@@ -1,9 +1,11 @@
 import './App.css';
 
+import Home from './components/Home/Home';
+
 function App() {
   return (
     <div className="App">
-      캐슬 채팅
+      <Home></Home>
     </div>
   );
 }
