@@ -9,16 +9,8 @@ function Pather() {
 
     return (
         <>
-            {/* {adminCode === 'admin' ?
-                <>
-                    <Header></Header>
-                    <RouteBody></RouteBody>
-                </>
-                :
-                <>
-                    <LogIn></LogIn>
-                </>
-            } */}
+            <Header></Header>
+            <RouteBody></RouteBody>
         </>
 
     )

@@ -1,13 +1,13 @@
-package com.castle.chat.castleboot;
+package com.chat.castle;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CastlebootApplication {
+public class CastleApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(CastlebootApplication.class, args);
+		SpringApplication.run(CastleApplication.class, args);
 	}
 
 }

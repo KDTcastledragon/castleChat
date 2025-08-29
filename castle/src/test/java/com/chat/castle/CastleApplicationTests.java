@@ -1,10 +1,10 @@
-package com.castle.chat.castleboot;
+package com.chat.castle;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CastlebootApplicationTests {
+class CastleApplicationTests {
 
 	@Test
 	void contextLoads() {
