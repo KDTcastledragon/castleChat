@@ -14,8 +14,8 @@ public class ChatServiceImpl implements ChatService {
 	ChatMapper chatmapper;
 
 	@Override
-	public List<UserDTO> allFriendsList() {
-		// TODO Auto-generated method stub
+	public List<UserDTO> allFriendsList(String user_id) {
+		List<UserDTO> list = chatmapper.friendsList(user_id);
 		return null;
 	}
 

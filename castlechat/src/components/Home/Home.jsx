@@ -8,10 +8,12 @@ function Home() {
     const [sendChat, setSendChat] = useState('');
     const [myChatList, setMyChatList] = useState('');
     const loginID = sessionStorage.getItem('loginID');
+    const [friList, setFriList] = useState([]);
 
     // =====[로그인]======================================================
     function login(id1, pw1) {
         sessionStorage.clear();
+        alert(`로근해요`)
 
 
         const data = { id: id1, pw: pw1 }
@@ -22,6 +24,20 @@ function Home() {
                 sessionStorage.setItem('loginID', id1);
                 alert(`${id1}`);
                 window.location.reload();
+
+                const data2 = {
+                    user_id: loginID
+                }
+
+                axios
+                    .post('/user/friendList', data2)
+                    .then((r) => {
+                        setFriList(r.data);
+                        alert(`성공`)
+                    }).catch((e) => {
+                        console.log(e);
+                        alert(`실패`);
+                    })
 
             }).catch((e) => {
                 if (e.response.status) {
@@ -40,6 +56,7 @@ function Home() {
 
                         default:
                             alert(`로그인 오류`);
+                            console.log(e);
                             break;
                     }
                 } else {
@@ -73,6 +90,7 @@ function Home() {
             <div className='friendsListSection'>
                 <div className='friendsListTitle'><span>친구 목록</span></div>
                 <div className='friendsList'>
+                    { }
                     <div>친구1</div>
                     <div>친구2</div>
                     <div>3</div>

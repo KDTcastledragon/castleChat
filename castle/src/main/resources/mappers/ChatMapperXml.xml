@@ -4,7 +4,14 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.iplist.ipboot.mapper.ChatMapper">
-	<select id="selectById" resultType="com.iplist.ipboot.domain.UserDTO">
-        SELECT * FROM administrator where admin_id = #{adminId};
-    </select>
+	<select id="friendsList" resultType="com.chat.castle.domain.UserDTO">
+	select * from friend where req_id = #{user_id} or fri_id = #{user_id} and status ='accept';
+	</select>
+
+	<select id="chatlist"
+		resultType="com.chat.castle.domain.ChatDTO">
+		SELECT * FROM chatting where sender_id = #{user_id} and receiver_id={recId};
+	</select>
+
+
 </mapper>

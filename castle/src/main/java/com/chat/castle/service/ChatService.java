@@ -6,6 +6,6 @@ import com.chat.castle.domain.UserDTO;
 
 public interface ChatService {
 
-	List<UserDTO> allFriendsList();
+	List<UserDTO> allFriendsList(String user_id);
 
 }
