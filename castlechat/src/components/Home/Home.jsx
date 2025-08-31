@@ -3,19 +3,35 @@ import './Home.css';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import LogIn from '../LogIn/LogIn';
+import ChatBox from '../Chattings/ChatBox';
 
 function Home() {
-    const [sendChat, setSendChat] = useState('');
     const [myChatList, setMyChatList] = useState('');
     const loginID = sessionStorage.getItem('loginID');
     const [friList, setFriList] = useState([]);
+    const [isOpenChatBox, setIsOpenChatBox] = useState(false);
+    const [friendIdForChat, setFriendIdForChat] = useState('');
 
     // =====[로그인]======================================================
+    useEffect(() => {
+        const data2 = {
+            user_id: loginID
+        }
+
+        axios
+            .post('/user/friendList', data2)
+            .then((r) => {
+                setFriList(r.data);
+                console.log(r.data);
+                // alert(`성공`)
+            }).catch((e) => {
+                console.log(e);
+                alert(`실패`);
+            })
+    }, [])
+
     function login(id1, pw1) {
         sessionStorage.clear();
-        alert(`로근해요`)
-
-
         const data = { id: id1, pw: pw1 }
 
         axios
@@ -24,20 +40,6 @@ function Home() {
                 sessionStorage.setItem('loginID', id1);
                 alert(`${id1}`);
                 window.location.reload();
-
-                const data2 = {
-                    user_id: loginID
-                }
-
-                axios
-                    .post('/user/friendList', data2)
-                    .then((r) => {
-                        setFriList(r.data);
-                        alert(`성공`)
-                    }).catch((e) => {
-                        console.log(e);
-                        alert(`실패`);
-                    })
 
             }).catch((e) => {
                 if (e.response.status) {
@@ -65,99 +67,60 @@ function Home() {
             });
 
     }
-    // =========================================================
 
-    function sendMessage(data) {
-        alert(`메시지 전송`);
+    function openChatBoxWithFriend(friId) {
+        setFriendIdForChat(friId);
+        setIsOpenChatBox(true);
 
-        const sendData = {
-            msg: data
-        }
-
-        axios
-            .post(`/chat/sendMessage`, sendData)
-            .then(() => {
-                alert(`성공`);
-            }).catch((e) => {
-                console.log(e.message);
-            })
     }
 
-
-
+    // =========================================================
     return (
         <div className='HomeContainer'>
             <div className='friendsListSection'>
                 <div className='friendsListTitle'><span>친구 목록</span></div>
                 <div className='friendsList'>
-                    { }
-                    <div>친구1</div>
-                    <div>친구2</div>
-                    <div>3</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
+                    {friList && friList.length > 0 ?
+                        friList.map((d, i) => (
+                            <>
+                                <div className='friend' onClick={() => openChatBoxWithFriend(d.user_id)}>
+                                    <div>{i + 1}번째 친구</div>
+                                    <div>ID : {d.user_id}</div>
+                                    <div>이름 : {d.user_name}</div>
+                                    <hr />
+                                </div>
+                            </>
+                        ))
+                        :
+                        <>
+                            <div>나는 개똥벌레,, 친구가 없네....</div>
+                            <div>어서 친추 ㄱㄱ</div>
+                        </>
+                    }
                 </div>
             </div>
-            <div className='chattingListSection'>
+            {/* <div className='chattingListSection'>
                 <div className='chatListTitle'><span>채팅방 목록</span></div>
                 <div className='chatList'>
-                    <div>1</div>
-                    <div>2</div>
-                    <div>3</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
-                    <div>4</div>
                 </div>
-            </div>
-            <div className='chattingRoomSection'>
-                <div className='chatListTitle'><span>채팅방()</span></div>
-                <div className='chattingBox'>
-                    { }
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                    <div>message1</div>
-                </div>
-                <div className='inputChat'>
-                    <textarea type="text" value={sendChat} onChange={(e) => setSendChat(e.target.value)} placeholder='여기에 메세지 입력.....' />
-                    <button onClick={() => sendMessage(sendChat)}>전송</button>
-                </div>
-            </div>
-            <div className='test'>
-                <div></div>
-            </div>
+            </div> */}
 
             <div className='logTest'>
                 <div>현재 : {loginID}</div>
-                <button onClick={() => login(123, 123)}>123</button>
-                <button onClick={() => login(456, 456)}>456</button>
-                <button onClick={() => login(789, 789)}>789</button>
-                <button onClick={() => login(321, 321)}>321</button>
-                <button onClick={() => login(654, 654)}>654</button>
-                <button onClick={() => login(987, 987)}>987</button>
+                <button onClick={() => login('123', '123')}>123</button>
+                <button onClick={() => login('456', '456')}>456</button>
+                <button onClick={() => login('789', '789')}>789</button>
+                <button onClick={() => login('321', '321')}>321</button>
+                <button onClick={() => login('654', '654')}>654</button>
+                <button onClick={() => login('987', '987')}>987</button>
             </div>
+
+            {isOpenChatBox &&
+                <ChatBox
+                    setIsOpenChatBox={setIsOpenChatBox}
+                    friendIdForChat={friendIdForChat}
+                />}
+
         </div>
     );
 }

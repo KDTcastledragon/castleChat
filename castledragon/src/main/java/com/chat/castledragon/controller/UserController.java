@@ -29,7 +29,7 @@ public class UserController {
 			log.info("data for friendList: " + data);
 			String user_id = (String) data.get("user_id");
 			List<UserDTO> fri_list = userservice.friendList(user_id);
-			log.info("id&list : " + user_id + fri_list);
+			log.info("id&fri_list : " + user_id + fri_list);
 
 			return ResponseEntity.ok(fri_list);
 

@@ -28,6 +28,11 @@
     background-color: blueviolet;
 }
 
+.friend:hover {
+    background-color: blueviolet;
+    cursor: pointer;
+}
+
 /* ====[채팅방 목록]============================================= */
 .chattingListSection {
     position: absolute;
