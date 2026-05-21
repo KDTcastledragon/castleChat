@@ -4,27 +4,120 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.castledragon.domain.ChatDTO;
+import com.chat.castledragon.domain.ChatRoomListDTO;
+import com.chat.castledragon.domain.ChatRoomsDTO;
+import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.mapper.ChatMapper;
+import com.chat.castledragon.mapper.UserMapper;
 
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
 public class ChatServiceImpl implements ChatService {
+
 	@Autowired
-	ChatMapper chatmapper;
+	ChatMapper chatMapper;
+
+	@Autowired
+	UserMapper userMapper;
 
 	@Override
-	public List<ChatDTO> getListWithFri(String user_id, String fri_id) {
-		List<ChatDTO> list = chatmapper.getListWithFri(user_id, fri_id);
-		return null;
+	@Transactional
+	public EnterRoomResponseDTO enterRoom(Long senderId, Long targetUserId) {
+
+		// 1. 기존 room 조회
+		Long roomId = chatMapper.findRoomId(senderId, targetUserId);
+
+		if (roomId == null) {
+			ChatRoomsDTO room = new ChatRoomsDTO();
+			room.setRoomType("DIRECT");
+			room.setRoomStatus("ACTIVE");
+			log.info("채팅방 새로 생성 : {}", room);
+
+			chatMapper.createRoom(room);
+			roomId = room.getRoomId();
+			log.info("새로운 채팅방의 newRoomId : {}", roomId);
+
+			chatMapper.insertRoomMember(roomId, senderId);
+			chatMapper.insertRoomMember(roomId, targetUserId);
+			log.info("roomId={}  user1 : {}, user2 : {} 추가", roomId, senderId, targetUserId);
+		}
+
+		// 2. 메시지 조회. --> if 다음 else 안 쓰는 이유? 1. nesting(중첩)때문에.가독성저하.조건흐름추적어려움.  2.Pyramid of Doom형태로 else의 else의 else...가 되버리기 때문.
+		log.info("{}과 {}의 채팅방 이미 존재. : {}  --> 이전 채팅내역 불러오기 시작.", senderId, targetUserId, roomId);
+		//		List<ChatDTO> messages = chatMapper.getMessages(roomId);
+
+		// 3. DTO 조립
+		EnterRoomResponseDTO resDTO = new EnterRoomResponseDTO();
+		String targetUserLoginId = userMapper.getUserLoginId(targetUserId);
+		log.info("채팅방 상대의 로그인ID : {}", targetUserLoginId);
+
+		resDTO.setRoomId(roomId);
+		//				resDTO.setMessages(messages);
+		resDTO.setTargetUserId(targetUserId);
+		resDTO.setTargetLoginId(targetUserLoginId);
+
+		log.info("최종 resDTO : {}", resDTO);
+
+		return resDTO;
 	}
 
 	@Override
-	public void sendMessage(String sender_id, String receiver_id, String msg) {
-		chatmapper.sendMessage(sender_id, receiver_id, msg);
+	public Long insertMessage(Long roomId, Long senderId, String msgText) {
+		ChatDTO dto = new ChatDTO();
+		dto.setRoomId(roomId);
+		dto.setSenderId(senderId);
+		dto.setMsgText(msgText);
+
+		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
+		Long messageId = dto.getMessageId();
+
+		return messageId;
+	}
+
+	@Override
+	public List<ChatDTO> getMessages(Long roomId) {
+		List<ChatDTO> chatList = chatMapper.getMessages(roomId);
+		return chatList;
+	}
+
+	@Override
+	public void updateLastRead(Long roomId, Long userId, Long lastReadMessageId) {
+		chatMapper.updateLastRead(roomId, userId, lastReadMessageId);
+	}
+
+	@Override
+	public List<ChatRoomListDTO> getMyChatRooms(Long userId) {
+		return chatMapper.getMyChatRooms(userId);
 	}
 
 }
+
+//if (roomId != null) {
+//	log.info("{}과 {}의 채팅방 이미 존재 : {}", user1, user2, roomId);
+//	return roomId;
+//}
+////이걸 Guard Clause(가드 절) 또는 Early Return 패턴이라고 한다. if로 방어 조건을 먼저 빼는 것.
+//
+//// 2. room 생성.  if 다음 else 안 쓰는 이유? 1. nesting(중첩)때문에.가독성저하.조건흐름추적어려움.  2.Pyramid of Doom형태로 else의 else의 else...가 되버리기 때문.
+//ChatRoomsDTO room = new ChatRoomsDTO();
+//
+//room.setRoomType("DIRECT");
+//room.setRoomStatus("ACTIVE");
+//
+//chatMapper.createRoom(room);
+//log.info("채팅방 새로 생성 :" + room);
+//
+//Long newRoomId = room.getRoomId();
+//log.info("새로운 채팅방의 newRoomId :" + newRoomId);
+//
+//// 3. room member insert
+//chatMapper.insertRoomMember(newRoomId, user1);
+//chatMapper.insertRoomMember(newRoomId, user2);
+//log.info("roomId={}  user1 : {}, user2 : {} 추가", newRoomId, user1, user2);
+//
+//return newRoomId;

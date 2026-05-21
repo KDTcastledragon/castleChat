@@ -8,8 +8,12 @@ import com.chat.castledragon.domain.UserDTO;
 
 @Mapper
 public interface UserMapper {
-	List<UserDTO> friendList(String user_id);
+	List<UserDTO> friendList(Long userId);
 
 	UserDTO getUser(String id);
+
+	String getUserLoginId(Long userId);
+
+	List<UserDTO> allUsers();
 
 }

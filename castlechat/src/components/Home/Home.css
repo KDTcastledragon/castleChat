@@ -115,3 +115,48 @@
     top: 50px;
     right: 50px;
 }
+
+.loginSection {
+    position: absolute;
+    background-color: rgb(232, 149, 149);
+    width: 300px;
+    height: 100px;
+    top: 100px;
+    left: 100px;
+}
+
+.loginForm>input {
+    display: inline-block;
+    width: 200px;
+    height: 70px;
+    font-size: 20px;
+}
+
+.chatRoomItem {
+    background-color: antiquewhite;
+    width: 100px;
+    height: 20px;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+
+}
+
+.unreadBadge {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+
+    background: red;
+    color: white;
+
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

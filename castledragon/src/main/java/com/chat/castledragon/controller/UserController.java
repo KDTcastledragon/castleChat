@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,22 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class UserController {
-	UserService userservice;
-
-	@PostMapping("/friendList")
-	public ResponseEntity<?> friendList(@RequestBody Map<String, Object> data) {
-		try {
-			log.info("data for friendList: " + data);
-			String user_id = (String) data.get("user_id");
-			List<UserDTO> fri_list = userservice.friendList(user_id);
-			log.info("id&fri_list : " + user_id + fri_list);
-
-			return ResponseEntity.ok(fri_list);
-
-		} catch (Exception e) {
-			throw e;
-		}
-	}
+	UserService userService;
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody Map<String, Object> data) {
@@ -44,7 +30,7 @@ public class UserController {
 		String id = (String) data.get("id");
 		String pw = (String) data.get("pw");
 
-		UserDTO user = userservice.login(id, pw);
+		UserDTO user = userService.login(id, pw);
 
 		if (user != null) {
 			return ResponseEntity.ok(user);
@@ -53,4 +39,27 @@ public class UserController {
 		}
 	}
 
+	@GetMapping("/allUsers")
+	public ResponseEntity<?> allUsers() {
+		log.info("allUsers");
+		List<UserDTO> list = userService.allUsers();
+
+		return ResponseEntity.ok(list);
+	}
+
 }
+
+//@PostMapping("/friendList")
+//public ResponseEntity<?> friendList(@RequestBody Map<String, Object> data) {
+//	try {
+//		log.info("data for friendList: " + data);
+//		String user_id = (String) data.get("user_id");
+//		List<UserDTO> fri_list = userservice.friendList(user_id);
+//		log.info("id&fri_list : " + user_id + fri_list);
+//
+//		return ResponseEntity.ok(fri_list);
+//
+//	} catch (Exception e) {
+//		throw e;
+//	}
+//}

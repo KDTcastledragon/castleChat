@@ -1,0 +1,211 @@
+package com.chat.castledragon.websocket;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.TextWebSocketHandler;
+
+import com.chat.castledragon.domain.ChatDTO;
+import com.chat.castledragon.service.ChatService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.extern.log4j.Log4j2;
+
+@Log4j2
+@Component
+public class ChatHandler extends TextWebSocketHandler {
+
+	private final ChatService chatService;
+	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	// roomId 기준 세션 저장
+	//	private final Map<Long, Set<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();// 근데 왜 List안쓰고 Set을 씀? (Legacy:OnlyRoom)
+	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
+
+	public ChatHandler(ChatService chatService) {
+		this.chatService = chatService;
+	}
+
+	//	====== room 퇴장 감지 ===========================================================================================================
+	@Override
+	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+
+		log.info("메시지 도착 : {}", message);
+
+		// 1. JSON → DTO
+		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class);
+
+		Long roomId = dto.getRoomId();
+
+		// 2. DB 저장
+		try {
+
+			chatService.insertMessage(dto.getRoomId(), dto.getSenderId(), dto.getMsgText());
+
+			log.info("{}의 메세지가 {}방으로 도착 : {}", dto.getSenderId(), dto.getRoomId(), dto.getMsgText());
+
+			log.info("DB 저장 완료");
+			log.info("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
+
+		} catch (Exception e) {
+
+			log.info("메시지 도달했으나, 저장은 실패 : {} / {}", dto.getMsgText(), e);
+
+			log.error("메시지 저장 실패 : {}", e);
+		}
+
+		// 3. 브로드캐스트용 메시지 생성
+		String payload = objectMapper.writeValueAsString(dto);
+
+		// 4. 같은 room 사람들에게 전송
+		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+
+		if (sessions != null) {
+
+			// 닫힌 세션 제거
+			sessions.values().removeIf(socketSession -> !socketSession.isOpen());
+
+			for (WebSocketSession s : sessions.values()) {
+
+				try {
+
+					if (s.isOpen()) {
+						s.sendMessage(new TextMessage(payload));
+					}
+
+				} catch (Exception e) {
+
+					log.error("전송 실패 session 제거", e);
+
+					// sessions.values().remove(s);  // 반복문 도는 중 remove는 위험하다. ConcurrentHashMap라 덜 위험하긴 한데, 굳이 안 하는 게 좋음. sessions.values().removeIf(socketSession -> !socketSession.isOpen()); 하고있어서 ㄱㅊ.
+				}
+			}
+		}
+	}
+
+	//	====== ...? ===========================================================================================================
+	@Override
+	public void afterConnectionEstablished(WebSocketSession session) {
+
+		String query = session.getUri().getQuery();
+
+		if (query == null) {
+			log.error("query 없음");
+			return;
+		}
+
+		String[] params = query.split("&");
+
+		Long roomId = null;
+		Long userId = null;
+
+		for (String param : params) {
+
+			String[] keyValue = param.split("=");
+
+			if (keyValue[0].equals("roomId")) {
+				roomId = Long.valueOf(keyValue[1]);
+			}
+
+			if (keyValue[0].equals("userId")) {
+				userId = Long.valueOf(keyValue[1]);
+			}
+		}
+
+		if (roomId == null || userId == null) {
+
+			log.error("roomId 또는 userId 없음");
+
+			return;
+		}
+
+		roomSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(userId, session);
+
+		log.info("{}번 유저 {}번방 입장", userId, roomId);
+	}
+
+	//	====== room 퇴장 감지 ===========================================================================================================
+	@Override
+	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+
+		roomSessions.forEach((roomId, userMap) -> {
+
+			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
+
+			// 방이 비었으면 room 자체 제거
+			if (userMap.isEmpty()) {
+				roomSessions.remove(roomId);
+			}
+		});
+
+		log.info("WebSocket 연결 종료");
+	}
+}
+
+//	@Override
+//	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+//
+//		log.info("메시지 도착 : {}", message);
+//
+//		// 1. JSON → DTO
+//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class);
+//
+//		Long roomId = dto.getRoomId();
+//
+//		roomSessions.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
+//
+//		// 2. DB 저장
+//		try {
+//			chatService.insertMessage(dto.getRoomId(), dto.getSenderId(), dto.getMsgText());
+//
+//			log.info("{}의 메세지가 {}방으로 도착 : {}", dto.getSenderId(), dto.getRoomId(), dto.getMsgText());
+//
+//			log.info("DB 저장 완료");
+//			log.info("■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■");
+//		} catch (Exception e) {
+//
+//			log.info("메시지 도달했으나, 저장은 실패 : {} / {}", dto.getMsgText(), e); // ws연결 유지를 위해 try-catch 도입.
+//			log.error("메시지 저장 실패 : {}", e); // ws연결 유지를 위해 try-catch 도입.
+//		}
+//
+//		// 3. 브로드캐스트용 메시지 생성
+//		String payload = objectMapper.writeValueAsString(dto);
+//
+//		// 4. 같은 room 사람들에게 전송
+//		Set<WebSocketSession> sessions = roomSessions.get(roomId); // 근데 왜 List안쓰고 Set을 씀?같은 session 중복 저장됨/disconnect 처리 어려움/브로드캐스트 중복 발생/그래서 WebSocket은 거의 무조건 Set 쓴다
+//
+//		if (sessions != null) {
+//
+//			sessions.removeIf(socketSession -> !socketSession.isOpen());
+//
+//			for (WebSocketSession s : sessions) {
+//				try {
+//					if (s.isOpen()) {
+//						s.sendMessage(new TextMessage(payload));
+//					}
+//				} catch (Exception e) {
+//					log.error("전송 실패 session 제거", e);
+//					sessions.remove(s);
+//				}
+//			}
+//		}
+//	}
+//
+//	@Override
+//	public void afterConnectionEstablished(WebSocketSession session) {
+//
+//		String query = session.getUri().getQuery();
+//
+//		if (query == null || !query.contains("roomId=")) {
+//			log.error("roomId 없음 - 연결 종료");
+//			return;
+//		}
+//
+//		Long roomId = Long.valueOf(query.split("=")[1]);
+//
+//		roomSessions.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
+//	}

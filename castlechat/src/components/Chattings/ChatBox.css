@@ -1,0 +1,41 @@
+.chattingRoomSection {
+    position: absolute;
+    top: 60px;
+    left: 500px;
+}
+
+
+.chattingBox {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+}
+
+/* 공통 말풍선 */
+.chatRow {
+    max-width: 60%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    word-break: break-word;
+}
+
+/* 내 메시지 (오른쪽) */
+.mine {
+    align-self: flex-end;
+    background-color: #fee500;
+    /* 카카오 노랑 느낌 */
+    text-align: right;
+}
+
+/* 상대 메시지 (왼쪽) */
+.other {
+    align-self: flex-start;
+    background-color: #f1f0f0;
+    text-align: left;
+}
+
+.formatTime {
+    font-size: 11px;
+    font-style: italic;
+}

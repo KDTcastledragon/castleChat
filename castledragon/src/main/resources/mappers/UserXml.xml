@@ -5,11 +5,25 @@
   
   <mapper namespace="com.chat.castledragon.mapper.UserMapper">
   	<select id="friendList" resultType="com.chat.castledragon.domain.UserDTO">
-  	call get_friend_list(#{user_id});
+  	call get_friend_list(#{login_id});
   	</select>
   	
   	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
-  	select * from user where user_id = #{id};
+  	select * from users where login_id = #{id};
   	</select>
+  	
+  	<select id="getUserLoginId" resultType="java.lang.String">
+  	select login_id from users where user_id = #{userId};
+  	</select>
+  	
+  	<select id="allUsers" resultType="com.chat.castledragon.domain.UserDTO">
+  	select * from users;
+  	</select>
+  	
+  	<insert id="createRoom" useGeneratedKeys="true" keyProperty="roomId">
+    INSERT INTO chat_rooms (room_type, room_status)
+    VALUES ('DIRECT', 'ACTIVE')
+	</insert>
+	
   
   </mapper>

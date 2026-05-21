@@ -14,18 +14,24 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class UserServiceImpl implements UserService {
 	@Autowired
-	UserMapper usermapper;
+	UserMapper userMapper;
 
 	@Override
-	public List<UserDTO> friendList(String user_id) {
-		List<UserDTO> list = usermapper.friendList(user_id);
+	public List<UserDTO> friendList(Long user_id) {
+		List<UserDTO> list = userMapper.friendList(user_id);
 		return list;
 	}
 
 	@Override
 	public UserDTO login(String id, String pw) {
-		UserDTO userPw = usermapper.getUser(id);
+		UserDTO userPw = userMapper.getUser(id);
 		return userPw;
+	}
+
+	@Override
+	public List<UserDTO> allUsers() {
+		List<UserDTO> list = userMapper.allUsers();
+		return list;
 	}
 
 }

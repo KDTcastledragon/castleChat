@@ -5,8 +5,174 @@
 
 <mapper namespace="com.chat.castledragon.mapper.ChatMapper">
 	<select id="getListWithFri" resultType="com.chat.castledragon.domain.ChatDTO">
-	select * from chatting where user_id = #{user_id} and fri_id = #{fri_id}
+		select * from chatting where user_id = #{user_id} and fri_id = #{fri_id}
 	</select>
 	
-	<update id="sendMessage" ></update>
+	<select id="findRoomId" resultType="long">
+	SELECT rm.room_id
+	FROM room_members rm
+	JOIN chat_rooms cr
+	    ON rm.room_id = cr.room_id
+	WHERE cr.room_type = 'DIRECT'
+	  AND rm.user_id IN (#{user1}, #{user2})
+	GROUP BY rm.room_id
+	HAVING COUNT(DISTINCT rm.user_id) = 2
+	   AND (
+       SELECT COUNT(*)
+       FROM room_members
+       WHERE room_id = rm.room_id
+   ) = 2
+	</select>
+
+	<insert id="createRoom" parameterType="com.chat.castledragon.domain.ChatRoomsDTO" useGeneratedKeys="true" keyProperty="roomId">
+	INSERT INTO chat_rooms(room_type, room_status) VALUES (#{roomType}, #{roomStatus})
+	</insert>
+
+	<insert id="insertRoomMember">
+	INSERT INTO room_members(room_id, user_id) VALUES (#{roomId}, #{userId})
+	</insert>
+	
+	<!-- <select id="getMessages" resultType="com.chat.castledragon.domain.ChatDTO">
+    	SELECT * FROM messages WHERE room_id = #{roomId} ORDER BY created_at ASC
+	</select> -->
+	
+	<select id="getMessages"
+        resultType="com.chat.castledragon.domain.ChatDTO">
+
+	SELECT
+	    m.*,
+	
+	    (
+	        SELECT COUNT(*)
+	        FROM room_members rm
+	        WHERE rm.room_id = m.room_id
+	        AND rm.user_id != m.sender_id
+	        AND (
+	            rm.last_read_message_id IS NULL
+	            OR rm.last_read_message_id &lt; m.message_id
+	        )
+	    ) AS unreadCount
+	
+	FROM messages m
+	
+	WHERE m.room_id = #{roomId}
+	
+	ORDER BY m.message_id ASC
+
+	</select>
+	
+	
+	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatDTO" useGeneratedKeys="true" keyProperty="messageId">
+    	INSERT INTO messages(room_id, sender_id, msg_text) VALUES(#{roomId}, #{senderId}, #{msgText})
+	</insert>
+	
+	<update id="updateLastRead">
+    	UPDATE room_members SET last_read_message_id = #{lastReadMessageId} WHERE room_id = #{roomId} AND user_id = #{userId}
+	</update>
+	
+	<select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
+	SELECT
+    r.room_id AS roomId,
+    u.user_id AS targetUserId,
+    u.login_id AS targetLoginId,
+
+    COUNT(DISTINCT m.message_id) AS unreadCount,
+
+    (
+        SELECT msg_text
+        FROM messages
+        WHERE room_id = r.room_id
+        ORDER BY message_id DESC
+        LIMIT 1
+    ) AS lastMessage,
+
+    (
+        SELECT created_at
+        FROM messages
+        WHERE room_id = r.room_id
+        ORDER BY message_id DESC
+        LIMIT 1
+    ) AS lastMessageTime
+
+	FROM room_members me
+	
+	JOIN room_members other
+	ON me.room_id = other.room_id
+	AND other.user_id != me.user_id
+	
+	JOIN users u
+	ON other.user_id = u.user_id
+	
+	JOIN chat_rooms r
+	ON r.room_id = me.room_id
+	
+	LEFT JOIN messages m
+	ON m.room_id = r.room_id
+	AND m.message_id > IFNULL(me.last_read_message_id, 0)
+	AND m.sender_id != me.user_id
+	
+	WHERE me.user_id = #{userId}
+	
+	GROUP BY r.room_id, u.user_id
+	
+	ORDER BY lastMessageTime DESC
+	
+	</select>
+		
+		<!-- <select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
+	
+	SELECT
+	    r.room_id AS roomId,
+	    u.user_id AS targetUserId,
+	    u.login_id AS targetLoginId,
+	
+	    COUNT(m.message_id) AS unreadCount,
+	    
+	
+	    (
+	        SELECT msg_text
+	        FROM messages
+	        WHERE room_id = r.room_id
+	        ORDER BY message_id DESC
+	        LIMIT 1
+	    ) AS lastMessage,
+	
+	    (
+	        SELECT created_at
+	        FROM messages
+	        WHERE room_id = r.room_id
+	        ORDER BY message_id DESC
+	        LIMIT 1
+	    ) AS lastMessageTime
+	
+	FROM room_members me
+	
+	JOIN room_members other
+	ON me.room_id = other.room_id
+	AND other.user_id != me.user_id
+	
+	JOIN users u
+	ON other.user_id = u.user_id
+	
+	JOIN chat_rooms r
+	ON r.room_id = me.room_id
+	
+	LEFT JOIN messages m
+	ON m.room_id = r.room_id
+	AND m.message_id > IFNULL(me.last_read_message_id, 0)
+	AND m.sender_id != me.user_id
+	
+	WHERE me.user_id = #{userId}
+	
+	GROUP BY r.room_id, u.user_id, u.login_id
+	
+	ORDER BY lastMessageTime DESC
+
+</select> -->
+	
+	
+	<!-- <insert id="insertMessage">
+    	INSERT INTO messages(room_id, sender_id, msg_text) VALUES(#{roomId}, #{senderId}, #{msgText})
+	</insert> --> <!-- 단순히 insert만 하고 반환 타입을 void로 하는것보다 위의 방식이 더 효율적 -->
+	
 </mapper>

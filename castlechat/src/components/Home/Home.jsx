@@ -6,30 +6,34 @@ import LogIn from '../LogIn/LogIn';
 import ChatBox from '../Chattings/ChatBox';
 
 function Home() {
-    const [myChatList, setMyChatList] = useState('');
+    const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
+
+    const [userList, setUserList] = useState([]);
+    const [enteredID, setEnteredID] = useState('');
+    const [targetUserID, setTargetUserID] = useState('');
+    const [targetLoginID, setTargetLoginID] = useState('');
+    const [roomId, setRoomId] = useState(null);
     const [friList, setFriList] = useState([]);
-    const [isOpenChatBox, setIsOpenChatBox] = useState(false);
-    const [friendIdForChat, setFriendIdForChat] = useState('');
+    const [isChattingOpen, setIsChattingOpen] = useState(false);
 
-    // =====[로그인]======================================================
+    const [chatRooms, setChatRooms] = useState([]);
+
+
+    // =====[유저 목록 전체]======================================================
     useEffect(() => {
-        const data2 = {
-            user_id: loginID
-        }
-
         axios
-            .post('/user/friendList', data2)
-            .then((r) => {
-                setFriList(r.data);
-                console.log(r.data);
-                // alert(`성공`)
+            .get(`/user/allUsers`)
+            .then((res) => {
+                console.log(`모든유저`);
+                setUserList(res.data);
+                console.log(res.data);
             }).catch((e) => {
-                console.log(e);
-                alert(`실패`);
-            })
+                console.log(e.message);
+            });
     }, [])
 
+    // =====[로그인/로그아웃 함수]======================================================
     function login(id1, pw1) {
         sessionStorage.clear();
         const data = { id: id1, pw: pw1 }
@@ -37,8 +41,8 @@ function Home() {
         axios
             .post(`/user/login`, data)
             .then((res) => {
-                sessionStorage.setItem('loginID', id1);
-                alert(`${id1}`);
+                sessionStorage.setItem('userID', res.data.userId); // res안의 data안에 정보가 있다.
+                sessionStorage.setItem('loginID', res.data.loginId);
                 window.location.reload();
 
             }).catch((e) => {
@@ -68,16 +72,105 @@ function Home() {
 
     }
 
-    function openChatBoxWithFriend(friId) {
-        setFriendIdForChat(friId);
-        setIsOpenChatBox(true);
+    function logout() {
+        sessionStorage.clear();
+        // alert(`로그아웃 성공`);
+        window.location.reload();
+    }
 
+    // ==== 2. 내 채팅방 목록 불러오기 ===================================================
+    useEffect(() => {
+
+        if (!userID) return;
+
+        axios.get(`/chat/myRooms/${userID}`)
+            .then((res) => {
+                setChatRooms(res.data);
+                console.log("내 채팅방 목록", res.data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+    }, [userID]);
+
+    // ====채팅방 오픈 함수 ===================================================
+    const openChattingRoom = async (targetUser) => {
+        try {
+            const res = await axios.post(`/chat/enterRoom`,
+                {
+                    senderId: userID,
+                    targetUserId: targetUser.userId
+                });
+
+            setRoomId(res.data.roomId);
+            setTargetLoginID(targetUser.loginId);
+
+            setIsChattingOpen(true);
+            console.log(`${targetUser.loginId}한테 대화 요청!`);
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     // =========================================================
     return (
         <div className='HomeContainer'>
-            <div className='friendsListSection'>
+
+            {/**============== 로그인 구역==================== */}
+            <div className='loginSection'>
+                {loginID ?
+                    <>
+                        <div className='loginForm'> {loginID} 님 -- ({userID})</div>
+
+                        <button onClick={() => logout()}>로그아웃</button>
+                    </>
+                    :
+                    <>
+                        <div className='loginForm'>
+                            ID : <input
+                                type="text"
+                                value={enteredID}
+                                onChange={(e) => setEnteredID(e.target.value)}
+                            />
+                        </div>
+                        <button onClick={() => login(enteredID)}>로그인</button>
+                    </>
+                }
+
+            </div>
+
+            {/**========= 유저 목록 및 채팅 오픈 버튼=================== */}
+            <div>
+                {userList.length > 0 ? userList.map((d, i) => (
+                    <>
+                        <button
+                            key={d.userId}
+                            onClick={() => openChattingRoom(d)}>
+                            {d.loginId}-({d.userId})
+                        </button><span>&nbsp;&nbsp;&nbsp;</span>
+                    </>
+                ))
+                    :
+                    <div>유저없음</div>
+                }
+            </div>
+
+
+
+
+            {/**========= 채팅창 =================== */}
+            {
+                isChattingOpen &&
+                <ChatBox
+                    setIsChattingOpen={setIsChattingOpen}
+                    targetUserID={targetUserID}
+                    targetLoginID={targetLoginID}
+                    roomId={roomId}
+                />
+            }
+
+            {/* <div className='friendsListSection'>
                 <div className='friendsListTitle'><span>친구 목록</span></div>
                 <div className='friendsList'>
                     {friList && friList.length > 0 ?
@@ -98,30 +191,9 @@ function Home() {
                         </>
                     }
                 </div>
-            </div>
-            {/* <div className='chattingListSection'>
-                <div className='chatListTitle'><span>채팅방 목록</span></div>
-                <div className='chatList'>
-                </div>
             </div> */}
 
-            <div className='logTest'>
-                <div>현재 : {loginID}</div>
-                <button onClick={() => login('123', '123')}>123</button>
-                <button onClick={() => login('456', '456')}>456</button>
-                <button onClick={() => login('789', '789')}>789</button>
-                <button onClick={() => login('321', '321')}>321</button>
-                <button onClick={() => login('654', '654')}>654</button>
-                <button onClick={() => login('987', '987')}>987</button>
-            </div>
-
-            {isOpenChatBox &&
-                <ChatBox
-                    setIsOpenChatBox={setIsOpenChatBox}
-                    friendIdForChat={friendIdForChat}
-                />}
-
-        </div>
+        </div >
     );
 }
 

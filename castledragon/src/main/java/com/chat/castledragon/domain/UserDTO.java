@@ -1,8 +1,5 @@
 package com.chat.castledragon.domain;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,13 +8,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class UserDTO {
-	private String user_id;
-	private String user_pw;
-	private String user_name;
-	private String phone_num;
-	private LocalDate birth;
-	private String thumbnail;
-	private LocalDateTime join_date;
-	private LocalDateTime latest_updated;
-	private LocalDateTime withdrawal_date;
+	private String userId;
+
+	private String loginId;
+	//	private String userPw;
+	//	private String userName;
+	//	private String phoneNum;
+	//	private LocalDate birth;
+	//	private String thumbnail;
+	//	private LocalDateTime joinDate;
+	//	private LocalDateTime latestUpdated;
+	//	private LocalDateTime withdrawalDate;
 }
