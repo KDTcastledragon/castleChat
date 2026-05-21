@@ -79,67 +79,55 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         // const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}`); //legacy
 
         const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
+
+        console.log(`ws.readyState : ${ws.readyState}`);
         ws.onopen = () => {
-            console.log("WebSocket 연결됐어용!");
+            console.log("WebSocket 연결됐어용!"); // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen이 "자동으로 실행된다" (o) 
         };
+
 
         ws.onmessage = async (event) => {
-            const newMessage = JSON.parse(event.data); // 서버에서 온 메세지 객체로 변환.
 
-            // if (Number(newMessage.roomId) === Number(roomId)) { // Number로 감싸줌으로써, Long타입으로 비교 가능.
-            //     setPrevChattings(prev => [...prev, newMessage]);
+            const newMessage = JSON.parse(event.data);
 
-            //     axios.post("/chat/updateLastRead", {
-            //         roomId: roomId,
-            //         userId: userID,
-            //         lastReadMessageId: newMessage.messageId
-            //     });
+            if (Number(newMessage.roomId) !== Number(roomId)) {
+                return;
+            }
 
-            // }
+            // 상대 메시지인 경우
+            if (Number(newMessage.senderId) !== Number(userID)) {
 
-            ws.onmessage = async (event) => {
+                // 1. 먼저 읽음 처리
+                await axios.post("/chat/updateLastRead", {
+                    roomId: roomId,
+                    userId: userID,
+                    lastReadMessageId: newMessage.messageId
+                });
 
-                const newMessage = JSON.parse(event.data);
+                // 2. unreadCount 반영된 최신 데이터 조회
+                const updated =
+                    await axios.get(
+                        `/chat/getMessages/${roomId}/${userID}`
+                    );
 
-                if (Number(newMessage.roomId) !== Number(roomId)) {
-                    return;
-                }
+                // 3. 최신 상태로 교체
+                setPrevChattings(updated.data);
 
-                // 상대 메시지인 경우
-                if (Number(newMessage.senderId) !== Number(userID)) {
+            } else {
 
-                    // 1. 먼저 읽음 처리
-                    await axios.post("/chat/updateLastRead", {
-                        roomId: roomId,
-                        userId: userID,
-                        lastReadMessageId: newMessage.messageId
-                    });
-
-                    // 2. unreadCount 반영된 최신 데이터 조회
-                    const updated =
-                        await axios.get(
-                            `/chat/getMessages/${roomId}/${userID}`
-                        );
-
-                    // 3. 최신 상태로 교체
-                    setPrevChattings(updated.data);
-
-                } else {
-
-                    // 내가 보낸 메시지는 그냥 추가
-                    setPrevChattings(prev => [...prev, newMessage]);
-                }
-            };
-
-
+                // 내가 보낸 메시지는 그냥 추가
+                setPrevChattings(prev => [...prev, newMessage]);
+            }
         };
 
+
+        console.log(`ws.readyState : ${ws.readyState}`);
         ws.onclose = () => {
             console.log("webSocket 종료.");
         };
-
+        console.log(`ws.readyState : ${ws.readyState}`);
         setSocket(ws); // WebSocket 채우기.
-
+        console.log(`ws.readyState : ${ws.readyState}`);
         return () => ws.close(); // ws연결종료 안 시키면, 과부하 온다. 필수 작성.
 
     }, [userID, targetUserID]);
@@ -170,6 +158,9 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         socket.send(JSON.stringify(sendData));
 
         setChatMessage('');
+
+        // ws.onclose(); reconnect
+        // ws.onerror(); reconnect
     }
 
     // ================ 최신 메세지 기준으로 보기. 스크롤 항상 최하단 ===============================================
