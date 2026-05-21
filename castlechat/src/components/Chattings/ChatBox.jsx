@@ -197,7 +197,8 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     return (
         <div className='chattingRoomSection'>
             <div className='chatListTitle'><span>{targetLoginID} - ({targetUserID})</span>&nbsp;&nbsp;&nbsp;&nbsp;
-                <button onClick={closeChat}>닫기</button></div>
+                <button onClick={closeChat}>닫기</button>
+            </div>
             <div className='chattingBox'>
                 {prevChattings && prevChattings.length > 0 ?
                     prevChattings.map((d, i) => (
