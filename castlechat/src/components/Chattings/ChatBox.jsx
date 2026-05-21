@@ -20,20 +20,58 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         return date.toTimeString().split(" ")[0];
     };
 
-    // ========== 이전 메시지 불러오기 ==================================
+    // 기존 : 1.화면추가 --> 2. 읽음처리 --> 3. 재조회
+    // 변경 : 1.읽음처리 --> 2. 재조회 --> 3. 재조회
+    // ========== 이전 메시지 불러오기 ==============================================================================================
     useEffect(() => {
+
         if (!roomId) return;
 
-        axios.get(`/chat/getMessages/${roomId}/${userID}`)
-            .then((res) => {
-                console.log("이전 메시지:", res.data);
-                setPrevChattings(res.data);
-            })
-            .catch((err) => {
-                console.log(err);
-            });
+        const loadMessages = async () => {
 
-    }, [roomId]);
+            try {
+
+                // 1. 메시지 조회
+                const res =
+                    await axios.get(
+                        `/chat/getMessages/${roomId}/${userID}`
+                    );
+
+                setPrevChattings(res.data);
+
+                // 2. 마지막 메시지 읽음 처리
+                if (res.data.length > 0) {
+
+                    const lastMessage =
+                        res.data[res.data.length - 1];
+
+                    await axios.post(
+                        "/chat/updateLastRead",
+                        {
+                            roomId,
+                            userId: userID,
+                            lastReadMessageId:
+                                lastMessage.messageId
+                        }
+                    );
+
+                    // 3. unreadCount 재조회
+                    const updated =
+                        await axios.get(
+                            `/chat/getMessages/${roomId}/${userID}`
+                        );
+
+                    setPrevChattings(updated.data);
+                }
+
+            } catch (err) {
+                console.log(err);
+            }
+        };
+
+        loadMessages();
+
+    }, [roomId, userID]);
 
     // ======== WebSocket 연결======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
@@ -45,19 +83,55 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
             console.log("WebSocket 연결됐어용!");
         };
 
-        ws.onmessage = (event) => {
+        ws.onmessage = async (event) => {
             const newMessage = JSON.parse(event.data); // 서버에서 온 메세지 객체로 변환.
 
-            if (Number(newMessage.roomId) === Number(roomId)) { // Number로 감싸줌으로써, Long타입으로 비교 가능.
-                setPrevChattings(prev => [...prev, newMessage]);
+            // if (Number(newMessage.roomId) === Number(roomId)) { // Number로 감싸줌으로써, Long타입으로 비교 가능.
+            //     setPrevChattings(prev => [...prev, newMessage]);
 
-                axios.post("/chat/updateLastRead", {
-                    roomId: roomId,
-                    userId: userID,
-                    lastReadMessageId: newMessage.messageId
-                });
+            //     axios.post("/chat/updateLastRead", {
+            //         roomId: roomId,
+            //         userId: userID,
+            //         lastReadMessageId: newMessage.messageId
+            //     });
 
-            }
+            // }
+
+            ws.onmessage = async (event) => {
+
+                const newMessage = JSON.parse(event.data);
+
+                if (Number(newMessage.roomId) !== Number(roomId)) {
+                    return;
+                }
+
+                // 상대 메시지인 경우
+                if (Number(newMessage.senderId) !== Number(userID)) {
+
+                    // 1. 먼저 읽음 처리
+                    await axios.post("/chat/updateLastRead", {
+                        roomId: roomId,
+                        userId: userID,
+                        lastReadMessageId: newMessage.messageId
+                    });
+
+                    // 2. unreadCount 반영된 최신 데이터 조회
+                    const updated =
+                        await axios.get(
+                            `/chat/getMessages/${roomId}/${userID}`
+                        );
+
+                    // 3. 최신 상태로 교체
+                    setPrevChattings(updated.data);
+
+                } else {
+
+                    // 내가 보낸 메시지는 그냥 추가
+                    setPrevChattings(prev => [...prev, newMessage]);
+                }
+            };
+
+
         };
 
         ws.onclose = () => {
@@ -135,14 +209,10 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
                                 <div>{d.msgText}</div>
 
-                                {
-                                    Number(d.unreadCount) > 0
-                                    &&
-                                    <span className='unreadOne'>
-                                        {d.unreadCount}
+                                <span className='unreadOne'>
+                                    {d.unreadCount}
 
-                                    </span>
-                                }
+                                </span>
                             </div>
                             <div className='formatTime'>{formatTime(d.createdAt)}</div>
                         </div>
@@ -173,3 +243,56 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 }
 
 export default ChatBox;
+
+// ========== 이전 메시지 불러오기 ==============================================================================================
+// useEffect(() => {
+//     if (!roomId) return;
+
+//     axios.get(`/chat/getMessages/${roomId}/${userID}`)
+//         .then((res) => {
+//             console.log("이전 메시지:", res.data);
+//             setPrevChattings(res.data);
+
+//             if (res.data.length > 0) {
+
+//                 const lastMessage =
+//                     res.data[res.data.length - 1];
+
+//                 axios.post("/chat/updateLastRead", {
+//                     roomId: roomId,
+//                     userId: userID,
+//                     lastReadMessageId: lastMessage.messageId
+//                 });
+
+//             }
+//         })
+//         .catch((err) => {
+//             console.log(err);
+//         });
+
+// }, [roomId]);
+
+// ==========================================================================================
+// if (Number(newMessage.roomId) === Number(roomId)) {
+
+//                 // 1. 화면에 메시지 추가
+//                 setPrevChattings(prev => [...prev, newMessage]);
+
+//                 // 2. "상대방 메시지"를 받은 경우만 읽음 처리
+//                 if (Number(newMessage.senderId) !== Number(userID)) {
+
+//                     await axios.post("/chat/updateLastRead", {
+//                         roomId: roomId,
+//                         userId: userID,
+//                         lastReadMessageId: newMessage.messageId
+//                     });
+
+//                     // 3. unreadCount 다시 반영하려고 재조회
+//                     const updated =
+//                         await axios.get(
+//                             `/chat/getMessages/${roomId}/${userID}`
+//                         );
+
+//                     setPrevChattings(updated.data);
+//                 }
+//             }
