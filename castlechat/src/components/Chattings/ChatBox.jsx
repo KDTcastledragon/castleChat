@@ -236,6 +236,10 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
 export default ChatBox;
 
+// ws연결 === 그러면 정확히는 컴퓨터 내에서 배포되어 있는(현재는 로컬테스팅중이지만) 내가 만든 springboot와 연결된다는거야? --> ㅇㅇ.
+// 정확히는, WebSocket은 “브라우저(React)”가 로컬에서 실행 중인 Spring Boot 서버에 연결하는 것
+
+
 // ========== 이전 메시지 불러오기 ==============================================================================================
 // useEffect(() => {
 //     if (!roomId) return;
