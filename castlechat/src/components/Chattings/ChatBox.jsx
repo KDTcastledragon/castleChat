@@ -20,8 +20,6 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         return date.toTimeString().split(" ")[0];
     };
 
-    // 기존 : 1.화면추가 --> 2. 읽음처리 --> 3. 재조회
-    // 변경 : 1.읽음처리 --> 2. 재조회 --> 3. 재조회
     // ========== 이전 메시지 불러오기 ==============================================================================================
     useEffect(() => {
 
@@ -78,13 +76,12 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         // const ws = new WebSocket("ws://localhost:8080/ws/chat"); // 브라우저 ↔ Spring Boot 실시간 연결 생성. 전화에 비유하면, http:한마디하고 끊음. ws:연결계속유지
         // const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}`); //legacy
 
-        const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
+        const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`); // new WS부터 연결 시작한다.
 
         console.log(`ws.readyState : ${ws.readyState}`);
         ws.onopen = () => {
             console.log("WebSocket 연결됐어용!"); // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen이 "자동으로 실행된다" (o) 
         };
-
 
         ws.onmessage = async (event) => {
 
@@ -149,6 +146,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         }
 
         const sendData = {
+            type: 'SEND',
             senderId: userID,
             senderLoginId: loginID,
             roomId: roomId,

@@ -89,7 +89,7 @@ public class ChatHandler extends TextWebSocketHandler {
 
 	//	====== ...? ===========================================================================================================
 	@Override
-	public void afterConnectionEstablished(WebSocketSession session) {
+	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
 
 		String query = session.getUri().getQuery();
 
