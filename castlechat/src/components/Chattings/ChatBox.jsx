@@ -29,11 +29,8 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
         const loadMessages = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
             try {
-
-
-
-                // 1-2. 메시지 조회
-                const res = await axios.get(`/chat/getMessages/${roomId}`);
+                // 1. 메시지 조회
+                const res = await axios.get(`/chat/getMessages/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.
 
                 setPrevChattings(res.data);
 
@@ -241,7 +238,7 @@ export default ChatBox;
 // 정확히는, WebSocket은 “브라우저(React)”가 로컬에서 실행 중인 Spring Boot 서버에 연결하는 것
 
 
-// 1-1. 메시지 조회
+// 1-1. 메시지 조회 ---> async/await 안의
 // const getPrevMsg =
 //     await axios
 //         .get(`/chat/getMessages/${roomId}`)
