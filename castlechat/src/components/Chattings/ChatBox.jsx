@@ -10,7 +10,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
 
-    const [socket, setSocket] = useState(null);
+    const [ws, setWs] = useState(null);
     const chatEndRef = useRef(null);
 
     const [lastReadMessageId, setLastReadMessageId] = useState(0);
@@ -25,26 +25,28 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
         if (!roomId || !userID) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
 
-        const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
+        // ======== WebSocket 연결======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
+        const webSocket = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
+        setWs(webSocket);
 
-        ws.onopen = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
-
-            console.log(`ws연결 완료.`);
+        // onopen = FUNCTION_NAME 식으로 function저장을 해도 되지만,,,? 어차피 onopen때 딱 한!번! 쓰고 말것이기 때문에 굳이 바깥으로 function으로 빼지 않는다.
+        webSocket.onopen = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
+            console.log(`webSocket연결 완료.`);  // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen에 저장된 함수가 "자동으로 실행된다" (o). 현재는 익명함수
 
             try {
                 // 1. 메시지 조회
                 const getedMsgInRoom = await axios.get(`/chat/getMessages/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
 
-                setPrevChattings(getedMsgInRoom.data);
+                setPrevChattings(getedMsgInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
 
                 // 2. 마지막 메시지 읽음 처리
-                if (getedMsgInRoom.data.length > 0 && ws.readyState === WebSocket.OPEN) {
+                if (getedMsgInRoom.data.length > 0 && webSocket.readyState === WebSocket.OPEN) {
                     // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
                     // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
 
                     const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
-                    ws.send(JSON.stringify({
+                    webSocket.send(JSON.stringify({
                         type: "READ",
                         roomId: roomId,
                         userId: userID,
@@ -52,7 +54,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
                     }));
                 }
 
-            } catch (error) { // 추후 실패 처리 로직 설계를 위해 반드시 필요함. 
+            } catch (error) { // 추후 실패 처리 로직 설계를 위해. 
                 console.error("메시지 조회 실패", error);
 
                 if (error.response.status === 401) {
@@ -65,79 +67,20 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
     }, []);
 
-    // ======== WebSocket 연결======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
-    useEffect(() => {
-        // const ws = new WebSocket("ws://localhost:8080/ws/chat"); // 브라우저 ↔ Spring Boot 실시간 연결 생성. 전화에 비유하면, http:한마디하고 끊음. ws:연결계속유지
-        // const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}`); //legacy
-
-        const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`); // new WS부터 연결 시작한다.
-
-        console.log(`ws.readyState : ${ws.readyState}`);
-        ws.onopen = () => {
-            console.log("WebSocket 연결됐어용!"); // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen이 "자동으로 실행된다" (o) 
-        };
-
-        ws.onmessage = async (event) => {
-
-            const newMessage = JSON.parse(event.data);
-
-            if (Number(newMessage.roomId) !== Number(roomId)) {
-                return;
-            }
-
-            // 상대 메시지인 경우
-            if (Number(newMessage.senderId) !== Number(userID)) {
-
-                // 1. 먼저 읽음 처리
-                await axios.post("/chat/updateLastRead", {
-                    roomId: roomId,
-                    userId: userID,
-                    lastReadMessageId: newMessage.messageId
-                });
-
-                // 2. unreadCount 반영된 최신 데이터 조회
-                const updated =
-                    await axios.get(
-                        `/chat/getMessages/${roomId}/${userID}`
-                    );
-
-                // 3. 최신 상태로 교체
-                setPrevChattings(updated.data);
-
-            } else {
-
-                // 내가 보낸 메시지는 그냥 추가
-                setPrevChattings(prev => [...prev, newMessage]);
-            }
-        };
-
-
-        console.log(`ws.readyState : ${ws.readyState}`);
-        ws.onclose = () => {
-            console.log("webSocket 종료.");
-        };
-        console.log(`ws.readyState : ${ws.readyState}`);
-        setSocket(ws); // WebSocket 채우기.
-        console.log(`ws.readyState : ${ws.readyState}`);
-        return () => ws.close(); // ws연결종료 안 시키면, 과부하 온다. 필수 작성.
-
-    }, [userID, targetUserID]);
-
-
     // ================ 메세지 전송 (WebSocket) =========================================================== 
     function sendMessage() {
         console.log(`현재 ${loginID} >> ${targetLoginID} 전송중...`);
-        console.log(socket);
+        console.log(ws);
 
-        if (!socket) {
+        if (!ws) {
             console.log("웹소켓 연결 안됨");
-            return;
+            return; // early Return
         }
 
-        if (!chatMessage.trim()) {
-            console.log(`trim이 안된다고?`);
+        if (ws.readyState !== WebSocket.OPEN) {
+            console.log("웹소켓 아직 연결중");
             return;
-        }
+        } // ws객체 자체가 비었는지, 현재 연결중인지 구분하기 위해 if 분리.
 
         const sendData = {
             type: 'SEND',
@@ -147,7 +90,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
             msgText: chatMessage
         };
 
-        socket.send(JSON.stringify(sendData));
+        ws.send(JSON.stringify(sendData));
 
         setChatMessage('');
 
@@ -161,7 +104,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     }, [prevChattings]);
 
 
-    // ================ 최신 메세지 기준으로 보기. 스크롤 항상 최하단 ===============================================
+    // ================ 채팅창 닫기 ===============================================
     const closeChat = () => {
         const last = prevChattings.at(-1);
 
