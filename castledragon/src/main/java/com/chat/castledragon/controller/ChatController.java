@@ -39,47 +39,47 @@ public class ChatController {
 		return ResponseEntity.ok(roomInfo);
 	}
 
-	@GetMapping("getMessages/{roomId}/{userId}")
-	public List<ChatDTO> getMessages(@PathVariable("roomId") Long roomId, @PathVariable("userId") Long userId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
+	@GetMapping("getMessages/{roomId}")
+	public List<ChatDTO> getMessages(@PathVariable("roomId") Long roomId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
 		List<ChatDTO> prevMessages = chatService.getMessages(roomId);
 		return prevMessages;
 	}
-
-	@PostMapping("/updateLastRead")
-	public void updateLastRead(@RequestBody Map<String, Object> data) {
-
-		if (data == null) {
-			return;
-		}
-
-		Object roomObj = data.get("roomId");
-		Object userObj = data.get("userId");
-		Object lastObj = data.get("lastReadMessageId");
-
-		if (roomObj == null || userObj == null || lastObj == null) {
-			log.warn("updateLastRead null 데이터: {}", data);
-			return;
-		}
-
-		Long roomId = Long.valueOf(roomObj.toString());
-		Long userId = Long.valueOf(userObj.toString());
-		Long lastReadMessageId = Long.valueOf(lastObj.toString());
-
-		chatService.updateLastRead(roomId, userId, lastReadMessageId);
-	}
-
-	//	@PostMapping("/updateLastRead")
-	//	public void updateLastRead(@RequestBody Map<String, Object> data) {
-	//
-	//		Long roomId = Long.valueOf(data.get("roomId").toString());
-	//		Long userId = Long.valueOf(data.get("userId").toString());
-	//		Long lastReadMessageId = Long.valueOf(data.get("lastReadMessageId").toString());
-	//
-	//		chatService.updateLastRead(roomId, userId, lastReadMessageId);
-	//	}
 
 	@GetMapping("/myRooms/{userId}")
 	public List<ChatRoomListDTO> getMyRooms(@PathVariable("userId") Long userId) {
 		return chatService.getMyChatRooms(userId);
 	}
 }
+
+//@PostMapping("/updateLastRead") --> http 에서 ws로 read/send 이벤트를 처리할 것이기 때문에.
+//public void updateLastRead(@RequestBody Map<String, Object> data) {
+//
+//	if (data == null) {
+//		return;
+//	}
+//
+//	Object roomObj = data.get("roomId");
+//	Object userObj = data.get("userId");
+//	Object lastObj = data.get("lastReadMessageId");
+//
+//	if (roomObj == null || userObj == null || lastObj == null) {
+//		log.warn("updateLastRead null 데이터: {}", data);
+//		return;
+//	}
+//
+//	Long roomId = Long.valueOf(roomObj.toString());
+//	Long userId = Long.valueOf(userObj.toString());
+//	Long lastReadMessageId = Long.valueOf(lastObj.toString());
+//
+//	chatService.updateLastRead(roomId, userId, lastReadMessageId);
+//}
+
+//	@PostMapping("/updateLastRead")
+//	public void updateLastRead(@RequestBody Map<String, Object> data) {
+//
+//		Long roomId = Long.valueOf(data.get("roomId").toString());
+//		Long userId = Long.valueOf(data.get("userId").toString());
+//		Long lastReadMessageId = Long.valueOf(data.get("lastReadMessageId").toString());
+//
+//		chatService.updateLastRead(roomId, userId, lastReadMessageId);
+//	}

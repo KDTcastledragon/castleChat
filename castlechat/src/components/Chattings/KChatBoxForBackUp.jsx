@@ -3,7 +3,7 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
-function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
+function KChatBoxForBackUp({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
 
@@ -23,17 +23,17 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     // ========== 이전 메시지 불러오기 ==============================================================================================
     useEffect(() => {
 
-        if (!roomId || !userID) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
+        if (!roomId) return;
 
-        const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
+        const loadMessages = async () => {
 
-        const loadMessages = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
             try {
 
-
-
-                // 1-2. 메시지 조회
-                const res = await axios.get(`/chat/getMessages/${roomId}`);
+                // 1. 메시지 조회
+                const res =
+                    await axios.get(
+                        `/chat/getMessages/${roomId}/${userID}`
+                    );
 
                 setPrevChattings(res.data);
 
@@ -61,12 +61,8 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
                     setPrevChattings(updated.data);
                 }
 
-            } catch (error) { // 추후 실패 처리 로직 설계를 위해 반드시 필요함. 
-                console.error("메시지 조회 실패", error);
-
-                if (error.response.status === 401) {
-                    console.log(`401 error`);
-                }
+            } catch (err) {
+                console.log(err);
             }
         };
 
@@ -235,22 +231,11 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     );
 }
 
-export default ChatBox;
+export default KChatBoxForBackUp;
 
 // ws연결 === 그러면 정확히는 컴퓨터 내에서 배포되어 있는(현재는 로컬테스팅중이지만) 내가 만든 springboot와 연결된다는거야? --> ㅇㅇ.
 // 정확히는, WebSocket은 “브라우저(React)”가 로컬에서 실행 중인 Spring Boot 서버에 연결하는 것
 
-
-// 1-1. 메시지 조회
-// const getPrevMsg =
-//     await axios
-//         .get(`/chat/getMessages/${roomId}`)
-//         .then((res) => {
-//             setPrevChattings(res.data);
-//             console.log(`메세지 조회 성공 : ${res.data}`);
-//         }).catch((e) => {
-//             console.log(`메세지 조회 실패`);
-//         })
 
 // ========== 이전 메시지 불러오기 ==============================================================================================
 // useEffect(() => {
@@ -304,4 +289,3 @@ export default ChatBox;
 //                     setPrevChattings(updated.data);
 //                 }
 //             }
-
