@@ -41,10 +41,17 @@ public class ChatHandler extends TextWebSocketHandler {
 
 		Long roomId = dto.getRoomId();
 
+		if ("READ".equals(dto.getType())) {
+			chatService.updateLastRead(dto.getRoomId(), dto.getUserId(), dto.getLastReadMessageId());
+			log.info("{}의 {}방 {}번 메시지까지 읽음", dto.getUserId(), dto.getRoomId(), dto.getLastReadMessageId());
+			return;
+		}
+
 		// 2. DB 저장
 		try {
 
-			chatService.insertMessage(dto.getRoomId(), dto.getSenderId(), dto.getMsgText());
+			Long messageId = chatService.insertMessage(dto.getRoomId(), dto.getSenderId(), dto.getMsgText());
+			dto.setMessageId(messageId);
 
 			log.info("{}의 메세지가 {}방으로 도착 : {}", dto.getSenderId(), dto.getRoomId(), dto.getMsgText());
 

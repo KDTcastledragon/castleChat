@@ -39,3 +39,7 @@
     font-size: 11px;
     font-style: italic;
 }
+
+.messageText {
+    white-space: pre-wrap;
+}
