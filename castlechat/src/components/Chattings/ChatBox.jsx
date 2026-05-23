@@ -27,35 +27,29 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
         const ws = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
 
-        const loadMessages = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
+        ws.onopen = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
+
+            console.log(`ws연결 완료.`);
+
             try {
                 // 1. 메시지 조회
-                const res = await axios.get(`/chat/getMessages/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.
+                const getedMsgInRoom = await axios.get(`/chat/getMessages/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
 
-                setPrevChattings(res.data);
+                setPrevChattings(getedMsgInRoom.data);
 
                 // 2. 마지막 메시지 읽음 처리
-                if (res.data.length > 0) {
+                if (getedMsgInRoom.data.length > 0 && ws.readyState === WebSocket.OPEN) {
+                    // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
+                    // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
 
-                    const lastMessage =
-                        res.data[res.data.length - 1];
+                    const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
-                    await axios.post(
-                        "/chat/updateLastRead",
-                        {
-                            roomId,
-                            userId: userID,
-                            lastReadMessageId: lastMessage.messageId
-                        }
-                    );
-
-                    // 3. unreadCount 재조회
-                    const updated =
-                        await axios.get(
-                            `/chat/getMessages/${roomId}/${userID}`
-                        );
-
-                    setPrevChattings(updated.data);
+                    ws.send(JSON.stringify({
+                        type: "READ",
+                        roomId: roomId,
+                        userId: userID,
+                        lastReadMessageId: lastMsgInRoom.messageId
+                    }));
                 }
 
             } catch (error) { // 추후 실패 처리 로직 설계를 위해 반드시 필요함. 
@@ -67,9 +61,9 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
             }
         };
 
-        loadMessages();
+        // loadMessages(); // const loadMessages = async (~~ ) 삭제. ws.onopen으로 대체함. 왜? 연결이 보장된 후에 read를 송신 해야만 하니까.
 
-    }, [roomId, userID]);
+    }, []);
 
     // ======== WebSocket 연결======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
