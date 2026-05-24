@@ -158,7 +158,6 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
                                 <span className='unreadOne'>
                                     {d.unreadCount}
-
                                 </span>
                             </div>
                             <div className='formatTime'>{formatTime(d.createdAt)}</div>
