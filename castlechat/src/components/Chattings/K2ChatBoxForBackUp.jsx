@@ -3,12 +3,17 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
-function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
+function K2ChatBoxForBackUp({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
+
+    // const [ws, setWs] = useState(null);
+    const isWsConnectedRef = useRef(false);
+    const chatEndRef = useRef(null);
+    const wsRef = useRef(null);
 
     const [lastReadMessageId, setLastReadMessageId] = useState(0);
 
@@ -32,9 +37,15 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
 
         if (!roomId || !userID) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
 
-
-        webSocket.onopen = async () => {
-
+        // ======== WebSocket 연결======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
+        // 만약 new Ws를 바깥으로 뺀다면? --> React 생명주기랑 충돌해서 터짐. 컴포넌트 랜더링 될때마다 연결함.
+        const webSocket = new WebSocket(`ws://localhost:8080/ws/chat?roomId=${roomId}&userId=${userID}`);
+        wsRef.current = webSocket;
+        // onopen = FUNCTION_NAME 식으로 function저장을 해도 되지만,,,? 어차피 onopen때 딱 한!번! 쓰고 말것이기 때문에 굳이 바깥으로 function으로 빼지 않는다.
+        webSocket.onopen = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
+            isWsConnectedRef.current = true;
+            console.log(`webSocket연결 완료.`);  // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen에 저장된 함수가 "자동으로 실행된다" (o). 현재는 익명함수
+            // wsRef.current = webSocket; // 연결후에 집어넣을 경우, onopen전에 sendMsg할수도있어서 위험함. 그래서 new Ws하자마자 바로 ㄱㄱ.
             try {
                 // 1. 메시지 조회
                 const getedMsgInRoom = await axios.get(`/chat/getMessages/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
@@ -70,7 +81,9 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         webSocket.onmessage = handleMessage;
 
         return () => {
-
+            webSocket.close();
+            wsRef.current = null;
+            isWsConnectedRef.current = false;
         }
     }, []);
 
@@ -175,7 +188,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
     );
 }
 
-export default ChatBox;
+export default K2ChatBoxForBackUp;
 
 // ws연결 === 그러면 정확히는 컴퓨터 내에서 배포되어 있는(현재는 로컬테스팅중이지만) 내가 만든 springboot와 연결된다는거야? --> ㅇㅇ.
 // 정확히는, WebSocket은 “브라우저(React)”가 로컬에서 실행 중인 Spring Boot 서버에 연결하는 것

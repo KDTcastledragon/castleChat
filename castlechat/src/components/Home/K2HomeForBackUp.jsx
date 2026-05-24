@@ -5,41 +5,23 @@ import { useEffect, useState } from 'react';
 import LogIn from '../LogIn/LogIn';
 import ChatBox from '../Chattings/ChatBox';
 
-function Home() {
+function K2HomeForBackUp() {
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
+
     const [userList, setUserList] = useState([]);
-
-    const [chatWindows, setChatWindows] = useState([]);
-
-    const isWsConnectedRef = useRef(false);
-    const chatEndRef = useRef(null);
-    const wsRef = useRef(null);
-
-    const [roomId, setRoomId] = useState(null);
     const [enteredID, setEnteredID] = useState('');
     const [targetUserID, setTargetUserID] = useState('');
     const [targetLoginID, setTargetLoginID] = useState('');
+    const [roomId, setRoomId] = useState(null);
     const [friList, setFriList] = useState([]);
     const [isChattingOpen, setIsChattingOpen] = useState(false);
 
     const [chatRooms, setChatRooms] = useState([]);
 
 
-    // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
+    // =====[유저 목록 전체]======================================================
     useEffect(() => {
-        // 만약 new Ws를 바깥으로 뺀다면? --> React 생명주기랑 충돌해서 터짐. 컴포넌트 랜더링 될때마다 연결함.
-        const webSocket = new WebSocket(`ws://localhost:8080/ws/chat`); // roomId=${roomId}&userId=${userID} 삭제. query string --> ENTER 이벤트송신으로 변경.
-        wsRef.current = webSocket;
-        // onopen = FUNCTION_NAME 식으로 function저장을 해도 되지만,,,? 어차피 onopen때 딱 한!번! 쓰고 말것이기 때문에 굳이 바깥으로 function으로 빼지 않는다.
-
-        webSocket.onopen = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
-            // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen에 저장된 함수가 "자동으로 실행된다" (o). 현재는 익명함수
-            // wsRef.current = webSocket; // 연결후에 집어넣을 경우, onopen전에 sendMsg할수도있어서 위험함. 그래서 new Ws하자마자 위에서 바로 ㄱㄱ.
-            isWsConnectedRef.current = true; // 연결 상태 false --> true
-            console.log(`webSocket연결 완료.`);
-        }
-
         axios
             .get(`/user/allUsers`)
             .then((res) => {
@@ -92,85 +74,28 @@ function Home() {
 
     function logout() {
         sessionStorage.clear();
-        // webSocket.close();
-        wsRef.current = null;
-        isWsConnectedRef.current = false;
         // alert(`로그아웃 성공`);
         window.location.reload();
     }
 
-    // ==== 채팅방 ===================================================
+    // ==== 2. 내 채팅방 목록 불러오기 ===================================================
+    useEffect(() => {
+
+        if (!userID) return;
+
+        axios.get(`/chat/myRooms/${userID}`)
+            .then((res) => {
+                setChatRooms(res.data);
+                console.log("내 채팅방 목록", res.data);
+            })
+            .catch((err) => {
+                console.log(err);
+            });
+
+    }, [userID]);
+
+    // ====채팅방 오픈 함수 ===================================================
     const openChattingRoom = async (targetUser) => {
-        try {
-            const res = await axios.post(`/chat/enterRoom`, {
-                senderId: userID,
-                targetUserId: targetUser.userId
-            });
-
-            const openedRoomId = res.data.roomId;
-
-            setChatWindows(prev => {
-                const alreadyOpen = prev.some(
-                    win => Number(win.roomId) === Number(openedRoomId)
-                );
-
-                if (alreadyOpen) {
-                    return prev.map(win =>
-                        Number(win.roomId) === Number(openedRoomId)
-                            ? { ...win, zIndex: Date.now() }
-                            : win
-                    );
-                }
-
-                return [
-                    ...prev,
-                    {
-                        roomId: openedRoomId,
-                        targetUserID: targetUser.userId,
-                        targetLoginID: targetUser.loginId,
-                        x: 420 + prev.length * 30,
-                        y: 120 + prev.length * 30,
-                        zIndex: Date.now()
-                    }
-                ];
-            });
-
-            console.log(`${targetUser.loginId}한테 대화 요청!`);
-
-        } catch (e) {
-            console.log(`채팅방 열기 실패!`);
-            console.log(e);
-        }
-    };
-
-    const closeChatWindow = (roomId) => {
-        setChatWindows(prev =>
-            prev.filter(win => Number(win.roomId) !== Number(roomId))
-        );
-    };
-
-    const moveChatWindow = (roomId, x, y) => {
-        setChatWindows(prev =>
-            prev.map(win =>
-                Number(win.roomId) === Number(roomId)
-                    ? { ...win, x, y }
-                    : win
-            )
-        );
-    };
-
-    const focusChatWindow = (roomId) => {
-        setChatWindows(prev =>
-            prev.map(win =>
-                Number(win.roomId) === Number(roomId)
-                    ? { ...win, zIndex: Date.now() }
-                    : win
-            )
-        );
-    };
-
-    // ====채팅방 오픈 함수222레거시 ===================================================
-    const openChattingRoom22 = async (targetUser) => {
         try {
             const res = await axios.post(`/chat/enterRoom`,
                 {
@@ -188,7 +113,7 @@ function Home() {
         }
     }
 
-    // ===< return >===========================================================================================================
+    // =========================================================
     return (
         <div className='HomeContainer'>
 
@@ -235,23 +160,7 @@ function Home() {
 
 
             {/**========= 채팅창 =================== */}
-            {chatWindows.map((win) => (
-                <ChatBox
-                    key={win.roomId}
-                    roomId={win.roomId}
-                    targetUserID={win.targetUserID}
-                    targetLoginID={win.targetLoginID}
-                    x={win.x}
-                    y={win.y}
-                    zIndex={win.zIndex}
-                    onClose={() => closeChatWindow(win.roomId)}
-                    onMove={(x, y) => moveChatWindow(win.roomId, x, y)}
-                    onFocus={() => focusChatWindow(win.roomId)}
-                />
-            ))}
-
-            {/**========= 채팅창 Legacy=================== */}
-            {/* { 
+            {
                 isChattingOpen &&
                 <ChatBox
                     setIsChattingOpen={setIsChattingOpen}
@@ -259,7 +168,7 @@ function Home() {
                     targetLoginID={targetLoginID}
                     roomId={roomId}
                 />
-            } */}
+            }
 
             {/* <div className='friendsListSection'>
                 <div className='friendsListTitle'><span>친구 목록</span></div>
@@ -288,4 +197,4 @@ function Home() {
     );
 }
 
-export default Home;
+export default K2HomeForBackUp;

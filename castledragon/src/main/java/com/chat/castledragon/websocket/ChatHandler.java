@@ -31,7 +31,8 @@ public class ChatHandler extends TextWebSocketHandler {
 	}
 
 	//	====== room 퇴장 감지 ===========================================================================================================
-	@Override
+	// TextWebSocketHandler안에 handleTextMessage내장 메소드 존재. 그래서 @Override 붙임. 반드시 약속된 메서드인 handleTextMessage를 입구로 써야 합니다.
+	@Override // --> 부모 클래스에 이미 있는 메서드를 내가 원하는 방식으로 다시 작성한다.
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 
 		log.info("메시지 도착 : {}", message);
@@ -94,15 +95,18 @@ public class ChatHandler extends TextWebSocketHandler {
 		}
 	}
 
-	//	====== ...? ===========================================================================================================
+	//	====== 연결 이후 메소드 ===========================================================================================================
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
+		// ws://localhost:8080/ws/chat?roomId=3&userId=7의 ?뒤의 부분 --> roomId=3&userId=7 을 'query string' 이라고 부른다.
+		// Get대신 Post를 못 쓰는 이유 --> 브라우저의 WebSocket API가 body를 지원하지 않기 때문입니다.
 
 		String query = session.getUri().getQuery();
+		//session은 현재 연결된 WebSocket 연결 정보입니다. session.getUri()는 클라이언트가 접속한 주소를 가져옵니다. .getQuery()는 ? 뒤쪽만 꺼냅니다.
 
 		if (query == null) {
 			log.error("query 없음");
-			return;
+			return; // 여기서 return하면 연결 자체를 강제로 닫는 건 아니지만, 이 session은 roomSessions에 등록되지 않습니다. 추후 broadcast 대상에도 포함되지 않습니다.
 		}
 
 		String[] params = query.split("&");
