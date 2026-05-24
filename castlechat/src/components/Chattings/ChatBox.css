@@ -1,7 +1,22 @@
 .chattingRoomSection {
-    position: absolute;
-    top: 60px;
-    left: 500px;
+    position: fixed;
+    width: 305px;
+    height: 400px;
+    background-color: rgb(252, 255, 198);
+    border: 1px solid #999;
+}
+
+.chatListTitle {
+    width: 100%;
+    height: 40px;
+    background-color: rgb(223, 189, 255);
+    cursor: move;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    box-sizing: border-box;
 }
 
 

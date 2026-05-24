@@ -3,9 +3,12 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
-function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
+// function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {  // --> 기존legacy
+function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, x, y, zIndex, onClose, onMove, onFocus }) {
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
+
+    const chatEndRef = useRef(null);
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
@@ -16,6 +19,56 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         const date = new Date(isoString);
         return date.toTimeString().split(" ")[0];
     };
+
+    const dragRef = useRef({
+        isDragging: false,
+        startMouseX: 0,
+        startMouseY: 0,
+        startX: 0,
+        startY: 0
+    });
+
+
+
+    const startDrag = (e) => {
+        onFocus();
+
+        dragRef.current = {
+            isDragging: true,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            startX: x,
+            startY: y
+        };
+    };
+
+    // ============== 상단바 드래그 & 드롭 ===================================
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!dragRef.current.isDragging) return;
+
+            const movedX = e.clientX - dragRef.current.startMouseX;
+            const movedY = e.clientY - dragRef.current.startMouseY;
+
+            onMove(
+                dragRef.current.startX + movedX,
+                dragRef.current.startY + movedY
+            );
+        };
+
+        const handleMouseUp = () => {
+            dragRef.current.isDragging = false;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [onMove]);
+
     // ==============메시지 실시간 띄우기 함수===================================
     const handleMessage = (event) => {
         const newMessage = JSON.parse(event.data);
@@ -33,7 +86,7 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
         if (!roomId || !userID) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
 
 
-        webSocket.onopen = async () => {
+        const initFunction = async () => {
 
             try {
                 // 1. 메시지 조회
@@ -42,19 +95,19 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
                 setPrevChattings(getedMsgInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
 
                 // 2. 마지막 메시지 읽음 처리
-                if (getedMsgInRoom.data.length > 0 && webSocket.readyState === WebSocket.OPEN) {
-                    // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
-                    // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
+                // if (getedMsgInRoom.data.length > 0 && webSocket.readyState === WebSocket.OPEN) {
+                // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
+                // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
 
-                    const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
+                // const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
-                    webSocket.send(JSON.stringify({
-                        type: "READ",
-                        roomId: roomId,
-                        userId: userID,
-                        lastReadMessageId: lastMsgInRoom.messageId
-                    }));
-                }
+                // webSocket.send(JSON.stringify({
+                //     type: "READ",
+                //     roomId: roomId,
+                //     userId: userID,
+                //     lastReadMessageId: lastMsgInRoom.messageId
+                // }));
+                // }
 
             } catch (error) { // 추후 실패 처리 로직 설계를 위해. 
                 console.error("메시지 조회 실패", error);
@@ -67,11 +120,8 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
             }
         };
 
-        webSocket.onmessage = handleMessage;
+        // webSocket.onmessage = handleMessage;
 
-        return () => {
-
-        }
     }, []);
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
@@ -123,15 +173,30 @@ function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {
             });
         }
 
-        setIsChattingOpen(false);
+        onClose();
     };
 
     // ==============================================================================================================================
     return (
-        <div className='chattingRoomSection'>
-            <div className='chatListTitle'><span>{targetLoginID} - ({targetUserID})</span>&nbsp;&nbsp;&nbsp;&nbsp;
-                <button onClick={closeChat}>닫기</button>
+        <div
+            className='chattingRoomSection'
+            style={{
+                left: x,
+                top: y,
+                zIndex
+            }}
+            onMouseDown={onFocus}
+        >
+            <div className='chatListTitle' onMouseDown={startDrag}>
+                <span>{targetLoginID} - ({targetUserID})</span>
+                <button
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={closeChat}
+                >
+                    닫기
+                </button>
             </div>
+
             <div className='chattingBox'>
                 {prevChattings && prevChattings.length > 0 ?
                     prevChattings.map((d, i) => (

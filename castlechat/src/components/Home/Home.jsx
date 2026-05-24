@@ -1,7 +1,7 @@
 import './Home.css';
 
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import LogIn from '../LogIn/LogIn';
 import ChatBox from '../Chattings/ChatBox';
 
@@ -13,17 +13,16 @@ function Home() {
     const [chatWindows, setChatWindows] = useState([]);
 
     const isWsConnectedRef = useRef(false);
-    const chatEndRef = useRef(null);
     const wsRef = useRef(null);
 
-    const [roomId, setRoomId] = useState(null);
     const [enteredID, setEnteredID] = useState('');
-    const [targetUserID, setTargetUserID] = useState('');
-    const [targetLoginID, setTargetLoginID] = useState('');
-    const [friList, setFriList] = useState([]);
-    const [isChattingOpen, setIsChattingOpen] = useState(false);
+    // const [roomId, setRoomId] = useState(null);
+    // const [targetUserID, setTargetUserID] = useState('');
+    // const [targetLoginID, setTargetLoginID] = useState('');
+    // const [friList, setFriList] = useState([]);
+    // const [isChattingOpen, setIsChattingOpen] = useState(false);
 
-    const [chatRooms, setChatRooms] = useState([]);
+    // const [chatRooms, setChatRooms] = useState([]);
 
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
@@ -53,7 +52,6 @@ function Home() {
 
     // =====[로그인/로그아웃 함수]======================================================
     function login(id1, pw1) {
-        sessionStorage.clear();
         const data = { id: id1, pw: pw1 }
 
         axios
@@ -170,23 +168,23 @@ function Home() {
     };
 
     // ====채팅방 오픈 함수222레거시 ===================================================
-    const openChattingRoom22 = async (targetUser) => {
-        try {
-            const res = await axios.post(`/chat/enterRoom`,
-                {
-                    senderId: userID,
-                    targetUserId: targetUser.userId
-                });
+    // const openChattingRoom22 = async (targetUser) => {
+    //     try {
+    //         const res = await axios.post(`/chat/enterRoom`,
+    //             {
+    //                 senderId: userID,
+    //                 targetUserId: targetUser.userId
+    //             });
 
-            setRoomId(res.data.roomId);
-            setTargetLoginID(targetUser.loginId);
+    //         setRoomId(res.data.roomId);
+    //         setTargetLoginID(targetUser.loginId);
 
-            setIsChattingOpen(true);
-            console.log(`${targetUser.loginId}한테 대화 요청!`);
-        } catch (e) {
-            console.log(e);
-        }
-    }
+    //         setIsChattingOpen(true);
+    //         console.log(`${targetUser.loginId}한테 대화 요청!`);
+    //     } catch (e) {
+    //         console.log(e);
+    //     }
+    // }
 
     // ===< return >===========================================================================================================
     return (
@@ -218,13 +216,12 @@ function Home() {
             {/**========= 유저 목록 및 채팅 오픈 버튼=================== */}
             <div>
                 {userList.length > 0 ? userList.map((d, i) => (
-                    <>
+                    <span key={d.userId}> {/**Fragment에 key를 줘야한다...why? 나중에 질문하자. */}
                         <button
-                            key={d.userId}
                             onClick={() => openChattingRoom(d)}>
                             {d.loginId}-({d.userId})
                         </button><span>&nbsp;&nbsp;&nbsp;</span>
-                    </>
+                    </span>
                 ))
                     :
                     <div>유저없음</div>
@@ -238,9 +235,13 @@ function Home() {
             {chatWindows.map((win) => (
                 <ChatBox
                     key={win.roomId}
+                    wsRef={wsRef}
+                    isWsConnectedRef={isWsConnectedRef}
+
                     roomId={win.roomId}
                     targetUserID={win.targetUserID}
                     targetLoginID={win.targetLoginID}
+
                     x={win.x}
                     y={win.y}
                     zIndex={win.zIndex}
