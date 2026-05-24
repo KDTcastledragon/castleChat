@@ -20,6 +20,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         return date.toTimeString().split(" ")[0];
     };
 
+    // ============== 상단바 드래그 & 드롭 1 ===================================
     const dragRef = useRef({
         isDragging: false,
         startMouseX: 0,
@@ -42,7 +43,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         };
     };
 
-    // ============== 상단바 드래그 & 드롭 ===================================
+    // ============== 상단바 드래그 & 드롭 2 ===================================
     useEffect(() => {
         const handleMouseMove = (e) => {
             if (!dragRef.current.isDragging) return;
@@ -69,6 +70,11 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         };
     }, [onMove]);
 
+    // ================ 최신 메세지 기준으로 보기. 스크롤 항상 최하단 ===============================================
+    useEffect(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [prevChattings]);
+
     // ==============메시지 실시간 띄우기 함수===================================
     const handleMessage = (event) => {
         const newMessage = JSON.parse(event.data);
@@ -84,9 +90,13 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
     useEffect(() => {
 
         if (!roomId || !userID) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
+        // 렌더링 타이밍상 아직 값이 없을 때 불필요한 API 호출 방지. 사용자 경험/콘솔 에러 정리.
+        // 특히 React에서는 useEffect가 컴포넌트 mount 후 실행되기 때문에, 값이 아직 안정적이지 않은 순간이 생길 수 있습니다.
+        // 지금 ChatBox는 roomId를 props로 받습니다. 대부분은 값이 들어온 뒤 mount되겠지만, 리팩토링 중이거나 조건부 렌더링이 살짝 바뀌면 undefined 상태로 들어올 수도 있습니다.
+        // 그래서 이 guard는 남기는 게 좋아요.
 
 
-        const initFunction = async () => {
+        const initChatRoom = async () => {
 
             try {
                 // 1. 메시지 조회
@@ -95,19 +105,19 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                 setPrevChattings(getedMsgInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
 
                 // 2. 마지막 메시지 읽음 처리
-                // if (getedMsgInRoom.data.length > 0 && webSocket.readyState === WebSocket.OPEN) {
-                // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
-                // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
+                if (getedMsgInRoom.data.length > 0 && wsRef.current.readyState === WebSocket.OPEN) {
+                    // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
+                    // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
 
-                // const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
+                    const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
-                // webSocket.send(JSON.stringify({
-                //     type: "READ",
-                //     roomId: roomId,
-                //     userId: userID,
-                //     lastReadMessageId: lastMsgInRoom.messageId
-                // }));
-                // }
+                    wsRef.current.send(JSON.stringify({
+                        type: "READ",
+                        roomId: roomId,
+                        userId: userID,
+                        lastReadMessageId: lastMsgInRoom.messageId
+                    }));
+                }
 
             } catch (error) { // 추후 실패 처리 로직 설계를 위해. 
                 console.error("메시지 조회 실패", error);
@@ -119,6 +129,8 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                 }
             }
         };
+
+        initChatRoom();
 
         // webSocket.onmessage = handleMessage;
 
@@ -154,12 +166,6 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         // ws.onclose(); reconnect
         // ws.onerror(); reconnect
     }
-
-    // ================ 최신 메세지 기준으로 보기. 스크롤 항상 최하단 ===============================================
-    useEffect(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [prevChattings]);
-
 
     // ================ 채팅창 닫기 ===============================================
     const closeChat = () => {

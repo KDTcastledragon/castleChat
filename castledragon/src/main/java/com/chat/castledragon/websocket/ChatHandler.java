@@ -220,3 +220,47 @@ public class ChatHandler extends TextWebSocketHandler {
 //
 //		roomSessions.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
 //	}
+
+// ========================== query string --> enter 이벤트 처리로 변경해서 legacy로 남김.====================
+//@Override 
+//public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
+//	// ws://localhost:8080/ws/chat?roomId=3&userId=7의 ?뒤의 부분 --> roomId=3&userId=7 을 'query string' 이라고 부른다.
+//	// Get대신 Post를 못 쓰는 이유 --> 브라우저의 WebSocket API가 body를 지원하지 않기 때문입니다.
+//
+//	String query = session.getUri().getQuery();
+//	//session은 현재 연결된 WebSocket 연결 정보입니다. session.getUri()는 클라이언트가 접속한 주소를 가져옵니다. .getQuery()는 ? 뒤쪽만 꺼냅니다.
+//
+//	if (query == null) {
+//		log.error("query 없음");
+//		return; // 여기서 return하면 연결 자체를 강제로 닫는 건 아니지만, 이 session은 roomSessions에 등록되지 않습니다. 추후 broadcast 대상에도 포함되지 않습니다.
+//	}
+//
+//	String[] params = query.split("&");
+//
+//	Long roomId = null;
+//	Long userId = null;
+//
+//	for (String param : params) {
+//
+//		String[] keyValue = param.split("=");
+//
+//		if (keyValue[0].equals("roomId")) {
+//			roomId = Long.valueOf(keyValue[1]);
+//		}
+//
+//		if (keyValue[0].equals("userId")) {
+//			userId = Long.valueOf(keyValue[1]);
+//		}
+//	}
+//
+//	if (roomId == null || userId == null) {
+//
+//		log.error("roomId 또는 userId 없음");
+//
+//		return;
+//	}
+//
+//	roomSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(userId, session);
+//
+//	log.info("{}번 유저 {}번방 입장", userId, roomId);
+//}

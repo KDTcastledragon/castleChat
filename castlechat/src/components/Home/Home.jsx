@@ -25,6 +25,33 @@ function Home() {
     // const [chatRooms, setChatRooms] = useState([]);
 
 
+    // ==== 채팅방 옮기기 기본 설정 ===============================================================================
+    const closeChatWindow = (roomId) => {
+        setChatWindows(prev =>
+            prev.filter(win => Number(win.roomId) !== Number(roomId))
+        );
+    };
+
+    const moveChatWindow = (roomId, x, y) => {
+        setChatWindows(prev =>
+            prev.map(win =>
+                Number(win.roomId) === Number(roomId)
+                    ? { ...win, x, y }
+                    : win
+            )
+        );
+    };
+
+    const focusChatWindow = (roomId) => {
+        setChatWindows(prev =>
+            prev.map(win =>
+                Number(win.roomId) === Number(roomId)
+                    ? { ...win, zIndex: Date.now() }
+                    : win
+            )
+        );
+    };
+
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
         // 만약 new Ws를 바깥으로 뺀다면? --> React 생명주기랑 충돌해서 터짐. 컴포넌트 랜더링 될때마다 연결함.
@@ -107,6 +134,13 @@ function Home() {
 
             const openedRoomId = res.data.roomId;
 
+
+            wsRef.current.send(JSON.stringify({
+                type: "ENTER",
+                roomId: openedRoomId,
+                userId: userID
+            }));
+
             setChatWindows(prev => {
                 const alreadyOpen = prev.some(
                     win => Number(win.roomId) === Number(openedRoomId)
@@ -140,51 +174,6 @@ function Home() {
             console.log(e);
         }
     };
-
-    const closeChatWindow = (roomId) => {
-        setChatWindows(prev =>
-            prev.filter(win => Number(win.roomId) !== Number(roomId))
-        );
-    };
-
-    const moveChatWindow = (roomId, x, y) => {
-        setChatWindows(prev =>
-            prev.map(win =>
-                Number(win.roomId) === Number(roomId)
-                    ? { ...win, x, y }
-                    : win
-            )
-        );
-    };
-
-    const focusChatWindow = (roomId) => {
-        setChatWindows(prev =>
-            prev.map(win =>
-                Number(win.roomId) === Number(roomId)
-                    ? { ...win, zIndex: Date.now() }
-                    : win
-            )
-        );
-    };
-
-    // ====채팅방 오픈 함수222레거시 ===================================================
-    // const openChattingRoom22 = async (targetUser) => {
-    //     try {
-    //         const res = await axios.post(`/chat/enterRoom`,
-    //             {
-    //                 senderId: userID,
-    //                 targetUserId: targetUser.userId
-    //             });
-
-    //         setRoomId(res.data.roomId);
-    //         setTargetLoginID(targetUser.loginId);
-
-    //         setIsChattingOpen(true);
-    //         console.log(`${targetUser.loginId}한테 대화 요청!`);
-    //     } catch (e) {
-    //         console.log(e);
-    //     }
-    // }
 
     // ===< return >===========================================================================================================
     return (
@@ -227,9 +216,6 @@ function Home() {
                     <div>유저없음</div>
                 }
             </div>
-
-
-
 
             {/**========= 채팅창 =================== */}
             {chatWindows.map((win) => (
@@ -290,3 +276,22 @@ function Home() {
 }
 
 export default Home;
+
+// ====채팅방 오픈 함수222레거시 ===================================================
+// const openChattingRoom22 = async (targetUser) => {
+//     try {
+//         const res = await axios.post(`/chat/enterRoom`,
+//             {
+//                 senderId: userID,
+//                 targetUserId: targetUser.userId
+//             });
+
+//         setRoomId(res.data.roomId);
+//         setTargetLoginID(targetUser.loginId);
+
+//         setIsChattingOpen(true);
+//         console.log(`${targetUser.loginId}한테 대화 요청!`);
+//     } catch (e) {
+//         console.log(e);
+//     }
+// }
