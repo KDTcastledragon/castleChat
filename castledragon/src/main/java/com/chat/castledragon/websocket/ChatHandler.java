@@ -9,7 +9,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.chat.castledragon.domain.ChatDTO;
+import com.chat.castledragon.domain.PayloadEnterRoomDTO;
+import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -48,6 +49,16 @@ public class ChatHandler extends TextWebSocketHandler {
 		// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
 	}
 
+	// ======= payload 변환 helper ==================================================
+	private <T> T convertPayload(WebSocketDTO dto, Class<T> clazz) {
+		return objectMapper.convertValue(dto.getPayload(), clazz); // WebSocketDTO 안의 payload를 각각의 메소드에 알맞게 Payload DTO 타입으로 변환하는 공통 함수.
+		// <T> : 이 메서드는 호출할 때 원하는 타입을 받아서, 그 타입으로 변환해서 돌려줄 수 있다.
+		// Java는 런타임에 제네릭 타입 정보를 잃는 부분이 있습니다. 그래서 T만 보고는 Jackson이 “무슨 클래스로 바꿔야 하는지” 모릅니다. 
+		// 그래서 Class<T> clazz를 이용하여 명시적으로 클래스 정보를 넘깁니다. 즉, 'payload를 어떤 클래스 타입으로 변환할지 알려주는 인자'이다.
+		// convertValue : 이미 Java 객체/JsonNode/Map 형태로 존재하는 값을 다른 Java 객체 타입으로 변환해주는 메소드. 이미 객체 형태인 값을 '다른 객체'로 바꿉니다.
+		// ws의 payload는 JsonNode입니다. 그래서, dto.getPayload()는 문자열이 아니라 JsonNode이다. --> JsonNode를 EnterRoomPayloadDTO 로 바꾸는 겁니다.
+	}
+
 	//	====== 연결 이후 메소드 ===========================================================================================================
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
@@ -61,39 +72,32 @@ public class ChatHandler extends TextWebSocketHandler {
 
 		log.info("webSocket_msg 도착 : {}", message.getPayload());
 
-		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라
+		//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
+		WebSocketDTO dto = objectMapper.readValue(message.getPayload(), WebSocketDTO.class);
 
-		switch (dto.getType()) {
+		if (dto.getSocketType() == null) {
+			log.warn("WebSocket type 없음: {}", message.getPayload());
+			return;
+		}
+
+		switch (dto.getSocketType()) {
 		case "ENTER_ROOM" -> handleEnterRoom(session, dto);
 		case "SEND_MSG" -> handleSendMessage(session, dto);
 		case "READ_MSG" -> handleReadMessage(session, dto);
-		default -> log.warn("알 수 없는 TYPE WS : {}", dto.getType());
+		default -> log.warn("알 수 없는 TYPE WS : {}", dto.getSocketType());
 		}
-
-		// 확장성 , 책임분리 ,버그 전파 방지 위해 분리했따.   1. 메시지를 받는다 --> 2. type에 맞는 method로 보낸다.  dispatcher의 역할을 한다.
-		//		처음에는 handleTextMessage 안에 모든 로직을 넣을 수도 있지만, WebSocket 메시지 타입이 늘어나면 메서드가 비대해지고 각 이벤트의 필수값 검증과 예외 처리가 섞이게 됩니다. 
-		//		그래서 handleTextMessage는 type 기반 dispatcher 역할만 하도록 두고, 실제 처리는 handleEnterRoom, handleSendMessage, handleReadMessage로 분리했습니다. 
-		//		이렇게 하면 각 이벤트의 책임이 분명해지고, read/unread 문제처럼 특정 기능을 수정할 때 해당 메서드만 보면 되어 유지보수성과 테스트 용이성이 좋아집니다.
-
-		//		WebSocket은 HTTP처럼 요청과 응답이 1:1로 묶여 있지 않고, 하나의 연결에서 여러 요청, 응답, broadcast 이벤트가 섞여 들어옵니다. 
-		//		그래서 클라이언트가 보낸 특정 요청과 서버의 응답을 매칭하기 위해 requestId를 추가했습니다. 클라이언트는 메시지를 보낼 때 UUID를 생성해 함께 보내고, 
-		//		서버는 처리 결과를 같은 requestId로 ACK 또는 FAIL 이벤트에 담아 반환합니다. 
-		//		이를 통해 메시지 전송 성공/실패 처리, 낙관적 UI의 임시 메시지 교체, timeout 처리 등을 안정적으로 구현할 수 있습니다.
-
-		//		처음에는 ChatDTO 하나로 WebSocket 요청과 메시지 데이터를 함께 처리했지만, 이벤트 타입이 늘어나면서 DTO의 책임이 섞인다고 판단했습니다. 
-		//		그래서 WebSocket 요청/응답 envelope를 도입해 requestId, type, success, errorMessage 같은 공통 메타데이터는 envelope에 두고, 
-		//		실제 이벤트별 데이터는 payload DTO로 분리했습니다. 
-		//		이 구조는 요청-응답 매칭과 에러 처리, broadcast 이벤트 처리를 일관되게 만들 수 있다는 장점이 있습니다.
 
 	} // handleTextMessage 끝.
 
 	//	====== room 퇴장 감지 ===========================================================================================================
-	private void handleEnterRoom(WebSocketSession session, ChatDTO dto) {
-		if (dto.getRoomId() == null || dto.getUserId() == null) {
+	private void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadEnterRoomDTO payload = convertPayload(dto, PayloadEnterRoomDTO.class);
+
+		if (payload.getRoomId() == null || payload.getUserId() == null) {
 			log.warn("ENTER_ROOM Data 누락 : {} / {}", dto.getRoomId(), dto.getUserId());
 			return;
 		}
-	}
+	} // handleEnterRoom 끝.
 
 	//	====== room 퇴장 감지 ===========================================================================================================
 	@Override
@@ -110,8 +114,36 @@ public class ChatHandler extends TextWebSocketHandler {
 		});
 
 		log.info("WebSocket 연결 종료");
-	}
-}
+	} // afterConnectionClosed 끝.
+
+} // ChatHandler 끝.
+
+//	확장성 , 책임분리 ,버그 전파 방지 위해 분리했따.   1. 메시지를 받는다 --> 2. type에 맞는 method로 보낸다.  dispatcher의 역할을 한다.
+//		처음에는 handleTextMessage 안에 모든 로직을 넣을 수도 있지만, WebSocket 메시지 타입이 늘어나면 메서드가 비대해지고 각 이벤트의 필수값 검증과 예외 처리가 섞이게 됩니다. 
+//		그래서 handleTextMessage는 type 기반 dispatcher 역할만 하도록 두고, 실제 처리는 handleEnterRoom, handleSendMessage, handleReadMessage로 분리했습니다. 
+//		이렇게 하면 각 이벤트의 책임이 분명해지고, read/unread 문제처럼 특정 기능을 수정할 때 해당 메서드만 보면 되어 유지보수성과 테스트 용이성이 좋아집니다.
+
+//		WebSocket은 HTTP처럼 요청과 응답이 1:1로 묶여 있지 않고, 하나의 연결에서 여러 요청, 응답, broadcast 이벤트가 섞여 들어옵니다. 
+//		그래서 클라이언트가 보낸 특정 요청과 서버의 응답을 매칭하기 위해 requestId를 추가했습니다. 클라이언트는 메시지를 보낼 때 UUID를 생성해 함께 보내고, 
+//		서버는 처리 결과를 같은 requestId로 ACK 또는 FAIL 이벤트에 담아 반환합니다. 
+//		이를 통해 메시지 전송 성공/실패 처리, 낙관적 UI의 임시 메시지 교체, timeout 처리 등을 안정적으로 구현할 수 있습니다.
+
+//		처음에는 ChatDTO 하나로 WebSocket 요청과 메시지 데이터를 함께 처리했지만, 이벤트 타입이 늘어나면서 DTO의 책임이 섞인다고 판단했습니다. 
+//		그래서 ChatDTO와 WebSocketDTO로 분리하여 만들었는데, 
+//		어떤 type에서 어떤 필드가 필수인지 알기 어려움 , null 필드가 엄청 많아짐 , 검증이 지저분해짐 , 프론트와 계약이 흐려짐 , DTO 하나가 모든 일을 다 함 등의 문제가 발생.
+//		그래서 WebSocket 요청/응답 envelope를 도입해 requestId, type, success, errorMessage 같은 공통 메타데이터는 envelope에 두고, 
+//		실제 이벤트별 데이터는 payload DTO로 분리했습니다. 
+//		이 구조는 요청-응답 매칭과 에러 처리, broadcast 이벤트 처리를 일관되게 만들 수 있다는 장점이 있습니다.
+
+//		Envelope를 도입한 목적은 단순히 WebSocket 응답을 보내기 위해서가 아니라, WebSocket 메시지의 공통 프로토콜을 정의하기 위해서였습니다. 
+//		WebSocket은 HTTP처럼 endpoint와 응답이 분리되어 있지 않고 모든 이벤트가 하나의 onmessage로 들어오기 때문에, 
+//		type, requestId, success, errorMessage, payload를 가진 공통 envelope를 사용해 요청, 응답, broadcast 이벤트를 일관되게 처리하도록 설계했습니다. 
+//		이를 통해 이벤트 라우팅, 요청-응답 매칭, 에러 처리, 기능 확장을 더 명확하게 만들 수 있었습니다.
+//		envelope는 “응답 하나 보내려고 억지로 만드는 구조”가 아니라, 앞으로 WebSocket 프로토콜을 감당하기 위한 기초 설계가 됩니다.
+
+//		네이밍은 언어 차원의 규칙보다는 팀 컨벤션의 문제라고 생각합니다. 
+//		저는 이벤트 이름을 먼저 두고 역할을 뒤에 붙이는 방식이 SendMessagePayloadDTO, SendMessageResponseDTO처럼 관련 클래스를 도메인 기준으로 찾기 쉬워서 선호합니다. 
+//		다만 Payload DTO를 한 그룹으로 모으는 컨벤션을 선택한다면 PayloadSendMessageDTO처럼 앞에 붙이는 것도 가능하다고 봅니다.
 
 //	@Override
 //	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {

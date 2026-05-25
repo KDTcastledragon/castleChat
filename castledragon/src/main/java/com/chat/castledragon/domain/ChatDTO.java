@@ -10,8 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class ChatDTO {
-	private String type;
-
 	private Long messageId;
 
 	private Long roomId;
