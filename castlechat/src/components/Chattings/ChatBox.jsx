@@ -110,10 +110,13 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                     const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
                     wsRef.current.send(JSON.stringify({
-                        type: "READ",
-                        roomId: roomId,
-                        userId: userID,
-                        lastReadMessageId: lastMsgInRoom.messageId
+                        requestId: crypto.randomUUID(),
+                        wsType: "READ_MSG",
+                        payload: {
+                            roomId,
+                            userId: Number(userID),
+                            lastReadMessageId: lastMsgInRoom.messageId
+                        }
                     }));
                 }
 
@@ -147,15 +150,24 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
             return;
         } // ws객체 자체가 비었는지, 현재 연결중인지 구분하기 위해 if 분리.
 
-        const sendData = {
-            type: 'SEND',
-            senderId: userID,
-            senderLoginId: loginID,
-            roomId: roomId,
-            msgText: chatMessage
-        };
+        // const sendData = {
+        //     type: 'SEND',
+        //     senderId: userID,
+        //     senderLoginId: loginID,
+        //     roomId: roomId,
+        //     msgText: chatMessage
+        // };
 
-        wsRef.current.send(JSON.stringify(sendData));
+        wsRef.current.send(JSON.stringify({
+            requestId: crypto.randomUUID(),
+            wsType: "SEND_MSG",
+            payload: {
+                roomId,
+                senderId: Number(userID),
+                senderLoginId: loginID,
+                msgText: chatMessage
+            }
+        }));
 
         setChatMessage('');
 

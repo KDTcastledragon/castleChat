@@ -7,9 +7,9 @@ import lombok.Data;
 @Data
 public class WebSocketDTO {
 	private String requestId;
-	private String socketType;
+	private String wsType;
 
-	private Boolean success;
+	private Boolean isSuccess;
 	private String wsMessage;
 
 	private JsonNode payload;

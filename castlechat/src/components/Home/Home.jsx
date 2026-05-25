@@ -66,6 +66,21 @@ function Home() {
             console.log(`webSocket연결 완료.`);
         }
 
+        webSocket.onmessage = (evt) => {
+            const wsEvt = JSON.parse(evt.data);
+            console.log(`ws 수신`, wsEvt);
+
+            switch (wsEvt.wsType) {
+                case "ENTER_ROOM_OK":
+                    console.log(`방 접속 성공`);
+                    break;
+
+                case "MSG_SEND":
+                    break;
+            }
+
+        }
+
         axios
             .get(`/user/allUsers`)
             .then((res) => {
@@ -136,9 +151,12 @@ function Home() {
 
 
             wsRef.current.send(JSON.stringify({
-                type: "ENTER",
-                roomId: openedRoomId,
-                userId: userID
+                requestId: crypto.randomUUID(),
+                wsType: "ENTER_ROOM",
+                payload: {
+                    roomId: openedRoomId,
+                    userId: Number(userID)
+                }
             }));
 
             setChatWindows(prev => {

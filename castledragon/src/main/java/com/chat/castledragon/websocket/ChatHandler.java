@@ -9,7 +9,10 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.chat.castledragon.domain.ChatDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
+import com.chat.castledragon.domain.PayloadReadMessageDTO;
+import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,6 +52,12 @@ public class ChatHandler extends TextWebSocketHandler {
 		// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
 	}
 
+	//	====== 연결 이후 메소드 ===========================================================================================================
+	@Override
+	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
+		log.info("WebSocket 연결 성공 : {}", session);
+	}
+
 	// ======= payload 변환 helper ==================================================
 	private <T> T convertPayload(WebSocketDTO dto, Class<T> clazz) {
 		return objectMapper.convertValue(dto.getPayload(), clazz); // WebSocketDTO 안의 payload를 각각의 메소드에 알맞게 Payload DTO 타입으로 변환하는 공통 함수.
@@ -57,15 +66,10 @@ public class ChatHandler extends TextWebSocketHandler {
 		// 그래서 Class<T> clazz를 이용하여 명시적으로 클래스 정보를 넘깁니다. 즉, 'payload를 어떤 클래스 타입으로 변환할지 알려주는 인자'이다.
 		// convertValue : 이미 Java 객체/JsonNode/Map 형태로 존재하는 값을 다른 Java 객체 타입으로 변환해주는 메소드. 이미 객체 형태인 값을 '다른 객체'로 바꿉니다.
 		// ws의 payload는 JsonNode입니다. 그래서, dto.getPayload()는 문자열이 아니라 JsonNode이다. --> JsonNode를 EnterRoomPayloadDTO 로 바꾸는 겁니다.
+		// Jackson은 사람이 아니라 Java에서 JSON을 다루는 대표 라이브러리 이름입니다. 오타 아니에요.
 	}
 
-	//	====== 연결 이후 메소드 ===========================================================================================================
-	@Override
-	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
-		log.info("WebSocket 연결 성공 : {}", session);
-	}
-
-	//	====== 메세지 관리 : switch-case ===========================================================================================================
+	//	====== 메세지 관리 Dispatcher ===========================================================================================================
 	// TextWebSocketHandler안에 handleTextMessage내장 메소드 존재. 그래서 @Override 붙임. 반드시 약속된 메서드인 handleTextMessage를 입구로 써야 합니다.
 	@Override // --> 부모 클래스에 이미 있는 메서드를 내가 원하는 방식으로 다시 작성한다.
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
@@ -75,29 +79,172 @@ public class ChatHandler extends TextWebSocketHandler {
 		//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
 		WebSocketDTO dto = objectMapper.readValue(message.getPayload(), WebSocketDTO.class);
 
-		if (dto.getSocketType() == null) {
+		if (dto.getWsType() == null) {
 			log.warn("WebSocket type 없음: {}", message.getPayload());
 			return;
 		}
 
-		switch (dto.getSocketType()) {
+		switch (dto.getWsType()) {
 		case "ENTER_ROOM" -> handleEnterRoom(session, dto);
 		case "SEND_MSG" -> handleSendMessage(session, dto);
 		case "READ_MSG" -> handleReadMessage(session, dto);
-		default -> log.warn("알 수 없는 TYPE WS : {}", dto.getSocketType());
+		default -> {
+			log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
+			responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
+		}
+
 		}
 
 	} // handleTextMessage 끝.
 
-	//	====== room 퇴장 감지 ===========================================================================================================
+	//	====== 채팅방 입장 ===========================================================================================================
 	private void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		PayloadEnterRoomDTO payload = convertPayload(dto, PayloadEnterRoomDTO.class);
 
 		if (payload.getRoomId() == null || payload.getUserId() == null) {
-			log.warn("ENTER_ROOM Data 누락 : {} / {}", dto.getRoomId(), dto.getUserId());
+			log.warn("ENTER_ROOM Data 누락 : {} / {}", payload.getRoomId(), payload.getUserId());
+			responseFail(session, dto, "ENTER_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
 			return;
 		}
+
+		// payload.roomId 방의 명부가 없으면 새로 만들고, 그 방 명부에 payload.userId와 현재 WebSocketSession을 등록한다. -->
+		//		
+		//		Long roomId = payload.getRoomId();
+		//		Long userId = payload.getUserId();
+		//
+		//		Map<Long, WebSocketSession> userMap = roomSessions.get(roomId);
+		//
+		//		if (userMap == null) {
+		//		    userMap = new ConcurrentHashMap<>();
+		//		    roomSessions.put(roomId, userMap);
+		//		}
+		//
+		//		userMap.put(userId, session);
+
+		// --> 이 유저의 현재 WebSocket 연결은 이 roomId의 실시간 메시지를 받을 대상이다.
+
+		//	위 과정을 축약했다. -->
+		roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(payload.getUserId(), session);
+		log.info("{}번 유저 {}번방 ENTER 등록", payload.getUserId(), payload.getRoomId());
+		responseOk(session, dto, "ENTER_ROOM_OK", payload);
+
 	} // handleEnterRoom 끝.
+
+	//	====== 메세지 읽기 ===========================================================================================================
+	private void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
+
+		if (payload.getRoomId() == null || payload.getSenderId() == null || payload.getMsgText() == null) {
+			log.warn("SEND_MSG Data 누락 : {} / {} / {}", payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
+			responseFail(session, dto, "MSG_SEND_FAIL", "SEND_MSG 필수값 누락");
+			return;
+		}
+
+		ChatDTO chat = new ChatDTO();
+
+		try {
+			Long messageId = chatService.insertMessage(payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
+
+			chat.setMessageId(messageId);
+			chat.setRoomId(payload.getRoomId());
+			chat.setSenderId(payload.getSenderId());
+			chat.setSenderLoginId(payload.getSenderLoginId());
+			chat.setMsgText(payload.getMsgText());
+
+			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", payload.getSenderId(), payload.getRoomId(), payload.getMsgText());
+
+		} catch (Exception e) {
+			log.error("메시지 저장 실패", e);
+			responseFail(session, dto, "MSG_SEND_FAIL", "메시지 저장 실패");
+			return;
+		}
+
+		broadcastToRoom(payload.getRoomId(), "MSG_SEND", chat, dto.getRequestId());
+		//		responseOk(session, dto, "SEND_MSG_OK", chat);
+	}
+
+	//	====== 메세지 읽기 ===========================================================================================================
+	private void handleReadMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadReadMessageDTO payload = convertPayload(dto, PayloadReadMessageDTO.class);
+
+		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLastReadMessageId() == null) {
+			log.info("readMsg 필수 값 누락 : {} / {} / {}", payload.getRoomId(), payload.getUserId(), payload.getLastReadMessageId());
+			responseFail(session, dto, "READ_MSG_FAIL", "READ_MSG 필수값 누락");
+			return;
+		}
+
+		chatService.updateLastRead(payload.getRoomId(), payload.getUserId(), payload.getLastReadMessageId());
+
+		log.info("{}번 유저가 {}번방 {}번 메시지까지 읽음", payload.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
+
+		broadcastToRoom(payload.getRoomId(), "MSG_READ", payload, dto.getRequestId());
+		//		responseOk(session, dto, "READ_MSG_OK", payload);
+	}
+
+	//	====== broadcast ===========================================================================================================
+	private void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
+		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+
+		if (sessions == null || sessions.isEmpty()) {
+			log.info("{}번방 broadcast 대상 없음", roomId);
+			return;
+		}
+
+		sessions.values().removeIf(socketSession -> !socketSession.isOpen());
+
+		WebSocketDTO event = new WebSocketDTO();
+		event.setRequestId(requestId);
+		event.setWsType(type);
+		event.setIsSuccess(true);
+		event.setPayload(objectMapper.valueToTree(payloadData));
+
+		String payload = objectMapper.writeValueAsString(event);
+
+		for (WebSocketSession s : sessions.values()) {
+			try {
+				if (s.isOpen()) {
+					s.sendMessage(new TextMessage(payload));
+				}
+			} catch (Exception e) {
+				log.error("broadcast 실패", e);
+			}
+		}
+	}
+
+	//	====== Success 응답 보내기 ===========================================================================================================
+	private void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
+		WebSocketDTO response = new WebSocketDTO();
+
+		response.setRequestId(request.getRequestId());
+		response.setWsType(wsType);
+		response.setIsSuccess(true);
+		response.setPayload(objectMapper.valueToTree(payload));
+
+		dispatchToSession(session, response);
+	}
+
+	//	====== Fail 응답 보내기 ===========================================================================================================
+	private void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
+		WebSocketDTO response = new WebSocketDTO();
+
+		response.setRequestId(request.getRequestId());
+		response.setWsType(wsType);
+		response.setIsSuccess(false);
+		response.setWsMessage(errorMessage);
+
+		dispatchToSession(session, response);
+	}
+
+	//	====== 응답 Session에 보내기 ===========================================================================================================
+	private void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		if (!session.isOpen()) {
+			log.info("responseToSession is Not Open");
+			return;
+		}
+
+		String payload = objectMapper.writeValueAsString(dto);
+		session.sendMessage(new TextMessage(payload));
+	}
 
 	//	====== room 퇴장 감지 ===========================================================================================================
 	@Override
@@ -144,6 +291,10 @@ public class ChatHandler extends TextWebSocketHandler {
 //		네이밍은 언어 차원의 규칙보다는 팀 컨벤션의 문제라고 생각합니다. 
 //		저는 이벤트 이름을 먼저 두고 역할을 뒤에 붙이는 방식이 SendMessagePayloadDTO, SendMessageResponseDTO처럼 관련 클래스를 도메인 기준으로 찾기 쉬워서 선호합니다. 
 //		다만 Payload DTO를 한 그룹으로 모으는 컨벤션을 선택한다면 PayloadSendMessageDTO처럼 앞에 붙이는 것도 가능하다고 봅니다.
+
+//		메시지 전송과 읽음 처리는 성공 시 별도의 ACK를 보내지 않고, 저장/처리 성공 후 발생하는 domain event인 MSG_CREATED, MSG_READ broadcast를 성공 응답으로 사용했습니다. 
+//		WebSocket에서는 송신자도 같은 room을 구독하고 있기 때문에 broadcast 이벤트를 받을 수 있고, 해당 이벤트에 requestId를 포함시켜 낙관적 UI의 임시 메시지와 매칭할 수 있게 했습니다. 
+//		실패한 경우에만 요청자에게 SEND_MSG_FAIL, READ_MSG_FAIL을 전송해 중복 응답을 줄였습니다.
 
 //	@Override
 //	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
