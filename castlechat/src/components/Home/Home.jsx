@@ -237,40 +237,6 @@ function Home() {
                 />
             ))}
 
-            {/**========= 채팅창 Legacy=================== */}
-            {/* { 
-                isChattingOpen &&
-                <ChatBox
-                    setIsChattingOpen={setIsChattingOpen}
-                    targetUserID={targetUserID}
-                    targetLoginID={targetLoginID}
-                    roomId={roomId}
-                />
-            } */}
-
-            {/* <div className='friendsListSection'>
-                <div className='friendsListTitle'><span>친구 목록</span></div>
-                <div className='friendsList'>
-                    {friList && friList.length > 0 ?
-                        friList.map((d, i) => (
-                            <>
-                                <div className='friend' onClick={() => openChatBoxWithFriend(d.user_id)}>
-                                    <div>{i + 1}번째 친구</div>
-                                    <div>ID : {d.user_id}</div>
-                                    <div>이름 : {d.user_name}</div>
-                                    <hr />
-                                </div>
-                            </>
-                        ))
-                        :
-                        <>
-                            <div>나는 개똥벌레,, 친구가 없네....</div>
-                            <div>어서 친추 ㄱㄱ</div>
-                        </>
-                    }
-                </div>
-            </div> */}
-
         </div >
     );
 }

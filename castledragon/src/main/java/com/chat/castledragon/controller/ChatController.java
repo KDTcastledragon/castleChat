@@ -49,7 +49,7 @@ public class ChatController {
 	public List<ChatRoomListDTO> getMyRooms(@PathVariable("userId") Long userId) {
 		return chatService.getMyChatRooms(userId);
 	}
-}
+} // enterRoom 끝.
 
 //@PostMapping("/updateLastRead") --> http 에서 ws로 read/send 이벤트를 처리할 것이기 때문에.
 //public void updateLastRead(@RequestBody Map<String, Object> data) {

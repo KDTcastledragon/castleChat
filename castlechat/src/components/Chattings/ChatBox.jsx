@@ -29,8 +29,6 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         startY: 0
     });
 
-
-
     const startDrag = (e) => {
         onFocus();
 
@@ -132,8 +130,6 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
         initChatRoom();
 
-        // webSocket.onmessage = handleMessage;
-
     }, []);
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
@@ -171,13 +167,13 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
     const closeChat = () => {
         const last = prevChattings.at(-1);
 
-        if (last) {
-            axios.post("/chat/updateLastRead", {
-                roomId,
-                userId: userID,
-                lastReadMessageId: last.messageId
-            });
-        }
+        // if (last) {
+        //     axios.post("/chat/updateLastRead", {
+        //         roomId,
+        //         userId: userID,
+        //         lastReadMessageId: last.messageId
+        //     });
+        // }
 
         onClose();
     };
