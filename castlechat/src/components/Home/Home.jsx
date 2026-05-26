@@ -15,14 +15,10 @@ function Home() {
     const isWsConnectedRef = useRef(false);
     const wsRef = useRef(null);
 
-    const [enteredID, setEnteredID] = useState('');
-    // const [roomId, setRoomId] = useState(null);
-    // const [targetUserID, setTargetUserID] = useState('');
-    // const [targetLoginID, setTargetLoginID] = useState('');
-    // const [friList, setFriList] = useState([]);
-    // const [isChattingOpen, setIsChattingOpen] = useState(false);
+    const roomHandlersRef = useRef({});
 
-    // const [chatRooms, setChatRooms] = useState([]);
+    const [enteredID, setEnteredID] = useState('');
+
 
 
     // ==== 채팅방 옮기기 기본 설정 ===============================================================================
@@ -75,7 +71,20 @@ function Home() {
                     console.log(`방 접속 성공`);
                     break;
 
-                case "MSG_SEND":
+                case "MSG_SENDED": {
+                    const roomId = wsEvt.payload.roomId;
+                    roomHandlersRef.current[roomId]?.(wsEvt);
+                    break;
+                }
+
+                case "MSG_READ": {
+                    const roomId = wsEvt.payload.roomId;
+                    roomHandlersRef.current[roomId]?.(wsEvt);
+                    break;
+                }
+
+                default:
+                    alert(`알수없는 타입`);
                     break;
             }
 
@@ -135,7 +144,6 @@ function Home() {
         // webSocket.close();
         wsRef.current = null;
         isWsConnectedRef.current = false;
-        // alert(`로그아웃 성공`);
         window.location.reload();
     }
 
@@ -246,6 +254,13 @@ function Home() {
                     targetUserID={win.targetUserID}
                     targetLoginID={win.targetLoginID}
 
+                    registerRoomHandler={(roomId, handler) => {
+                        roomHandlersRef.current[roomId] = handler;
+                    }}
+                    unregisterRoomHandler={(roomId) => {
+                        delete roomHandlersRef.current[roomId];
+                    }}
+
                     x={win.x}
                     y={win.y}
                     zIndex={win.zIndex}
@@ -279,3 +294,11 @@ export default Home;
 //         console.log(e);
 //     }
 // }
+
+// const [roomId, setRoomId] = useState(null);
+// const [targetUserID, setTargetUserID] = useState('');
+// const [targetLoginID, setTargetLoginID] = useState('');
+// const [friList, setFriList] = useState([]);
+// const [isChattingOpen, setIsChattingOpen] = useState(false);
+
+// const [chatRooms, setChatRooms] = useState([]);

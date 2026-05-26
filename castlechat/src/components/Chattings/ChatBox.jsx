@@ -4,7 +4,8 @@ import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
 // function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {  // --> 기존legacy
-function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, x, y, zIndex, onClose, onMove, onFocus }) {
+function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, registerRoomHandler,
+    unregisterRoomHandler, x, y, zIndex, onClose, onMove, onFocus }) {
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
 
@@ -73,16 +74,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [prevChattings]);
 
-    // ==============메시지 실시간 띄우기 함수===================================
-    const handleMessage = (event) => {
-        const newMessage = JSON.parse(event.data);
 
-        if (Number(newMessage.roomId) !== Number(roomId)) {
-            return;
-        }
-
-        setPrevChattings(prev => [...prev, newMessage]);
-    };
 
     // ========== 이전 메시지 불러오기 ==============================================================================================
     useEffect(() => {
@@ -103,7 +95,8 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                 setPrevChattings(getedMsgInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
 
                 // 2. 마지막 메시지 읽음 처리
-                if (getedMsgInRoom.data.length > 0 && wsRef.current.readyState === WebSocket.OPEN) {
+                if (getedMsgInRoom.data.length > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
+                    // optional Chaining : wsRef.current가 null 또는 undefined면 에러 내지 말고 undefined를 반환해라.
                     // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
                     // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
 
@@ -133,6 +126,51 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
         initChatRoom();
 
+        registerRoomHandler(roomId, (wsEvt) => {
+            // 1. 전송한 메세지 화면에 띄우기
+            if (wsEvt.wsType === "MSG_SENDED") {
+                const newMsg = wsEvt.payload;
+                setPrevChattings(prev => [...prev, newMsg]);
+
+                if (Number(newMsg.senderId) !== Number(userID)) {
+                    wsRef.current?.send(JSON.stringify({
+                        requestId: crypto.randomUUID(),
+                        wsType: "READ_MSG",
+                        payload: {
+                            roomId: roomId,
+                            userId: Number(userID),
+                            lastReadMessageId: newMsg.messageId
+                        }
+                    }));
+                }
+            }
+
+            // 2. 전송한 메세지 읽기 처리
+            if (wsEvt.wsType === "MSG_READ") {
+                const readInfo = wsEvt.payload;
+
+                setPrevChattings(prev =>
+                    prev.map(msg => {
+                        const isMyMsg = Number(msg.senderId) === Number(userID);
+                        const isReadTarget = Number(msg.messageId) <= Number(readInfo.lastReadMessageId);
+
+                        if (isMyMsg && isReadTarget) {
+                            return {
+                                ...msg,
+                                unreadCount: 0
+                            };
+                        }
+
+                        return msg;
+                    })
+                );
+            }
+        });
+
+        return () => {
+            unregisterRoomHandler(roomId);
+        };
+
     }, []);
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
@@ -150,14 +188,6 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
             return;
         } // ws객체 자체가 비었는지, 현재 연결중인지 구분하기 위해 if 분리.
 
-        // const sendData = {
-        //     type: 'SEND',
-        //     senderId: userID,
-        //     senderLoginId: loginID,
-        //     roomId: roomId,
-        //     msgText: chatMessage
-        // };
-
         wsRef.current.send(JSON.stringify({
             requestId: crypto.randomUUID(),
             wsType: "SEND_MSG",
@@ -170,23 +200,10 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         }));
 
         setChatMessage('');
-
-        // ws.onclose(); reconnect
-        // ws.onerror(); reconnect
     }
 
     // ================ 채팅창 닫기 ===============================================
     const closeChat = () => {
-        const last = prevChattings.at(-1);
-
-        // if (last) {
-        //     axios.post("/chat/updateLastRead", {
-        //         roomId,
-        //         userId: userID,
-        //         lastReadMessageId: last.messageId
-        //     });
-        // }
-
         onClose();
     };
 
@@ -223,7 +240,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                                 <div className="messageText">{d.msgText}</div>
 
                                 <span className='unreadOne'>
-                                    {d.unreadCount}
+                                    u-{String(d.unreadCount)}
                                 </span>
                             </div>
                             <div className='formatTime'>{formatTime(d.createdAt)}</div>
@@ -324,3 +341,28 @@ export default ChatBox;
 //                 }
 //             }
 
+// ==============메시지 실시간 띄우기 함수 legacy===================================
+// const handleMessage = (event) => {
+//     const newMessage = JSON.parse(event.data);
+
+//     if (Number(newMessage.roomId) !== Number(roomId)) {
+//         return;
+//     }
+
+//     setPrevChattings(prev => [...prev, newMessage]);
+// };
+
+// ================ 채팅창 닫기 legacy ===============================================
+// const closeChat = () => {
+// const last = prevChattings.at(-1);
+
+// if (last) {
+//     axios.post("/chat/updateLastRead", {
+//         roomId,
+//         userId: userID,
+//         lastReadMessageId: last.messageId
+//     });
+// }
+
+// onClose();
+// };

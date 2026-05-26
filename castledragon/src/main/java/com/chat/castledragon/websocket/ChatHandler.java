@@ -159,7 +159,7 @@ public class ChatHandler extends TextWebSocketHandler {
 			return;
 		}
 
-		broadcastToRoom(payload.getRoomId(), "MSG_SEND", chat, dto.getRequestId());
+		broadcastToRoom(payload.getRoomId(), "MSG_SENDED", chat, dto.getRequestId());
 		//		responseOk(session, dto, "SEND_MSG_OK", chat);
 	}
 
