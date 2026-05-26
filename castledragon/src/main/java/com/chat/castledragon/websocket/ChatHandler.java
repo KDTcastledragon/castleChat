@@ -107,30 +107,13 @@ public class ChatHandler extends TextWebSocketHandler {
 			return;
 		}
 
-		// payload.roomId 방의 명부가 없으면 새로 만들고, 그 방 명부에 payload.userId와 현재 WebSocketSession을 등록한다. -->
-		//		
-		//		Long roomId = payload.getRoomId();
-		//		Long userId = payload.getUserId();
-		//
-		//		Map<Long, WebSocketSession> userMap = roomSessions.get(roomId);
-		//
-		//		if (userMap == null) {
-		//		    userMap = new ConcurrentHashMap<>();
-		//		    roomSessions.put(roomId, userMap);
-		//		}
-		//
-		//		userMap.put(userId, session);
-
-		// --> 이 유저의 현재 WebSocket 연결은 이 roomId의 실시간 메시지를 받을 대상이다.
-
-		//	위 과정을 축약했다. -->
 		roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(payload.getUserId(), session);
 		log.info("{}번 유저 {}번방 ENTER 등록", payload.getUserId(), payload.getRoomId());
 		responseOk(session, dto, "ENTER_ROOM_OK", payload);
 
 	} // handleEnterRoom 끝.
 
-	//	====== 메세지 읽기 ===========================================================================================================
+	//	====== 메세지 전송 ===========================================================================================================
 	private void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
 
@@ -150,6 +133,8 @@ public class ChatHandler extends TextWebSocketHandler {
 			chat.setSenderId(payload.getSenderId());
 			chat.setSenderLoginId(payload.getSenderLoginId());
 			chat.setMsgText(payload.getMsgText());
+
+			chat.setUnreadCount(null);
 
 			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", payload.getSenderId(), payload.getRoomId(), payload.getMsgText());
 
@@ -295,6 +280,17 @@ public class ChatHandler extends TextWebSocketHandler {
 //		메시지 전송과 읽음 처리는 성공 시 별도의 ACK를 보내지 않고, 저장/처리 성공 후 발생하는 domain event인 MSG_CREATED, MSG_READ broadcast를 성공 응답으로 사용했습니다. 
 //		WebSocket에서는 송신자도 같은 room을 구독하고 있기 때문에 broadcast 이벤트를 받을 수 있고, 해당 이벤트에 requestId를 포함시켜 낙관적 UI의 임시 메시지와 매칭할 수 있게 했습니다. 
 //		실패한 경우에만 요청자에게 SEND_MSG_FAIL, READ_MSG_FAIL을 전송해 중복 응답을 줄였습니다.
+
+//		방 멤버 수는 메시지 전송 시 unreadCount 계산에 자주 필요한 값이라 매번 room_members를 count하면 DB 부하가 커질 수 있다고 판단했습니다. 
+//		그래서 방 생성 시점에 Redis에 memberCount를 캐싱하고, 초대/나가기/강퇴처럼 멤버 수가 바뀌는 이벤트에서는 DB 반영 후 Redis도 함께 갱신하도록 설계했습니다.
+//		단, Redis는 원본 저장소가 아니라 캐시이기 때문에 값이 없을 경우 DB에서 다시 조회해 Redis에 적재하는 cache-aside fallback도 함께 두었습니다.
+
+//ChatHandler
+//= WebSocket 메시지 받기
+//= payload 변환
+//= 현재 방을 보고 있는 유저 목록 추출
+//= Service에 위임
+//= 결과 broadcast
 
 //	@Override
 //	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
@@ -518,3 +514,23 @@ public class ChatHandler extends TextWebSocketHandler {
 //		}
 //	}
 //}
+
+// enterRoom 부가설명==================================================================================================
+// payload.roomId 방의 명부가 없으면 새로 만들고, 그 방 명부에 payload.userId와 현재 WebSocketSession을 등록한다. -->
+//		
+//		Long roomId = payload.getRoomId();
+//		Long userId = payload.getUserId();
+//
+//		Map<Long, WebSocketSession> userMap = roomSessions.get(roomId);
+//
+//		if (userMap == null) {
+//		    userMap = new ConcurrentHashMap<>();
+//		    roomSessions.put(roomId, userMap);
+//		}
+//
+//		userMap.put(userId, session);
+
+// --> 이 유저의 현재 WebSocket 연결은 이 roomId의 실시간 메시지를 받을 대상이다.
+
+//	위 과정을 축약했다. -->
+//		roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(payload.getUserId(), session);

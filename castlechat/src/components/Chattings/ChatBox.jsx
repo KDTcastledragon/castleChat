@@ -127,6 +127,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         initChatRoom();
 
         registerRoomHandler(roomId, (wsEvt) => {
+
             // 1. 전송한 메세지 화면에 띄우기
             if (wsEvt.wsType === "MSG_SENDED") {
                 const newMsg = wsEvt.payload;
@@ -192,11 +193,12 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
             requestId: crypto.randomUUID(),
             wsType: "SEND_MSG",
             payload: {
-                roomId,
+                roomId: roomId,
                 senderId: Number(userID),
                 senderLoginId: loginID,
                 msgText: chatMessage
             }
+
         }));
 
         setChatMessage('');
