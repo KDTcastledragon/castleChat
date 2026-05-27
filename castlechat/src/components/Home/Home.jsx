@@ -50,6 +50,8 @@ function Home() {
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
+        if (!userID || !loginID) return;
+
         // 만약 new Ws를 바깥으로 뺀다면? --> React 생명주기랑 충돌해서 터짐. 컴포넌트 랜더링 될때마다 연결함.
         const webSocket = new WebSocket(`ws://localhost:8080/ws/chat`); // roomId=${roomId}&userId=${userID} 삭제. query string --> ENTER 이벤트송신으로 변경.
         wsRef.current = webSocket;
@@ -116,6 +118,10 @@ function Home() {
             }).catch((e) => {
                 console.log(e.message);
             });
+
+        return () => {
+            webSocket.close();
+        }
     }, [])
 
     // =====[로그인/로그아웃 함수]======================================================
@@ -157,10 +163,14 @@ function Home() {
     }
 
     function logout() {
-        sessionStorage.clear();
-        // webSocket.close();
-        wsRef.current = null;
+        if (wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
+            console.log(`로그아웃 및 ws 연결종료`);
+        }
+
         isWsConnectedRef.current = false;
+        sessionStorage.clear();
         window.location.reload();
     }
 

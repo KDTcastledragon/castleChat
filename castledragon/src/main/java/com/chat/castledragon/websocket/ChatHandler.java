@@ -59,7 +59,7 @@ public class ChatHandler extends TextWebSocketHandler {
 	//	====== 연결 이후 메소드 ===========================================================================================================
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
-		log.info("ws 연결 성공 : id▶{}   uri▶{}", session.getId(), session.getUri());
+		log.info("ws 연결 성공 : WSid▶{}   uri▶{}", session.getId(), session.getUri());
 	}
 
 	// ======= payload 변환 helper ==================================================
@@ -78,7 +78,7 @@ public class ChatHandler extends TextWebSocketHandler {
 	@Override // --> 부모 클래스에 이미 있는 메서드를 내가 원하는 방식으로 다시 작성한다.
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
 
-		log.info("webSocket_msg 도착 : {}", message.getPayload());
+		log.info("WebSocket_msg 도착 : {}", message.getPayload());
 
 		//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
 		WebSocketDTO dto = objectMapper.readValue(message.getPayload(), WebSocketDTO.class);
@@ -259,11 +259,19 @@ public class ChatHandler extends TextWebSocketHandler {
 		session.sendMessage(new TextMessage(payload));
 	}
 
-	//	====== room 퇴장 감지 ===========================================================================================================
+	//	====== ws 연결 종료 ===========================================================================================================
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
 
-		PayloadConnectUserDTO connectedUser = connectedUserSessions.remove(session);
+		PayloadConnectUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
+		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
+		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
+
+		if (connectedUser != null) {
+			log.info("{}-({})님이 종료하였습니다.", connectedUser.getLoginId(), connectedUser.getUserId());
+		} else {
+			log.info("식별되지 않은 WS 종료. Wsid▶ {}", session.getId());
+		}
 
 		roomSessions.forEach((roomId, userMap) -> {
 
@@ -274,7 +282,7 @@ public class ChatHandler extends TextWebSocketHandler {
 				roomSessions.remove(roomId);
 			}
 		});
-		log.info("ws 연결 종료 : id▶{}   status▶{}", session.getId(), status);
+		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.
 
 	private Set<Long> getViewingUserIds(Long roomId) {
