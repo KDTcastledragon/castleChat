@@ -102,6 +102,13 @@ function Home() {
                     break;
                 }
 
+                case "TYPING_START":
+                case "TYPING_STOP": {
+                    const roomId = wsEvt.payload.roomId;
+                    roomHandlersRef.current[roomId]?.(wsEvt);
+                    break;
+                }
+
                 default:
                     // alert(`알수없는 타입`);
                     break;

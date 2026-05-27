@@ -17,6 +17,7 @@ import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
+import com.chat.castledragon.domain.PayloadTypingDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -98,6 +99,8 @@ public class WsHandler extends TextWebSocketHandler {
 			case "READ_MSG" -> handleReadMessage(session, dto);
 			case "CONNECT_USER" -> handleConnectUser(session, dto);
 			case "EXIT_ROOM" -> handleExitRoom(session, dto);
+			case "TYPING_START" -> handleTyping(session, dto, "TYPING_START");
+			case "TYPING_STOP" -> handleTyping(session, dto, "TYPING_STOP");
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
@@ -234,6 +237,21 @@ public class WsHandler extends TextWebSocketHandler {
 		responseOk(session, dto, "EXIT_ROOM_OK", payload);
 	}
 
+	//	====== typing start/stop ===========================================================================================================
+	private void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
+		PayloadTypingDTO payload = convertPayload(dto, PayloadTypingDTO.class);
+
+		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLoginId() == null) {
+			log.warn("TYPING Data 누락 : {} / {} / {}", payload.getRoomId(), payload.getUserId(), payload.getLoginId());
+			responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
+			return;
+		}
+
+		log.info("{}-({}) {} in room {}", payload.getLoginId(), payload.getUserId(), eventType, payload.getRoomId());
+
+		broadcastToRoomExceptUser(payload.getRoomId(), eventType, payload, dto.getRequestId(), payload.getUserId());
+	}
+
 	//	====== broadcast ===========================================================================================================
 	private void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
 		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
@@ -260,6 +278,42 @@ public class WsHandler extends TextWebSocketHandler {
 				}
 			} catch (Exception e) {
 				log.error("broadcast 실패", e);
+			}
+		}
+	}
+
+	private void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
+		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+
+		if (sessions == null || sessions.isEmpty()) {
+			log.info("{}번방 typing broadcast 대상 없음", roomId);
+			return;
+		}
+
+		sessions.values().removeIf(socketSession -> !socketSession.isOpen());
+
+		WebSocketDTO event = new WebSocketDTO();
+		event.setRequestId(requestId);
+		event.setWsType(type);
+		event.setIsSuccess(true);
+		event.setPayload(objectMapper.valueToTree(payloadData));
+
+		String payload = objectMapper.writeValueAsString(event);
+
+		for (Map.Entry<Long, WebSocketSession> entry : sessions.entrySet()) {
+			Long userId = entry.getKey();
+			WebSocketSession s = entry.getValue();
+
+			if (userId.equals(excludedUserId)) {
+				continue;
+			}
+
+			try {
+				if (s.isOpen()) {
+					s.sendMessage(new TextMessage(payload));
+				}
+			} catch (Exception e) {
+				log.error("typing broadcast 실패", e);
 			}
 		}
 	}

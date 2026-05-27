@@ -9,10 +9,16 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
 
-    const chatEndRef = useRef(null);
-
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
+    const [typingUsers, setTypingUsers] = useState([]);
+
+    const chatEndRef = useRef(null);
+
+    const isTypingRef = useRef(false);
+    const typingTimerRef = useRef(null);
+
+
 
     const formatTime = (isoString) => {
         const date = new Date(isoString);
@@ -129,6 +135,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
         initChatRoom();
 
+        // RoomHandler function
         registerRoomHandler(roomId, (wsEvt) => {
 
             // 1. 전송한 메세지 화면에 띄우기
@@ -147,7 +154,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                         }
                     }));
                 }
-            }
+            }// if 1.
 
             // 2. 전송한 메세지 읽기 처리
             if (wsEvt.wsType === "MSG_READ") {
@@ -174,6 +181,36 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                         return msg;
                     })
                 );
+            }// if 2.
+
+            // 3.
+            if (wsEvt.wsType === "TYPING_START") {
+                const typingInfo = wsEvt.payload;
+
+                if (Number(typingInfo.userId) === Number(userID)) {
+                    return;
+                }
+
+                setTypingUsers(prev => {
+                    const alreadyExists = prev.some(
+                        user => Number(user.userId) === Number(typingInfo.userId)
+                    );
+
+                    if (alreadyExists) {
+                        return prev;
+                    }
+
+                    return [...prev, typingInfo];
+                });
+            }
+
+            // 4.
+            if (wsEvt.wsType === "TYPING_STOP") {
+                const typingInfo = wsEvt.payload;
+
+                setTypingUsers(prev =>
+                    prev.filter(user => Number(user.userId) !== Number(typingInfo.userId))
+                );
             }
         });
 
@@ -188,6 +225,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
         console.log(`${loginID} >> ${targetLoginID} Msg 전송`);
         console.log(`현재 wsRef : ${wsRef}`);
 
+
         if (!wsRef.current) {
             console.log("wsRef Null");
             return; // early Return
@@ -197,6 +235,16 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
             console.log("웹소켓 아직 연결중");
             return;
         } // ws객체 자체가 비었는지, 현재 연결중인지 구분하기 위해 if 분리.
+
+        if (isTypingRef.current) {
+            isTypingRef.current = false;
+            sendTypingStop();
+        }
+
+        if (typingTimerRef.current) {
+            clearTimeout(typingTimerRef.current);
+            typingTimerRef.current = null;
+        }
 
         wsRef.current.send(JSON.stringify({
             requestId: crypto.randomUUID(),
@@ -215,6 +263,16 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
     // ================ 채팅창 닫기 ===============================================
     const exitChat = () => {
+        if (isTypingRef.current) {
+            isTypingRef.current = false;
+            sendTypingStop();
+        }
+
+        if (typingTimerRef.current) {
+            clearTimeout(typingTimerRef.current);
+            typingTimerRef.current = null;
+        }
+
         wsRef.current.send(JSON.stringify({
             requestId: crypto.randomUUID(),
             wsType: "EXIT_ROOM",
@@ -226,6 +284,68 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
         exitChatRoom(); // chatBox창 unmount.
     };
+
+    // ================ 채팅 입력 start/stop ===============================================
+    const sendTypingStart = () => {
+        wsRef.current?.send(JSON.stringify({
+            requestId: crypto.randomUUID(),
+            wsType: "TYPING_START",
+            payload: {
+                roomId: roomId,
+                userId: Number(userID),
+                loginId: loginID
+            }
+        }));
+    };
+
+    const sendTypingStop = () => {
+        wsRef.current?.send(JSON.stringify({
+            requestId: crypto.randomUUID(),
+            wsType: "TYPING_STOP",
+            payload: {
+                roomId: roomId,
+                userId: Number(userID),
+                loginId: loginID
+            }
+        }));
+    };
+
+    const handleChatMessageChange = (e) => {
+        const nextValue = e.target.value;
+
+        setChatMessage(nextValue);
+
+        if (!wsRef.current) {
+            return;
+        }
+
+        const isNowTyping = nextValue.length > 0;
+
+        if (isNowTyping && !isTypingRef.current) {
+            isTypingRef.current = true;
+            sendTypingStart();
+        }
+
+        if (!isNowTyping && isTypingRef.current) {
+            isTypingRef.current = false;
+            sendTypingStop();
+        }
+
+        if (typingTimerRef.current) {
+            clearTimeout(typingTimerRef.current);
+        }
+
+        if (isNowTyping) {
+            typingTimerRef.current = setTimeout(() => {
+                if (isTypingRef.current) {
+                    isTypingRef.current = false;
+                    sendTypingStop();
+                }
+            }, 90000);
+        }
+    };
+
+
 
     // ==============================================================================================================================
     return (
@@ -281,11 +401,18 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                 {/* 👇 이게 핵심 */}
                 <div ref={chatEndRef} />
             </div>
+            {typingUsers.length > 0 && (
+                <div className="typingNotice">
+                    {typingUsers.map(user => user.loginId).join(', ')}님이 입력 중...
+                </div>
+            )}
+
             <div className='inputChat'>
                 <textarea
                     type="text"
                     value={chatMessage}
-                    onChange={(e) => setChatMessage(e.target.value)}
+                    // onChange={(e) => setChatMessage(e.target.value)}
+                    onChange={handleChatMessageChange}
                     placeholder='여기에 메세지 입력...'
                     onKeyDown={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
