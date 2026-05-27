@@ -125,7 +125,7 @@
 	    WHERE room_id = #{roomId}
 	      AND left_at IS NULL
 	</select>
-		
+</mapper>
 		<!-- <select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
 	
 	SELECT
@@ -182,4 +182,3 @@
     	INSERT INTO messages(room_id, sender_id, msg_text) VALUES(#{roomId}, #{senderId}, #{msgText})
 	</insert> --> <!-- 단순히 insert만 하고 반환 타입을 void로 하는것보다 위의 방식이 더 효율적 -->
 	
-</mapper>

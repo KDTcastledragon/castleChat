@@ -1,60 +1,72 @@
-.chattingRoomSection {
-    position: fixed;
-    width: 305px;
-    height: 400px;
-    background-color: rgb(252, 255, 198);
-    border: 1px solid #999;
-}
-
-.chatListTitle {
-    width: 100%;
-    height: 40px;
-    background-color: rgb(223, 189, 255);
-    cursor: move;
-    user-select: none;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 8px;
-    box-sizing: border-box;
-}
-
-
 .chattingBox {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 3px;
     padding: 10px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
-/* 공통 말풍선 */
 .chatRow {
-    max-width: 60%;
+    max-width: 96%;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    box-sizing: border-box;
+}
+
+.messageWrap {
+    min-width: 80px;
+    max-width: 220px;
+    min-height: 20px;
     padding: 8px 12px;
     border-radius: 12px;
     word-break: break-word;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    box-sizing: border-box;
 }
 
-/* 내 메시지 (오른쪽) */
 .mine {
     align-self: flex-end;
-    background-color: #fee500;
-    /* 카카오 노랑 느낌 */
-    text-align: right;
+    flex-direction: row;
+    margin-right: 18px;
 }
 
-/* 상대 메시지 (왼쪽) */
 .other {
     align-self: flex-start;
+    flex-direction: row;
+    margin-left: 18px;
+}
+
+.mine .messageWrap {
+    background-color: #fee500;
+    text-align: left;
+}
+
+.other .messageWrap {
     background-color: #f1f0f0;
     text-align: left;
 }
 
-.formatTime {
-    font-size: 11px;
-    font-style: italic;
+.messageInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
 }
 
-.messageText {
-    white-space: pre-wrap;
+.unreadCount {
+    font-size: 11px;
+    color: #f0a000;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.formatTime {
+    font-size: 10px;
+    color: #777;
+    white-space: nowrap;
 }

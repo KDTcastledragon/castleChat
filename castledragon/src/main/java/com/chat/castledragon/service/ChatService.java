@@ -13,7 +13,7 @@ public interface ChatService {
 
 	List<ChatDTO> getMessages(Long roomId);
 
-	Long insertMessage(Long roomId, Long senderId, String msgText);
+	//	Long insertMessage(Long roomId, Long senderId, String msgText);
 
 	void updateLastRead(Long roomId, Long userId, Long lastReadMessageId);
 

@@ -99,21 +99,25 @@ public class ChatServiceImpl implements ChatService {
 		chat.setSenderId(senderId);
 		chat.setMsgText(payload.getMsgText());
 
-		chatMapper.insertMessage(chat);
+		chatMapper.insertMessage(chat); // DB에 Msg 저장.
 
 		// 방 멤버 전체를 Redis에서 가져온다. 없으면 DB에서 가져와 Redis에 올린다.
-		Set<Long> roomMemberIds = roomMemberCache.getOrLoadRoomMembers(roomId, () -> chatMapper.findActiveRoomMemberIds(roomId));
+		Set<Long> totalRoomMemberIds = roomMemberCache.getOrLoadRoomMembers(roomId, () -> chatMapper.findActiveRoomMemberIds(roomId));
 
 		// 현재 방을 보고 있는 사람들은 메시지를 즉시 받은 상태니까 읽은 사람으로 본다. 보낸 사람도 자기 메시지는 당연히 읽은 상태니까 추가한다.
-		Set<Long> readUserIds = new HashSet<>(viewingUserIds);
-		readUserIds.add(senderId);
+		Set<Long> connectedRoomMemberIds = new HashSet<>(viewingUserIds);
+		connectedRoomMemberIds.add(senderId);
 
-		readUserIds.retainAll(roomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
+		connectedRoomMemberIds.retainAll(totalRoomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
 
-		long unreadCount = roomMemberIds.size() - readUserIds.size(); // 안 읽은 사람 수 계산.
+		log.info("{}방의 총 유저 : {}  , 현재 연결된 유저 : {}", roomId, totalRoomMemberIds, connectedRoomMemberIds);
+
+		Long unreadCount = (long) (totalRoomMemberIds.size() - connectedRoomMemberIds.size()); // 안 읽은 사람 수 계산.
+
+		log.info("unreadCount : {}", unreadCount);
 
 		if (unreadCount < 0) {
-			unreadCount = 0;
+			unreadCount = (long) 0;
 		}
 
 		chat.setSenderLoginId(payload.getSenderLoginId());
@@ -122,18 +126,18 @@ public class ChatServiceImpl implements ChatService {
 		return chat;
 	}
 
-	@Override
-	public Long insertMessage(Long roomId, Long senderId, String msgText) {
-		ChatDTO dto = new ChatDTO();
-		dto.setRoomId(roomId);
-		dto.setSenderId(senderId);
-		dto.setMsgText(msgText);
-
-		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
-		Long messageId = dto.getMessageId();
-
-		return messageId;
-	}
+	//	@Override
+	//	public Long insertMessage(Long roomId, Long senderId, String msgText) {
+	//		ChatDTO dto = new ChatDTO();
+	//		dto.setRoomId(roomId);
+	//		dto.setSenderId(senderId);
+	//		dto.setMsgText(msgText);
+	//
+	//		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
+	//		Long messageId = dto.getMessageId();
+	//
+	//		return messageId;
+	//	}
 
 	@Override
 	public List<ChatDTO> getMessages(Long roomId) {

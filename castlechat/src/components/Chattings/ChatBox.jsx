@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from 'react';
 
 // function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {  // --> 기존legacy
 function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, registerRoomHandler,
-    unregisterRoomHandler, x, y, zIndex, onClose, onMove, onFocus }) {
+    unregisterRoomHandler, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const userID = sessionStorage.getItem('userID');
     const loginID = sessionStorage.getItem('loginID');
 
@@ -13,8 +13,6 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
-
-    const [lastReadMessageId, setLastReadMessageId] = useState(0);
 
     const formatTime = (isoString) => {
         const date = new Date(isoString);
@@ -100,17 +98,22 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                     // ws.readyState : 현재 ws 연결상태. 0:connecting , 1:open , 2:closed / WebSocket.OPEN : "연결 성공 상태를 의미하는 고정 상수"
                     // 굳이 '1'을 안쓰고 readyState === OPEN 쓰는 이유는?? --> 훨씬 의미가 명확하기 때문.
 
-                    const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
+                    // const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
-                    wsRef.current.send(JSON.stringify({
-                        requestId: crypto.randomUUID(),
-                        wsType: "READ_MSG",
-                        payload: {
-                            roomId,
-                            userId: Number(userID),
-                            lastReadMessageId: lastMsgInRoom.messageId
-                        }
-                    }));
+                    const lastOtherMsgInRoom = [...getedMsgInRoom.data].reverse().find(msg => Number(msg.senderId) !== Number(userID));
+
+                    if (lastOtherMsgInRoom !== undefined) {
+
+                        wsRef.current.send(JSON.stringify({
+                            requestId: crypto.randomUUID(),
+                            wsType: "READ_MSG",
+                            payload: {
+                                roomId,
+                                userId: Number(userID),
+                                lastReadMessageId: lastOtherMsgInRoom.messageId
+                            }
+                        }));
+                    } // if-lastMsg
                 }
 
             } catch (error) { // 추후 실패 처리 로직 설계를 위해. 
@@ -121,8 +124,8 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                 } else {
                     console.log(error);
                 }
-            }
-        };
+            } // try-catch
+        }; // init-chatRoom
 
         initChatRoom();
 
@@ -150,15 +153,21 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
             if (wsEvt.wsType === "MSG_READ") {
                 const readInfo = wsEvt.payload;
 
+                // if (Number(readInfo.userId) === Number(userID)) {
+                //     return; // 내가 보낸 READ 이벤트는 내 화면에서 unreadCount를 줄이지 않게 막는 것.
+                // } // 이 코드 때문에, a가 보낸 메시지를 d가 접속해서 확인해도 1 -> 0으로 바뀌질 않음.
+
                 setPrevChattings(prev =>
                     prev.map(msg => {
-                        const isMyMsg = Number(msg.senderId) === Number(userID);
+                        // const isMyMsg = Number(msg.senderId) === Number(userID);
                         const isReadTarget = Number(msg.messageId) <= Number(readInfo.lastReadMessageId);
+                        const isReaderOwnMessage = Number(msg.senderId) === Number(readInfo.userId);
 
-                        if (isMyMsg && isReadTarget) {
+                        // if (isMyMsg && isReadTarget) {
+                        if (isReadTarget && !isReaderOwnMessage) {
                             return {
                                 ...msg,
-                                unreadCount: 0
+                                unreadCount: Math.max(Number(msg.unreadCount || 0) - 1, 0)
                             };
                         }
 
@@ -205,8 +214,17 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
     }
 
     // ================ 채팅창 닫기 ===============================================
-    const closeChat = () => {
-        onClose();
+    const exitChat = () => {
+        wsRef.current.send(JSON.stringify({
+            requestId: crypto.randomUUID(),
+            wsType: "EXIT_ROOM",
+            payload: {
+                roomId: roomId,
+                userId: Number(userID),
+            }
+        }));
+
+        exitChatRoom(); // chatBox창 unmount.
     };
 
     // ==============================================================================================================================
@@ -224,7 +242,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                 <span>{targetLoginID} - ({targetUserID})</span>
                 <button
                     onMouseDown={(e) => e.stopPropagation()}
-                    onClick={closeChat}
+                    onClick={exitChat}
                 >
                     닫기
                 </button>
@@ -237,15 +255,23 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                             key={i}
                             className={`chatRow ${Number(d.senderId) === Number(userID) ? 'mine' : 'other'}`}
                         >
+                            {Number(d.senderId) === Number(userID) && (
+                                <div className='messageInfo'>
+                                    <div className='unreadCount'>{d.unreadCount}</div>
+                                    <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                </div>
+                            )}
+
                             <div className='messageWrap'>
-
                                 <div className="messageText">{d.msgText}</div>
-
-                                <span className='unreadOne'>
-                                    u-{String(d.unreadCount)}
-                                </span>
                             </div>
-                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
+
+                            {Number(d.senderId) !== Number(userID) && (
+                                <div className='messageInfo'>
+                                    <div className='unreadCount'>{d.unreadCount}</div>
+                                    <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                </div>
+                            )}
                         </div>
                     ))
                     :

@@ -112,9 +112,9 @@ function Home() {
         axios
             .get(`/user/allUsers`)
             .then((res) => {
-                console.log(`모든유저`);
+                // console.log(`모든유저`);
                 setUserList(res.data);
-                console.log(res.data);
+                // console.log(res.data);
             }).catch((e) => {
                 console.log(e.message);
             });
@@ -291,7 +291,7 @@ function Home() {
                     x={win.x}
                     y={win.y}
                     zIndex={win.zIndex}
-                    onClose={() => closeChatWindow(win.roomId)}
+                    exitChatRoom={() => closeChatWindow(win.roomId)}
                     onMove={(x, y) => moveChatWindow(win.roomId, x, y)}
                     onFocus={() => focusChatWindow(win.roomId)}
                 />

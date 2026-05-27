@@ -14,6 +14,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import com.chat.castledragon.domain.ChatDTO;
 import com.chat.castledragon.domain.PayloadConnectUserDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
+import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
@@ -24,7 +25,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-public class ChatHandler extends TextWebSocketHandler {
+public class WsHandler extends TextWebSocketHandler {
 
 	private final ChatService chatService;
 	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
@@ -47,7 +48,7 @@ public class ChatHandler extends TextWebSocketHandler {
 
 	//	========== 생성자 주입 ==========================================================================================
 	//	메시지 저장/읽음 처리 같은 비즈니스 로직은 Service에게 맡기기 위해 Spring이 넣어준 ChatService를 보관한다.
-	public ChatHandler(ChatService chatService) {
+	public WsHandler(ChatService chatService) {
 		this.chatService = chatService;
 
 		// chatService를 생성자로 받습니다.
@@ -77,29 +78,41 @@ public class ChatHandler extends TextWebSocketHandler {
 	// TextWebSocketHandler안에 handleTextMessage내장 메소드 존재. 그래서 @Override 붙임. 반드시 약속된 메서드인 handleTextMessage를 입구로 써야 합니다.
 	@Override // --> 부모 클래스에 이미 있는 메서드를 내가 원하는 방식으로 다시 작성한다.
 	protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+		WebSocketDTO dto = null;
 
-		log.info("WebSocket_msg 도착 : {}", message.getPayload());
+		try {
 
-		//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
-		WebSocketDTO dto = objectMapper.readValue(message.getPayload(), WebSocketDTO.class);
+			log.info("WebSocket_msg 도착 : {}", message.getPayload());
 
-		if (dto.getWsType() == null) {
-			log.warn("WebSocket type 없음: {}", message.getPayload());
-			return;
-		}
+			//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
+			dto = objectMapper.readValue(message.getPayload(), WebSocketDTO.class);
 
-		switch (dto.getWsType()) {
-		case "ENTER_ROOM" -> handleEnterRoom(session, dto);
-		case "SEND_MSG" -> handleSendMessage(session, dto);
-		case "READ_MSG" -> handleReadMessage(session, dto);
-		case "CONNECT_USER" -> handleConnectUser(session, dto);
-		default -> {
-			log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
-			responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
-		}
+			if (dto.getWsType() == null) {
+				log.warn("WebSocket type 없음: {}", message.getPayload());
+				return;
+			}
 
-		}
+			switch (dto.getWsType()) {
+			case "ENTER_ROOM" -> handleEnterRoom(session, dto);
+			case "SEND_MSG" -> handleSendMessage(session, dto);
+			case "READ_MSG" -> handleReadMessage(session, dto);
+			case "CONNECT_USER" -> handleConnectUser(session, dto);
+			case "EXIT_ROOM" -> handleExitRoom(session, dto);
+			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
+			default -> {
+				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
+				responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
+			}// default
 
+			}// switch-case
+
+		} catch (Exception e) {
+			log.error("WebSocket 메시지 처리 실패: {}", message.getPayload(), e);
+
+			if (dto != null && session.isOpen()) {
+				responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
+			}
+		}// try-catch : 이렇게 하면 잘못된 payload가 와도 서버가 FAIL을 보내고, WebSocket 연결 자체는 최대한 유지할 수 있어.
 	} // handleTextMessage 끝.
 
 	//	====== 유저 접속 ============================================================================================================
@@ -194,6 +207,33 @@ public class ChatHandler extends TextWebSocketHandler {
 		//		responseOk(session, dto, "READ_MSG_OK", payload);
 	}
 
+	//	====== 채팅방 닫기 ===========================================================================================================
+	private void handleExitRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadExitRoomDTO payload = convertPayload(dto, PayloadExitRoomDTO.class);
+
+		if (payload.getRoomId() == null || payload.getUserId() == null) {
+			responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
+			return;
+		}
+
+		Map<Long, WebSocketSession> userMap = roomSessions.get(payload.getRoomId());
+
+		log.info("exit -> userMap : {}", userMap);
+		log.info("EXIT 전 {}번방 접속 유저 : {}", payload.getRoomId(), userMap == null ? null : userMap.keySet());
+		if (userMap != null) {
+			userMap.remove(payload.getUserId());
+
+			if (userMap.isEmpty()) {
+				roomSessions.remove(payload.getRoomId());
+			}
+		}
+		Map<Long, WebSocketSession> afterMap = roomSessions.get(payload.getRoomId()); // 확인용 Map
+
+		log.info("EXIT 후 {}번방 접속 유저 : {}", payload.getRoomId(), afterMap == null ? null : afterMap.keySet());
+		log.info("{}번 유저 {}번방 Exit 처리", payload.getUserId(), payload.getRoomId());
+		responseOk(session, dto, "EXIT_ROOM_OK", payload);
+	}
+
 	//	====== broadcast ===========================================================================================================
 	private void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
 		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
@@ -262,7 +302,6 @@ public class ChatHandler extends TextWebSocketHandler {
 	//	====== ws 연결 종료 ===========================================================================================================
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-
 		PayloadConnectUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
 		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
 		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
