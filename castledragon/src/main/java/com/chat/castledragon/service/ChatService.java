@@ -1,10 +1,12 @@
 package com.chat.castledragon.service;
 
 import java.util.List;
+import java.util.Set;
 
 import com.chat.castledragon.domain.ChatDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
+import com.chat.castledragon.domain.PayloadSendMessageDTO;
 
 public interface ChatService {
 	EnterRoomResponseDTO enterRoom(Long senderId, Long targetUserId);
@@ -16,4 +18,6 @@ public interface ChatService {
 	void updateLastRead(Long roomId, Long userId, Long lastReadMessageId);
 
 	List<ChatRoomListDTO> getMyChatRooms(Long userId);
+
+	ChatDTO sendMessage(PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
 }

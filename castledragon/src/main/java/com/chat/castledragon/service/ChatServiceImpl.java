@@ -1,15 +1,19 @@
 package com.chat.castledragon.service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.chat.castledragon.cache.RoomMemberCache;
 import com.chat.castledragon.domain.ChatDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.ChatRoomsDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
+import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.mapper.ChatMapper;
 import com.chat.castledragon.mapper.UserMapper;
 
@@ -25,26 +29,44 @@ public class ChatServiceImpl implements ChatService {
 	@Autowired
 	UserMapper userMapper;
 
+	@Autowired
+	RoomMemberCache roomMemberCache;
+
 	@Override
 	@Transactional
 	public EnterRoomResponseDTO enterRoom(Long senderId, Long targetUserId) {
 
 		// 1. 기존 room 조회
 		Long roomId = chatMapper.findRoomId(senderId, targetUserId);
+		boolean isNewRoom = false;
 
 		if (roomId == null) {
 			ChatRoomsDTO room = new ChatRoomsDTO();
 			room.setRoomType("DIRECT");
 			room.setRoomStatus("ACTIVE");
+
 			log.info("채팅방 새로 생성 : {}", room);
 
 			chatMapper.createRoom(room);
 			roomId = room.getRoomId();
+
 			log.info("새로운 채팅방의 newRoomId : {}", roomId);
 
 			chatMapper.insertRoomMember(roomId, senderId);
 			chatMapper.insertRoomMember(roomId, targetUserId);
+
+			roomMemberCache.cacheRoomMembers(roomId, Set.of(senderId, targetUserId));
+
+			isNewRoom = true;
+
 			log.info("roomId={}  user1 : {}, user2 : {} 추가", roomId, senderId, targetUserId);
+		}
+
+		if (!isNewRoom) {
+			Long finalRoomId = roomId;
+			roomMemberCache.getOrLoadRoomMembers(finalRoomId, () -> chatMapper.findActiveRoomMemberIds(finalRoomId));
+			// 여기서 finalRoomId를 쓰는 이유는 람다 안에서 사용하는 지역 변수는 Java에서 effectively final이어야 하기 때문이야. 
+			// roomId는 위에서 값이 바뀌었으니 람다 안에서 바로 쓰면 오류가 날 수 있어.
 		}
 
 		// 2. 메시지 조회. --> if 다음 else 안 쓰는 이유? 1. nesting(중첩)때문에.가독성저하.조건흐름추적어려움.  2.Pyramid of Doom형태로 else의 else의 else...가 되버리기 때문.
@@ -64,6 +86,40 @@ public class ChatServiceImpl implements ChatService {
 		log.info("최종 resDTO : {}", resDTO);
 
 		return resDTO;
+	}
+
+	@Override
+	@Transactional
+	public ChatDTO sendMessage(PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+		Long roomId = payload.getRoomId();
+		Long senderId = payload.getSenderId();
+
+		ChatDTO chat = new ChatDTO();
+		chat.setRoomId(roomId);
+		chat.setSenderId(senderId);
+		chat.setMsgText(payload.getMsgText());
+
+		chatMapper.insertMessage(chat);
+
+		// 방 멤버 전체를 Redis에서 가져온다. 없으면 DB에서 가져와 Redis에 올린다.
+		Set<Long> roomMemberIds = roomMemberCache.getOrLoadRoomMembers(roomId, () -> chatMapper.findActiveRoomMemberIds(roomId));
+
+		// 현재 방을 보고 있는 사람들은 메시지를 즉시 받은 상태니까 읽은 사람으로 본다. 보낸 사람도 자기 메시지는 당연히 읽은 상태니까 추가한다.
+		Set<Long> readUserIds = new HashSet<>(viewingUserIds);
+		readUserIds.add(senderId);
+
+		readUserIds.retainAll(roomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
+
+		long unreadCount = roomMemberIds.size() - readUserIds.size(); // 안 읽은 사람 수 계산.
+
+		if (unreadCount < 0) {
+			unreadCount = 0;
+		}
+
+		chat.setSenderLoginId(payload.getSenderLoginId());
+		chat.setUnreadCount(unreadCount);
+
+		return chat;
 	}
 
 	@Override

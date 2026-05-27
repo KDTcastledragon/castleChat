@@ -1,6 +1,8 @@
 package com.chat.castledragon.websocket;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
@@ -10,6 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.chat.castledragon.domain.ChatDTO;
+import com.chat.castledragon.domain.PayloadConnectUserDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
@@ -40,6 +43,7 @@ public class ChatHandler extends TextWebSocketHandler {
 	//	      └─ WebSocketSession
 
 	//	ConcurrentHashMap 왜 씀?? 일반 HashMap은 여러 thread가 동시에 수정하면 문제가 생길 수 있습니다.그래서 thread-safe한 Map인 ConcurrentHashMap씀. 동시에 여러 요청이 건드려도 일반 HashMap보다 안전한 Map
+	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
 
 	//	========== 생성자 주입 ==========================================================================================
 	//	메시지 저장/읽음 처리 같은 비즈니스 로직은 Service에게 맡기기 위해 Spring이 넣어준 ChatService를 보관한다.
@@ -55,7 +59,7 @@ public class ChatHandler extends TextWebSocketHandler {
 	//	====== 연결 이후 메소드 ===========================================================================================================
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
-		log.info("WebSocket 연결 성공 : {}", session);
+		log.info("ws 연결 성공 : id▶{}   uri▶{}", session.getId(), session.getUri());
 	}
 
 	// ======= payload 변환 helper ==================================================
@@ -88,6 +92,7 @@ public class ChatHandler extends TextWebSocketHandler {
 		case "ENTER_ROOM" -> handleEnterRoom(session, dto);
 		case "SEND_MSG" -> handleSendMessage(session, dto);
 		case "READ_MSG" -> handleReadMessage(session, dto);
+		case "CONNECT_USER" -> handleConnectUser(session, dto);
 		default -> {
 			log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
 			responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
@@ -96,6 +101,22 @@ public class ChatHandler extends TextWebSocketHandler {
 		}
 
 	} // handleTextMessage 끝.
+
+	//	====== 유저 접속 ============================================================================================================
+	private void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadConnectUserDTO payload = convertPayload(dto, PayloadConnectUserDTO.class);
+
+		if (payload.getUserId() == null || payload.getLoginId() == null) {
+			log.warn("아이디 없이 접속 경고 : {} / {} ", payload.getUserId(), payload.getLoginId());
+			responseFail(session, dto, "CONNECT_USER_FAIL", "UserId가 없습니다.");
+			return;
+		}
+
+		log.info("{}-({})님이 접속하셨습니다.", payload.getLoginId(), payload.getUserId());
+		connectedUserSessions.put(session, payload);
+		responseOk(session, dto, "CONNECT_USER_OK", payload);
+
+	}
 
 	//	====== 채팅방 입장 ===========================================================================================================
 	private void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -123,18 +144,27 @@ public class ChatHandler extends TextWebSocketHandler {
 			return;
 		}
 
-		ChatDTO chat = new ChatDTO();
+		//		ChatDTO chat = new ChatDTO();
 
 		try {
-			Long messageId = chatService.insertMessage(payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
 
-			chat.setMessageId(messageId);
-			chat.setRoomId(payload.getRoomId());
-			chat.setSenderId(payload.getSenderId());
-			chat.setSenderLoginId(payload.getSenderLoginId());
-			chat.setMsgText(payload.getMsgText());
+			Set<Long> viewingUserIds = getViewingUserIds(payload.getRoomId());
 
-			chat.setUnreadCount(null);
+			ChatDTO chat = chatService.sendMessage(payload, viewingUserIds);
+
+			broadcastToRoom(payload.getRoomId(), "MSG_SENDED", chat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
+
+			//			Long messageId = chatService.insertMessage(payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
+			//			chat.setMessageId(messageId);
+			//			chat.setRoomId(payload.getRoomId());
+			//			chat.setSenderId(payload.getSenderId());
+			//			chat.setSenderLoginId(payload.getSenderLoginId());
+			//			chat.setMsgText(payload.getMsgText());
+			//			chat.setUnreadCount(null);
+			//			ChatHandler는 insertMessage 직접 호출하지 않는다.
+			//			ChatHandler는 ChatDTO new 하지 않는다.
+			//			ChatHandler는 viewingUserIds만 구해서 Service에 넘긴다.
+			//			Service가 메시지 저장 + unreadCount 계산 + ChatDTO 조립을 한다.
 
 			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", payload.getSenderId(), payload.getRoomId(), payload.getMsgText());
 
@@ -143,8 +173,6 @@ public class ChatHandler extends TextWebSocketHandler {
 			responseFail(session, dto, "MSG_SEND_FAIL", "메시지 저장 실패");
 			return;
 		}
-
-		broadcastToRoom(payload.getRoomId(), "MSG_SENDED", chat, dto.getRequestId());
 		//		responseOk(session, dto, "SEND_MSG_OK", chat);
 	}
 
@@ -235,6 +263,8 @@ public class ChatHandler extends TextWebSocketHandler {
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
 
+		PayloadConnectUserDTO connectedUser = connectedUserSessions.remove(session);
+
 		roomSessions.forEach((roomId, userMap) -> {
 
 			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
@@ -244,9 +274,20 @@ public class ChatHandler extends TextWebSocketHandler {
 				roomSessions.remove(roomId);
 			}
 		});
-
-		log.info("WebSocket 연결 종료");
+		log.info("ws 연결 종료 : id▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.
+
+	private Set<Long> getViewingUserIds(Long roomId) {
+		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+
+		if (sessions == null || sessions.isEmpty()) {
+			return Set.of();
+		}
+
+		sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
+
+		return new HashSet<>(sessions.keySet());
+	}
 
 } // ChatHandler 끝.
 

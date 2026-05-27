@@ -118,6 +118,13 @@
 	ORDER BY lastMessageTime DESC
 	
 	</select>
+	
+	<select id="findActiveRoomMemberIds" resultType="long">
+	    SELECT user_id
+	    FROM room_members
+	    WHERE room_id = #{roomId}
+	      AND left_at IS NULL
+	</select>
 		
 		<!-- <select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
 	

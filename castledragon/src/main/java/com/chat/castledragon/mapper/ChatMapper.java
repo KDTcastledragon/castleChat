@@ -28,6 +28,8 @@ public interface ChatMapper {
 
 	List<ChatRoomListDTO> getMyChatRooms(Long userId);
 
+	List<Long> findActiveRoomMemberIds(Long roomId);
+
 	//	void insertMessage(@Param("roomId") Long roomId, @Param("senderId") Long senderId, @Param("msgText") String msgText); pk바로 주입하는 기법 사용해서 legacy로 변경.
 	//	void insertRoomMember(Long roomId, Long userId);
 	//	Long findRoomId(Long user1, Long user2);

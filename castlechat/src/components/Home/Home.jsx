@@ -58,8 +58,20 @@ function Home() {
         webSocket.onopen = async () => { // async라서 useEffect안쪽에 callback함수 못 넣는다. useEffect는 cleaup function을 return해야 할수도있다. 바깥으로 빼면, parameter전달필요 , stale closure 위험, 의존성 증가 등이 생김.
             // --> onopen 호출하면 연결된다 (x)  / 연결이 성공하면 onopen에 저장된 함수가 "자동으로 실행된다" (o). 현재는 익명함수
             // wsRef.current = webSocket; // 연결후에 집어넣을 경우, onopen전에 sendMsg할수도있어서 위험함. 그래서 new Ws하자마자 위에서 바로 ㄱㄱ.
+
             isWsConnectedRef.current = true; // 연결 상태 false --> true
+
             console.log(`webSocket연결 완료.`);
+
+            wsRef.current.send(JSON.stringify({
+                requestId: crypto.randomUUID(),
+                wsType: "CONNECT_USER",
+                payload: {
+                    userId: Number(userID),
+                    loginId: loginID
+                }
+            }))
+
         }
 
         webSocket.onmessage = (evt) => {
@@ -67,6 +79,11 @@ function Home() {
             console.log(`ws 수신`, wsEvt);
 
             switch (wsEvt.wsType) {
+                case "CONNECT_USER_OK":
+                    console.log(`접속 성공`);
+                    break;
+
+
                 case "ENTER_ROOM_OK":
                     console.log(`방 접속 성공`);
                     break;
@@ -84,7 +101,7 @@ function Home() {
                 }
 
                 default:
-                    alert(`알수없는 타입`);
+                    // alert(`알수없는 타입`);
                     break;
             }
 
