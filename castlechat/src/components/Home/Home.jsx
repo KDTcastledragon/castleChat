@@ -2,7 +2,8 @@ import './Home.css';
 
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
-import LogIn from '../LogIn/LogIn';
+import { useNavigate } from 'react-router-dom';
+// import LogIn from '../LogIn/LogIn';
 import ChatBox from '../Chattings/ChatBox';
 
 function Home() {
@@ -18,7 +19,8 @@ function Home() {
     const roomHandlersRef = useRef({});
 
     const [enteredID, setEnteredID] = useState('');
-
+    const [enteredPw, setEnteredPw] = useState('');
+    const navigator = useNavigate();
 
 
     // ==== 채팅방 옮기기 기본 설정 ===============================================================================
@@ -146,15 +148,11 @@ function Home() {
                 if (e.response.status) {
                     switch (e.response.status) {
                         case 401:
-                            alert('아이디 없음');
+                            alert('아이디 또는 비밀번호가 틀립니다.');
                             break;
 
                         case 403:
                             alert('이용이 제한된 사용자입니다.');
-                            break;
-
-                        case 409:
-                            alert(`비밀번호가 틀립니다.`);
                             break;
 
                         default:
@@ -250,15 +248,32 @@ function Home() {
                     :
                     <>
                         <div className='loginForm'>
-                            ID : <input
-                                type="text"
-                                value={enteredID}
-                                onChange={(e) => setEnteredID(e.target.value)}
-                            />
+                            <div>
+                                <span>ID : </span>
+                                <input
+                                    type="text"
+                                    value={enteredID}
+                                    onChange={(e) => setEnteredID(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <span>PW : </span>
+                                <input
+                                    type="password"
+                                    value={enteredPw}
+                                    onChange={(e) => setEnteredPw(e.target.value)}
+                                />
+                            </div>
+                            <div className='loginButton'>
+                                <button onClick={() => login(enteredID, enteredPw)}>로그인</button>
+                            </div>
                         </div>
-                        <button onClick={() => login(enteredID)}>로그인</button>
                     </>
                 }
+
+                <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+
+                <div><button onClick={() => navigator('/JoinPage')}>회원가입</button></div>
 
             </div>
 

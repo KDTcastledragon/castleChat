@@ -29,7 +29,16 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
+	
+	/** BCryptPasswordEncoder */
+	implementation 'org.springframework.security:spring-security-crypto'
+	
+	/** → Redis 접속/조작 도구 */
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	
+	/** → HttpSession을 Redis에 저장하게 해주는 Spring Session 기능 */
+	implementation 'org.springframework.session:spring-session-data-redis'
+	
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'

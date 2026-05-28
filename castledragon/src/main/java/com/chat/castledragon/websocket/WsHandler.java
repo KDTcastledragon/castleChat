@@ -18,6 +18,7 @@ import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.PayloadTypingDTO;
+import com.chat.castledragon.domain.UserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -388,6 +389,27 @@ public class WsHandler extends TextWebSocketHandler {
 		sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
 
 		return new HashSet<>(sessions.keySet());
+	}
+
+	//	로그인 인증 =======================================================
+	private UserDTO getLoginUser(WebSocketSession session) {
+		Object loginUser = session.getAttributes().get("LOGIN_USER");
+
+		if (loginUser instanceof UserDTO user) {
+			return user;
+		}
+
+		return null;
+	}
+
+	private Long getLoginUserId(WebSocketSession session) {
+		UserDTO loginUser = getLoginUser(session);
+
+		if (loginUser == null) {
+			return null;
+		}
+
+		return Long.valueOf(loginUser.getUserId());
 	}
 
 } // ChatHandler 끝.

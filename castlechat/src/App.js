@@ -6,8 +6,7 @@ import Pather from './components/Pather/Pather';
 function App() {
   return (
     <div className="App">
-      {/* <Pather></Pather> */}
-      <Home></Home>
+      <Pather></Pather>
     </div>
   );
 }

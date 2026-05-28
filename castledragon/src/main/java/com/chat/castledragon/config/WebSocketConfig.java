@@ -4,16 +4,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 import com.chat.castledragon.websocket.WsHandler;
 
 @Configuration
 @EnableWebSocket
-public class ChatWebSocketConfig implements WebSocketConfigurer { // WebSocketConfig 이름은 중요하지 않다. 위 2개의 @어노테이션이 중요함.
+public class WebSocketConfig implements WebSocketConfigurer { // WebSocketConfig 이름은 중요하지 않다. 위 2개의 @어노테이션이 중요함.
 
 	private final WsHandler wsHandler;
 
-	public ChatWebSocketConfig(WsHandler wsHandler) {
+	public WebSocketConfig(WsHandler wsHandler) {
 		this.wsHandler = wsHandler;
 	}
 
@@ -21,6 +22,7 @@ public class ChatWebSocketConfig implements WebSocketConfigurer { // WebSocketCo
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 
 		registry.addHandler(wsHandler, "/ws/chat").setAllowedOrigins("*"); // 어떤 Origin에서 온 WebSocket 연결을 허용할 것인가?
+		registry.addHandler(wsHandler, "/ws/chat").addInterceptors(new HttpSessionHandshakeInterceptor()).setAllowedOrigins("*");
 	}
 
 	//	여기서 의미는:

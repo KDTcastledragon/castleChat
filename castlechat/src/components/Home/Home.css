@@ -120,15 +120,21 @@
     position: absolute;
     background-color: rgb(232, 149, 149);
     width: 300px;
-    height: 100px;
+    height: 300px;
     top: 100px;
     left: 100px;
 }
 
-.loginForm>input {
+.loginForm {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.loginForm>div>input {
     display: inline-block;
     width: 200px;
-    height: 70px;
+    height: 50px;
     font-size: 20px;
 }
 
@@ -159,4 +165,19 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.loginButton {
+    margin: 20px auto;
+    margin-top: 20px;
+    width: 200px;
+    height: 200px;
+    background-color: aqua;
+}
+
+.loginButton>button {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    font-size: 50px;
 }
