@@ -2,13 +2,14 @@ import './Home.css';
 
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom'; //  Navigate : “화면 렌더링 중 조건에 따라 다른 주소로 보내는 컴포넌트”야.
 // import LogIn from '../LogIn/LogIn';
 import ChatBox from '../Chattings/ChatBox';
 
 function Home() {
-    const userID = sessionStorage.getItem('userID');
-    const loginID = sessionStorage.getItem('loginID');
+
+    const [loginUser, setLoginUser] = useState(null);
+    const [isCheckingLogin, setIsCheckingLogin] = useState(true); // “지금 서버에 로그인 상태 확인 중인가?” --> “아직 서버 판정 전이라 로그인폼을 보여주면 안 되는 시간”을 처리하는 장치.
     const [userList, setUserList] = useState([]);
 
     const [chatWindows, setChatWindows] = useState([]);
@@ -18,8 +19,6 @@ function Home() {
 
     const roomHandlersRef = useRef({});
 
-    const [enteredLoginID, setEnteredLoginID] = useState('');
-    const [enteredPassword, setEnteredPassword] = useState('');
     const navigator = useNavigate();
 
 
@@ -50,9 +49,32 @@ function Home() {
         );
     };
 
+    // ====== 로그인 감지 ======================================
+    useEffect(() => {
+        axios.get('/user/isMe')
+            .then((res) => {
+                setLoginUser(res.data);
+            })
+            .catch(() => {
+                setLoginUser(null);
+            })
+            // 성공하든 실패하든 무조건 실행되는 마지막 처리
+            .finally(() => {
+                setIsCheckingLogin(false);
+                // 왜 isCheckingLogin이 필요하냐? 없으면 처음 렌더링 때 문제가 생겨. 
+                // 처음에는 무조건: loginUser = null 이니까, 화면이 바로 로그인 폼을 보여줄 수 있어. --> {loginUser ? 로그인화면 : 로그인폼}
+                // 근데 사실 서버 확인 중일 뿐인데, 0.1초 동안 로그인폼이 깜빡 보일 수 있어.
+                // e.g.) 처음 렌더링: loginUser null → 로그인폼 표시
+                // e.g.) /user/me 성공 → loginUser 있음 → 로그인화면 표시
+                // 그러면 사용자는 새로고침할 때 로그인 폼이 순간적으로 보이는 이상한 UX를 볼 수 있어.
+                // 그래서 isCheckingLogin으로 중간 상태를 하나 더 만드는 거야.
+
+            });
+    }, []);
+
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
-        if (!userID || !loginID) return;
+        if (!loginUser) return;
 
         // 만약 new Ws를 바깥으로 뺀다면? --> React 생명주기랑 충돌해서 터짐. 컴포넌트 랜더링 될때마다 연결함.
         const webSocket = new WebSocket(`ws://localhost:8080/ws/chat`); // roomId=${roomId}&userId=${userID} 삭제. query string --> ENTER 이벤트송신으로 변경.
@@ -71,8 +93,7 @@ function Home() {
                 requestId: crypto.randomUUID(),
                 wsType: "CONNECT_USER",
                 payload: {
-                    userId: Number(userID),
-                    loginId: loginID
+                    // publicId: publicId
                 }
             }))
 
@@ -131,60 +152,16 @@ function Home() {
         return () => {
             webSocket.close();
         }
-    }, [])
+    }, [loginUser])
 
-    // =====[로그인/로그아웃 함수]======================================================
-    function login(enteredLoginID, enteredPassword) {
-        const data = { loginId: enteredLoginID, password: enteredPassword }
 
-        axios
-            .post(`/user/login`, data)
-            .then((res) => {
-                sessionStorage.setItem('userId', res.data.userId); // res안의 data안에 정보가 있다.
-                sessionStorage.setItem('nickname', res.data.nickname);
-                window.location.reload();
-
-            }).catch((e) => {
-                if (e.response.status) {
-                    switch (e.response.status) {
-                        case 401:
-                            alert('아이디 또는 비밀번호가 틀립니다.');
-                            break;
-
-                        case 403:
-                            alert('이용이 제한된 사용자입니다.');
-                            break;
-
-                        default:
-                            alert(`로그인 오류`);
-                            console.log(e);
-                            break;
-                    }
-                } else {
-                    alert(`알 수 없는 오류`);
-                }
-            });
-
-    }
-
-    function logout() {
-        if (wsRef.current) {
-            wsRef.current.close();
-            wsRef.current = null;
-            console.log(`로그아웃 및 ws 연결종료`);
-        }
-
-        isWsConnectedRef.current = false;
-        sessionStorage.clear();
-        window.location.reload();
-    }
 
     // ==== 채팅방 ===================================================
     const openChattingRoom = async (targetUser) => {
         try {
             const res = await axios.post(`/chat/enterRoom`, {
-                senderId: userID,
-                targetUserId: targetUser.userId
+                // senderId: publicId,
+                targetPublicId: targetUser.publicId
             });
 
             const openedRoomId = res.data.roomId;
@@ -195,7 +172,7 @@ function Home() {
                 wsType: "ENTER_ROOM",
                 payload: {
                     roomId: openedRoomId,
-                    userId: Number(userID)
+                    // publicId: publicId
                 }
             }));
 
@@ -233,40 +210,42 @@ function Home() {
         }
     };
 
+    function logout() {
+        if (wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
+            console.log(`로그아웃 및 ws 연결종료`);
+        }
+
+        isWsConnectedRef.current = false;
+        sessionStorage.clear();
+        window.location.reload();
+    }
+
+    if (isCheckingLogin) {
+        return <div>로그인 확인 중...</div>;
+    }
+
+    if (!loginUser) {
+        return <Navigate to="/login" replace />;
+    }
+
     // ===< return >===========================================================================================================
     return (
         <div className='HomeContainer'>
 
             {/**============== 로그인 구역==================== */}
             <div className='loginSection'>
-                {loginID ?
+                {loginUser ?
                     <>
-                        <div className='loginForm'> {loginID} 님 -- ({userID})</div>
+                        <div className='loginForm'> publicId 님 안녕하세요.</div>
 
                         <button onClick={() => logout()}>로그아웃</button>
                     </>
                     :
                     <>
                         <div className='loginForm'>
-                            <div>
-                                <span>ID : </span>
-                                <input
-                                    type="text"
-                                    value={enteredLoginID}
-                                    onChange={(e) => setEnteredLoginID(e.target.value)}
-                                />
-                            </div>
-                            <div>
-                                <span>PW : </span>
-                                <input
-                                    type="password"
-                                    value={enteredPassword}
-                                    onChange={(e) => setEnteredPassword(e.target.value)}
-                                />
-                            </div>
-                            <div className='loginButton'>
-                                <button onClick={() => login(enteredLoginID, enteredPassword)}>로그인</button>
-                            </div>
+                            <div>오류</div>
                         </div>
                     </>
                 }
@@ -280,10 +259,10 @@ function Home() {
             {/**========= 유저 목록 및 채팅 오픈 버튼=================== */}
             <div>
                 {userList.length > 0 ? userList.map((d, i) => (
-                    <span key={d.userId}> {/**Fragment에 key를 줘야한다...why? 나중에 질문하자. */}
+                    <span key={i}> {/**Fragment에 key를 줘야한다...why? 나중에 질문하자. */}
                         <button
                             onClick={() => openChattingRoom(d)}>
-                            {d.loginId}-({d.userId})
+                            {d.public_id}-({d.nickname})
                         </button><span>&nbsp;&nbsp;&nbsp;</span>
                     </span>
                 ))

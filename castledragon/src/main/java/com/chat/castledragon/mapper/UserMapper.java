@@ -15,7 +15,7 @@ public interface UserMapper {
 
 	String getUserLoginId(Long userId);
 
-	int join(@Param("loginId") String loginId, @Param("password") String encodedPassword, @Param("nickname") String nickname, @Param("friendCode") String friendCode);
+	int join(@Param("publicId") String publicId, @Param("loginId") String loginId, @Param("password") String password, @Param("nickname") String nickname, @Param("friendCode") String friendCode);
 
 	int changePassword(String id, String encodedNewPassword);
 

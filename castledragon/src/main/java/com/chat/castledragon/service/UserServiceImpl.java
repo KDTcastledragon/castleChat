@@ -3,6 +3,7 @@ package com.chat.castledragon.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,9 +28,20 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserDTO login(String id, String pw) {
-		UserDTO userPw = userMapper.getUser(id);
-		return userPw;
+	public UserDTO login(String loginId, String password) {
+		UserDTO user = userMapper.getUser(loginId);
+
+		if (user == null) {
+			log.info("id 없음");
+			return null;
+		}
+
+		if (!encoder.matches(password, user.getPassword())) {
+			log.info("pw 일치하지않음");
+			return null;
+		}
+
+		return user;
 	}
 
 	@Override
@@ -48,10 +60,35 @@ public class UserServiceImpl implements UserService {
 
 		String encodedPassword = encoder.encode(password);
 
-		int joinUser = userMapper.join(loginId, encodedPassword, nickname);
+		String charsNumAlp = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-		log.info("뭐가문제지??? : {} {}", isJoined, encodedPassword);
-		return isJoined > 0;
+		for (int attempt = 0; attempt < 10; attempt++) {
+			String publicId = com.github.f4b6a3.ulid.UlidCreator.getMonotonicUlid().toString();
+
+			StringBuilder friendCodeBuilder = new StringBuilder("#");
+
+			for (int i = 0; i < 7; i++) {
+				int index = java.util.concurrent.ThreadLocalRandom.current().nextInt(charsNumAlp.length());
+
+				friendCodeBuilder.append(charsNumAlp.charAt(index));
+			}
+
+			String friendCode = friendCodeBuilder.toString();
+
+			try {
+				int joinUser = userMapper.join(publicId, loginId, encodedPassword, nickname, friendCode);
+
+				log.info("회원가입 완료 publicId={}, friendCode={}", publicId, friendCode);
+
+				return joinUser > 0;
+
+			} catch (DuplicateKeyException e) {
+				log.warn("publicId/friendCode 중복 발생. 재시도 attempt={}, publicId={}, friendCode={}", attempt + 1, publicId, friendCode);
+			}// try-catch
+
+		}// for
+
+		throw new IllegalStateException("publicId/friendCode 생성 실패");
 
 	}
 

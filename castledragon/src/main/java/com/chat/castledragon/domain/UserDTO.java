@@ -2,8 +2,6 @@ package com.chat.castledragon.domain;
 
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,7 +14,6 @@ public class UserDTO {
 
 	private String loginId;
 
-	@JsonIgnore // JSON으로 응답할 때 이 필드는 빼라는 뜻이야.
 	private String password;
 
 	private String publicId;

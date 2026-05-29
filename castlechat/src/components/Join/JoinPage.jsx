@@ -1,9 +1,9 @@
 import './JoinPage.css';
 import axios from 'axios';
-import { useState, useEffect, useRef } from 'react';
-import Calendar from 'react-calendar';
+import { useState, useEffect } from 'react';
 import 'react-calendar/dist/Calendar.css';
 import { useNavigate } from 'react-router-dom';
+// import Calendar from 'react-calendar';
 // import DatePicker from 'react-datepicker';
 // import "react-datepicker/dist/react-datepicker.css";
 
@@ -40,7 +40,7 @@ function JoinPage() {
     const loginIdRegex = /^[a-zA-Z0-9]*$/;
     const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).*$/;
     const noKorPwRegex = /^[^가-힣ㄱ-ㅎㅏ-ㅣ]*$/;
-    const nicknameRegex = /^[가-힣a-zA-Z]*$/;
+    const nicknameRegex = /^[가-힣a-zA-Z0-9]*$/;
     // const pwRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,15}$/;
     // const pwRegex = /[!@#$%^&*(),.?":{}|<>]/;
     // const nameRegex = /^[가-힣a-zA-Z]*$/;

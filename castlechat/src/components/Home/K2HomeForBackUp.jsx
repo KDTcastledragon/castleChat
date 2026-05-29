@@ -2,7 +2,7 @@ import './Home.css';
 
 import axios from 'axios';
 import { useEffect, useState } from 'react';
-import LogIn from '../LogIn/LogIn';
+import LogIn from '../LogIn/LoginPage';
 import ChatBox from '../Chattings/ChatBox';
 
 function K2HomeForBackUp() {

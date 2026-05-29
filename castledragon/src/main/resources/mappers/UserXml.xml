@@ -5,14 +5,15 @@
   
   <mapper namespace="com.chat.castledragon.mapper.UserMapper">
   
-  <insert id="join">
-    	insert into user(id,password,user_name,birth,phone_number)
-    	values(
-    		#{loginId},
-    		#{password},
-    		#{nickname},
-    	)
-    </insert>
+ 	<insert id="join">
+	INSERT INTO users(public_id, login_id, password, nickname, friend_code)
+	VALUES(#{publicId}, #{loginId}, #{password}, #{nickname}, #{friendCode})
+	</insert>
+	
+	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
+  	select * from users where login_id = #{id};
+  	</select>
+	
     
      <update id="changePassword">
     	update user set password = #{encodedNewPassword} where id = #{id}
@@ -39,9 +40,6 @@
     VALUES ('DIRECT', 'ACTIVE')
 	</insert>
 	
-	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
-  	select * from users where login_id = #{id};
-  	</select>
 	
   
   </mapper>

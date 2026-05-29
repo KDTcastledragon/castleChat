@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.chat.castledragon.domain.LoginRequestDTO;
+import com.chat.castledragon.domain.LoginResponseDTO;
+import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.UserDTO;
 import com.chat.castledragon.service.UserService;
 
@@ -29,27 +32,42 @@ public class UserController {
 	PasswordEncoder pwEncoder;
 
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody Map<String, Object> data, HttpSession session) {
-		log.info("loginData :" + data);
-		String loginId = (String) data.get("loginId");
-		String password = (String) data.get("password");
+	public ResponseEntity<?> login(@RequestBody LoginRequestDTO data, HttpSession session) {
+		log.info("{} login 시도  :", data.getLoginId());
 
-		UserDTO user = userService.login(loginId, password);
+		UserDTO user = userService.login(data.getLoginId(), data.getPassword());
 
 		if (user == null) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
 		}
 
-		session.setAttribute("LOGIN_USER", user);
+		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getProfileImg());
 
-		return ResponseEntity.ok(user);
+		session.setAttribute("LOGIN_USER", sessionUser);
+
+		LoginResponseDTO loginResponse = new LoginResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+
+		return ResponseEntity.ok(loginResponse);
 	}// login
+
+	@PostMapping("/isMe")
+	public ResponseEntity<?> isMe(HttpSession session) {
+		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (loginUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		LoginResponseDTO isMeTrue = new LoginResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), null, loginUser.getProfileImg()); // friCode = null
+
+		return ResponseEntity.ok(isMeTrue);
+	}// isMe
 
 	@PostMapping("/logout")
 	public ResponseEntity<?> logout(HttpSession session) {
 		session.invalidate();
 		return ResponseEntity.ok().build();
-	}
+	}// logout
 
 	// ====[중복체크]========================================================================================
 	@PostMapping("/loginIdDuplicateCheck")
@@ -69,20 +87,14 @@ public class UserController {
 		} catch (Exception e) {
 			throw e;
 		}
-	}// loginIdDuplicateCheck
-
-	private String createFriendCode() {
-		int number = java.util.concurrent.ThreadLocalRandom.current().nextInt(0, 100_000_000);
-
-		return String.format("#%08d", number);
-	}
+	}// DupCheck
 
 	// ====[회원가입]========================================================================================
 	@PostMapping("/join")
 	public ResponseEntity<?> join(@RequestBody UserDTO data) {
 		try {
 			log.info("");
-			log.info("join data : {}", data);
+			log.info("join data : {} {} {}", data.getLoginId(), data.getPassword(), data.getNickname());
 
 			String loginId = data.getLoginId();
 			String password = data.getPassword();
