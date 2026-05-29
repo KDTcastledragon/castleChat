@@ -18,8 +18,8 @@ function Home() {
 
     const roomHandlersRef = useRef({});
 
-    const [enteredID, setEnteredID] = useState('');
-    const [enteredPw, setEnteredPw] = useState('');
+    const [enteredLoginID, setEnteredLoginID] = useState('');
+    const [enteredPassword, setEnteredPassword] = useState('');
     const navigator = useNavigate();
 
 
@@ -134,14 +134,14 @@ function Home() {
     }, [])
 
     // =====[로그인/로그아웃 함수]======================================================
-    function login(id1, pw1) {
-        const data = { id: id1, pw: pw1 }
+    function login(enteredLoginID, enteredPassword) {
+        const data = { loginId: enteredLoginID, password: enteredPassword }
 
         axios
             .post(`/user/login`, data)
             .then((res) => {
-                sessionStorage.setItem('userID', res.data.userId); // res안의 data안에 정보가 있다.
-                sessionStorage.setItem('loginID', res.data.loginId);
+                sessionStorage.setItem('userId', res.data.userId); // res안의 data안에 정보가 있다.
+                sessionStorage.setItem('nickname', res.data.nickname);
                 window.location.reload();
 
             }).catch((e) => {
@@ -252,28 +252,28 @@ function Home() {
                                 <span>ID : </span>
                                 <input
                                     type="text"
-                                    value={enteredID}
-                                    onChange={(e) => setEnteredID(e.target.value)}
+                                    value={enteredLoginID}
+                                    onChange={(e) => setEnteredLoginID(e.target.value)}
                                 />
                             </div>
                             <div>
                                 <span>PW : </span>
                                 <input
                                     type="password"
-                                    value={enteredPw}
-                                    onChange={(e) => setEnteredPw(e.target.value)}
+                                    value={enteredPassword}
+                                    onChange={(e) => setEnteredPassword(e.target.value)}
                                 />
                             </div>
                             <div className='loginButton'>
-                                <button onClick={() => login(enteredID, enteredPw)}>로그인</button>
+                                <button onClick={() => login(enteredLoginID, enteredPassword)}>로그인</button>
                             </div>
                         </div>
                     </>
                 }
 
-                <br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+                <br /><br />
 
-                <div><button onClick={() => navigator('/JoinPage')}>회원가입</button></div>
+                <div className='loginButton'><button onClick={() => navigator('/JoinPage')}>회원가입</button></div>
 
             </div>
 

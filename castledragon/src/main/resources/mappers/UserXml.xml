@@ -4,12 +4,26 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
   <mapper namespace="com.chat.castledragon.mapper.UserMapper">
+  
+  <insert id="join">
+    	insert into user(id,password,user_name,birth,phone_number)
+    	values(
+    		#{loginId},
+    		#{password},
+    		#{nickname},
+    	)
+    </insert>
+    
+     <update id="changePassword">
+    	update user set password = #{encodedNewPassword} where id = #{id}
+    </update>
+    
+    <delete id="withdrawMember">
+    	delete from user where id = #{id}
+    </delete>
+    
   	<select id="friendList" resultType="com.chat.castledragon.domain.UserDTO">
   	call get_friend_list(#{login_id});
-  	</select>
-  	
-  	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
-  	select * from users where login_id = #{id};
   	</select>
   	
   	<select id="getUserLoginId" resultType="java.lang.String">
@@ -24,6 +38,10 @@
     INSERT INTO chat_rooms (room_type, room_status)
     VALUES ('DIRECT', 'ACTIVE')
 	</insert>
+	
+	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
+  	select * from users where login_id = #{id};
+  	</select>
 	
   
   </mapper>

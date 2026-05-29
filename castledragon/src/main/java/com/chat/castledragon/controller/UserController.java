@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,16 +26,18 @@ import lombok.extern.log4j.Log4j2;
 public class UserController {
 	UserService userService;
 
+	PasswordEncoder pwEncoder;
+
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody Map<String, Object> data, HttpSession session) {
 		log.info("loginData :" + data);
-		String id = (String) data.get("id");
-		String pw = (String) data.get("pw");
+		String loginId = (String) data.get("loginId");
+		String password = (String) data.get("password");
 
-		UserDTO user = userService.login(id, pw);
+		UserDTO user = userService.login(loginId, password);
 
 		if (user == null) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("로그인 실패");
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
 		}
 
 		session.setAttribute("LOGIN_USER", user);
@@ -42,20 +45,98 @@ public class UserController {
 		return ResponseEntity.ok(user);
 	}// login
 
-	@PostMapping("/login2")
-	public ResponseEntity<?> login2(@RequestBody Map<String, Object> data) {
-		log.info("loginData :" + data);
-		String id = (String) data.get("id");
-		String pw = (String) data.get("pw");
-
-		UserDTO user = userService.login(id, pw);
-
-		if (user != null) {
-			return ResponseEntity.ok(user);
-		} else {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("잘못된 아이디");
-		}
+	@PostMapping("/logout")
+	public ResponseEntity<?> logout(HttpSession session) {
+		session.invalidate();
+		return ResponseEntity.ok().build();
 	}
+
+	// ====[중복체크]========================================================================================
+	@PostMapping("/loginIdDuplicateCheck")
+	public ResponseEntity<?> idDupCheck(@RequestBody UserDTO data) {
+		try {
+			log.info("");
+
+			String loginId = data.getLoginId() != null ? data.getLoginId() : null;
+
+			boolean isDuplicated = userService.loginIdDuplicateCheck(loginId);
+
+			if (isDuplicated) {
+				return ResponseEntity.status(HttpStatus.CONFLICT).body("conflict");
+			} else {
+				return ResponseEntity.ok().build();
+			}
+		} catch (Exception e) {
+			throw e;
+		}
+	}// loginIdDuplicateCheck
+
+	private String createFriendCode() {
+		int number = java.util.concurrent.ThreadLocalRandom.current().nextInt(0, 100_000_000);
+
+		return String.format("#%08d", number);
+	}
+
+	// ====[회원가입]========================================================================================
+	@PostMapping("/join")
+	public ResponseEntity<?> join(@RequestBody UserDTO data) {
+		try {
+			log.info("");
+			log.info("join data : {}", data);
+
+			String loginId = data.getLoginId();
+			String password = data.getPassword();
+			String nickname = data.getNickname();
+
+			if (loginId == null || password == null || nickname == null) {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("필수값 누락");
+			}
+
+			log.info("회원가입 : {} {} {} {} {}", loginId, password, nickname);// 추후 삭제.
+
+			boolean isJoined = userService.join(loginId, password, nickname);
+
+			log.info("뭐가문제냐구웅웅웅 : {}", isJoined);
+
+			if (isJoined == true) {
+				return ResponseEntity.ok().build();
+
+			} else {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("service 오류");
+			}
+
+		} catch (Exception e) {
+			throw e;
+		}
+	}// join
+
+	//====[비밀번호 변경]==========================================
+	@PostMapping("/changePassword")
+	public ResponseEntity<?> changePassword(@RequestBody Map<String, String> pwData) {
+		try {
+			String id = pwData.get("id");
+			String prevPw = pwData.get("prevPw");
+			String newPw = pwData.get("newPw");
+
+			UserDTO dto = userService.getUser(id);
+
+			log.info("비밀번호 일치? {} {}", prevPw, dto.getPassword());
+
+			if (pwEncoder.matches(prevPw, dto.getPassword())) {
+
+				boolean isChanged = userService.changePassWord(id, newPw);
+				log.info("비밀번호 변경됨? {}", isChanged);
+
+				return ResponseEntity.ok().body(id); // 200
+
+			} else {
+				return ResponseEntity.status(HttpStatus.CONFLICT).body("no match pw"); // 409
+			}
+
+		} catch (Exception e) {
+			throw e;
+		}
+	}//changePassword
 
 	@GetMapping("/allUsers")
 	public ResponseEntity<?> allUsers() {
@@ -65,25 +146,4 @@ public class UserController {
 		return ResponseEntity.ok(list);
 	}
 
-	@PostMapping("/logout")
-	public ResponseEntity<?> logout(HttpSession session) {
-		session.invalidate();
-		return ResponseEntity.ok().build();
-	}
-
-}
-
-//@PostMapping("/friendList")
-//public ResponseEntity<?> friendList(@RequestBody Map<String, Object> data) {
-//	try {
-//		log.info("data for friendList: " + data);
-//		String user_id = (String) data.get("user_id");
-//		List<UserDTO> fri_list = userservice.friendList(user_id);
-//		log.info("id&fri_list : " + user_id + fri_list);
-//
-//		return ResponseEntity.ok(fri_list);
-//
-//	} catch (Exception e) {
-//		throw e;
-//	}
-//}
+}// chgPw

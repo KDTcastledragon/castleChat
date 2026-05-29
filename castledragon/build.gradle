@@ -39,6 +39,9 @@ dependencies {
 	/** → HttpSession을 Redis에 저장하게 해주는 Spring Session 기능 */
 	implementation 'org.springframework.session:spring-session-data-redis'
 	
+	/** public_id 생성을 위한 ULID */
+	implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
+	
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'

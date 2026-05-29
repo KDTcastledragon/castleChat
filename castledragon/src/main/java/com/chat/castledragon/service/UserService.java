@@ -12,4 +12,14 @@ public interface UserService {
 
 	List<UserDTO> allUsers();
 
+	boolean changePassWord(String id, String newPw);
+
+	boolean withdrawMember(String id);
+
+	boolean join(String loginId, String password, String nickname);
+
+	boolean loginIdDuplicateCheck(String id);
+
+	UserDTO getUser(String id);
+
 }

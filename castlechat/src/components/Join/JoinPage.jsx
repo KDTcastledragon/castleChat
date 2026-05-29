@@ -9,11 +9,11 @@ import { useNavigate } from 'react-router-dom';
 
 function JoinPage() {
     const navigator = useNavigate();
-    const [id, setId] = useState('');
+    const [loginId, setLoginId] = useState('');
     const [validId, setValidId] = useState(false);
 
 
-    const [pw, setPw] = useState('');
+    const [password, setPassword] = useState('');
     const [vaildPw, setValidPw] = useState(false);
     const [showPw, setShowPw] = useState(false);
     const [confirmPw, setConfirmPw] = useState('');
@@ -37,13 +37,13 @@ function JoinPage() {
 
     const [activeJoinButton, setActiveJoinButton] = useState(true);
 
-    const idRegex = /^[a-zA-Z0-9]*$/;
-    // const pwRegex = /[!@#$%^&*(),.?":{}|<>]/;
-    // const pwRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,15}$/;
-    const pwRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).*$/;
+    const loginIdRegex = /^[a-zA-Z0-9]*$/;
+    const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).*$/;
     const noKorPwRegex = /^[^가-힣ㄱ-ㅎㅏ-ㅣ]*$/;
-    const nameRegex = /^[가-힣a-zA-Z]*$/;
-    const NicknameRegex = /^[가-힣a-zA-Z]*$/;
+    const nicknameRegex = /^[가-힣a-zA-Z]*$/;
+    // const pwRegex = /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,15}$/;
+    // const pwRegex = /[!@#$%^&*(),.?":{}|<>]/;
+    // const nameRegex = /^[가-힣a-zA-Z]*$/;
     // const phoneNumberRegex = /^010\d{7,8}$/;
 
 
@@ -54,23 +54,23 @@ function JoinPage() {
     // const dayList = Array.from({ length: 31 }, (_, index) => index + 1)
 
     // ** 숫자가 1자리인 경우 앞에 0을 붙임
-    const formatDateNumber = (number) => {
-        return String(number).padStart(2, '0');
-    };
+    // const formatDateNumber = (number) => {
+    //     return String(number).padStart(2, '0');
+    // };
 
     //======================
-    function idDupCheck() {
-        if (id.length < 5 || id.length > 10) {
+    function loginIdDuplicateCheck() {
+        if (loginId.length < 5 || loginId.length > 10) {
             alert('아이디는 5자 이상, 10자 이하여야 합니다.');
             setValidId(false);
-        } else if (!idRegex.test(id)) {
+        } else if (!loginIdRegex.test(loginId)) {
             alert(`아이디는 영문과 숫자만 가능합니다.`);
             setValidId(false);
         } else {
-            const data = { id: id }
+            const data = { loginId: loginId }
 
             axios
-                .post('/user/idDupCheck', data)
+                .post('/user/loginIdDuplicateCheck', data)
                 .then((r) => {
                     alert(`사용가능한 아이디 입니다.`);
                     setValidId(true);
@@ -89,13 +89,13 @@ function JoinPage() {
 
     //======================
     function handleValidatePw() {
-        if (pw.length < 7 || pw.length > 15) {
-            setPwMsg('비밀번호는 7자 이상, 15자 이하여야 합니다.');
+        if (password.length < 8 || password.length > 15) {
+            setPwMsg('비밀번호는 8자 이상, 15자 이하여야 합니다.');
             setValidPw(false);
-        } else if (!pwRegex.test(pw)) {
+        } else if (!passwordRegex.test(password)) {
             setPwMsg('비밀번호에는 특수문자 , 숫자 , 영문이 모두 포함되어야 합니다.');
             setValidPw(false);
-        } else if (!noKorPwRegex.test(pw)) {
+        } else if (!noKorPwRegex.test(password)) {
             setPwMsg('한글은 비밀번호에 포함될 수 없습니다.');
             setValidPw(false);
         } else {
@@ -121,7 +121,7 @@ function JoinPage() {
         if (nickname.length <= 0) {
             setNicknameMsg('닉네임을 입력해주세요');
             setValidNickname(false);
-        } else if (!NicknameRegex.test(nickname)) {
+        } else if (!nicknameRegex.test(nickname)) {
             setNicknameMsg('닉네임은 영문과 한글만 가능합니다');
             setValidNickname(false);
         } else {
@@ -145,7 +145,7 @@ function JoinPage() {
 
     function handleActivation() {
         // if (validId === true && vaildPw && pw === confirmPw && validName && year !== null && month !== null && day !== null && validPhoneNumber) {
-        if (validId === true && vaildPw && pw === confirmPw && validNickname) {
+        if (validId === true && vaildPw && password === confirmPw && validNickname) {
             setActiveJoinButton(false);
         } else {
             setActiveJoinButton(true);
@@ -164,12 +164,12 @@ function JoinPage() {
         // console.log(`${year}-${month}-${day}`);
 
         // if (validId && vaildPw && pw === confirmPw && validName && year !== null && month !== null && day !== null && validPhoneNumber) {
-        if (validId && vaildPw && pw === confirmPw && validNickname) {
+        if (validId && vaildPw && password === confirmPw && validNickname) {
 
             const data = {
-                id: id,
-                password: pw,
-                Nickname: nickname,
+                loginId: loginId,
+                password: password,
+                nickname: nickname
                 // birth: `${year}-${month}-${day}`,
                 // phone_number: phoneNumber
             }
@@ -177,7 +177,7 @@ function JoinPage() {
             axios
                 .post(`/user/join`, data)
                 .then((r) => {
-                    navigator('/LogInPage');
+                    navigator('/');
                     alert(`회원가입 완료. 로그인 페이지로 이동합니다.`);
                 }).catch((e) => {
                     if (e.response && e.response.status === 400) {
@@ -192,7 +192,7 @@ function JoinPage() {
         } else {
             alert(`각 항목을 조건에 맞게 모두 입력해주세요`);
         }
-    }
+    }// join
 
 
     //======================================================================================================================
@@ -201,7 +201,8 @@ function JoinPage() {
     // console.log(name);
     // console.log(`${year}-${month}-${day}`);
     // console.log(phoneNumber);
-    //======================================================================================================================
+
+    //======< return >===============================================================================================================
     return (
         <div className='JoinPageContainer'>
             <div className='joinTitle'><span>회원가입</span></div>
@@ -209,22 +210,22 @@ function JoinPage() {
             <div className='joinMemberData'>
                 <div className='joinId'>
                     <span>아이디</span>
-                    <input type="text" value={id} onKeyUp={handleActivation} onChange={(e) => {
-                        setId(e.target.value)
+                    <input type="text" value={loginId} onKeyUp={handleActivation} onChange={(e) => {
+                        setLoginId(e.target.value)
                         setValidId(false);
                     }}
                         required autoComplete='off' minLength={5} maxLength={10}
                     />
                     {validId ? <span className='validIdTrue'>사용가능</span>
-                        : <button onClick={() => idDupCheck(id)}>중복체크</button>}
+                        : <button onClick={() => loginIdDuplicateCheck(loginId)}>중복체크</button>}
 
                 </div>
 
                 <div className='joinPw'>
                     <span>비밀번호</span>
-                    <input type={showPw ? 'text' : "password"} value={pw} onKeyUp={handleActivation}
+                    <input type={showPw ? 'text' : "password"} value={password} onKeyUp={handleActivation}
                         onChange={(e) => {
-                            setPw(e.target.value)
+                            setPassword(e.target.value)
                         }}
                         required autoComplete='off' minLength={8} maxLength={15} placeholder='특수문자 포함 8~15자리' onBlur={handleValidatePw}
                     />
@@ -238,8 +239,8 @@ function JoinPage() {
                         onChange={(e) => { setConfirmPw(e.target.value) }}
                         required autoComplete='off' minLength={8} maxLength={15} placeholder='비밀번호 재입력'
                     />
-                    {vaildPw === true && pw !== null && confirmPw !== null && pw === confirmPw ? <span className='confirmedPw'>비밀번호 일치</span>
-                        : vaildPw === true && pw !== null && confirmPw !== null && pw !== confirmPw ? <span className='denyPw'>비밀번호 불일치</span>
+                    {vaildPw === true && password !== null && confirmPw !== null && password === confirmPw ? <span className='confirmedPw'>비밀번호 일치</span>
+                        : vaildPw === true && password !== null && confirmPw !== null && password !== confirmPw ? <span className='denyPw'>비밀번호 불일치</span>
                             : <span className='denyPw'>비밀번호 검사 필요</span>}
                     <button onClick={() => setShowPw(p => !p)}>
                         {showPw ?
@@ -278,7 +279,7 @@ function JoinPage() {
                             setNickname(e.target.value)
                             setNicknameMsg('')
                         }}
-                        required autoComplete='off' minLength={1} maxLength={30} onBlur={handleValidateNickname}
+                        required autoComplete='off' minLength={1} maxLength={20} onBlur={handleValidateNickname}
                     />
                     {nicknameMsg === 'validNickname' ? <span className='validName'>적절한 닉네임</span> : <span className='inValidName'>{nicknameMsg}</span>}
                 </div>
