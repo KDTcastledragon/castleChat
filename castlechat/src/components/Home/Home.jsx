@@ -3,16 +3,35 @@ import './Home.css';
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom'; //  Navigate : “화면 렌더링 중 조건에 따라 다른 주소로 보내는 컴포넌트”야.
-// import LogIn from '../LogIn/LogIn';
+
+import { useMe } from '../../hooks/useMe';
+import { useUsers } from '../../hooks/useUsers';
+import { useLogout } from '../../hooks/useLogout';
+import { useDebounce } from '../../hooks/useDebounce';
+import { useSearchUsers } from '../../hooks/useSearchUsers';
+import { useAddFriend } from '../../hooks/useAddFriend';
+import { useFriendList } from '../../hooks/useFriendList';
+import { useReceivedFriendRequests } from '../../hooks/useReceivedFriendRequests';
+
 import ChatBox from '../Chattings/ChatBox';
+
+
 
 function Home() {
 
-    const [loginUser, setLoginUser] = useState(null);
-    const [isCheckingLogin, setIsCheckingLogin] = useState(true); // “지금 서버에 로그인 상태 확인 중인가?” --> “아직 서버 판정 전이라 로그인폼을 보여주면 안 되는 시간”을 처리하는 장치.
-    const [userList, setUserList] = useState([]);
+    // const [loginUser, setLoginUser] = useState(null);
+    // const [isCheckingLogin, setIsCheckingLogin] = useState(true); // “지금 서버에 로그인 상태 확인 중인가?” --> “아직 서버 판정 전이라 로그인폼을 보여주면 안 되는 시간”을 처리하는 장치.
+    // const [userList, setUserList] = useState([]);
+
+    const { data: me, isLoading: isCheckingLogin } = useMe();
+    const { data: userList = [] } = useUsers(!!me);
+    const { data: friendList = [] } = useFriendList(!!me);
+    const { data: receivedFriendRequests = [] } = useReceivedFriendRequests(!!me);
+    const logoutMutation = useLogout();
+    const addFriendMutation = useAddFriend();
 
     const [chatWindows, setChatWindows] = useState([]);
+    const [searchWord, setSearchWord] = useState('');
 
     const isWsConnectedRef = useRef(false);
     const wsRef = useRef(null);
@@ -20,6 +39,13 @@ function Home() {
     const roomHandlersRef = useRef({});
 
     const navigator = useNavigate();
+
+    const debouncedSearchWord = useDebounce(searchWord, 500);
+    const {
+        data: searchUsersResults = [],
+        isLoading: isSearching
+    } = useSearchUsers(debouncedSearchWord);
+
 
 
     // ==== 채팅방 옮기기 기본 설정 ===============================================================================
@@ -49,32 +75,11 @@ function Home() {
         );
     };
 
-    // ====== 로그인 감지 ======================================
-    useEffect(() => {
-        axios.get('/user/isMe')
-            .then((res) => {
-                setLoginUser(res.data);
-            })
-            .catch(() => {
-                setLoginUser(null);
-            })
-            // 성공하든 실패하든 무조건 실행되는 마지막 처리
-            .finally(() => {
-                setIsCheckingLogin(false);
-                // 왜 isCheckingLogin이 필요하냐? 없으면 처음 렌더링 때 문제가 생겨. 
-                // 처음에는 무조건: loginUser = null 이니까, 화면이 바로 로그인 폼을 보여줄 수 있어. --> {loginUser ? 로그인화면 : 로그인폼}
-                // 근데 사실 서버 확인 중일 뿐인데, 0.1초 동안 로그인폼이 깜빡 보일 수 있어.
-                // e.g.) 처음 렌더링: loginUser null → 로그인폼 표시
-                // e.g.) /user/me 성공 → loginUser 있음 → 로그인화면 표시
-                // 그러면 사용자는 새로고침할 때 로그인 폼이 순간적으로 보이는 이상한 UX를 볼 수 있어.
-                // 그래서 isCheckingLogin으로 중간 상태를 하나 더 만드는 거야.
 
-            });
-    }, []);
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
-        if (!loginUser) return;
+        if (!me) return;
 
         // 만약 new Ws를 바깥으로 뺀다면? --> React 생명주기랑 충돌해서 터짐. 컴포넌트 랜더링 될때마다 연결함.
         const webSocket = new WebSocket(`ws://localhost:8080/ws/chat`); // roomId=${roomId}&userId=${userID} 삭제. query string --> ENTER 이벤트송신으로 변경.
@@ -93,7 +98,7 @@ function Home() {
                 requestId: crypto.randomUUID(),
                 wsType: "CONNECT_USER",
                 payload: {
-                    // publicId: publicId
+                    // session정보를 신뢰하고, f-e에서는 useMe로 로그인정보 관리하므로, 굳이 보낼 필요 없다. 
                 }
             }))
 
@@ -139,22 +144,35 @@ function Home() {
 
         }
 
-        axios
-            .get(`/user/allUsers`)
-            .then((res) => {
-                // console.log(`모든유저`);
-                setUserList(res.data);
-                // console.log(res.data);
-            }).catch((e) => {
-                console.log(e.message);
-            });
-
         return () => {
             webSocket.close();
         }
-    }, [loginUser])
+    }, [me])
 
 
+    // ==== 친구 추가 ==================================================
+    function addFriend(targetPublicId) {
+        addFriendMutation.mutate(targetPublicId, {
+            onSuccess: () => {
+                alert('친구 요청을 보냈습니다!');
+            },
+            onError: (e) => {
+                if (e.response?.status === 409) {
+                    alert('이미 친구이거나 친구 요청 중입니다.');
+                    return;
+                }
+
+                if (e.response?.status === 401) {
+                    alert('로그인이 필요합니다.');
+                    navigator('/login');
+                    return;
+                }
+
+                alert('친구 요청 실패');
+                console.log(e);
+            }
+        });
+    }
 
     // ==== 채팅방 ===================================================
     const openChattingRoom = async (targetUser) => {
@@ -218,15 +236,22 @@ function Home() {
         }
 
         isWsConnectedRef.current = false;
-        sessionStorage.clear();
-        window.location.reload();
+
+        // sessionStorage.clear();
+        // window.location.reload();
+
+        logoutMutation.mutate(null, {
+            onSuccess: () => {
+                navigator('/login');
+            }
+        });
     }
 
     if (isCheckingLogin) {
         return <div>로그인 확인 중...</div>;
     }
 
-    if (!loginUser) {
+    if (!me) {
         return <Navigate to="/login" replace />;
     }
 
@@ -236,9 +261,12 @@ function Home() {
 
             {/**============== 로그인 구역==================== */}
             <div className='loginSection'>
-                {loginUser ?
+                {me ?
                     <>
-                        <div className='loginForm'> publicId 님 안녕하세요.</div>
+                        <div>{me.profileImg ? me.profileImg : '프사 없음'}</div>
+                        <div className='loginForm'> {me.nickname} 님 안녕하세요.</div>
+                        <div>{me.publicId}</div>
+                        <div>{me.friendCode}</div>
 
                         <button onClick={() => logout()}>로그아웃</button>
                     </>
@@ -252,29 +280,84 @@ function Home() {
 
                 <br /><br />
 
-                <div className='loginButton'><button onClick={() => navigator('/JoinPage')}>회원가입</button></div>
-
             </div>
 
-            {/**========= 유저 목록 및 채팅 오픈 버튼=================== */}
-            <div>
-                {userList.length > 0 ? userList.map((d, i) => (
-                    <span key={i}> {/**Fragment에 key를 줘야한다...why? 나중에 질문하자. */}
-                        <button
-                            onClick={() => openChattingRoom(d)}>
-                            {d.public_id}-({d.nickname})
-                        </button><span>&nbsp;&nbsp;&nbsp;</span>
-                    </span>
-                ))
-                    :
-                    <div>유저없음</div>
-                }
+            {/**========= 친구 목록=================== */}
+            <div className='friendsListSection'>
+                <div>친구목록</div>
+
+                {friendList.length > 0 ? friendList.map((friend) => (
+                    <div key={friend.publicId}>
+                        <span>{friend.nickname}</span>
+                        <span>{friend.friendCode}</span>
+                        &nbsp;&nbsp;
+                        <button onClick={() => openChattingRoom(friend)}>
+                            채팅
+                        </button>
+                    </div>
+                )) : (
+                    <div>친구 없음</div>
+                )}
             </div>
+            <div className='friendsAlertList'>
+                <div>친구 요청 목록</div>
+
+                {receivedFriendRequests.length > 0 ? receivedFriendRequests.map((requestUser) => (
+                    <div key={requestUser.publicId}>
+                        <span>{requestUser.nickname}</span>
+                        <span>{requestUser.friendCode}</span>
+                        &nbsp;&nbsp;
+                        <button>
+                            수락
+                        </button>
+                    </div>
+                )) : (
+                    <div>받은 친구 요청 없음</div>
+                )}
+            </div>
+
+            {/**========= 유저 검색 및 친구추가 =================== */}
+            <div className='searchOthersSection'>
+                <div className='searchFriend'>
+                    <span>검색 : </span>
+                    <input
+                        type="text"
+                        value={searchWord}
+                        onChange={(e) => setSearchWord(e.target.value)}
+                        placeholder='닉네임/친구코드 검색'
+                    />
+                </div>
+                <div>
+                    {isSearching && <div>검색 중...</div>}
+
+                    {!isSearching && debouncedSearchWord.trim().length > 0 && searchUsersResults.length === 0 && (
+                        <div>검색 결과 없음</div>
+                    )}
+
+                    {searchUsersResults.map((user) => (
+                        <div key={user.publicId}>
+                            <span>{user.nickname}</span>
+                            <span>{user.friendCode}</span> {/** <-- 임시로 개발중에만 띄움. 추후 삭제 예정. */}
+                            &nbsp;&nbsp;
+                            <button
+                                onClick={() => addFriend(user.publicId)}
+                                disabled={addFriendMutation.isPending}>
+                                추가
+                            </button>
+
+                        </div>
+                    ))}
+                </div>
+            </div>
+
 
             {/**========= 채팅창 =================== */}
             {chatWindows.map((win) => (
                 <ChatBox
                     key={win.roomId}
+
+                    me={me}
+
                     wsRef={wsRef}
                     isWsConnectedRef={isWsConnectedRef}
 
@@ -304,6 +387,29 @@ function Home() {
 
 export default Home;
 
+// // ====== 로그인 감지 legacy ======================================
+// useEffect(() => {
+//     axios.get('/user/isMe')
+//         .then((res) => {
+//             setLoginUser(res.data);
+//         })
+//         .catch(() => {
+//             setLoginUser(null);
+//         })
+//         // 성공하든 실패하든 무조건 실행되는 마지막 처리
+//         .finally(() => {
+//             setIsCheckingLogin(false);
+//             // 왜 isCheckingLogin이 필요하냐? 없으면 처음 렌더링 때 문제가 생겨. 
+//             // 처음에는 무조건: loginUser = null 이니까, 화면이 바로 로그인 폼을 보여줄 수 있어. --> {loginUser ? 로그인화면 : 로그인폼}
+//             // 근데 사실 서버 확인 중일 뿐인데, 0.1초 동안 로그인폼이 깜빡 보일 수 있어.
+//             // e.g.) 처음 렌더링: loginUser null → 로그인폼 표시
+//             // e.g.) /user/me 성공 → loginUser 있음 → 로그인화면 표시
+//             // 그러면 사용자는 새로고침할 때 로그인 폼이 순간적으로 보이는 이상한 UX를 볼 수 있어.
+//             // 그래서 isCheckingLogin으로 중간 상태를 하나 더 만드는 거야.
+
+//         });
+// }, []);
+
 // ====채팅방 오픈 함수222레거시 ===================================================
 // const openChattingRoom22 = async (targetUser) => {
 //     try {
@@ -330,3 +436,18 @@ export default Home;
 // const [isChattingOpen, setIsChattingOpen] = useState(false);
 
 // const [chatRooms, setChatRooms] = useState([]);
+
+{/**Fragment에 key를 줘야한다...why? 나중에 질문하자. */ }
+{/** <div>
+                {userList.length > 0 ? userList.map((d, i) => (
+                    <span key={i}> 
+                        <button
+                            onClick={() => openChattingRoom(d)}>
+                            {d.public_id}-({d.nickname})
+                        </button><span>&nbsp;&nbsp;&nbsp;</span>
+                    </span>
+                ))
+                    :
+                    <div>유저없음</div>
+                }
+            </div> */}

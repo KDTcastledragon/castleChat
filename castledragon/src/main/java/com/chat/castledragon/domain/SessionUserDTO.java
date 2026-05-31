@@ -18,5 +18,7 @@ public class SessionUserDTO implements Serializable {
 
 	private String nickname;
 
+	private String friendCode;
+
 	private String profileImg;
 }

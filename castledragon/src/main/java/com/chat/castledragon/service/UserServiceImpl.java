@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.chat.castledragon.domain.UserDTO;
+import com.chat.castledragon.domain.UserProfileResponseDTO;
 import com.chat.castledragon.mapper.UserMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -90,6 +91,12 @@ public class UserServiceImpl implements UserService {
 
 		throw new IllegalStateException("publicId/friendCode 생성 실패");
 
+	}
+
+	@Override
+	public List<UserProfileResponseDTO> searchUsers(String searchWord, Long userId) {
+		List<UserProfileResponseDTO> list = userMapper.searchUsers(searchWord, userId);
+		return list;
 	}
 
 	@Override

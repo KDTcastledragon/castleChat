@@ -3,6 +3,7 @@ package com.chat.castledragon.service;
 import java.util.List;
 
 import com.chat.castledragon.domain.UserDTO;
+import com.chat.castledragon.domain.UserProfileResponseDTO;
 
 public interface UserService {
 
@@ -21,5 +22,7 @@ public interface UserService {
 	boolean loginIdDuplicateCheck(String id);
 
 	UserDTO getUser(String id);
+
+	List<UserProfileResponseDTO> searchUsers(String searchWord, Long userId);
 
 }

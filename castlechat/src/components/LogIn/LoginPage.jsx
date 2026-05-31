@@ -1,12 +1,17 @@
 import './LoginPage.css';
+
+// import axios from 'axios'; // axios 안 쓰고 있넹...?!
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+
+import { useLogin } from '../../hooks/useLogin';
+
+// import { useQueryClient } from '@tanstack/react-query';
 
 function LoginPage() {
     const navigator = useNavigate();
-    const queryClient = useQueryClient();
+    const loginMutation = useLogin();
+    // const queryClient = useQueryClient();
 
     // ==============================================
 
@@ -14,44 +19,36 @@ function LoginPage() {
     const [password, setPassword] = useState('');
 
 
-    // =====[로그인/로그아웃 함수]======================================================
+    // =====[로그인 함수]======================================================
+
     function login(enteredLoginID, enteredPassword) {
-        const data = { loginId: enteredLoginID, password: enteredPassword }
-
-        axios
-            .post(`/user/login`, data)
-            .then((res) => {
-                queryClient.setQueryData(['me'], res.data);
-                navigator('/');
-
-            }).catch((e) => {
-                if (e.response.status) {
-                    switch (e.response.status) {
-                        case 401:
-                            alert('아이디 또는 비밀번호가 틀립니다.');
-                            break;
-
-                        case 403:
-                            alert('이용이 제한된 사용자입니다.');
-                            break;
-
-                        default:
-                            alert(`로그인 오류`);
-                            console.log(e);
-                            break;
+        loginMutation.mutate(
+            { loginId: enteredLoginID, password: enteredPassword },
+            {
+                onSuccess: () => {
+                    navigator('/');
+                },
+                onError: (e) => {
+                    if (e.response?.status === 401) {
+                        alert('아이디 또는 비밀번호가 틀립니다.');
+                    } else if (e.response?.status === 403) {
+                        alert('이용이 제한된 사용자입니다.');
+                    } else {
+                        alert('로그인 오류');
+                        console.log(e);
                     }
-                } else {
-                    alert(`알 수 없는 오류`);
                 }
-            });
-
+            }
+        );
     }
+
+
 
     // ======< return >================================================================================================
     return (
         <div className='LogInPageContainer'
             onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !loginMutation.isPending) {
                     e.preventDefault();
                     login(loginId, password);
                 }
@@ -78,7 +75,15 @@ function LoginPage() {
                     </div>
                 </div>
 
-                <div className='loginButton'><button onClick={() => login(loginId, password)}>로그인</button></div>
+                <div className='loginButton'>
+                    <button
+                        onClick={() => login(loginId, password)}
+                        disabled={loginMutation.isPending}
+                    >
+                        {loginMutation.isPending ? '로그인 중...' : '로그인'}
+                    </button>
+                    {/* <button onClick={() => login(loginId, password)}>로그인</button> */}
+                </div>
             </div>
 
         </div>
@@ -86,3 +91,36 @@ function LoginPage() {
 }
 
 export default LoginPage;
+
+
+// function login(enteredLoginID, enteredPassword) {
+//     const data = { loginId: enteredLoginID, password: enteredPassword }
+
+//     axios
+//         .post(`/user/login`, data)
+//         .then((res) => {
+//             queryClient.setQueryData(['me'], res.data);
+//             navigator('/');
+
+//         }).catch((e) => {
+//             if (e.response.status) {
+//                 switch (e.response.status) {
+//                     case 401:
+//                         alert('아이디 또는 비밀번호가 틀립니다.');
+//                         break;
+
+//                     case 403:
+//                         alert('이용이 제한된 사용자입니다.');
+//                         break;
+
+//                     default:
+//                         alert(`로그인 오류`);
+//                         console.log(e);
+//                         break;
+//                 }
+//             } else {
+//                 alert(`알 수 없는 오류`);
+//             }
+//         });
+
+// }

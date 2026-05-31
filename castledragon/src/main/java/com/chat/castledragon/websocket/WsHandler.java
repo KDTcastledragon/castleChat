@@ -2,6 +2,7 @@ package com.chat.castledragon.websocket;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,13 +13,12 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.chat.castledragon.domain.ChatDTO;
-import com.chat.castledragon.domain.PayloadConnectUserDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.PayloadTypingDTO;
-import com.chat.castledragon.domain.UserDTO;
+import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,7 +46,8 @@ public class WsHandler extends TextWebSocketHandler {
 	//	      └─ WebSocketSession
 
 	//	ConcurrentHashMap 왜 씀?? 일반 HashMap은 여러 thread가 동시에 수정하면 문제가 생길 수 있습니다.그래서 thread-safe한 Map인 ConcurrentHashMap씀. 동시에 여러 요청이 건드려도 일반 HashMap보다 안전한 Map
-	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
+	//	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
+	private final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
 
 	//	========== 생성자 주입 ==========================================================================================
 	//	메시지 저장/읽음 처리 같은 비즈니스 로직은 Service에게 맡기기 위해 Spring이 넣어준 ChatService를 보관한다.
@@ -121,17 +122,35 @@ public class WsHandler extends TextWebSocketHandler {
 
 	//	====== 유저 접속 ============================================================================================================
 	private void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		PayloadConnectUserDTO payload = convertPayload(dto, PayloadConnectUserDTO.class);
+		SessionUserDTO loginUser = getLoginUser(session);
 
-		if (payload.getUserId() == null || payload.getLoginId() == null) {
-			log.warn("아이디 없이 접속 경고 : {} / {} ", payload.getUserId(), payload.getLoginId());
-			responseFail(session, dto, "CONNECT_USER_FAIL", "UserId가 없습니다.");
+		if (loginUser == null) {
+			log.warn("인증되지 않은 WS CONNECT 요청. WSid={}", session.getId());
+			responseFail(session, dto, "CONNECT_USER_FAIL", "로그인이 필요합니다.");
+
+			if (session.isOpen()) {
+				session.close(CloseStatus.NOT_ACCEPTABLE);
+			}
+
 			return;
 		}
 
-		log.info("{}-({})님이 접속하셨습니다.", payload.getLoginId(), payload.getUserId());
-		connectedUserSessions.put(session, payload);
-		responseOk(session, dto, "CONNECT_USER_OK", payload);
+		connectedUserSessions.put(session, loginUser);
+
+		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
+		responseOk(session, dto, "CONNECT_USER_OK", loginUser);
+		//	    
+		//		PayloadConnectUserDTO payload = convertPayload(dto, PayloadConnectUserDTO.class);
+		//
+		//		if (payload.getUserId() == null || payload.getLoginId() == null) {
+		//			log.warn("아이디 없이 접속 경고 : {} / {} ", payload.getUserId(), payload.getLoginId());
+		//			responseFail(session, dto, "CONNECT_USER_FAIL", "UserId가 없습니다.");
+		//			return;
+		//		}
+		//
+		//		log.info("{}-({})님이 접속하셨습니다.", payload.getLoginId(), payload.getUserId());
+		//		connectedUserSessions.put(session, payload);
+		//		responseOk(session, dto, "CONNECT_USER_OK", payload);
 
 	}
 
@@ -354,28 +373,76 @@ public class WsHandler extends TextWebSocketHandler {
 		session.sendMessage(new TextMessage(payload));
 	}
 
-	//	====== ws 연결 종료 ===========================================================================================================
-	@Override
-	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-		PayloadConnectUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
-		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
-		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
+	// ====== ws 연결 강제 종료 (로그아웃) ===========================================================================================================
+	public void closeUserWebSocketConnection(Long userId) {
+		WebSocketSession targetSession = null;
 
-		if (connectedUser != null) {
-			log.info("{}-({})님이 종료하였습니다.", connectedUser.getLoginId(), connectedUser.getUserId());
-		} else {
-			log.info("식별되지 않은 WS 종료. Wsid▶ {}", session.getId());
+		for (Map.Entry<WebSocketSession, SessionUserDTO> entry : connectedUserSessions.entrySet()) {
+			SessionUserDTO connectedUser = entry.getValue();
+
+			if (Objects.equals(connectedUser.getUserId(), userId)) {
+				targetSession = entry.getKey();
+				break;
+			}
 		}
 
-		roomSessions.forEach((roomId, userMap) -> {
+		if (targetSession == null) {
+			log.info("로그아웃 WS 대상 없음 userId={}", userId);
+			return;
+		}
 
+		//		allExitRooms(targetSession);
+		//		connectedUserSessions.remove(targetSession);
+		// ---> afterConnectionClosed의 중복을 피하기 위해, 주석처리로 제거.
+		// -->  로그아웃 API에서는 WebSocketSession을 직접 정리하지 않고 close만 호출했습니다. 
+		//		실제 세션 제거와 roomSessions 정리는 WebSocket lifecycle callback인 afterConnectionClosed에서 단일하게 처리하도록 했습니다. 
+		//		이렇게 해서 브라우저 종료, 네트워크 끊김, 로그아웃 등 모든 종료 경로의 cleanup이 한 곳으로 모이게 했습니다.
+
+		if (targetSession.isOpen()) {
+			try {
+				targetSession.close(CloseStatus.NORMAL);
+			} catch (Exception e) {
+				log.error("로그아웃 WS 종료 실패 userId={}", userId, e);
+			}
+		}
+	}// disconnect
+
+	// ====== 모든 방 exit 처리 ===========================================================================================================
+	private void removeSessionAllRooms(WebSocketSession session) {
+		roomSessions.forEach((roomId, userMap) -> {
 			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
 
-			// 방이 비었으면 room 자체 제거
 			if (userMap.isEmpty()) {
 				roomSessions.remove(roomId);
 			}
 		});
+	}
+
+	// ====== ws 연결 종료 ===========================================================================================================
+	@Override
+	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+		SessionUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
+		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
+		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
+
+		if (connectedUser != null) {
+			log.info("{}-({})님이 종료하였습니다.", connectedUser.getNickname(), connectedUser.getUserId());
+		} else {
+			log.info("식별되지 않은 WS 종료. Wsid▶ {}", session.getId());
+		}
+
+		//		roomSessions.forEach((roomId, userMap) -> {
+		//
+		//			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
+		//
+		//			// 방이 비었으면 room 자체 제거
+		//			if (userMap.isEmpty()) {
+		//				roomSessions.remove(roomId);
+		//			}
+		//		});
+
+		removeSessionAllRooms(session);
+
 		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.
 
@@ -392,10 +459,10 @@ public class WsHandler extends TextWebSocketHandler {
 	}
 
 	//	로그인 인증 =======================================================
-	private UserDTO getLoginUser(WebSocketSession session) {
+	private SessionUserDTO getLoginUser(WebSocketSession session) {
 		Object loginUser = session.getAttributes().get("LOGIN_USER");
 
-		if (loginUser instanceof UserDTO user) {
+		if (loginUser instanceof SessionUserDTO user) {
 			return user;
 		}
 
@@ -403,7 +470,7 @@ public class WsHandler extends TextWebSocketHandler {
 	}
 
 	private Long getLoginUserId(WebSocketSession session) {
-		UserDTO loginUser = getLoginUser(session);
+		SessionUserDTO loginUser = getLoginUser(session);
 
 		if (loginUser == null) {
 			return null;

@@ -3,15 +3,27 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
-// function ChatBox({ roomId, targetUserID, targetLoginID, setIsChattingOpen }) {  // --> 기존legacy
-function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, registerRoomHandler,
+// home에서 me항목 하나씩 일일히 다 넘기게 되면 Home이 ChatBox 내부에서 뭘 쓰는지 너무 많이 관여하게 돼. 그래서 me를 통째로 받는게 좋다.
+function ChatBox({ me, wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, registerRoomHandler,
     unregisterRoomHandler, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
-    const userID = sessionStorage.getItem('userID');
-    const loginID = sessionStorage.getItem('loginID');
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
+
+    const userID = 'userID';
+    const loginID = 'loginID';
+
+    // const myPublicId = me.publicId;
+    // const myNickname = me.nickname;
+    // const myFriendCode = me.friendCode;
+    // const myProfileImg = me.profileImg;
+
+    // const { myPublicId, myNickname, myFriendCode, myProfileImg } = me; (이렇게 쓰면 망한다.)
+
+    const { publicId: myPublicId, nickname: myNickname, friendCode: myFriendCode, profileImg: myProfileImg } = me || {}; // me가 null일경우, undefined상태로 만듦.
+
+
 
     const chatEndRef = useRef(null);
 
@@ -83,7 +95,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
     // ========== 이전 메시지 불러오기 ==============================================================================================
     useEffect(() => {
 
-        if (!roomId || !userID) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
+        if (!roomId || !myPublicId) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
         // 렌더링 타이밍상 아직 값이 없을 때 불필요한 API 호출 방지. 사용자 경험/콘솔 에러 정리.
         // 특히 React에서는 useEffect가 컴포넌트 mount 후 실행되기 때문에, 값이 아직 안정적이지 않은 순간이 생길 수 있습니다.
         // 지금 ChatBox는 roomId를 props로 받습니다. 대부분은 값이 들어온 뒤 mount되겠지만, 리팩토링 중이거나 조건부 렌더링이 살짝 바뀌면 undefined 상태로 들어올 수도 있습니다.
@@ -115,7 +127,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
                             wsType: "READ_MSG",
                             payload: {
                                 roomId,
-                                userId: Number(userID),
+                                publicId: myPublicId,
                                 lastReadMessageId: lastOtherMsgInRoom.messageId
                             }
                         }));
@@ -222,7 +234,7 @@ function ChatBox({ wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID,
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
     function sendMessage() {
-        console.log(`${loginID} >> ${targetLoginID} Msg 전송`);
+        console.log(`${myNickname} >> ${targetLoginID} Msg 전송`);
         console.log(`현재 wsRef : ${wsRef}`);
 
 

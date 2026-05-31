@@ -21,8 +21,8 @@ public class WebSocketConfig implements WebSocketConfigurer { // WebSocketConfig
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 
-		registry.addHandler(wsHandler, "/ws/chat").setAllowedOrigins("*"); // 어떤 Origin에서 온 WebSocket 연결을 허용할 것인가?
-		registry.addHandler(wsHandler, "/ws/chat").addInterceptors(new HttpSessionHandshakeInterceptor()).setAllowedOrigins("*");
+		//		registry.addHandler(wsHandler, "/ws/chat").setAllowedOrigins("*"); // 어떤 Origin에서 온 WebSocket 연결을 허용할 것인가?
+		registry.addHandler(wsHandler, "/ws/chat").addInterceptors(new HttpSessionHandshakeInterceptor()).setAllowedOriginPatterns("http://localhost:*");
 	}
 
 	//	여기서 의미는:

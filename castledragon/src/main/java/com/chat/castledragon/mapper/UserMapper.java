@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.chat.castledragon.domain.UserDTO;
+import com.chat.castledragon.domain.UserProfileResponseDTO;
 
 @Mapper
 public interface UserMapper {
@@ -22,5 +23,7 @@ public interface UserMapper {
 	int withdrawMember(String id);
 
 	List<UserDTO> allUsers();
+
+	List<UserProfileResponseDTO> searchUsers(@Param("searchWord") String searchWord, @Param("userId") Long userId);
 
 }

@@ -13,6 +13,19 @@
 	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
   	select * from users where login_id = #{id};
   	</select>
+  	
+  	<select id="searchUsers" resultType="com.chat.castledragon.domain.UserProfileResponseDTO" >
+	  	SELECT public_id, nickname, friend_code, profile_img
+		FROM users
+		WHERE status = 'ACTIVE'
+		  AND user_id != #{userId}
+<!-- 		  AND user_id &lt;&gt; #{myUserId} -->
+		  AND (
+		      nickname LIKE CONCAT('%', #{searchWord}, '%')
+		      OR friend_code LIKE CONCAT('%', UPPER(#{searchWord}), '%')
+		  )
+		LIMIT 20
+  	</select>
 	
     
      <update id="changePassword">

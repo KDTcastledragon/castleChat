@@ -10,13 +10,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chat.castledragon.domain.LoginRequestDTO;
-import com.chat.castledragon.domain.LoginResponseDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.UserDTO;
+import com.chat.castledragon.domain.UserProfileResponseDTO;
 import com.chat.castledragon.service.UserService;
+import com.chat.castledragon.websocket.WsHandler;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -31,9 +33,11 @@ public class UserController {
 
 	PasswordEncoder pwEncoder;
 
+	WsHandler wsHandler; // private final을 꼭 붙여야 하나??
+
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequestDTO data, HttpSession session) {
-		log.info("{} login 시도  :", data.getLoginId());
+		log.info("{}의 login 시도  :", data.getLoginId());
 
 		UserDTO user = userService.login(data.getLoginId(), data.getPassword());
 
@@ -41,16 +45,16 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
 		}
 
-		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getProfileImg());
+		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
 
 		session.setAttribute("LOGIN_USER", sessionUser);
 
-		LoginResponseDTO loginResponse = new LoginResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+		UserProfileResponseDTO loginResponse = new UserProfileResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
 
 		return ResponseEntity.ok(loginResponse);
 	}// login
 
-	@PostMapping("/isMe")
+	@GetMapping("/isMe")
 	public ResponseEntity<?> isMe(HttpSession session) {
 		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
 
@@ -58,14 +62,22 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		LoginResponseDTO isMeTrue = new LoginResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), null, loginUser.getProfileImg()); // friCode = null
+		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser.getFriendCode(), loginUser.getProfileImg()); // friCode = null
 
 		return ResponseEntity.ok(isMeTrue);
 	}// isMe
 
 	@PostMapping("/logout")
 	public ResponseEntity<?> logout(HttpSession session) {
+
+		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (loginUser != null) {
+			wsHandler.closeUserWebSocketConnection(loginUser.getUserId());
+		}
+
 		session.invalidate();
+
 		return ResponseEntity.ok().build();
 	}// logout
 
@@ -87,7 +99,7 @@ public class UserController {
 		} catch (Exception e) {
 			throw e;
 		}
-	}// DupCheck
+	}// logIdDupCheck
 
 	// ====[회원가입]========================================================================================
 	@PostMapping("/join")
@@ -121,6 +133,28 @@ public class UserController {
 			throw e;
 		}
 	}// join
+
+	//====[비밀번호 변경]==========================================
+	@GetMapping("/searchUsers")
+	public ResponseEntity<?> searchUsers(@RequestParam("searchWord") String searchWord, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		log.info("{} 유저가 검색중 : {}", me.getNickname(), searchWord);
+
+		if (searchWord == null || searchWord.trim().isEmpty()) {
+			return ResponseEntity.ok(List.of());
+		}
+
+		List<UserProfileResponseDTO> searchedList = userService.searchUsers(searchWord.trim(), me.getUserId());
+
+		log.info("{} 유저의 {} 검색결과 : {}", me.getNickname(), searchWord, searchedList);
+
+		return ResponseEntity.ok(searchedList);
+	}
 
 	//====[비밀번호 변경]==========================================
 	@PostMapping("/changePassword")
