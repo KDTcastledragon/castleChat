@@ -57,6 +57,15 @@
     font-size: 22px;
 }
 
+/* ============================================================= */
+.friendsAlertList {
+    position: absolute;
+    right: 500px;
+    width: 300px;
+    height: 500px;
+    background-color: rgb(255, 252, 166);
+}
+
 /* ====[채팅방 목록]============================================= */
 .chattingListSection {
     position: absolute;
