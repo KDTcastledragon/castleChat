@@ -2,13 +2,11 @@ package com.chat.castledragon.websocket;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -20,13 +18,16 @@ public class WsOutboundWriter {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
+	private final WsSessionRegistry wsSessionRegistry;
 
-	private final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
+	// 생성자 주입
+	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry) {
+		this.wsSessionRegistry = wsSessionRegistry;
+	}
 
 	//	====== broadcast ===========================================================================================================
-	private void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
-		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+	void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
+		Map<Long, WebSocketSession> sessions = wsSessionRegistry.roomSessions.get(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 broadcast 대상 없음", roomId);
@@ -54,8 +55,8 @@ public class WsOutboundWriter {
 		}
 	}
 
-	private void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
-		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+	void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
+		Map<Long, WebSocketSession> sessions = wsSessionRegistry.roomSessions.get(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 typing broadcast 대상 없음", roomId);
@@ -91,7 +92,7 @@ public class WsOutboundWriter {
 	}
 
 	//	====== Success 응답 보내기 ===========================================================================================================
-	private void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
+	void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
 		WebSocketDTO response = new WebSocketDTO();
 
 		response.setRequestId(request.getRequestId());
@@ -103,7 +104,7 @@ public class WsOutboundWriter {
 	}
 
 	//	====== Fail 응답 보내기 ===========================================================================================================
-	private void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
+	void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
 		WebSocketDTO response = new WebSocketDTO();
 
 		response.setRequestId(request.getRequestId());
@@ -115,7 +116,7 @@ public class WsOutboundWriter {
 	}
 
 	//	====== 응답 Session에 보내기 ===========================================================================================================
-	private void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
+	void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		if (!session.isOpen()) {
 			log.info("responseToSession is Not Open");
 			return;

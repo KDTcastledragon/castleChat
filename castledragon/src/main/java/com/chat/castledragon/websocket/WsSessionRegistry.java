@@ -6,11 +6,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.castledragon.domain.SessionUserDTO;
-import com.chat.castledragon.domain.WebSocketDTO;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -40,43 +38,9 @@ public class WsSessionRegistry {
 	//	ConcurrentHashMap 왜 씀?? 일반 HashMap은 여러 thread가 동시에 수정하면 문제가 생길 수 있습니다.그래서 thread-safe한 Map인 ConcurrentHashMap씀. 동시에 여러 요청이 건드려도 일반 HashMap보다 안전한 Map
 	//	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
 
-	//	====== 유저 접속 ============================================================================================================
-	private void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		SessionUserDTO loginUser = getLoginUser(session);
-
-		if (loginUser == null) {
-			log.warn("인증되지 않은 WS CONNECT 요청. WSid={}", session.getId());
-			responseFail(session, dto, "CONNECT_USER_FAIL", "로그인이 필요합니다.");
-
-			if (session.isOpen()) {
-				session.close(CloseStatus.NOT_ACCEPTABLE);
-			}
-
-			return;
-		}
-
-		connectedUserSessions.put(session, loginUser);
-
-		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
-		responseOk(session, dto, "CONNECT_USER_OK", loginUser);
-		//	    
-		//		PayloadConnectUserDTO payload = convertPayload(dto, PayloadConnectUserDTO.class);
-		//
-		//		if (payload.getUserId() == null || payload.getLoginId() == null) {
-		//			log.warn("아이디 없이 접속 경고 : {} / {} ", payload.getUserId(), payload.getLoginId());
-		//			responseFail(session, dto, "CONNECT_USER_FAIL", "UserId가 없습니다.");
-		//			return;
-		//		}
-		//
-		//		log.info("{}-({})님이 접속하셨습니다.", payload.getLoginId(), payload.getUserId());
-		//		connectedUserSessions.put(session, payload);
-		//		responseOk(session, dto, "CONNECT_USER_OK", payload);
-
-	}
-
 	// ====== 모든 방 exit 처리 ===========================================================================================================
 	// 사용자가 보내는 WS 이벤트가 아니라 연결 종료 cleanup 내부 동작이야. 그래서 이건 private으로 둔다.
-	private void removeSessionAllRooms(WebSocketSession session) {
+	void removeSessionAllRooms(WebSocketSession session) {
 		roomSessions.forEach((roomId, userMap) -> {
 			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
 
@@ -97,17 +61,6 @@ public class WsSessionRegistry {
 		sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
 
 		return new HashSet<>(sessions.keySet());
-	}
-
-	//	로그인 인증 =======================================================
-	private SessionUserDTO getLoginUser(WebSocketSession session) {
-		Object loginUser = session.getAttributes().get("LOGIN_USER");
-
-		if (loginUser instanceof SessionUserDTO user) {
-			return user;
-		}
-
-		return null;
 	}
 
 }// WsSessionRegistry

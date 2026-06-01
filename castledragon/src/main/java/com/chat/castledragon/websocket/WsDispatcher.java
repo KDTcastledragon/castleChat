@@ -66,7 +66,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
-				responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
+				wsOutboundWriter.responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
 			}// default
 
 			}// switch-case
@@ -75,7 +75,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			log.error("WebSocket 메시지 처리 실패: {}", message.getPayload(), e);
 
 			if (dto != null && session.isOpen()) {
-				responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
+				wsOutboundWriter.responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
 			}
 		}// try-catch : 이렇게 하면 잘못된 payload가 와도 서버가 FAIL을 보내고, WebSocket 연결 자체는 최대한 유지할 수 있어.
 	} // handleTextMessage 끝.
@@ -83,7 +83,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 	// ====== ws 연결 종료 ===========================================================================================================
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-		SessionUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
+		SessionUserDTO connectedUser = wsSessionRegistry.connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
 		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
 		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
 
@@ -103,7 +103,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 		//			}
 		//		});
 
-		removeSessionAllRooms(session);
+		wsSessionRegistry.removeSessionAllRooms(session);
 
 		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.
@@ -112,7 +112,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 	public void closeUserWebSocketConnection(Long userId) {
 		WebSocketSession targetSession = null;
 
-		for (Map.Entry<WebSocketSession, SessionUserDTO> entry : connectedUserSessions.entrySet()) {
+		for (Map.Entry<WebSocketSession, SessionUserDTO> entry : wsSessionRegistry.connectedUserSessions.entrySet()) {
 			SessionUserDTO connectedUser = entry.getValue();
 
 			if (Objects.equals(connectedUser.getUserId(), userId)) {

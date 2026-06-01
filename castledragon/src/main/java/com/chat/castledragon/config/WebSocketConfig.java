@@ -41,4 +41,7 @@ public class WebSocketConfig implements WebSocketConfigurer { // WebSocketConfig
 	//		afterConnectionEstablished(...)
 	//		handleTextMessage(...)
 	//		afterConnectionClosed(...)
+
+	// HttpSessionHandshakeInterceptor : 얘가 Spring WebSocket handshake 과정에서 HTTP 세션의 attribute를 WebSocketSession attributes로 복사한다.
+	// ws에서 session에 접근하는건, httpSession이 아니라 wsSession이다. 근데 정확히는 HTTP session === WS session 은 아니야. 같은 객체는 아님.
 }
