@@ -10,6 +10,7 @@ function RouteBody() {
 
     return (
         <Routes>
+
             <Route path="/" element={<Home />} />
             <Route path="/ChatBox" element={<ChatBox />} />
             <Route path="/AdminPage" element={<AdminPage />} />

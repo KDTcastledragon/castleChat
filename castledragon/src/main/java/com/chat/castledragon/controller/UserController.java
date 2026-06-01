@@ -18,7 +18,7 @@ import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.UserDTO;
 import com.chat.castledragon.domain.UserProfileResponseDTO;
 import com.chat.castledragon.service.UserService;
-import com.chat.castledragon.websocket.WsHandler;
+import com.chat.castledragon.websocket.WsDispatcher;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -33,7 +33,7 @@ public class UserController {
 
 	PasswordEncoder pwEncoder;
 
-	WsHandler wsHandler; // private final을 꼭 붙여야 하나??
+	WsDispatcher wsDispatcher; // private final을 꼭 붙여야 하나??
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequestDTO data, HttpSession session) {
@@ -73,7 +73,7 @@ public class UserController {
 		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
 
 		if (loginUser != null) {
-			wsHandler.closeUserWebSocketConnection(loginUser.getUserId());
+			wsDispatcher.closeUserWebSocketConnection(loginUser.getUserId());
 		}
 
 		session.invalidate();

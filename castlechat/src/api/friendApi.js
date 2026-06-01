@@ -15,3 +15,10 @@ export const getReceivedFriendRequestsApi = async () => {
     const res = await axios.get('/friend/getReceivedFriendRequests');
     return res.data;
 };
+
+export const respondFriendRequestApi = async ({ publicId, action }) => {
+    await axios.post('/friend/respondFriendRequest', {
+        publicId,
+        action
+    });
+};

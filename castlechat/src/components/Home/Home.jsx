@@ -12,25 +12,28 @@ import { useSearchUsers } from '../../hooks/useSearchUsers';
 import { useAddFriend } from '../../hooks/useAddFriend';
 import { useFriendList } from '../../hooks/useFriendList';
 import { useReceivedFriendRequests } from '../../hooks/useReceivedFriendRequests';
+import { useRespondFriendRequest } from '../../hooks/useRespondFriendRequest';
 
 import ChatBox from '../Chattings/ChatBox';
 
 
 
 function Home() {
-
     // const [loginUser, setLoginUser] = useState(null);
     // const [isCheckingLogin, setIsCheckingLogin] = useState(true); // “지금 서버에 로그인 상태 확인 중인가?” --> “아직 서버 판정 전이라 로그인폼을 보여주면 안 되는 시간”을 처리하는 장치.
     // const [userList, setUserList] = useState([]);
 
+    const [chatWindows, setChatWindows] = useState([]);
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const { data: userList = [] } = useUsers(!!me);
     const { data: friendList = [] } = useFriendList(!!me);
     const { data: receivedFriendRequests = [] } = useReceivedFriendRequests(!!me);
     const logoutMutation = useLogout();
     const addFriendMutation = useAddFriend();
+    const respondFriendRequestMutation = useRespondFriendRequest();
 
-    const [chatWindows, setChatWindows] = useState([]);
+
+
     const [searchWord, setSearchWord] = useState('');
 
     const isWsConnectedRef = useRef(false);
@@ -174,12 +177,33 @@ function Home() {
         });
     }
 
+    // ==== 친구 수락/거절 ===================================================
+    function respondFriendRequest(publicId, action) {
+        respondFriendRequestMutation.mutate(
+            { publicId, action },
+            {
+                onSuccess: () => {
+                    if (action === 'ACCEPT') {
+                        alert('친구 요청을 수락 했습니다. accept');
+                    }
+
+                    if (action === 'REJECT') {
+                        alert('친구 요청을 거절 했습니다. reject');
+                    }
+                },
+                onError: (e) => {
+                    alert('친구 요청 처리 실패');
+                    console.log(e);
+                }
+            }
+        );
+    }
+
     // ==== 채팅방 ===================================================
-    const openChattingRoom = async (targetUser) => {
+    const openChattingRoom = async (friendPublicId) => {
         try {
             const res = await axios.post(`/chat/enterRoom`, {
-                // senderId: publicId,
-                targetPublicId: targetUser.publicId
+                friendPublicId: friendPublicId
             });
 
             const openedRoomId = res.data.roomId;
@@ -190,7 +214,7 @@ function Home() {
                 wsType: "ENTER_ROOM",
                 payload: {
                     roomId: openedRoomId,
-                    // publicId: publicId
+                    // friendPublicId: friendPublicId
                 }
             }));
 
@@ -211,8 +235,7 @@ function Home() {
                     ...prev,
                     {
                         roomId: openedRoomId,
-                        targetUserID: targetUser.userId,
-                        targetLoginID: targetUser.loginId,
+                        friendPublicId: friendPublicId,
                         x: 420 + prev.length * 30,
                         y: 120 + prev.length * 30,
                         zIndex: Date.now()
@@ -220,7 +243,7 @@ function Home() {
                 ];
             });
 
-            console.log(`${targetUser.loginId}한테 대화 요청!`);
+            alert(`${res.data.nickname}한테 대화 요청!`);
 
         } catch (e) {
             console.log(`채팅방 열기 실패!`);
@@ -228,6 +251,7 @@ function Home() {
         }
     };
 
+    // ===== 로그아웃 ===========================================================================================
     function logout() {
         if (wsRef.current) {
             wsRef.current.close();
@@ -236,9 +260,6 @@ function Home() {
         }
 
         isWsConnectedRef.current = false;
-
-        // sessionStorage.clear();
-        // window.location.reload();
 
         logoutMutation.mutate(null, {
             onSuccess: () => {
@@ -291,7 +312,7 @@ function Home() {
                         <span>{friend.nickname}</span>
                         <span>{friend.friendCode}</span>
                         &nbsp;&nbsp;
-                        <button onClick={() => openChattingRoom(friend)}>
+                        <button onClick={() => openChattingRoom(friend.publicId)}>
                             채팅
                         </button>
                     </div>
@@ -307,8 +328,18 @@ function Home() {
                         <span>{requestUser.nickname}</span>
                         <span>{requestUser.friendCode}</span>
                         &nbsp;&nbsp;
-                        <button>
+                        <button
+                            onClick={() => respondFriendRequest(requestUser.publicId, 'ACCEPT')}
+                            disabled={respondFriendRequestMutation.isPending}
+                        >
                             수락
+                        </button>
+
+                        <button
+                            onClick={() => respondFriendRequest(requestUser.publicId, 'REJECT')}
+                            disabled={respondFriendRequestMutation.isPending}
+                        >
+                            거절
                         </button>
                     </div>
                 )) : (
@@ -362,8 +393,7 @@ function Home() {
                     isWsConnectedRef={isWsConnectedRef}
 
                     roomId={win.roomId}
-                    targetUserID={win.targetUserID}
-                    targetLoginID={win.targetLoginID}
+                    friId={win.friendPublicId}
 
                     registerRoomHandler={(roomId, handler) => {
                         roomHandlersRef.current[roomId] = handler;

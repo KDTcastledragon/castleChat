@@ -2,22 +2,18 @@ package com.chat.castledragon.domain;
 
 import java.time.LocalDateTime;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
-public class ChatMessageDTO {
+public class ChatMessageResponseDTO {
 	private Long messageId;
 
 	private Long roomId;
-	private Long senderId;
+	private String senderPublicId; // 메시지를 보낸 사람의 publicId
 
 	private String msgText;
 
-	private LocalDateTime createdAt;
+	private LocalDateTime createdAt; // default.
 
 	private Long lastReadMessageId;
 

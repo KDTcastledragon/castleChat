@@ -127,4 +127,10 @@ public class UserServiceImpl implements UserService {
 		return list;
 	}
 
+	@Override
+	public Long findUserIdByPublicId(String publicId) {
+		Long userId = userMapper.findUserIdByPublicId(publicId);
+		return userId;
+	}
+
 }

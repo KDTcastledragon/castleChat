@@ -6,5 +6,6 @@ export function useSearchUsers(searchWord) {
         queryKey: ['searchUsers', searchWord],
         queryFn: () => searchUsersApi(searchWord),
         enabled: searchWord.trim().length > 0,
+        retry: false
     });
 }

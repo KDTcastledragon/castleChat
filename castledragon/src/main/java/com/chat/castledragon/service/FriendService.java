@@ -12,4 +12,6 @@ public interface FriendService {
 
 	List<UserProfileResponseDTO> getReceivedFriendRequests(Long userId);
 
+	boolean respondFriendRequest(Long userId, String publicId, String action);
+
 }

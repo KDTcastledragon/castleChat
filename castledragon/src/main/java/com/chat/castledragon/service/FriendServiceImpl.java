@@ -50,4 +50,27 @@ public class FriendServiceImpl implements FriendService {
 		return (list);
 	}
 
+	@Override
+	public boolean respondFriendRequest(Long myUserId, String requesterPublicId, String action) {
+		Long requesterUserId = friendMapper.findUserIdByPublicId(requesterPublicId);
+
+		if (requesterUserId == null || myUserId.equals(requesterUserId)) {
+			return false;
+		}
+
+		String nextStatus;
+
+		if ("ACCEPT".equals(action)) {
+			nextStatus = "ACCEPTED";
+		} else if ("REJECT".equals(action)) {
+			nextStatus = "REJECTED";
+		} else {
+			return false;
+		}
+
+		int updated = friendMapper.respondFriendRequest(myUserId, requesterUserId, nextStatus);
+
+		return updated > 0;
+	}
+
 }//Impl끝.

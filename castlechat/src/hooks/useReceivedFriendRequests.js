@@ -6,5 +6,6 @@ export function useReceivedFriendRequests(enabled) {
         queryKey: ['receivedFriendRequests'],
         queryFn: getReceivedFriendRequestsApi,
         enabled,
+        retry: false
     });
 }

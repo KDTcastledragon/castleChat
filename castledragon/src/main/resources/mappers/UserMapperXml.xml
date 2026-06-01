@@ -26,6 +26,10 @@
 		  )
 		LIMIT 20
   	</select>
+  	
+  	<select id="findUserIdByPublicId" resultType="long">
+	select user_id from users where public_id =#{publicId} and status ='ACTIVE'
+	</select>
 	
     
      <update id="changePassword">

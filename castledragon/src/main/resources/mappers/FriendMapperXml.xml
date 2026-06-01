@@ -46,5 +46,13 @@
 	  AND u.status = 'ACTIVE'
 	</select>
 	
+	<update id="respondFriendRequest">
+	UPDATE friendships
+	SET status = #{nextStatus}
+	WHERE receiver_user_id = #{myUserId}
+	  AND requester_user_id = #{requesterUserId}
+	  AND status = 'PENDING'
+</update>
+	
 </mapper>
 		

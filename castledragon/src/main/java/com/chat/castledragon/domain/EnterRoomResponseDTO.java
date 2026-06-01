@@ -17,7 +17,7 @@ public class EnterRoomResponseDTO {
 
 	private String targetLoginId;
 
-	private List<ChatDTO> messages;
+	private List<ChatMessageDTO> messages;
 
 	private Long lastReadMessageId;
 }

@@ -4,15 +4,14 @@ import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
 // home에서 me항목 하나씩 일일히 다 넘기게 되면 Home이 ChatBox 내부에서 뭘 쓰는지 너무 많이 관여하게 돼. 그래서 me를 통째로 받는게 좋다.
-function ChatBox({ me, wsRef, isWsConnectedRef, roomId, targetUserID, targetLoginID, registerRoomHandler,
+function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, registerRoomHandler,
     unregisterRoomHandler, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
 
-    const userID = 'userID';
-    const loginID = 'loginID';
+
 
     // const myPublicId = me.publicId;
     // const myNickname = me.nickname;
@@ -23,7 +22,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, targetUserID, targetLogi
 
     const { publicId: myPublicId, nickname: myNickname, friendCode: myFriendCode, profileImg: myProfileImg } = me || {}; // me가 null일경우, undefined상태로 만듦.
 
-
+    const userID = myPublicId;
 
     const chatEndRef = useRef(null);
 

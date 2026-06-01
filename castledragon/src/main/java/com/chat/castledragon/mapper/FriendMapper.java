@@ -16,4 +16,8 @@ public interface FriendMapper {
 	List<UserProfileResponseDTO> getFriendList(Long userId);
 
 	List<UserProfileResponseDTO> getReceivedFriendRequests(Long userId);
+
+	int acceptFriend(@Param("myUserId") Long myUserId, @Param("requesterUserId") Long requesterUserId);
+
+	int respondFriendRequest(@Param("myUserId") Long myUserId, @Param("requesterUserId") Long requesterUserId, @Param("nextStatus") String nextStatus);
 }

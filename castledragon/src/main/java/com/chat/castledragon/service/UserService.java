@@ -25,4 +25,6 @@ public interface UserService {
 
 	List<UserProfileResponseDTO> searchUsers(String searchWord, Long userId);
 
+	Long findUserIdByPublicId(String publicId);
+
 }

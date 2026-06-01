@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.castledragon.cache.RoomMemberCache;
-import com.chat.castledragon.domain.ChatDTO;
+import com.chat.castledragon.domain.ChatMessageDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.ChatRoomsDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
@@ -34,32 +34,38 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public EnterRoomResponseDTO enterRoom(Long senderId, Long targetUserId) {
+	public EnterRoomResponseDTO enterRoom(Long senderId, Long friendUserId) {
+
+		if (senderId == null || friendUserId == null) {
+			log.info("방생성 필요 요소 없음 : {} / {}", senderId, friendUserId);
+			return null;
+		}
 
 		// 1. 기존 room 조회
-		Long roomId = chatMapper.findRoomId(senderId, targetUserId);
+		Long roomId = chatMapper.findRoomId(senderId, friendUserId);
 		boolean isNewRoom = false;
 
+		log.info("기존 방 없음 : {}", roomId);
+
 		if (roomId == null) {
+			log.info("새로운 채팅방(roomId) 생성 시작");
 			ChatRoomsDTO room = new ChatRoomsDTO();
 			room.setRoomType("DIRECT");
 			room.setRoomStatus("ACTIVE");
 
-			log.info("채팅방 새로 생성 : {}", room);
-
 			chatMapper.createRoom(room);
 			roomId = room.getRoomId();
 
-			log.info("새로운 채팅방의 newRoomId : {}", roomId);
+			log.info("새로운 채팅방의 newRoomId 생성 완료 : {}", roomId);
 
 			chatMapper.insertRoomMember(roomId, senderId);
-			chatMapper.insertRoomMember(roomId, targetUserId);
+			chatMapper.insertRoomMember(roomId, friendUserId);
 
-			roomMemberCache.cacheRoomMembers(roomId, Set.of(senderId, targetUserId));
+			roomMemberCache.cacheRoomMembers(roomId, Set.of(senderId, friendUserId));
 
 			isNewRoom = true;
 
-			log.info("roomId={}  user1 : {}, user2 : {} 추가", roomId, senderId, targetUserId);
+			log.info("roomId={}  user1 : {}, user2 : {} 추가", roomId, senderId, friendUserId);
 		}
 
 		if (!isNewRoom) {
@@ -70,17 +76,17 @@ public class ChatServiceImpl implements ChatService {
 		}
 
 		// 2. 메시지 조회. --> if 다음 else 안 쓰는 이유? 1. nesting(중첩)때문에.가독성저하.조건흐름추적어려움.  2.Pyramid of Doom형태로 else의 else의 else...가 되버리기 때문.
-		log.info("{}과 {}의 채팅방 이미 존재. : {}  --> 이전 채팅내역 불러오기 시작.", senderId, targetUserId, roomId);
+		log.info("{}과 {}의 채팅방 이미 존재. : {}  --> 이전 채팅내역 불러오기 시작.", senderId, friendUserId, roomId);
 		//		List<ChatDTO> messages = chatMapper.getMessages(roomId);
 
 		// 3. DTO 조립
 		EnterRoomResponseDTO resDTO = new EnterRoomResponseDTO();
-		String targetUserLoginId = userMapper.getUserLoginId(targetUserId);
+		String targetUserLoginId = userMapper.getUserLoginId(friendUserId);
 		log.info("채팅방 상대의 로그인ID : {}", targetUserLoginId);
 
 		resDTO.setRoomId(roomId);
 		//				resDTO.setMessages(messages);
-		resDTO.setTargetUserId(targetUserId);
+		resDTO.setTargetUserId(friendUserId);
 		resDTO.setTargetLoginId(targetUserLoginId);
 
 		log.info("최종 resDTO : {}", resDTO);
@@ -90,11 +96,11 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public ChatDTO sendMessage(PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+	public ChatMessageDTO sendMessage(PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
 		Long roomId = payload.getRoomId();
 		Long senderId = payload.getSenderId();
 
-		ChatDTO chat = new ChatDTO();
+		ChatMessageDTO chat = new ChatMessageDTO();
 		chat.setRoomId(roomId);
 		chat.setSenderId(senderId);
 		chat.setMsgText(payload.getMsgText());
@@ -120,7 +126,6 @@ public class ChatServiceImpl implements ChatService {
 			unreadCount = (long) 0;
 		}
 
-		chat.setSenderLoginId(payload.getSenderLoginId());
 		chat.setUnreadCount(unreadCount);
 
 		return chat;
@@ -140,8 +145,8 @@ public class ChatServiceImpl implements ChatService {
 	//	}
 
 	@Override
-	public List<ChatDTO> getMessages(Long roomId) {
-		List<ChatDTO> chatList = chatMapper.getMessages(roomId);
+	public List<ChatMessageDTO> getMessages(Long roomId) {
+		List<ChatMessageDTO> chatList = chatMapper.getMessages(roomId);
 		return chatList;
 	}
 

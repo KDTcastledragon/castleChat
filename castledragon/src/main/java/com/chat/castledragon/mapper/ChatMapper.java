@@ -5,14 +5,14 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.castledragon.domain.ChatDTO;
+import com.chat.castledragon.domain.ChatMessageDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.ChatRoomsDTO;
 
 @Mapper
 public interface ChatMapper {
 
-	List<ChatDTO> getListWithFri(String userId, String friId);
+	List<ChatMessageDTO> getListWithFri(String userId, String friId);
 
 	Long findRoomId(@Param("user1") Long user1, @Param("user2") Long user2);
 
@@ -20,9 +20,9 @@ public interface ChatMapper {
 
 	void insertRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
 
-	List<ChatDTO> getMessages(Long roomId);
+	List<ChatMessageDTO> getMessages(Long roomId);
 
-	void insertMessage(ChatDTO dto);
+	void insertMessage(ChatMessageDTO dto);
 
 	void updateLastRead(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("lastReadMessageId") Long lastReadMessageId);
 

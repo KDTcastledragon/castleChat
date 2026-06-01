@@ -6,5 +6,6 @@ export function useFriendList(enabled) {
         queryKey: ['friends'],
         queryFn: getFriendListApi,
         enabled,
+        retry: false
     });
 }

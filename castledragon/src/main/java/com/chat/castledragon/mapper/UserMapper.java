@@ -14,6 +14,8 @@ public interface UserMapper {
 
 	UserDTO getUser(String id);
 
+	Long findUserIdByPublicId(@Param("publicId") String publicId);
+
 	String getUserLoginId(Long userId);
 
 	int join(@Param("publicId") String publicId, @Param("loginId") String loginId, @Param("password") String password, @Param("nickname") String nickname, @Param("friendCode") String friendCode);

@@ -1,9 +1,7 @@
 package com.chat.castledragon.websocket;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
@@ -12,31 +10,21 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.chat.castledragon.domain.ChatDTO;
-import com.chat.castledragon.domain.PayloadEnterRoomDTO;
-import com.chat.castledragon.domain.PayloadExitRoomDTO;
-import com.chat.castledragon.domain.PayloadReadMessageDTO;
-import com.chat.castledragon.domain.PayloadSendMessageDTO;
-import com.chat.castledragon.domain.PayloadTypingDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
-import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-public class WsHandler extends TextWebSocketHandler {
+public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
-	private final ChatService chatService;
-	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
-	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
-	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
+	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
 	// 채팅방별로 현재 접속 중인 유저들의 WebSocket 연결을 저장할 명부를 하나 준비한다.
 	//	private final Map<Long, Set<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();// 근데 왜 List안쓰고 Set을 씀? (Legacy:OnlyRoom)
-	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
 	// roomId별로 현재 접속 중인 WebSocketSession들을 저장.
 	//	왜 필요하냐??? 방에 메시지가 왔을 때, 이 roomId에 접속 중인 사람들에게만 보내야 하니까.
 	//	 <구조>
@@ -49,32 +37,10 @@ public class WsHandler extends TextWebSocketHandler {
 	//	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
 	private final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
 
-	//	========== 생성자 주입 ==========================================================================================
-	//	메시지 저장/읽음 처리 같은 비즈니스 로직은 Service에게 맡기기 위해 Spring이 넣어준 ChatService를 보관한다.
-	public WsHandler(ChatService chatService) {
-		this.chatService = chatService;
-
-		// chatService를 생성자로 받습니다.
-		// Spring이 ChatHandler를 만들 때, 이미 Bean으로 등록된 ChatService를 찾아서 넣어줍니다. 이걸 생성자 주입이라고 합니다.
-		// 왜 직접 new ChatServiceImpl() 안 하냐??? Spring이 관리하는 Bean을 써야 하기 때문입니다. 트랜잭션 , AOP , 의존성 관리 , 테스트 , 싱글톤 관리 등을 쓸 수 있기 때문에.
-		// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
-	}
-
 	//	====== 연결 이후 메소드 ===========================================================================================================
 	@Override
 	public void afterConnectionEstablished(WebSocketSession session) { // 이게 실행되는 순간 = 클라이언트가 ws 연결 성공한 순간
 		log.info("ws 연결 성공 : WSid▶{}   uri▶{}", session.getId(), session.getUri());
-	}
-
-	// ======= payload 변환 helper ==================================================
-	private <T> T convertPayload(WebSocketDTO dto, Class<T> clazz) {
-		return objectMapper.convertValue(dto.getPayload(), clazz); // WebSocketDTO 안의 payload를 각각의 메소드에 알맞게 Payload DTO 타입으로 변환하는 공통 함수.
-		// <T> : 이 메서드는 호출할 때 원하는 타입을 받아서, 그 타입으로 변환해서 돌려줄 수 있다.
-		// Java는 런타임에 제네릭 타입 정보를 잃는 부분이 있습니다. 그래서 T만 보고는 Jackson이 “무슨 클래스로 바꿔야 하는지” 모릅니다. 
-		// 그래서 Class<T> clazz를 이용하여 명시적으로 클래스 정보를 넘깁니다. 즉, 'payload를 어떤 클래스 타입으로 변환할지 알려주는 인자'이다.
-		// convertValue : 이미 Java 객체/JsonNode/Map 형태로 존재하는 값을 다른 Java 객체 타입으로 변환해주는 메소드. 이미 객체 형태인 값을 '다른 객체'로 바꿉니다.
-		// ws의 payload는 JsonNode입니다. 그래서, dto.getPayload()는 문자열이 아니라 JsonNode이다. --> JsonNode를 EnterRoomPayloadDTO 로 바꾸는 겁니다.
-		// Jackson은 사람이 아니라 Java에서 JSON을 다루는 대표 라이브러리 이름입니다. 오타 아니에요.
 	}
 
 	//	====== 메세지 관리 Dispatcher ===========================================================================================================
@@ -84,7 +50,6 @@ public class WsHandler extends TextWebSocketHandler {
 		WebSocketDTO dto = null;
 
 		try {
-
 			log.info("WebSocket_msg 도착 : {}", message.getPayload());
 
 			//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
@@ -120,258 +85,33 @@ public class WsHandler extends TextWebSocketHandler {
 		}// try-catch : 이렇게 하면 잘못된 payload가 와도 서버가 FAIL을 보내고, WebSocket 연결 자체는 최대한 유지할 수 있어.
 	} // handleTextMessage 끝.
 
-	//	====== 유저 접속 ============================================================================================================
-	private void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		SessionUserDTO loginUser = getLoginUser(session);
+	// ====== ws 연결 종료 ===========================================================================================================
+	@Override
+	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+		SessionUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
+		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
+		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
 
-		if (loginUser == null) {
-			log.warn("인증되지 않은 WS CONNECT 요청. WSid={}", session.getId());
-			responseFail(session, dto, "CONNECT_USER_FAIL", "로그인이 필요합니다.");
-
-			if (session.isOpen()) {
-				session.close(CloseStatus.NOT_ACCEPTABLE);
-			}
-
-			return;
+		if (connectedUser != null) {
+			log.info("{}-({})님이 종료하였습니다.", connectedUser.getNickname(), connectedUser.getUserId());
+		} else {
+			log.info("식별되지 않은 WS 종료. Wsid▶ {}", session.getId());
 		}
 
-		connectedUserSessions.put(session, loginUser);
-
-		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
-		responseOk(session, dto, "CONNECT_USER_OK", loginUser);
-		//	    
-		//		PayloadConnectUserDTO payload = convertPayload(dto, PayloadConnectUserDTO.class);
+		//		roomSessions.forEach((roomId, userMap) -> {
 		//
-		//		if (payload.getUserId() == null || payload.getLoginId() == null) {
-		//			log.warn("아이디 없이 접속 경고 : {} / {} ", payload.getUserId(), payload.getLoginId());
-		//			responseFail(session, dto, "CONNECT_USER_FAIL", "UserId가 없습니다.");
-		//			return;
-		//		}
+		//			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
 		//
-		//		log.info("{}-({})님이 접속하셨습니다.", payload.getLoginId(), payload.getUserId());
-		//		connectedUserSessions.put(session, payload);
-		//		responseOk(session, dto, "CONNECT_USER_OK", payload);
+		//			// 방이 비었으면 room 자체 제거
+		//			if (userMap.isEmpty()) {
+		//				roomSessions.remove(roomId);
+		//			}
+		//		});
 
-	}
+		removeSessionAllRooms(session);
 
-	//	====== 채팅방 입장 ===========================================================================================================
-	private void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		PayloadEnterRoomDTO payload = convertPayload(dto, PayloadEnterRoomDTO.class);
-
-		if (payload.getRoomId() == null || payload.getUserId() == null) {
-			log.warn("ENTER_ROOM Data 누락 : {} / {}", payload.getRoomId(), payload.getUserId());
-			responseFail(session, dto, "ENTER_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
-			return;
-		}
-
-		roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(payload.getUserId(), session);
-		log.info("{}번 유저 {}번방 ENTER 등록", payload.getUserId(), payload.getRoomId());
-		responseOk(session, dto, "ENTER_ROOM_OK", payload);
-
-	} // handleEnterRoom 끝.
-
-	//	====== 메세지 전송 ===========================================================================================================
-	private void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
-
-		if (payload.getRoomId() == null || payload.getSenderId() == null || payload.getMsgText() == null) {
-			log.warn("SEND_MSG Data 누락 : {} / {} / {}", payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
-			responseFail(session, dto, "MSG_SEND_FAIL", "SEND_MSG 필수값 누락");
-			return;
-		}
-
-		//		ChatDTO chat = new ChatDTO();
-
-		try {
-
-			Set<Long> viewingUserIds = getViewingUserIds(payload.getRoomId());
-
-			ChatDTO chat = chatService.sendMessage(payload, viewingUserIds);
-
-			broadcastToRoom(payload.getRoomId(), "MSG_SENDED", chat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
-
-			//			Long messageId = chatService.insertMessage(payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
-			//			chat.setMessageId(messageId);
-			//			chat.setRoomId(payload.getRoomId());
-			//			chat.setSenderId(payload.getSenderId());
-			//			chat.setSenderLoginId(payload.getSenderLoginId());
-			//			chat.setMsgText(payload.getMsgText());
-			//			chat.setUnreadCount(null);
-			//			ChatHandler는 insertMessage 직접 호출하지 않는다.
-			//			ChatHandler는 ChatDTO new 하지 않는다.
-			//			ChatHandler는 viewingUserIds만 구해서 Service에 넘긴다.
-			//			Service가 메시지 저장 + unreadCount 계산 + ChatDTO 조립을 한다.
-
-			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", payload.getSenderId(), payload.getRoomId(), payload.getMsgText());
-
-		} catch (Exception e) {
-			log.error("메시지 저장 실패", e);
-			responseFail(session, dto, "MSG_SEND_FAIL", "메시지 저장 실패");
-			return;
-		}
-		//		responseOk(session, dto, "SEND_MSG_OK", chat);
-	}
-
-	//	====== 메세지 읽기 ===========================================================================================================
-	private void handleReadMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		PayloadReadMessageDTO payload = convertPayload(dto, PayloadReadMessageDTO.class);
-
-		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLastReadMessageId() == null) {
-			log.info("readMsg 필수 값 누락 : {} / {} / {}", payload.getRoomId(), payload.getUserId(), payload.getLastReadMessageId());
-			responseFail(session, dto, "READ_MSG_FAIL", "READ_MSG 필수값 누락");
-			return;
-		}
-
-		chatService.updateLastRead(payload.getRoomId(), payload.getUserId(), payload.getLastReadMessageId());
-
-		log.info("{}번 유저가 {}번방 {}번 메시지까지 읽음", payload.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
-
-		broadcastToRoom(payload.getRoomId(), "MSG_READ", payload, dto.getRequestId());
-		//		responseOk(session, dto, "READ_MSG_OK", payload);
-	}
-
-	//	====== 채팅방 닫기 ===========================================================================================================
-	private void handleExitRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		PayloadExitRoomDTO payload = convertPayload(dto, PayloadExitRoomDTO.class);
-
-		if (payload.getRoomId() == null || payload.getUserId() == null) {
-			responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
-			return;
-		}
-
-		Map<Long, WebSocketSession> userMap = roomSessions.get(payload.getRoomId());
-
-		log.info("exit -> userMap : {}", userMap);
-		log.info("EXIT 전 {}번방 접속 유저 : {}", payload.getRoomId(), userMap == null ? null : userMap.keySet());
-		if (userMap != null) {
-			userMap.remove(payload.getUserId());
-
-			if (userMap.isEmpty()) {
-				roomSessions.remove(payload.getRoomId());
-			}
-		}
-		Map<Long, WebSocketSession> afterMap = roomSessions.get(payload.getRoomId()); // 확인용 Map
-
-		log.info("EXIT 후 {}번방 접속 유저 : {}", payload.getRoomId(), afterMap == null ? null : afterMap.keySet());
-		log.info("{}번 유저 {}번방 Exit 처리", payload.getUserId(), payload.getRoomId());
-		responseOk(session, dto, "EXIT_ROOM_OK", payload);
-	}
-
-	//	====== typing start/stop ===========================================================================================================
-	private void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
-		PayloadTypingDTO payload = convertPayload(dto, PayloadTypingDTO.class);
-
-		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLoginId() == null) {
-			log.warn("TYPING Data 누락 : {} / {} / {}", payload.getRoomId(), payload.getUserId(), payload.getLoginId());
-			responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
-			return;
-		}
-
-		log.info("{}-({}) {} in room {}", payload.getLoginId(), payload.getUserId(), eventType, payload.getRoomId());
-
-		broadcastToRoomExceptUser(payload.getRoomId(), eventType, payload, dto.getRequestId(), payload.getUserId());
-	}
-
-	//	====== broadcast ===========================================================================================================
-	private void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
-		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
-
-		if (sessions == null || sessions.isEmpty()) {
-			log.info("{}번방 broadcast 대상 없음", roomId);
-			return;
-		}
-
-		sessions.values().removeIf(socketSession -> !socketSession.isOpen());
-
-		WebSocketDTO event = new WebSocketDTO();
-		event.setRequestId(requestId);
-		event.setWsType(type);
-		event.setIsSuccess(true);
-		event.setPayload(objectMapper.valueToTree(payloadData));
-
-		String payload = objectMapper.writeValueAsString(event);
-
-		for (WebSocketSession s : sessions.values()) {
-			try {
-				if (s.isOpen()) {
-					s.sendMessage(new TextMessage(payload));
-				}
-			} catch (Exception e) {
-				log.error("broadcast 실패", e);
-			}
-		}
-	}
-
-	private void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
-		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
-
-		if (sessions == null || sessions.isEmpty()) {
-			log.info("{}번방 typing broadcast 대상 없음", roomId);
-			return;
-		}
-
-		sessions.values().removeIf(socketSession -> !socketSession.isOpen());
-
-		WebSocketDTO event = new WebSocketDTO();
-		event.setRequestId(requestId);
-		event.setWsType(type);
-		event.setIsSuccess(true);
-		event.setPayload(objectMapper.valueToTree(payloadData));
-
-		String payload = objectMapper.writeValueAsString(event);
-
-		for (Map.Entry<Long, WebSocketSession> entry : sessions.entrySet()) {
-			Long userId = entry.getKey();
-			WebSocketSession s = entry.getValue();
-
-			if (userId.equals(excludedUserId)) {
-				continue;
-			}
-
-			try {
-				if (s.isOpen()) {
-					s.sendMessage(new TextMessage(payload));
-				}
-			} catch (Exception e) {
-				log.error("typing broadcast 실패", e);
-			}
-		}
-	}
-
-	//	====== Success 응답 보내기 ===========================================================================================================
-	private void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
-		WebSocketDTO response = new WebSocketDTO();
-
-		response.setRequestId(request.getRequestId());
-		response.setWsType(wsType);
-		response.setIsSuccess(true);
-		response.setPayload(objectMapper.valueToTree(payload));
-
-		dispatchToSession(session, response);
-	}
-
-	//	====== Fail 응답 보내기 ===========================================================================================================
-	private void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
-		WebSocketDTO response = new WebSocketDTO();
-
-		response.setRequestId(request.getRequestId());
-		response.setWsType(wsType);
-		response.setIsSuccess(false);
-		response.setWsMessage(errorMessage);
-
-		dispatchToSession(session, response);
-	}
-
-	//	====== 응답 Session에 보내기 ===========================================================================================================
-	private void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		if (!session.isOpen()) {
-			log.info("responseToSession is Not Open");
-			return;
-		}
-
-		String payload = objectMapper.writeValueAsString(dto);
-		session.sendMessage(new TextMessage(payload));
-	}
+		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
+	} // afterConnectionClosed 끝.
 
 	// ====== ws 연결 강제 종료 (로그아웃) ===========================================================================================================
 	public void closeUserWebSocketConnection(Long userId) {
@@ -405,79 +145,7 @@ public class WsHandler extends TextWebSocketHandler {
 				log.error("로그아웃 WS 종료 실패 userId={}", userId, e);
 			}
 		}
-	}// disconnect
-
-	// ====== 모든 방 exit 처리 ===========================================================================================================
-	private void removeSessionAllRooms(WebSocketSession session) {
-		roomSessions.forEach((roomId, userMap) -> {
-			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
-
-			if (userMap.isEmpty()) {
-				roomSessions.remove(roomId);
-			}
-		});
-	}
-
-	// ====== ws 연결 종료 ===========================================================================================================
-	@Override
-	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-		SessionUserDTO connectedUser = connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
-		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
-		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
-
-		if (connectedUser != null) {
-			log.info("{}-({})님이 종료하였습니다.", connectedUser.getNickname(), connectedUser.getUserId());
-		} else {
-			log.info("식별되지 않은 WS 종료. Wsid▶ {}", session.getId());
-		}
-
-		//		roomSessions.forEach((roomId, userMap) -> {
-		//
-		//			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
-		//
-		//			// 방이 비었으면 room 자체 제거
-		//			if (userMap.isEmpty()) {
-		//				roomSessions.remove(roomId);
-		//			}
-		//		});
-
-		removeSessionAllRooms(session);
-
-		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
-	} // afterConnectionClosed 끝.
-
-	private Set<Long> getViewingUserIds(Long roomId) {
-		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
-
-		if (sessions == null || sessions.isEmpty()) {
-			return Set.of();
-		}
-
-		sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
-
-		return new HashSet<>(sessions.keySet());
-	}
-
-	//	로그인 인증 =======================================================
-	private SessionUserDTO getLoginUser(WebSocketSession session) {
-		Object loginUser = session.getAttributes().get("LOGIN_USER");
-
-		if (loginUser instanceof SessionUserDTO user) {
-			return user;
-		}
-
-		return null;
-	}
-
-	private Long getLoginUserId(WebSocketSession session) {
-		SessionUserDTO loginUser = getLoginUser(session);
-
-		if (loginUser == null) {
-			return null;
-		}
-
-		return Long.valueOf(loginUser.getUserId());
-	}
+	}// closeUserSession
 
 } // ChatHandler 끝.
 

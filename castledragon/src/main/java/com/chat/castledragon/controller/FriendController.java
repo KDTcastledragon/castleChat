@@ -27,6 +27,8 @@ import lombok.extern.log4j.Log4j2;
 public class FriendController {
 	private final FriendService friendService;
 
+	//	private final UserService userService;
+
 	@PostMapping("/addFriend")
 	public ResponseEntity<?> addFriend(@RequestBody FriendDTO requestData, HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
@@ -88,5 +90,26 @@ public class FriendController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("no list");
 		}
 	}//getRecvAddFriList
+
+	@PostMapping("/respondFriendRequest")
+	public ResponseEntity<?> respondFriendRequest(@RequestBody FriendDTO requestData, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		log.info("???????????????????");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		boolean result = friendService.respondFriendRequest(me.getUserId(), requestData.getPublicId(), requestData.getAction());
+
+		if (!result) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("친구 요청 응답 실패");
+		}
+
+		log.info("{}님이 친구 요청 {}", me.getUserId(), requestData.getAction());
+
+		return ResponseEntity.ok().build();
+	}
 
 }//Controller 끝.
