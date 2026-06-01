@@ -1,11 +1,15 @@
 package com.chat.castledragon.websocket;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.castledragon.domain.ChatMessageDTO;
+import com.chat.castledragon.domain.PayloadEnterRoomDTO;
+import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.PayloadTypingDTO;
@@ -25,14 +29,23 @@ public class WsChatEventHandler {
 	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
 
-	public WsChatEventHandler(ChatService chatService) {
-		this.chatService = chatService;
+	private final WsChatEventHandler wsChatEventHandler;
+	private final WsSessionRegistry wsSessionRegistry;
+	private final WsOutboundWriter wsOutboundWriter;
 
-		// chatService를 생성자로 받습니다.
-		// Spring이 ChatHandler를 만들 때, 이미 Bean으로 등록된 ChatService를 찾아서 넣어줍니다. 이걸 생성자 주입이라고 합니다.
-		// 왜 직접 new ChatServiceImpl() 안 하냐??? Spring이 관리하는 Bean을 써야 하기 때문입니다. 트랜잭션 , AOP , 의존성 관리 , 테스트 , 싱글톤 관리 등을 쓸 수 있기 때문에.
-		// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
+	// 생성자 주입
+	public WsChatEventHandler(WsChatEventHandler wsChatEventHandler, WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter,
+			ChatService chatService) {
+		this.wsChatEventHandler = wsChatEventHandler;
+		this.wsSessionRegistry = wsSessionRegistry;
+		this.wsOutboundWriter = wsOutboundWriter;
+		this.chatService = chatService;
 	}
+
+	// chatService를 생성자로 받습니다.
+	// Spring이 ChatHandler를 만들 때, 이미 Bean으로 등록된 ChatService를 찾아서 넣어줍니다. 이걸 생성자 주입이라고 합니다.
+	// 왜 직접 new ChatServiceImpl() 안 하냐??? Spring이 관리하는 Bean을 써야 하기 때문입니다. 트랜잭션 , AOP , 의존성 관리 , 테스트 , 싱글톤 관리 등을 쓸 수 있기 때문에.
+	// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
 
 	// ======= payload 변환 helper ==================================================
 	private <T> T convertPayload(WebSocketDTO dto, Class<T> clazz) {
@@ -44,6 +57,49 @@ public class WsChatEventHandler {
 		// ws의 payload는 JsonNode입니다. 그래서, dto.getPayload()는 문자열이 아니라 JsonNode이다. --> JsonNode를 EnterRoomPayloadDTO 로 바꾸는 겁니다.
 		// Jackson은 사람이 아니라 Java에서 JSON을 다루는 대표 라이브러리 이름입니다. 오타 아니에요.
 	}
+
+	//	====== 채팅방 입장 ===========================================================================================================
+	void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadEnterRoomDTO payload = convertPayload(dto, PayloadEnterRoomDTO.class);
+
+		if (payload.getRoomId() == null || payload.getUserId() == null) {
+			log.warn("ENTER_ROOM Data 누락 : {} / {}", payload.getRoomId(), payload.getUserId());
+			responseFail(session, dto, "ENTER_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
+			return;
+		}
+
+		wsSessionRegistry.roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(payload.getUserId(), session);
+		log.info("{}번 유저 {}번방 ENTER 등록", payload.getUserId(), payload.getRoomId());
+		responseOk(session, dto, "ENTER_ROOM_OK", payload);
+
+	} // handleEnterRoom 끝.
+
+	//	====== 채팅방 닫기 ===========================================================================================================
+	void handleExitRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		PayloadExitRoomDTO payload = convertPayload(dto, PayloadExitRoomDTO.class);
+
+		if (payload.getRoomId() == null || payload.getUserId() == null) {
+			responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
+			return;
+		}
+
+		Map<Long, WebSocketSession> userMap = roomSessions.get(payload.getRoomId());
+
+		log.info("exit -> userMap : {}", userMap);
+		log.info("EXIT 전 {}번방 접속 유저 : {}", payload.getRoomId(), userMap == null ? null : userMap.keySet());
+		if (userMap != null) {
+			userMap.remove(payload.getUserId());
+
+			if (userMap.isEmpty()) {
+				roomSessions.remove(payload.getRoomId());
+			}
+		}
+		Map<Long, WebSocketSession> afterMap = roomSessions.get(payload.getRoomId()); // 확인용 Map
+
+		log.info("EXIT 후 {}번방 접속 유저 : {}", payload.getRoomId(), afterMap == null ? null : afterMap.keySet());
+		log.info("{}번 유저 {}번방 Exit 처리", payload.getUserId(), payload.getRoomId());
+		responseOk(session, dto, "EXIT_ROOM_OK", payload);
+	}//exitRoom 끝.
 
 	//	====== 메세지 전송 ===========================================================================================================
 	void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -88,7 +144,7 @@ public class WsChatEventHandler {
 	}
 
 	//	====== 메세지 읽기 ===========================================================================================================
-	private void handleReadMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+	void handleReadMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		PayloadReadMessageDTO payload = convertPayload(dto, PayloadReadMessageDTO.class);
 
 		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLastReadMessageId() == null) {
@@ -106,7 +162,7 @@ public class WsChatEventHandler {
 	}
 
 	//	====== typing start/stop ===========================================================================================================
-	private void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
+	void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
 		PayloadTypingDTO payload = convertPayload(dto, PayloadTypingDTO.class);
 
 		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLoginId() == null) {
