@@ -2,7 +2,6 @@ package com.chat.castledragon.websocket;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -22,20 +21,16 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
-	// 채팅방별로 현재 접속 중인 유저들의 WebSocket 연결을 저장할 명부를 하나 준비한다.
-	//	private final Map<Long, Set<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();// 근데 왜 List안쓰고 Set을 씀? (Legacy:OnlyRoom)
-	// roomId별로 현재 접속 중인 WebSocketSession들을 저장.
-	//	왜 필요하냐??? 방에 메시지가 왔을 때, 이 roomId에 접속 중인 사람들에게만 보내야 하니까.
-	//	 <구조>
-	//	roomSessions
-	//	└─ roomId
-	//	   └─ userId
-	//	      └─ WebSocketSession
+	private final WsChatEventHandler wsChatEventHandler;
+	private final WsSessionRegistry wsSessionRegistry;
+	private final WsOutboundWriter wsOutboundWriter;
 
-	//	ConcurrentHashMap 왜 씀?? 일반 HashMap은 여러 thread가 동시에 수정하면 문제가 생길 수 있습니다.그래서 thread-safe한 Map인 ConcurrentHashMap씀. 동시에 여러 요청이 건드려도 일반 HashMap보다 안전한 Map
-	//	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
-	private final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
+	// 생성자 주입
+	public WsDispatcher(WsChatEventHandler wsChatEventHandler, WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter) {
+		this.wsChatEventHandler = wsChatEventHandler;
+		this.wsSessionRegistry = wsSessionRegistry;
+		this.wsOutboundWriter = wsOutboundWriter;
+	}
 
 	//	====== 연결 이후 메소드 ===========================================================================================================
 	@Override
@@ -61,13 +56,13 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			}
 
 			switch (dto.getWsType()) {
-			case "ENTER_ROOM" -> handleEnterRoom(session, dto);
-			case "SEND_MSG" -> handleSendMessage(session, dto);
-			case "READ_MSG" -> handleReadMessage(session, dto);
-			case "CONNECT_USER" -> handleConnectUser(session, dto);
-			case "EXIT_ROOM" -> handleExitRoom(session, dto);
-			case "TYPING_START" -> handleTyping(session, dto, "TYPING_START");
-			case "TYPING_STOP" -> handleTyping(session, dto, "TYPING_STOP");
+			case "ENTER_ROOM" -> wsChatEventHandler.handleEnterRoom(session, dto);
+			case "SEND_MSG" -> wsChatEventHandler.handleSendMessage(session, dto);
+			case "READ_MSG" -> wsChatEventHandler.handleReadMessage(session, dto);
+			case "CONNECT_USER" -> wsChatEventHandler.handleConnectUser(session, dto);
+			case "EXIT_ROOM" -> wsChatEventHandler.handleExitRoom(session, dto);
+			case "TYPING_START" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_START");
+			case "TYPING_STOP" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_STOP");
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());

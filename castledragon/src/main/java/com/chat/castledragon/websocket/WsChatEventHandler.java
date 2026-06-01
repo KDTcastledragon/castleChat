@@ -20,6 +20,7 @@ import lombok.extern.log4j.Log4j2;
 public class WsChatEventHandler {
 
 	private final ChatService chatService;
+
 	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
 	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
@@ -45,7 +46,7 @@ public class WsChatEventHandler {
 	}
 
 	//	====== 메세지 전송 ===========================================================================================================
-	private void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+	void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
 
 		if (payload.getRoomId() == null || payload.getSenderId() == null || payload.getMsgText() == null) {
