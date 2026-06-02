@@ -7,7 +7,8 @@ import com.chat.castledragon.domain.SessionUserDTO;
 
 @Component
 public class WsAuth {
-	//	로그인 인증 =======================================================
+
+	//	로그인 유저 꺼내기 =======================================================
 	SessionUserDTO getLoginUser(WebSocketSession session) {
 		Object loginUser = session.getAttributes().get("LOGIN_USER");
 
@@ -16,5 +17,21 @@ public class WsAuth {
 		}
 
 		return null;
+	}
+
+	// ==== 로그인 PK id =======================================================
+	Long getMyUserIdInWsSession(WebSocketSession session) {
+		return requireLoginUserId(session).getUserId();
+	}
+
+	// ==== 로그인 PK id =======================================================
+	SessionUserDTO requireLoginUserId(WebSocketSession session) {
+		SessionUserDTO me = getLoginUser(session);
+
+		if (me == null) {
+			throw new WsAuthException("로그인이 필요합니다.");
+		}
+
+		return me;
 	}
 }// getLoginUser

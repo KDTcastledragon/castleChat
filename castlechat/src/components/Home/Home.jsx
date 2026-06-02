@@ -202,7 +202,7 @@ function Home() {
     // ==== 채팅방 ===================================================
     const openChattingRoom = async (friendPublicId) => {
         try {
-            const res = await axios.post(`/chat/enterRoom`, {
+            const res = await axios.post(`/chat/enterDirectRoom`, {
                 friendPublicId: friendPublicId
             });
 
@@ -211,7 +211,7 @@ function Home() {
 
             wsRef.current.send(JSON.stringify({
                 requestId: crypto.randomUUID(),
-                wsType: "ENTER_ROOM",
+                wsType: "ENTER_DIRECT_ROOM",
                 payload: {
                     roomId: openedRoomId,
                     // friendPublicId: friendPublicId

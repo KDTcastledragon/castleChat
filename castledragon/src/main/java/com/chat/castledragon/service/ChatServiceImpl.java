@@ -34,7 +34,7 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public EnterRoomResponseDTO enterRoom(Long senderId, Long friendUserId) {
+	public EnterRoomResponseDTO enterDirectRoom(Long senderId, Long friendUserId) {
 
 		if (senderId == null || friendUserId == null) {
 			log.info("방생성 필요 요소 없음 : {} / {}", senderId, friendUserId);
@@ -96,9 +96,9 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public ChatMessageDTO sendMessage(PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+	public ChatMessageDTO sendMessage(Long senderId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+
 		Long roomId = payload.getRoomId();
-		Long senderId = payload.getSenderId();
 
 		ChatMessageDTO chat = new ChatMessageDTO();
 		chat.setRoomId(roomId);

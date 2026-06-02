@@ -233,7 +233,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
     function sendMessage() {
-        console.log(`${myNickname} >> ${targetLoginID} Msg 전송`);
+        console.log(`${myNickname} >> ${friendPublicId} Msg 전송`);
         console.log(`현재 wsRef : ${wsRef}`);
 
 
@@ -262,9 +262,11 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             wsType: "SEND_MSG",
             payload: {
                 roomId: roomId,
-                senderId: Number(userID),
-                senderLoginId: loginID,
                 msgText: chatMessage
+
+                // senderId: Number(userID),
+                // senderLoginId: loginID
+                // session 에서 꺼내먹을 거라 필요없다.
             }
 
         }));
@@ -302,9 +304,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             requestId: crypto.randomUUID(),
             wsType: "TYPING_START",
             payload: {
-                roomId: roomId,
-                userId: Number(userID),
-                loginId: loginID
+                roomId: roomId
             }
         }));
     };
@@ -314,9 +314,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             requestId: crypto.randomUUID(),
             wsType: "TYPING_STOP",
             payload: {
-                roomId: roomId,
-                userId: Number(userID),
-                loginId: loginID
+                roomId: roomId
             }
         }));
     };
@@ -370,7 +368,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             onMouseDown={onFocus}
         >
             <div className='chatListTitle' onMouseDown={startDrag}>
-                <span>{targetLoginID} - ({targetUserID})</span>
+                <span>{friendPublicId}</span>
                 <button
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={exitChat}
