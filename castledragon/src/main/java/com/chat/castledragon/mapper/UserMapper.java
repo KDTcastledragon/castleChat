@@ -10,7 +10,8 @@ import com.chat.castledragon.domain.UserProfileResponseDTO;
 
 @Mapper
 public interface UserMapper {
-	List<UserDTO> friendList(Long userId);
+
+	UserDTO getUserByLoginId(String loginId);
 
 	UserDTO getUser(String id);
 
@@ -27,5 +28,7 @@ public interface UserMapper {
 	List<UserDTO> allUsers();
 
 	List<UserProfileResponseDTO> searchUsers(@Param("searchWord") String searchWord, @Param("userId") Long userId);
+
+	List<UserDTO> friendList(Long userId);
 
 }

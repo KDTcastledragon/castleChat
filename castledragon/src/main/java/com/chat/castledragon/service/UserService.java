@@ -7,6 +7,8 @@ import com.chat.castledragon.domain.UserProfileResponseDTO;
 
 public interface UserService {
 
+	UserDTO getUser(String id);
+
 	List<UserDTO> friendList(Long userId);
 
 	UserDTO login(String id, String pw);
@@ -20,8 +22,6 @@ public interface UserService {
 	boolean join(String loginId, String password, String nickname);
 
 	boolean loginIdDuplicateCheck(String id);
-
-	UserDTO getUser(String id);
 
 	List<UserProfileResponseDTO> searchUsers(String searchWord, Long userId);
 

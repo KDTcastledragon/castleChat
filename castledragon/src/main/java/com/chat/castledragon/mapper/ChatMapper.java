@@ -12,8 +12,6 @@ import com.chat.castledragon.domain.ChatRoomsDTO;
 @Mapper
 public interface ChatMapper {
 
-	List<ChatMessageDTO> getListWithFri(String userId, String friId);
-
 	Long findRoomId(@Param("user1") Long user1, @Param("user2") Long user2);
 
 	void createRoom(ChatRoomsDTO room); //DTO내부 getter를 통해 접근 가능해서, 이렇게만 적어도 된다.

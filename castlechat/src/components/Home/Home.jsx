@@ -200,7 +200,7 @@ function Home() {
     }
 
     // ==== 채팅방 ===================================================
-    const openChattingRoom = async (friendPublicId) => {
+    const enterDirectRoom = async (friendPublicId) => {
         try {
             const res = await axios.post(`/chat/enterDirectRoom`, {
                 friendPublicId: friendPublicId
@@ -243,7 +243,7 @@ function Home() {
                 ];
             });
 
-            alert(`${res.data.nickname}한테 대화 요청!`);
+            alert(`${openedRoomId}입장!`);
 
         } catch (e) {
             console.log(`채팅방 열기 실패!`);
@@ -312,7 +312,7 @@ function Home() {
                         <span>{friend.nickname}</span>
                         <span>{friend.friendCode}</span>
                         &nbsp;&nbsp;
-                        <button onClick={() => openChattingRoom(friend.publicId)}>
+                        <button onClick={() => enterDirectRoom(friend.publicId)}>
                             채팅
                         </button>
                     </div>

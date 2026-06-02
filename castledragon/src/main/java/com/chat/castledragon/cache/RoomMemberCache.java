@@ -82,12 +82,12 @@ public class RoomMemberCache {
 
 		if (count == null) {
 
-			log.info("Redis countRoomMembers 조회 : {}", count);
+			log.info("count == null / Redis coRM 조회 : {}", count);
 
 			return 0L;
 		}
 
-		log.info("Redis countRoomMembers 조회 : {}", count);
+		log.info("Redis cRM 조회 : {}", count);
 
 		return count;
 	}

@@ -23,14 +23,8 @@ public class UserServiceImpl implements UserService {
 	PasswordEncoder encoder;
 
 	@Override
-	public UserDTO getUser(String id) {
-		UserDTO userPw = userMapper.getUser(id);
-		return userPw;
-	}
-
-	@Override
 	public UserDTO login(String loginId, String password) {
-		UserDTO user = userMapper.getUser(loginId);
+		UserDTO user = userMapper.getUserByLoginId(loginId);
 
 		if (user == null) {
 			log.info("id 없음");
@@ -131,6 +125,12 @@ public class UserServiceImpl implements UserService {
 	public Long findUserIdByPublicId(String publicId) {
 		Long userId = userMapper.findUserIdByPublicId(publicId);
 		return userId;
+	}
+
+	@Override
+	public UserDTO getUser(String id) {
+		UserDTO userPw = userMapper.getUser(id);
+		return userPw;
 	}
 
 }

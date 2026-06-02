@@ -36,10 +36,10 @@ public class UserController {
 	WsDispatcher wsDispatcher; // private final을 꼭 붙여야 하나??
 
 	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody LoginRequestDTO data, HttpSession session) {
-		log.info("{}의 login 시도  :", data.getLoginId());
+	public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginData, HttpSession session) {
+		log.info("{}의 login 시도  :", loginData.getLoginId());
 
-		UserDTO user = userService.login(data.getLoginId(), data.getPassword());
+		UserDTO user = userService.login(loginData.getLoginId(), loginData.getPassword());
 
 		if (user == null) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");

@@ -9,7 +9,7 @@ import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 
 public interface ChatService {
-	EnterRoomResponseDTO enterDirectRoom(Long senderId, Long targetUserId);
+	EnterRoomResponseDTO enterDirectRoom(Long senderId, String friendPublicId);
 
 	List<ChatMessageDTO> getMessages(Long roomId);
 

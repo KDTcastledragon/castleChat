@@ -121,6 +121,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
                     if (lastOtherMsgInRoom !== undefined) {
 
+
                         wsRef.current.send(JSON.stringify({
                             requestId: crypto.randomUUID(),
                             wsType: "READ_MSG",

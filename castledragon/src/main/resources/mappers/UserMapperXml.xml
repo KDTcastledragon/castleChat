@@ -10,8 +10,12 @@
 	VALUES(#{publicId}, #{loginId}, #{password}, #{nickname}, #{friendCode})
 	</insert>
 	
+	<select id="getUserByLoginId" resultType="com.chat.castledragon.domain.UserDTO">
+  	select * from users where login_id = #{loginId};
+  	</select>
+  	
 	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
-  	select * from users where login_id = #{id};
+  	select * from users where public_id = #{id};
   	</select>
   	
   	<select id="searchUsers" resultType="com.chat.castledragon.domain.UserProfileResponseDTO" >

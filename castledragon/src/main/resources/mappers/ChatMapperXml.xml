@@ -4,10 +4,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.chat.castledragon.mapper.ChatMapper">
-	<select id="getListWithFri" resultType="com.chat.castledragon.domain.ChatDTO">
-		select * from chatting where user_id = #{user_id} and fri_id = #{fri_id}
-	</select>
-	
+
 	<select id="findRoomId" resultType="long">
 	SELECT rm.room_id
 	FROM room_members rm
@@ -37,7 +34,7 @@
 	</select> -->
 	
 	<select id="getMessages"
-        resultType="com.chat.castledragon.domain.ChatDTO">
+        resultType="com.chat.castledragon.domain.ChatMessageDTO">
 
 	SELECT
 	    m.*,
@@ -53,7 +50,7 @@
 	        )
 	    ) AS unreadCount
 	
-	FROM messages m
+	FROM chat_messages m
 	
 	WHERE m.room_id = #{roomId}
 	
@@ -62,8 +59,8 @@
 	</select>
 	
 	
-	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatDTO" useGeneratedKeys="true" keyProperty="messageId">
-    	INSERT INTO messages(room_id, sender_id, msg_text) VALUES(#{roomId}, #{senderId}, #{msgText})
+	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatMessageDTO" useGeneratedKeys="true" keyProperty="messageId">
+    	INSERT INTO chat_messages(room_id, sender_id, msg_text) VALUES(#{roomId}, #{senderId}, #{msgText})
 	</insert>
 	
 	<update id="updateLastRead">
@@ -80,7 +77,7 @@
 
     (
         SELECT msg_text
-        FROM messages
+        FROM chat_messages
         WHERE room_id = r.room_id
         ORDER BY message_id DESC
         LIMIT 1
@@ -88,7 +85,7 @@
 
     (
         SELECT created_at
-        FROM messages
+        FROM chat_messages
         WHERE room_id = r.room_id
         ORDER BY message_id DESC
         LIMIT 1
@@ -106,7 +103,7 @@
 	JOIN chat_rooms r
 	ON r.room_id = me.room_id
 	
-	LEFT JOIN messages m
+	LEFT JOIN chat_messages m
 	ON m.room_id = r.room_id
 	AND m.message_id > IFNULL(me.last_read_message_id, 0)
 	AND m.sender_id != me.user_id

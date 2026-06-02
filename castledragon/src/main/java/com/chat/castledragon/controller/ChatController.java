@@ -36,18 +36,25 @@ public class ChatController {
 	public ResponseEntity<?> enterDirectRoom(@RequestBody Map<String, Object> data, HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
 
+		String friendPublicId = (String) data.get("friendPublicId");
+
+		String nick = userService.getUser(friendPublicId).getNickname(); // 개발과정에서 임시로 씀. 추후 삭제.
+
 		if (me == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		log.info("1:1 채팅방 입장 : {} --> {} ", me.getNickname(), data.get("friendPublicId"));
+		if (friendPublicId == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("친구아이디없음.");
+		}
 
-		String friendPublicId = (String) data.get("friendPublicId");
+		log.info("1:1 채팅방 입장 시도 : {} --> {} ", me.getNickname(), nick);
 
-		Long friendUserId = userService.findUserIdByPublicId(friendPublicId);
+		//		Long friendUserId = userService.findUserIdByPublicId(friendPublicId);
+
 		//		Long targetUserId = Long.valueOf(data.get("targetUserId").toString());
 
-		EnterRoomResponseDTO roomInfo = chatService.enterDirectRoom(me.getUserId(), friendUserId);
+		EnterRoomResponseDTO roomInfo = chatService.enterDirectRoom(me.getUserId(), friendPublicId);
 
 		return ResponseEntity.ok(roomInfo);
 	}

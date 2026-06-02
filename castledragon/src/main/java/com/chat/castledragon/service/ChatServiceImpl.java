@@ -34,18 +34,17 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public EnterRoomResponseDTO enterDirectRoom(Long senderId, Long friendUserId) {
+	public EnterRoomResponseDTO enterDirectRoom(Long senderId, String friendPublicId) {
 
-		if (senderId == null || friendUserId == null) {
-			log.info("방생성 필요 요소 없음 : {} / {}", senderId, friendUserId);
+		Long friendUserId = userMapper.findUserIdByPublicId(friendPublicId);
+
+		if (friendUserId == null) {
 			return null;
 		}
 
 		// 1. 기존 room 조회
 		Long roomId = chatMapper.findRoomId(senderId, friendUserId);
 		boolean isNewRoom = false;
-
-		log.info("기존 방 없음 : {}", roomId);
 
 		if (roomId == null) {
 			log.info("새로운 채팅방(roomId) 생성 시작");
