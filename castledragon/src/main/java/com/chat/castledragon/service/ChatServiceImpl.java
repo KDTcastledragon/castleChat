@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.castledragon.cache.RoomMemberCache;
 import com.chat.castledragon.domain.ChatMessageDTO;
+import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.ChatRoomsDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
@@ -95,23 +96,23 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public ChatMessageDTO sendMessage(Long senderId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+	public ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
 
 		Long roomId = payload.getRoomId();
 
-		ChatMessageDTO chat = new ChatMessageDTO();
-		chat.setRoomId(roomId);
-		chat.setSenderId(senderId);
-		chat.setMsgText(payload.getMsgText());
+		ChatMessageDTO sendChat = new ChatMessageDTO();
+		sendChat.setRoomId(roomId);
+		sendChat.setSenderId(senderUserId);
+		sendChat.setMessageText(payload.getMessageText());
 
-		chatMapper.insertMessage(chat); // DB에 Msg 저장.
+		chatMapper.insertMessage(sendChat); // DB에 Msg 저장.
 
 		// 방 멤버 전체를 Redis에서 가져온다. 없으면 DB에서 가져와 Redis에 올린다.
 		Set<Long> totalRoomMemberIds = roomMemberCache.getOrLoadRoomMembers(roomId, () -> chatMapper.findActiveRoomMemberIds(roomId));
 
 		// 현재 방을 보고 있는 사람들은 메시지를 즉시 받은 상태니까 읽은 사람으로 본다. 보낸 사람도 자기 메시지는 당연히 읽은 상태니까 추가한다.
 		Set<Long> connectedRoomMemberIds = new HashSet<>(viewingUserIds);
-		connectedRoomMemberIds.add(senderId);
+		connectedRoomMemberIds.add(senderUserId);
 
 		connectedRoomMemberIds.retainAll(totalRoomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
 
@@ -122,30 +123,24 @@ public class ChatServiceImpl implements ChatService {
 		log.info("unreadCount : {}", unreadCount);
 
 		if (unreadCount < 0) {
-			unreadCount = (long) 0;
+			unreadCount = 0L; // === (long) 0;
 		}
 
-		chat.setUnreadCount(unreadCount);
+		ChatMessageResponseDTO resChat = new ChatMessageResponseDTO();
 
-		return chat;
+		resChat.setMessageId(sendChat.getMessageId());
+		resChat.setRoomId(sendChat.getRoomId());
+		resChat.setSenderPublicId(senderPublicId);
+		resChat.setMessageText(sendChat.getMessageText());
+		resChat.setCreatedAt(sendChat.getCreatedAt());
+		resChat.setUnreadCount(unreadCount);
+
+		return resChat;
 	}
 
-	//	@Override
-	//	public Long insertMessage(Long roomId, Long senderId, String msgText) {
-	//		ChatDTO dto = new ChatDTO();
-	//		dto.setRoomId(roomId);
-	//		dto.setSenderId(senderId);
-	//		dto.setMsgText(msgText);
-	//
-	//		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
-	//		Long messageId = dto.getMessageId();
-	//
-	//		return messageId;
-	//	}
-
 	@Override
-	public List<ChatMessageDTO> getMessages(Long roomId) {
-		List<ChatMessageDTO> chatList = chatMapper.getMessages(roomId);
+	public List<ChatMessageResponseDTO> getPrevMessagesInRoom(Long roomId) {
+		List<ChatMessageResponseDTO> chatList = chatMapper.getPrevMessagesInRoom(roomId);
 		return chatList;
 	}
 
@@ -160,6 +155,19 @@ public class ChatServiceImpl implements ChatService {
 	}
 
 }
+
+//	@Override
+//	public Long insertMessage(Long roomId, Long senderId, String msgText) {
+//		ChatDTO dto = new ChatDTO();
+//		dto.setRoomId(roomId);
+//		dto.setSenderId(senderId);
+//		dto.setMsgText(msgText);
+//
+//		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
+//		Long messageId = dto.getMessageId();
+//
+//		return messageId;
+//	}
 
 //if (roomId != null) {
 //	log.info("{}과 {}의 채팅방 이미 존재 : {}", user1, user2, roomId);

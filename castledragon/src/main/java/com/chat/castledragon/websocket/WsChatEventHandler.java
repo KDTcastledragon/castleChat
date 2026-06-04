@@ -8,12 +8,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.ChatMessageDTO;
+import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadMessageDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
-import com.chat.castledragon.domain.PayloadTypingDTO;
+import com.chat.castledragon.domain.PayloadTypingRequestDTO;
+import com.chat.castledragon.domain.PayloadTypingResponseDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
@@ -60,6 +61,7 @@ public class WsChatEventHandler {
 
 	//	====== 유저 접속 ============================================================================================================
 	void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
 		SessionUserDTO loginUser = wsAuth.getLoginUser(session);
 
 		if (loginUser == null) {
@@ -75,7 +77,7 @@ public class WsChatEventHandler {
 
 		wsSessionRegistry.connectedUserSessions.put(session, loginUser);
 
-		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
+		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), myUserId);
 		wsOutboundWriter.responseOk(session, dto, "CONNECT_USER_OK", loginUser);
 		//	    
 		//		PayloadConnectUserDTO payload = convertPayload(dto, PayloadConnectUserDTO.class);
@@ -104,17 +106,19 @@ public class WsChatEventHandler {
 		}
 
 		wsSessionRegistry.roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(myUserId, session);
-		log.info("{}번 유저 {}번방 ENTER 등록", myUserId, payload.getRoomId());
+		log.info("{}번 유저 {}번방 ENTER, roomSession등록", myUserId, payload.getRoomId());
 		wsOutboundWriter.responseOk(session, dto, "ENTER_ROOM_OK", payload);
 
 	} // handleEnterRoom 끝.
 
 	//	====== 채팅방 닫기 ===========================================================================================================
 	void handleExitRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+
 		PayloadExitRoomDTO payload = convertPayload(dto, PayloadExitRoomDTO.class);
 
-		if (payload.getRoomId() == null || payload.getUserId() == null) {
-			wsOutboundWriter.responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
+		if (payload.getRoomId() == null) {
+			wsOutboundWriter.responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId가 없습니다.");
 			return;
 		}
 
@@ -123,7 +127,7 @@ public class WsChatEventHandler {
 		log.info("exit -> userMap : {}", userMap);
 		log.info("EXIT 전 {}번방 접속 유저 : {}", payload.getRoomId(), userMap == null ? null : userMap.keySet());
 		if (userMap != null) {
-			userMap.remove(payload.getUserId());
+			userMap.remove(myUserId);
 
 			if (userMap.isEmpty()) {
 				wsSessionRegistry.roomSessions.remove(payload.getRoomId());
@@ -132,18 +136,21 @@ public class WsChatEventHandler {
 		Map<Long, WebSocketSession> afterMap = wsSessionRegistry.roomSessions.get(payload.getRoomId()); // 확인용 Map
 
 		log.info("EXIT 후 {}번방 접속 유저 : {}", payload.getRoomId(), afterMap == null ? null : afterMap.keySet());
-		log.info("{}번 유저 {}번방 Exit 처리", payload.getUserId(), payload.getRoomId());
+		log.info("{}번 유저 {}번방 Exit 처리", myUserId, payload.getRoomId());
 		wsOutboundWriter.responseOk(session, dto, "EXIT_ROOM_OK", payload);
 	}//exitRoom 끝.
 
 	//	====== 메세지 전송 ===========================================================================================================
 	void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		//		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
 		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
 
-		if (payload.getRoomId() == null || payload.getMsgText() == null) {
-			log.warn("SEND_MSG Data 누락 : {} / {} / {}", payload.getRoomId(), payload.getMsgText());
+		log.info("{} 유저의 sendMsg 전송 시도! ", me.getUserId());
+
+		if (payload.getRoomId() == null || payload.getMessageText() == null) {
+			log.warn("SEND_MSG Data 누락 : {} / {}", payload.getRoomId(), payload.getMessageText());
 			wsOutboundWriter.responseFail(session, dto, "MSG_SEND_FAIL", "SEND_MSG 필수값 누락");
 			return;
 		}
@@ -154,9 +161,11 @@ public class WsChatEventHandler {
 
 			Set<Long> viewingUserIds = wsSessionRegistry.getViewingUserIds(payload.getRoomId());
 
-			ChatMessageDTO chat = chatService.sendMessage(myUserId, payload, viewingUserIds);
+			//			ChatMessageDTO chat = chatService.sendMessage(me.getUserId(), payload, viewingUserIds);
 
-			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_SENDED", chat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
+			ChatMessageResponseDTO resChat = chatService.sendMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
+
+			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 
 			//			Long messageId = chatService.insertMessage(payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
 			//			chat.setMessageId(messageId);
@@ -170,7 +179,7 @@ public class WsChatEventHandler {
 			//			ChatHandler는 viewingUserIds만 구해서 Service에 넘긴다.
 			//			Service가 메시지 저장 + unreadCount 계산 + ChatDTO 조립을 한다.
 
-			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", myUserId, payload.getRoomId(), payload.getMsgText());
+			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
 
 		} catch (Exception e) {
 			log.error("메시지 저장 실패", e);
@@ -183,18 +192,21 @@ public class WsChatEventHandler {
 	//	====== 메세지 읽기 ===========================================================================================================
 	void handleReadMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
 		PayloadReadMessageDTO payload = convertPayload(dto, PayloadReadMessageDTO.class);
 
-		if (payload.getRoomId() == null || payload.getUserId() == null || payload.getLastReadMessageId() == null) {
-			log.info("readMsg 필수 값 누락 : {} / {} / {}", payload.getRoomId(), payload.getUserId(), payload.getLastReadMessageId());
+		if (payload.getRoomId() == null || payload.getLastReadMessageId() == null) {
+			log.info("readMsg 필수 값 누락 : {} / {}", payload.getRoomId(), payload.getLastReadMessageId());
 			wsOutboundWriter.responseFail(session, dto, "READ_MSG_FAIL", "READ_MSG 필수값 누락");
 			return;
 		}
 
-		chatService.updateLastRead(payload.getRoomId(), payload.getUserId(), payload.getLastReadMessageId());
+		chatService.updateLastRead(payload.getRoomId(), myUserId, payload.getLastReadMessageId());
 
-		log.info("{}번 유저가 {}번방 {}번 메시지까지 읽음", payload.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
+		PayloadReadMessageDTO responsePayload = new PayloadReadMessageDTO(payload.getRoomId(), payload.getLastReadMessageId(), me.getPublicId(), me.getNickname());
+
+		log.info("{}번 유저가 {}번방 {}번 메시지까지 읽음", myUserId, payload.getRoomId(), payload.getLastReadMessageId());
 
 		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", payload, dto.getRequestId());
 		//		responseOk(session, dto, "READ_MSG_OK", payload);
@@ -202,19 +214,23 @@ public class WsChatEventHandler {
 
 	//	====== typing start/stop ===========================================================================================================
 	void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
-		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		//		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
-		PayloadTypingDTO payload = convertPayload(dto, PayloadTypingDTO.class);
+		//		PayloadTypingRequestDTO payload = convertPayload(dto, PayloadTypingRequestDTO.class);
+		PayloadTypingRequestDTO payload = convertPayload(dto, PayloadTypingRequestDTO.class);
 
 		if (payload.getRoomId() == null) {
-			log.warn("TYPING Data roomId 누락 : {} ", payload.getRoomId());
+			log.warn("TYPING Data roomId null");
 			wsOutboundWriter.responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
 			return;
 		}
 
-		log.info("{} in room={}", eventType, payload.getRoomId());
+		PayloadTypingResponseDTO responsePayload = new PayloadTypingResponseDTO(payload.getRoomId(), me.getPublicId(), me.getNickname());
 
-		wsOutboundWriter.broadcastToRoomExceptUser(payload.getRoomId(), eventType, payload, dto.getRequestId(), myUserId);
+		log.info("{} in room={}", eventType, responsePayload.getRoomId());
+
+		wsOutboundWriter.broadcastToRoomExceptUser(payload.getRoomId(), eventType, responsePayload, dto.getRequestId(), me.getUserId());
 	}
 
 }

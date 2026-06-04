@@ -97,7 +97,8 @@ function Home() {
 
             console.log(`webSocket연결 완료.`);
 
-            wsRef.current.send(JSON.stringify({
+            // wsRef.current.send(JSON.stringify({
+            webSocket.send(JSON.stringify({
                 requestId: crypto.randomUUID(),
                 wsType: "CONNECT_USER",
                 payload: {
@@ -113,23 +114,25 @@ function Home() {
 
             switch (wsEvt.wsType) {
                 case "CONNECT_USER_OK":
-                    console.log(`접속 성공`);
+                    console.log(`CONNECT_USER_OK`);
                     break;
 
 
                 case "ENTER_ROOM_OK":
-                    console.log(`방 접속 성공`);
+                    console.log(`ENTER_ROOM_OK`);
                     break;
 
-                case "MSG_SENDED": {
+                case "MSG_CREATED": {
                     const roomId = wsEvt.payload.roomId;
                     roomHandlersRef.current[roomId]?.(wsEvt);
+                    console.log(`MSG_CREATED`);
                     break;
                 }
 
                 case "MSG_READ": {
                     const roomId = wsEvt.payload.roomId;
                     roomHandlersRef.current[roomId]?.(wsEvt);
+                    console.log(`MSG_READ`);
                     break;
                 }
 
@@ -146,6 +149,24 @@ function Home() {
             }
 
         }
+
+        webSocket.onclose = (evt) => {
+            console.log('WebSocket 종료', {
+                code: evt.code,
+                reason: evt.reason,
+                wasClean: evt.wasClean
+            });
+
+            isWsConnectedRef.current = false;
+
+            if (wsRef.current === webSocket) {
+                wsRef.current = null;
+            }
+        };
+
+        webSocket.onerror = (evt) => {
+            console.error('WebSocket 오류', evt);
+        };
 
         return () => {
             webSocket.close();
@@ -200,29 +221,49 @@ function Home() {
     }
 
     // ==== 채팅방 ===================================================
-    const enterDirectRoom = async (friendPublicId) => {
+    const enterDirectRoom = async (friInfo) => {
+
         try {
             const res = await axios.post(`/chat/enterDirectRoom`, {
-                friendPublicId: friendPublicId
+                friendPublicId: friInfo.publicId
             });
 
             const openedRoomId = res.data.roomId;
 
+            const ws = wsRef.current;
 
-            wsRef.current.send(JSON.stringify({
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                console.log('WebSocket 방 입장 전송 실패', {
+                    ws,
+                    readyState: ws?.readyState
+                });
+                return;
+            }
+
+            ws.send(JSON.stringify({
                 requestId: crypto.randomUUID(),
                 wsType: "ENTER_DIRECT_ROOM",
                 payload: {
                     roomId: openedRoomId,
-                    // friendPublicId: friendPublicId
                 }
             }));
 
+            // setChatWindows는 현재 열린 채팅창 목록을 변경하는 함수야.
+            // prev는 변경 직전의 채팅창 배열이야.
+            // e.g.)     prev = [
+            //                      { roomId: 4, friend: { nickname: '공성전차' } },
+            //                      { roomId: 7, friend: { nickname: '마법사' } }
+            //                  ];
             setChatWindows(prev => {
+                // 함수형 업데이트를 사용하는 이유는 채팅창을 연속으로 열거나 닫을 때 가장 최신 state를 기준으로 계산하기 위해서야.
+                // some()은 배열 안에 조건을 만족하는 요소가 하나라도 있는지 확인해서 true 또는 false를 반환해.
+                // prev 안에 openedRoomId와 같은 roomId를 가진 채팅창이 있는가?
                 const alreadyOpen = prev.some(
                     win => Number(win.roomId) === Number(openedRoomId)
                 );
 
+                // ...win은 기존 채팅창 객체의 모든 정보를 복사한다는 뜻이야. 기존 정보는 유지하고 zIndex만 새 값으로 덮어써.
+                // 결과적으로 이미 열린 채팅창을 새로 만들지 않고 화면 맨 앞으로 가져오는 거야.
                 if (alreadyOpen) {
                     return prev.map(win =>
                         Number(win.roomId) === Number(openedRoomId)
@@ -230,20 +271,25 @@ function Home() {
                             : win
                     );
                 }
-
+                // [...prev, 새객체]는 기존 배열을 복사하고 끝에 새 채팅창 객체를 추가한다는 뜻이야.
                 return [
                     ...prev,
                     {
                         roomId: openedRoomId,
-                        friendPublicId: friendPublicId,
+                        // 여기서 fri정보를 첨가.
+                        // friPublicId: friInfo.publicId,
+                        // friNickname: friInfo.nickname,
+                        // friProfileImg: friInfo.profileImg,
+                        // friCode: friInfo.friendCode,
+                        friend: friInfo,
                         x: 420 + prev.length * 30,
                         y: 120 + prev.length * 30,
-                        zIndex: Date.now()
+                        zIndex: Date.now() // : 현재 시간을 큰 숫자로 사용해서, 가장 최근에 열린 창이 가장 위에 보이도록 하는 방식이야.
                     }
                 ];
             });
 
-            alert(`${openedRoomId}입장!`);
+            // alert(`${openedRoomId}입장!`);
 
         } catch (e) {
             console.log(`채팅방 열기 실패!`);
@@ -312,7 +358,7 @@ function Home() {
                         <span>{friend.nickname}</span>
                         <span>{friend.friendCode}</span>
                         &nbsp;&nbsp;
-                        <button onClick={() => enterDirectRoom(friend.publicId)}>
+                        <button onClick={() => enterDirectRoom(friend)}>
                             채팅
                         </button>
                     </div>
@@ -393,7 +439,7 @@ function Home() {
                     isWsConnectedRef={isWsConnectedRef}
 
                     roomId={win.roomId}
-                    friId={win.friendPublicId}
+                    friend={win.friend}
 
                     registerRoomHandler={(roomId, handler) => {
                         roomHandlersRef.current[roomId] = handler;

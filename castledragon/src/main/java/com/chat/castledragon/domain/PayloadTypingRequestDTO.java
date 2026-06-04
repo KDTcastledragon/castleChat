@@ -3,6 +3,6 @@ package com.chat.castledragon.domain;
 import lombok.Data;
 
 @Data
-public class PayloadTypingDTO {
+public class PayloadTypingRequestDTO {
 	private Long roomId;
 }

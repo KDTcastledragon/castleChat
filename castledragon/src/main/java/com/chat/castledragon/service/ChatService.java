@@ -3,7 +3,7 @@ package com.chat.castledragon.service;
 import java.util.List;
 import java.util.Set;
 
-import com.chat.castledragon.domain.ChatMessageDTO;
+import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
@@ -11,7 +11,7 @@ import com.chat.castledragon.domain.PayloadSendMessageDTO;
 public interface ChatService {
 	EnterRoomResponseDTO enterDirectRoom(Long senderId, String friendPublicId);
 
-	List<ChatMessageDTO> getMessages(Long roomId);
+	List<ChatMessageResponseDTO> getPrevMessagesInRoom(Long roomId);
 
 	//	Long insertMessage(Long roomId, Long senderId, String msgText);
 
@@ -19,5 +19,5 @@ public interface ChatService {
 
 	List<ChatRoomListDTO> getMyChatRooms(Long userId);
 
-	ChatMessageDTO sendMessage(Long senderId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
+	ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
 }

@@ -5,10 +5,8 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class PayloadReadMessageDTO {
+public class PayloadTypingResponseDTO {
 	private Long roomId;
-	private Long lastReadMessageId;
-
-	private String readerPublicId;
-	private String readerNickname;
+	private String publicId;
+	private String nickname;
 }

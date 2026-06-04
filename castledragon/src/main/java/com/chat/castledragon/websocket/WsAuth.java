@@ -19,13 +19,13 @@ public class WsAuth {
 		return null;
 	}
 
-	// ==== 로그인 PK id =======================================================
+	// ==== 로그인 user_id =======================================================
 	Long getMyUserIdInWsSession(WebSocketSession session) {
-		return requireLoginUserId(session).getUserId();
+		return requireLoginUser(session).getUserId();
 	}
 
 	// ==== 로그인 PK id =======================================================
-	SessionUserDTO requireLoginUserId(WebSocketSession session) {
+	SessionUserDTO requireLoginUser(WebSocketSession session) {
 		SessionUserDTO me = getLoginUser(session);
 
 		if (me == null) {

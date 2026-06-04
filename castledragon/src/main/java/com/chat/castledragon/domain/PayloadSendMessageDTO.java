@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class PayloadSendMessageDTO {
 	private Long roomId;
-	private String msgText;
+	private String messageText;
 }
 
 // private Long senderId;

@@ -3,8 +3,6 @@ package com.chat.castledragon.domain;
 import lombok.Data;
 
 @Data
-public class ChatMessageRequestDTO {
+public class PayloadRoomIdDTO {
 	private Long roomId;
-
-	private String messageText;
 }

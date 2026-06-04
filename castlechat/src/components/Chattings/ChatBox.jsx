@@ -4,14 +4,12 @@ import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
 // home에서 me항목 하나씩 일일히 다 넘기게 되면 Home이 ChatBox 내부에서 뭘 쓰는지 너무 많이 관여하게 돼. 그래서 me를 통째로 받는게 좋다.
-function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, registerRoomHandler,
+function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHandler,
     unregisterRoomHandler, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
-
-
 
     // const myPublicId = me.publicId;
     // const myNickname = me.nickname;
@@ -22,7 +20,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
     const { publicId: myPublicId, nickname: myNickname, friendCode: myFriendCode, profileImg: myProfileImg } = me || {}; // me가 null일경우, undefined상태로 만듦.
 
-    const userID = myPublicId;
+    // const userID = myPublicId;
 
     const chatEndRef = useRef(null);
 
@@ -100,12 +98,14 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
         // 지금 ChatBox는 roomId를 props로 받습니다. 대부분은 값이 들어온 뒤 mount되겠지만, 리팩토링 중이거나 조건부 렌더링이 살짝 바뀌면 undefined 상태로 들어올 수도 있습니다.
         // 그래서 이 guard는 남기는 게 좋아요.
 
-
         const initChatRoom = async () => {
 
             try {
-                // 1. 메시지 조회
-                const getedMsgInRoom = await axios.get(`/chat/getMessages/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
+                // 1. '이미 전송처리된' 이전 메시지 조회
+                const getedMsgInRoom = await axios.get(`/chat/getPrevMessagesInRoom/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
+
+                // console.log(`getPrevMsg --> ${JSON.stringify(getedMsgInRoom.data, null, 2)}`); // null, 2 가 들여쓰기 해줌.
+                console.log(`${JSON.stringify(getedMsgInRoom.data)}`);
 
                 setPrevChattings(getedMsgInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
 
@@ -117,18 +117,30 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
                     // const lastMsgInRoom = getedMsgInRoom.data[getedMsgInRoom.data.length - 1]; // 동적계산을 위해 length-1
 
-                    const lastOtherMsgInRoom = [...getedMsgInRoom.data].reverse().find(msg => Number(msg.senderId) !== Number(userID));
+                    // 채팅방 메시지 중에서 “상대가 보낸 마지막 메시지”를 찾는 코드
+                    // const copiedMessages = [...getedMsgInRoom.data];
+                    // const reversedMessages = copiedMessages.reverse();
+                    // const lastOtherMsgInRoom = reversedMessages.find(
+                    //     function (message) {
+                    //     const messageSenderId = Number(message.senderId);
+                    //     const myUserId = Number(userID);
+                    //     const isOtherUserMessage = messageSenderId !== myUserId;
+                    //     return isOtherUserMessage;
+                    //     }
+                    // );
+                    // ---> const lastOtherMsgInRoom = [...getedMsgInRoom.data].reverse().find(msg => Number(msg.senderId) !== Number(userID));
+
+                    const lastOtherMsgInRoom = [...getedMsgInRoom.data].reverse().find(msg => msg.senderPublicId !== myPublicId);
 
                     if (lastOtherMsgInRoom !== undefined) {
-
 
                         wsRef.current.send(JSON.stringify({
                             requestId: crypto.randomUUID(),
                             wsType: "READ_MSG",
                             payload: {
-                                roomId,
-                                publicId: myPublicId,
-                                lastReadMessageId: lastOtherMsgInRoom.messageId
+                                roomId: roomId,
+                                readerUserId: myPublicId,
+                                lastReadMessageId: lastOtherMsgInRoom.messageId // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
                             }
                         }));
                     } // if-lastMsg
@@ -150,18 +162,18 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
         // RoomHandler function
         registerRoomHandler(roomId, (wsEvt) => {
 
-            // 1. 전송한 메세지 화면에 띄우기
-            if (wsEvt.wsType === "MSG_SENDED") {
+            // 1. 전송한 메세지 '실시간' 화면에 띄우기
+            if (wsEvt.wsType === "MSG_CREATED") {
                 const newMsg = wsEvt.payload;
                 setPrevChattings(prev => [...prev, newMsg]);
 
-                if (Number(newMsg.senderId) !== Number(userID)) {
+                if (newMsg.senderPublicId !== myPublicId) {
                     wsRef.current?.send(JSON.stringify({
                         requestId: crypto.randomUUID(),
                         wsType: "READ_MSG",
                         payload: {
                             roomId: roomId,
-                            userId: Number(userID),
+                            readerUserId: myPublicId,
                             lastReadMessageId: newMsg.messageId
                         }
                     }));
@@ -174,13 +186,14 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
                 // if (Number(readInfo.userId) === Number(userID)) {
                 //     return; // 내가 보낸 READ 이벤트는 내 화면에서 unreadCount를 줄이지 않게 막는 것.
-                // } // 이 코드 때문에, a가 보낸 메시지를 d가 접속해서 확인해도 1 -> 0으로 바뀌질 않음.
+                // } 
+                // 이 코드 때문에, a가 보낸 메시지를 d가 접속해서 확인해도 1 -> 0으로 바뀌질 않음.
 
                 setPrevChattings(prev =>
                     prev.map(msg => {
                         // const isMyMsg = Number(msg.senderId) === Number(userID);
                         const isReadTarget = Number(msg.messageId) <= Number(readInfo.lastReadMessageId);
-                        const isReaderOwnMessage = Number(msg.senderId) === Number(readInfo.userId);
+                        const isReaderOwnMessage = msg.senderPublicId === readInfo.publicId;
 
                         // if (isMyMsg && isReadTarget) {
                         if (isReadTarget && !isReaderOwnMessage) {
@@ -199,13 +212,13 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             if (wsEvt.wsType === "TYPING_START") {
                 const typingInfo = wsEvt.payload;
 
-                if (Number(typingInfo.userId) === Number(userID)) {
+                if (typingInfo.publicId === myPublicId) {
                     return;
                 }
 
                 setTypingUsers(prev => {
                     const alreadyExists = prev.some(
-                        user => Number(user.userId) === Number(typingInfo.userId)
+                        user => user.publicId === typingInfo.publicId
                     );
 
                     if (alreadyExists) {
@@ -221,7 +234,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
                 const typingInfo = wsEvt.payload;
 
                 setTypingUsers(prev =>
-                    prev.filter(user => Number(user.userId) !== Number(typingInfo.userId))
+                    prev.filter(user => user.publicId !== typingInfo.publicId)
                 );
             }
         });
@@ -234,7 +247,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
     function sendMessage() {
-        console.log(`${myNickname} >> ${friendPublicId} Msg 전송`);
+        console.log(`${myNickname} >> ${friend.nickname} Msg 전송`);
         console.log(`현재 wsRef : ${wsRef}`);
 
 
@@ -263,11 +276,9 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             wsType: "SEND_MSG",
             payload: {
                 roomId: roomId,
-                msgText: chatMessage
-
-                // senderId: Number(userID),
-                // senderLoginId: loginID
-                // session 에서 꺼내먹을 거라 필요없다.
+                messageText: chatMessage
+                // senderId: Number(userID), --> session 에서 꺼내먹을 거라 필요없다.
+                // senderLoginId: loginID  --> 얜 걍 필요없음.
             }
 
         }));
@@ -292,7 +303,6 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             wsType: "EXIT_ROOM",
             payload: {
                 roomId: roomId,
-                userId: Number(userID),
             }
         }));
 
@@ -357,7 +367,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
 
 
 
-    // ==============================================================================================================================
+    // ======< return >=================================================================================================================
     return (
         <div
             className='chattingRoomSection'
@@ -369,7 +379,8 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             onMouseDown={onFocus}
         >
             <div className='chatListTitle' onMouseDown={startDrag}>
-                <span>{friendPublicId}</span>
+                <span>{friend.nickname}/ {friend.friendCode}</span>
+                &nbsp;&nbsp;
                 <button
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={exitChat}
@@ -383,9 +394,9 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
                     prevChattings.map((d, i) => (
                         <div
                             key={i}
-                            className={`chatRow ${Number(d.senderId) === Number(userID) ? 'mine' : 'other'}`}
+                            className={`chatRow ${d.senderPublicId === myPublicId ? 'mine' : 'other'}`}
                         >
-                            {Number(d.senderId) === Number(userID) && (
+                            {d.senderPublicId === myPublicId && (
                                 <div className='messageInfo'>
                                     <div className='unreadCount'>{d.unreadCount}</div>
                                     <div className='formatTime'>{formatTime(d.createdAt)}</div>
@@ -393,10 +404,10 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
                             )}
 
                             <div className='messageWrap'>
-                                <div className="messageText">{d.msgText}</div>
+                                <div className="messageText">{d.messageText}</div>
                             </div>
 
-                            {Number(d.senderId) !== Number(userID) && (
+                            {d.senderPublicId !== myPublicId && (
                                 <div className='messageInfo'>
                                     <div className='unreadCount'>{d.unreadCount}</div>
                                     <div className='formatTime'>{formatTime(d.createdAt)}</div>
@@ -413,7 +424,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friendPublicId, register
             </div>
             {typingUsers.length > 0 && (
                 <div className="typingNotice">
-                    {typingUsers.map(user => user.loginId).join(', ')}님이 입력 중...
+                    {typingUsers.map(typingUser => typingUser.nickname).join(', ')}님이 입력 중...
                 </div>
             )}
 

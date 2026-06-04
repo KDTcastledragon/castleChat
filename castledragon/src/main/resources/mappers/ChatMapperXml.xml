@@ -33,11 +33,38 @@
     	SELECT * FROM messages WHERE room_id = #{roomId} ORDER BY created_at ASC
 	</select> -->
 	
-	<select id="getMessages"
-        resultType="com.chat.castledragon.domain.ChatMessageDTO">
-
+	<select id="getPrevMessagesInRoom" resultType="com.chat.castledragon.domain.ChatMessageResponseDTO">
 	SELECT
-	    m.*,
+        m.message_id,
+        m.room_id,
+        u.public_id AS sender_public_id,
+        m.message_text,
+        m.created_at,
+
+        (
+            SELECT COUNT(*)
+            FROM room_members rm
+            WHERE rm.room_id = m.room_id
+              AND rm.user_id != m.sender_id
+              AND (
+                  rm.last_read_message_id IS NULL
+                  OR rm.last_read_message_id &lt; m.message_id
+              )
+        ) AS unread_count
+
+    FROM chat_messages m
+
+    JOIN users u
+      ON u.user_id = m.sender_id
+
+    WHERE m.room_id = #{roomId}
+
+    ORDER BY m.message_id ASC
+
+	</select>
+	
+	<select id="getMessages" resultType="com.chat.castledragon.domain.ChatMessageDTO">
+	SELECT m.*,
 	
 	    (
 	        SELECT COUNT(*)
@@ -60,12 +87,21 @@
 	
 	
 	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatMessageDTO" useGeneratedKeys="true" keyProperty="messageId">
-    	INSERT INTO chat_messages(room_id, sender_id, msg_text) VALUES(#{roomId}, #{senderId}, #{msgText})
+    	INSERT INTO chat_messages(room_id, sender_id, message_text) VALUES(#{roomId}, #{senderId}, #{messageText})
 	</insert>
 	
 	<update id="updateLastRead">
     	UPDATE room_members SET last_read_message_id = #{lastReadMessageId} WHERE room_id = #{roomId} AND user_id = #{userId}
 	</update>
+	
+	<select id="getReadMsgMembers"> <!-- 언제 쓸지는 모르겠당.. -->
+	SELECT u.public_id, u.nickname
+FROM room_members rm
+JOIN users u ON u.user_id = rm.user_id
+WHERE rm.room_id = #{roomId}
+  AND rm.last_read_message_id >= #{messageId}
+  AND rm.user_id != #{senderId}
+	</select>
 	
 	<select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
 	SELECT
