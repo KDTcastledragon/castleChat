@@ -20,17 +20,22 @@ public class RoomMemberCache {
 		this.redisTemplate = redisTemplate;
 	}
 
+	// key Name make function 이당.
 	private String rmSizeKey(Long roomId) {
 		return "chat:room:" + roomId + ":members";
 	}
 
 	//====== Redis에 방 멤버 Set 저장 ======================================================================================
 	public void cacheRoomMembers(Long roomId, Set<Long> memberIds) {
-		String key = rmSizeKey(roomId);
+		String key = rmSizeKey(roomId); // 1. roomId로 Redis key 이름 생성
 
-		Set<String> values = memberIds.stream().map(String::valueOf).collect(Collectors.toSet());
+		redisTemplate.delete(key); // 2. 그 key에 예전 멤버 Set이 있으면 삭제. 해당 roomId의 캐시를 DB 기준으로 다시 맞추는 코드. 지금은 무슨말인지 대략적으로만 이해함. chat:room:{roomId}:members 처럼 특정방 하나만 가리킨다.
+		// redisTemplate.delete("chat:room:*:members"); // 이런 식으로 전체 삭제 시도 X. 인생 망함.
 
-		redisTemplate.opsForSet().add(key, values.toArray(new String[0]));
+		Set<String> values = memberIds.stream().map(String::valueOf).collect(Collectors.toSet()); // 3. 새 memberIds를 String Set으로 변환
+
+		redisTemplate.opsForSet().add(key, values.toArray(new String[0])); // 4. Redis에 새로 저장
+
 	}
 
 	//======  Redis에서 방 멤버 Set 조회 ======================================================================================

@@ -11,7 +11,8 @@ import org.springframework.web.socket.WebSocketSession;
 import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadExitRoomDTO;
-import com.chat.castledragon.domain.PayloadReadMessageDTO;
+import com.chat.castledragon.domain.PayloadReadMessageRequestDTO;
+import com.chat.castledragon.domain.PayloadReadMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.PayloadTypingRequestDTO;
 import com.chat.castledragon.domain.PayloadTypingResponseDTO;
@@ -194,7 +195,11 @@ public class WsChatEventHandler {
 		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
 		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
-		PayloadReadMessageDTO payload = convertPayload(dto, PayloadReadMessageDTO.class);
+		//		PayloadReadMessageDTO payload = new PayloadReadMessageDTO(); <--- @NoArgsConstructor가 없어서, 이 부분에서 터져버리는거다. 코드는 딱 1줄이라 티가나질않아서 찾기 빡셈.@NoArgsConstructor 넣고, req res 나누고 코드 쫌만 바꿨는데, 채팅 urc문제 다 해결함;;ㄷ;; 뭐야;
+		//		payload.setRoomId(1L);
+		//		payload.setLastReadMessageId(6L);
+		//		--->
+		PayloadReadMessageRequestDTO payload = convertPayload(dto, PayloadReadMessageRequestDTO.class);
 
 		if (payload.getRoomId() == null || payload.getLastReadMessageId() == null) {
 			log.info("readMsg 필수 값 누락 : {} / {}", payload.getRoomId(), payload.getLastReadMessageId());
@@ -204,11 +209,11 @@ public class WsChatEventHandler {
 
 		chatService.updateLastRead(payload.getRoomId(), myUserId, payload.getLastReadMessageId());
 
-		PayloadReadMessageDTO responsePayload = new PayloadReadMessageDTO(payload.getRoomId(), payload.getLastReadMessageId(), me.getPublicId(), me.getNickname());
+		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), payload.getLastReadMessageId(), me.getPublicId(), me.getNickname());
 
-		log.info("{}번 유저가 {}번방 {}번 메시지까지 읽음", myUserId, payload.getRoomId(), payload.getLastReadMessageId());
+		log.info("{}({})번 유저가 {}번방 {}번 메시지까지 읽음", myUserId, me.getNickname(), payload.getRoomId(), payload.getLastReadMessageId());
 
-		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", payload, dto.getRequestId());
+		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", responsePayload, dto.getRequestId());
 		//		responseOk(session, dto, "READ_MSG_OK", payload);
 	}
 

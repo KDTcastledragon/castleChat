@@ -45,7 +45,7 @@ public class FriendServiceImpl implements FriendService {
 	@Override
 	public List<UserProfileResponseDTO> getReceivedFriendRequests(Long userId) {
 		List<UserProfileResponseDTO> list = friendMapper.getReceivedFriendRequests(userId);
-		log.info("{}의 현재 친구 목록 : {}", userId, list);
+		log.info("{}의 현재 친구추가 요청 목록 : {}", userId, list);
 
 		return (list);
 	}

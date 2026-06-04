@@ -33,6 +33,8 @@ function Home() {
     const respondFriendRequestMutation = useRespondFriendRequest();
 
 
+    const [selectedFriendList, setSelectedFriendList] = useState([]);
+    const [isChecked, setIsChecked] = useState(false);
 
     const [searchWord, setSearchWord] = useState('');
 

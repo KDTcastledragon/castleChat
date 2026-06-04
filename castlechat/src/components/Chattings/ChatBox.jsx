@@ -139,7 +139,6 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
                             wsType: "READ_MSG",
                             payload: {
                                 roomId: roomId,
-                                readerUserId: myPublicId,
                                 lastReadMessageId: lastOtherMsgInRoom.messageId // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
                             }
                         }));
@@ -173,7 +172,6 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
                         wsType: "READ_MSG",
                         payload: {
                             roomId: roomId,
-                            readerUserId: myPublicId,
                             lastReadMessageId: newMsg.messageId
                         }
                     }));
@@ -287,7 +285,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
     }
 
     // ================ 채팅창 닫기 ===============================================
-    const exitChat = () => {
+    const exitRoom = () => {
         if (isTypingRef.current) {
             isTypingRef.current = false;
             sendTypingStop();
@@ -298,7 +296,15 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
             typingTimerRef.current = null;
         }
 
-        wsRef.current.send(JSON.stringify({
+        const ws = wsRef.current;
+
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            exitChatRoom();
+            return;
+        }
+
+        // wsRef.current.send(JSON.stringify({
+        ws.send(JSON.stringify({
             requestId: crypto.randomUUID(),
             wsType: "EXIT_ROOM",
             payload: {
@@ -383,7 +389,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
                 &nbsp;&nbsp;
                 <button
                     onMouseDown={(e) => e.stopPropagation()}
-                    onClick={exitChat}
+                    onClick={exitRoom}
                 >
                     닫기
                 </button>
