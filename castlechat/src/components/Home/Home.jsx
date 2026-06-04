@@ -34,7 +34,7 @@ function Home() {
 
 
     const [selectedFriendList, setSelectedFriendList] = useState([]);
-    const [isChecked, setIsChecked] = useState(false);
+    // const [isChecked, setIsChecked] = useState(false);
 
     const [searchWord, setSearchWord] = useState('');
 
@@ -50,8 +50,6 @@ function Home() {
         data: searchUsersResults = [],
         isLoading: isSearching
     } = useSearchUsers(debouncedSearchWord);
-
-
 
     // ==== 채팅방 옮기기 기본 설정 ===============================================================================
     const closeChatWindow = (roomId) => {
@@ -175,6 +173,33 @@ function Home() {
         }
     }, [me])
 
+    // ===== 로그아웃 ===========================================================================================
+    function logout() {
+        if (wsRef.current) {
+            wsRef.current.close();
+            wsRef.current = null;
+            console.log(`로그아웃 및 ws 연결종료`);
+        }
+
+        isWsConnectedRef.current = false;
+
+        logoutMutation.mutate(null, {
+            onSuccess: () => {
+                navigator('/login');
+            }
+        });
+    }
+
+    if (isCheckingLogin) {
+        return <div>로그인 확인 중...</div>;
+    }
+
+    if (!me) {
+        return <Navigate to="/login" replace />;
+    }
+
+    //useState, useRef, useEffect, useQuery 같은 Hook들은 return보다 항상 위에서, 매 렌더링마다 같은 순서로 호출되어야 함. return이 맨 위로 가면 Hook after an early return? 오류뜸.
+
 
     // ==== 친구 추가 ==================================================
     function addFriend(targetPublicId) {
@@ -221,6 +246,50 @@ function Home() {
             }
         );
     }
+
+    // ===== 친구 목록 체크 박스 설정=================================================================
+    const isFriendSelected = (publicId) => {
+        return selectedFriendList.some(friend => friend.publicId === publicId);
+    };
+    const toggleFriendSelect = (friend) => {
+        setSelectedFriendList(prev => {
+            const alreadySelected = prev.some(
+                selectedFriend => selectedFriend.publicId === friend.publicId
+            );
+
+            if (alreadySelected) {
+                return prev.filter(
+                    selectedFriend => selectedFriend.publicId !== friend.publicId
+                );
+            }
+
+            return [...prev, friend];
+        });
+    };
+
+    // const isAllSelected_legacy =
+    //     friendList.length > 0 &&
+    //     selectedFriendList.length === friendList.length;
+    const isAllSelected =
+        friendList.length > 0 &&
+        friendList.every(friend =>
+            selectedFriendList.some(
+                selectedFriend => selectedFriend.publicId === friend.publicId
+            )
+        );
+    const toggleSelectAllFriends = () => {
+        setSelectedFriendList(prev => {
+            const isAllSelectedNow =
+                friendList.length > 0 &&
+                prev.length === friendList.length;
+
+            if (isAllSelectedNow) {
+                return [];
+            }
+
+            return friendList;
+        });
+    };
 
     // ==== 채팅방 ===================================================
     const enterDirectRoom = async (friInfo) => {
@@ -299,30 +368,7 @@ function Home() {
         }
     };
 
-    // ===== 로그아웃 ===========================================================================================
-    function logout() {
-        if (wsRef.current) {
-            wsRef.current.close();
-            wsRef.current = null;
-            console.log(`로그아웃 및 ws 연결종료`);
-        }
 
-        isWsConnectedRef.current = false;
-
-        logoutMutation.mutate(null, {
-            onSuccess: () => {
-                navigator('/login');
-            }
-        });
-    }
-
-    if (isCheckingLogin) {
-        return <div>로그인 확인 중...</div>;
-    }
-
-    if (!me) {
-        return <Navigate to="/login" replace />;
-    }
 
     // ===< return >===========================================================================================================
     return (
@@ -338,6 +384,19 @@ function Home() {
                         <div>{me.friendCode}</div>
 
                         <button onClick={() => logout()}>로그아웃</button>
+
+                        {/* <div>{selectedFriendList}</div> */} {/** Object그 자체는 React가 rendering 할 수 없다. */}
+                        <div>단톡 초대 체크된 친구들</div>
+                        <input
+                            type="checkbox"
+                            checked={isAllSelected}
+                            onChange={toggleSelectAllFriends}
+                        />
+                        <span>모두선택</span>
+                        {/* <pre>{JSON.stringify(selectedFriendList, null, 2)}</pre> */} {/**객체 정보 다 보기 */}
+                        <div>
+                            {selectedFriendList.map(friend => friend.nickname).join(', ')} {/**닉만 보기. */}
+                        </div>
                     </>
                     :
                     <>
@@ -357,6 +416,13 @@ function Home() {
 
                 {friendList.length > 0 ? friendList.map((friend) => (
                     <div key={friend.publicId}>
+                        <input
+                            type="checkbox"
+                            checked={selectedFriendList.some(
+                                selectedFriend => selectedFriend.publicId === friend.publicId
+                            )}
+                            onChange={() => toggleFriendSelect(friend)}
+                        />
                         <span>{friend.nickname}</span>
                         <span>{friend.friendCode}</span>
                         &nbsp;&nbsp;
