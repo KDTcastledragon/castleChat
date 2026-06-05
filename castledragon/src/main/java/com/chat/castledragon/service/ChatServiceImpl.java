@@ -1,6 +1,8 @@
 package com.chat.castledragon.service;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -9,10 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.castledragon.cache.RoomMemberCache;
+import com.chat.castledragon.domain.ChatMemberDTO;
 import com.chat.castledragon.domain.ChatMessageDTO;
 import com.chat.castledragon.domain.ChatMessageResponseDTO;
+import com.chat.castledragon.domain.ChatRoomDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
-import com.chat.castledragon.domain.ChatRoomsDTO;
+import com.chat.castledragon.domain.EnterGroupResponseDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.mapper.ChatMapper;
@@ -33,11 +37,35 @@ public class ChatServiceImpl implements ChatService {
 	@Autowired
 	RoomMemberCache roomMemberCache;
 
+	private Long createRoomAndGetRoomId(String roomType, String roomStatus, String roomName) {
+		ChatRoomDTO room = new ChatRoomDTO();
+		room.setRoomType(roomType);
+		room.setRoomStatus(roomStatus);
+		room.setRoomName(roomName);
+
+		chatMapper.createRoom(room); // dto 방식에서, parameter 방식으로 변경.하려 했으나,,, 결국 다시 왔소.
+		// chatMapper.createRoom("DIRECT", "ACTIVE");  // generated roomId를 받을 곳이 없음. 그래서 안 씀. ...
+		// 사실, 뭐 CreateRoomParam Helper Object를 만들수도 있기는 한데, 그래봐야 어차피 param.set~() --> param.getRoomId(); 해야되서 결국 조삼모사....
+
+		Long roomId = room.getRoomId();
+
+		return roomId;
+	}
+
 	@Override
 	@Transactional
 	public EnterRoomResponseDTO enterDirectRoom(Long senderId, String friendPublicId) {
 
-		Long friendUserId = userMapper.findUserIdByPublicId(friendPublicId);
+		//  Long friendUserId = userMapper.findUserInfoByPublicId(friendPublicId).getUserId(); // 이건 DB 조회가 2번 나갈 가능성이 커. 같은 유저를 두 번 찾는 거라 낭비야.
+		//  String friendNickname = userMapper.findUserInfoByPublicId(friendPublicId).getNickname(); // 이건 DB 조회가 2번 나갈 가능성이 커. 같은 유저를 두 번 찾는 거라 낭비야.
+		ChatMemberDTO friend = userMapper.findUserInfoByPublicId(friendPublicId);
+
+		if (friend == null) {
+			return null;
+		}
+
+		Long friendUserId = friend.getUserId();
+		String friendNickname = friend.getNickname();
 
 		if (friendUserId == null) {
 			return null;
@@ -49,17 +77,13 @@ public class ChatServiceImpl implements ChatService {
 
 		if (roomId == null) {
 			log.info("새로운 채팅방(roomId) 생성 시작");
-			ChatRoomsDTO room = new ChatRoomsDTO();
-			room.setRoomType("DIRECT");
-			room.setRoomStatus("ACTIVE");
 
-			chatMapper.createRoom(room);
-			roomId = room.getRoomId();
+			roomId = createRoomAndGetRoomId("DIRECT", "ACTIVE", friendNickname + "님과의 1:1 채팅방");
 
 			log.info("새로운 채팅방의 newRoomId 생성 완료 : {}", roomId);
 
-			chatMapper.insertRoomMember(roomId, senderId);
-			chatMapper.insertRoomMember(roomId, friendUserId);
+			chatMapper.insertRoomMember(roomId, senderId, "MEMBER");
+			chatMapper.insertRoomMember(roomId, friendUserId, "MEMBER");
 
 			roomMemberCache.cacheRoomMembers(roomId, Set.of(senderId, friendUserId));
 
@@ -154,7 +178,45 @@ public class ChatServiceImpl implements ChatService {
 		return chatMapper.getMyChatRooms(userId);
 	}
 
-}
+	@Override
+	public EnterGroupResponseDTO createGroupRoom(Long hostUserId, String roomName, List<String> selectedFriPubIdList, String hostNickname) {
+
+		if (roomName == null || roomName.trim().isEmpty()) {
+			roomName = hostNickname + "의 단톡방";
+		}
+
+		Long roomId = createRoomAndGetRoomId(hostNickname, hostNickname, roomName);
+
+		List<ChatMemberDTO> insertList = new ArrayList<>(); // UserProfileResponseDTO 대신, 내부 Mappiing용으로 GroupRoomMemberDTO 타입 생성 .
+
+		// 1. pubId로 userId찾아서 insert를 위한 profileInfo getting.
+		for (String pubId : selectedFriPubIdList) {
+			ChatMemberDTO member = userMapper.findUserInfoByPublicId(pubId);
+			// insertList.add(member); // 여기서 추가 안하고 밑의 if문에서 추가.
+
+			if (member != null) {
+				insertList.add(member);
+			}
+		}
+
+		// userId로 insert작업 준비
+		Set<Long> memberUserIds = new LinkedHashSet<>();
+		memberUserIds.add(hostUserId);
+
+		for (ChatMemberDTO member : insertList) {
+			memberUserIds.add(member.getUserId());
+		}
+
+		// insert
+		chatMapper.insertRoomMember(roomId, hostUserId, "HOST");
+
+		for (Long id : memberUserIds) {
+			chatMapper.insertRoomMember(roomId, id, "MEMBER");
+		}
+
+	}// createGroupRoom
+
+}//serviceImpl
 
 //	@Override
 //	public Long insertMessage(Long roomId, Long senderId, String msgText) {
@@ -173,7 +235,8 @@ public class ChatServiceImpl implements ChatService {
 //	log.info("{}과 {}의 채팅방 이미 존재 : {}", user1, user2, roomId);
 //	return roomId;
 //}
-////이걸 Guard Clause(가드 절) 또는 Early Return 패턴이라고 한다. if로 방어 조건을 먼저 빼는 것.
+// 
+//// 이걸 Guard Clause(가드 절) 또는 Early Return 패턴이라고 한다. if로 방어 조건을 먼저 빼는 것.
 //
 //// 2. room 생성.  if 다음 else 안 쓰는 이유? 1. nesting(중첩)때문에.가독성저하.조건흐름추적어려움.  2.Pyramid of Doom형태로 else의 else의 else...가 되버리기 때문.
 //ChatRoomsDTO room = new ChatRoomsDTO();

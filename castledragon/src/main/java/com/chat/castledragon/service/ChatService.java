@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
+import com.chat.castledragon.domain.EnterGroupResponseDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 
@@ -20,4 +21,6 @@ public interface ChatService {
 	List<ChatRoomListDTO> getMyChatRooms(Long userId);
 
 	ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
+
+	EnterGroupResponseDTO createGroupRoom(Long hostUserId, String roomName, List<String> selectedFriPubIdList, String hostNickname);
 }

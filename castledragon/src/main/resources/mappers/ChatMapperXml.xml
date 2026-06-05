@@ -26,7 +26,7 @@
 	</insert>
 
 	<insert id="insertRoomMember">
-	INSERT INTO room_members(room_id, user_id) VALUES (#{roomId}, #{userId})
+	INSERT INTO room_members(room_id, user_id , role) VALUES (#{roomId}, #{userId}, #{role})
 	</insert>
 	
 	<!-- <select id="getMessages" resultType="com.chat.castledragon.domain.ChatDTO">

@@ -8,16 +8,17 @@ import org.apache.ibatis.annotations.Param;
 import com.chat.castledragon.domain.ChatMessageDTO;
 import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
-import com.chat.castledragon.domain.ChatRoomsDTO;
+import com.chat.castledragon.domain.ChatRoomDTO;
 
 @Mapper
 public interface ChatMapper {
 
 	Long findRoomId(@Param("user1") Long user1, @Param("user2") Long user2);
 
-	void createRoom(ChatRoomsDTO room); //DTO내부 getter를 통해 접근 가능해서, 이렇게만 적어도 된다.
+	//	void createRoom(@Param("roomType") String roomType, @Param("roomStatus") String roomStatus); //roomId를 받을 parameter가 없다.
+	void createRoom(ChatRoomDTO dto); //DTO내부 getter를 통해 접근 가능해서, 이렇게만 적어도 된다.
 
-	void insertRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
+	void insertRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("role") String role);
 
 	List<ChatMessageDTO> getMessages(Long roomId);
 

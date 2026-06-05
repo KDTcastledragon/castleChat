@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 // 테이블 DTO
-public class ChatRoomsDTO {
+public class ChatRoomDTO {
 	private Long roomId;
 
 	private String roomType;

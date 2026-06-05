@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.chat.castledragon.domain.ChatMemberDTO;
 import com.chat.castledragon.domain.UserDTO;
 import com.chat.castledragon.domain.UserProfileResponseDTO;
 
@@ -30,5 +31,7 @@ public interface UserMapper {
 	List<UserProfileResponseDTO> searchUsers(@Param("searchWord") String searchWord, @Param("userId") Long userId);
 
 	List<UserDTO> friendList(Long userId);
+
+	ChatMemberDTO findUserInfoByPublicId(String publicId);
 
 }

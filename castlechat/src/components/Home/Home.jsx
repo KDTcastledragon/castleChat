@@ -16,8 +16,6 @@ import { useRespondFriendRequest } from '../../hooks/useRespondFriendRequest';
 
 import ChatBox from '../Chattings/ChatBox';
 
-
-
 function Home() {
     // const [loginUser, setLoginUser] = useState(null);
     // const [isCheckingLogin, setIsCheckingLogin] = useState(true); // “지금 서버에 로그인 상태 확인 중인가?” --> “아직 서버 판정 전이라 로그인폼을 보여주면 안 되는 시간”을 처리하는 장치.
@@ -32,7 +30,7 @@ function Home() {
     const addFriendMutation = useAddFriend();
     const respondFriendRequestMutation = useRespondFriendRequest();
 
-
+    const [roomName, setRoomName] = useState('');
     const [selectedFriendList, setSelectedFriendList] = useState([]);
     // const [isChecked, setIsChecked] = useState(false);
 
@@ -293,7 +291,6 @@ function Home() {
 
     // ==== 채팅방 ===================================================
     const enterDirectRoom = async (friInfo) => {
-
         try {
             const res = await axios.post(`/chat/enterDirectRoom`, {
                 friendPublicId: friInfo.publicId
@@ -368,6 +365,43 @@ function Home() {
         }
     };
 
+    const inviteGroupRoom = async (roomName, selectedFriends) => {
+        if (selectedFriends.length === 0) {
+            alert(`초대할 친구를 선택해주세요.`);
+            return;
+        }
+
+        try {
+            const selectedFriPubIdList = selectedFriends.map(f => f.publicId); // axios 즉시요청해서 객체 전부 보내지말고, 필터링 한번빼라.
+
+            const res = await axios.post(`/chat/enterGroupRoom`, {
+                roomName: roomName,
+                selectedFriPubIdList: selectedFriPubIdList
+            });
+
+            const openedGroupRoomId = res.data.roomId;
+
+            const ws = wsRef.current;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    requestId: crypto.randomUUID(),
+                    wsType: "ENTER_GROUP_ROOM",
+                    payload: {
+                        roomName: roomName,
+                        roomId: openedGroupRoomId
+                    }
+                }));
+            }
+
+            console.log(`단톡방`);
+
+
+        } catch (e) {
+            console.log(`단톡실패`);
+        }
+    }
+
 
 
     // ===< return >===========================================================================================================
@@ -387,14 +421,24 @@ function Home() {
 
                         {/* <div>{selectedFriendList}</div> */} {/** Object그 자체는 React가 rendering 할 수 없다. */}
                         <div>단톡 초대 체크된 친구들</div>
+                        <br />
                         <input
                             type="checkbox"
                             checked={isAllSelected}
                             onChange={toggleSelectAllFriends}
                         />
                         <span>모두선택</span>
-                        {/* <pre>{JSON.stringify(selectedFriendList, null, 2)}</pre> */} {/**객체 정보 다 보기 */}
+                        &nbsp;&nbsp;&nbsp;
+                        <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder='단톡방 이름 입력...' />
+                        <button
+                            onClick={() => inviteGroupRoom(roomName, selectedFriendList)}
+                        >
+                            단톡초대하기
+                        </button>
+                        <div></div>
+                        <br />
                         <div>
+                            {/* <pre>{JSON.stringify(selectedFriendList, null, 2)}</pre> */} {/**객체 정보 다 보기 */}
                             {selectedFriendList.map(friend => friend.nickname).join(', ')} {/**닉만 보기. */}
                         </div>
                     </>
