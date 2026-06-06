@@ -56,10 +56,11 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			}
 
 			switch (dto.getWsType()) {
-			case "ENTER_DIRECT_ROOM" -> wsChatEventHandler.handleEnterRoom(session, dto);
+			case "CONNECT_USER" -> wsChatEventHandler.handleConnectUser(session, dto);
+			case "ENTER_ROOM" -> wsChatEventHandler.handleEnterRoom(session, dto);
+			case "ENTER_GROUP_ROOM" -> wsChatEventHandler.handleEnterRoom(session, dto);
 			case "SEND_MSG" -> wsChatEventHandler.handleSendMessage(session, dto);
 			case "READ_MSG" -> wsChatEventHandler.handleReadMessage(session, dto);
-			case "CONNECT_USER" -> wsChatEventHandler.handleConnectUser(session, dto);
 			case "EXIT_ROOM" -> wsChatEventHandler.handleExitRoom(session, dto);
 			case "TYPING_START" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_START");
 			case "TYPING_STOP" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_STOP");

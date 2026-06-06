@@ -56,28 +56,29 @@ public class ChatController {
 
 		//		Long targetUserId = Long.valueOf(data.get("targetUserId").toString());
 
-		EnterRoomResponseDTO roomInfo = chatService.enterDirectRoom(me.getUserId(), friendPublicId);
+		EnterRoomResponseDTO roomInfo = chatService.enterDirectRoom(me.getUserId(), me.getNickname(), friendPublicId);
 
 		return ResponseEntity.ok(roomInfo);
 	}
 
-	@PostMapping("/enterGroupRoom") // 무조건 “방(room)”을 먼저 만든다
-	public ResponseEntity<?> enterGroupRoom(@RequestBody EnterGroupRequestDTO groupRoomData, HttpSession session) {
+	@PostMapping("/createGroupRoom") // 무조건 “방(room)”을 먼저 만든다
+	public ResponseEntity<?> createGroupRoom(@RequestBody EnterGroupRequestDTO groupRoomData, HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
 
 		if (me == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		if (groupRoomData.getSelectedFriPubIdList() == null) {
+		if (groupRoomData.getSelectedFriendPublicIdList() == null) {
 			log.info("초대인원없음 : {}", groupRoomData);
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("초대인원없음.");
 		}
 
 		log.info("단톡방 생성 시도 : {} --> {} ", me.getNickname(), groupRoomData);
 
-		EnterGroupResponseDTO roomInfo = chatService.createGroupRoom(me.getUserId(), groupRoomData.getRoomName(), groupRoomData.getSelectedFriPubIdList(), me.getNickname());
+		EnterGroupResponseDTO roomInfo = chatService.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getSelectedFriendPublicIdList());
 
+		log.info("GroupRoom roomInfo res : {}", roomInfo);
 		return ResponseEntity.ok(roomInfo);
 	}
 
@@ -88,9 +89,17 @@ public class ChatController {
 		return prevMessages;
 	}
 
-	@GetMapping("/myRooms/{userId}")
-	public List<ChatRoomListDTO> getMyRooms(@PathVariable("userId") Long userId) {
-		return chatService.getMyChatRooms(userId);
+	@GetMapping("/getMyAllRooms")
+	public ResponseEntity<?> getMyAllRooms(HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		List<ChatRoomListDTO> roomList = chatService.getMyAllRooms(me.getUserId());
+
+		return ResponseEntity.ok(roomList);
 	}
 } // enterRoom 끝.
 

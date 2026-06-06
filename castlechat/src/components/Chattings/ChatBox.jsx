@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
 
 // home에서 me항목 하나씩 일일히 다 넘기게 되면 Home이 ChatBox 내부에서 뭘 쓰는지 너무 많이 관여하게 돼. 그래서 me를 통째로 받는게 좋다.
-function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHandler,
+function ChatBox({ me, wsRef, isWsConnectedRef, roomId, roomType, roomName, friend, memberList, registerRoomHandler,
     unregisterRoomHandler, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
 
     const [chatMessage, setChatMessage] = useState('');
@@ -245,7 +245,7 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
     function sendMessage() {
-        console.log(`${myNickname} >> ${friend.nickname} Msg 전송`);
+        // console.log(`${myNickname} >> ${friend.nickname} Msg 전송`);
         console.log(`현재 wsRef : ${wsRef}`);
 
 
@@ -385,7 +385,8 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, friend, registerRoomHand
             onMouseDown={onFocus}
         >
             <div className='chatListTitle' onMouseDown={startDrag}>
-                <span>{friend.nickname}/ {friend.friendCode}</span>
+                <span>{roomName}</span>
+                <span>{roomType}</span>
                 &nbsp;&nbsp;
                 <button
                     onMouseDown={(e) => e.stopPropagation()}

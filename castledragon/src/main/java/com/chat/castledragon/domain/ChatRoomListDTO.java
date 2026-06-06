@@ -9,9 +9,11 @@ import lombok.Data;
 public class ChatRoomListDTO {
 	private Long roomId;
 
-	private Long targetUserId;
+	private String roomType;
 
-	private String targetLoginId;
+	private String roomName;
+
+	private String displayRoomName;
 
 	private Long unreadCount;
 

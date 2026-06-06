@@ -19,6 +19,8 @@ import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterGroupResponseDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
+import com.chat.castledragon.domain.SessionUserDTO;
+import com.chat.castledragon.domain.UserProfileResponseDTO;
 import com.chat.castledragon.mapper.ChatMapper;
 import com.chat.castledragon.mapper.UserMapper;
 
@@ -54,7 +56,7 @@ public class ChatServiceImpl implements ChatService {
 
 	@Override
 	@Transactional
-	public EnterRoomResponseDTO enterDirectRoom(Long senderId, String friendPublicId) {
+	public EnterRoomResponseDTO enterDirectRoom(Long senderUserId, String senderNickname, String friendPublicId) {
 
 		//  Long friendUserId = userMapper.findUserInfoByPublicId(friendPublicId).getUserId(); // 이건 DB 조회가 2번 나갈 가능성이 커. 같은 유저를 두 번 찾는 거라 낭비야.
 		//  String friendNickname = userMapper.findUserInfoByPublicId(friendPublicId).getNickname(); // 이건 DB 조회가 2번 나갈 가능성이 커. 같은 유저를 두 번 찾는 거라 낭비야.
@@ -72,24 +74,24 @@ public class ChatServiceImpl implements ChatService {
 		}
 
 		// 1. 기존 room 조회
-		Long roomId = chatMapper.findRoomId(senderId, friendUserId);
+		Long roomId = chatMapper.findRoomId(senderUserId, friendUserId);
 		boolean isNewRoom = false;
 
 		if (roomId == null) {
 			log.info("새로운 채팅방(roomId) 생성 시작");
 
-			roomId = createRoomAndGetRoomId("DIRECT", "ACTIVE", friendNickname + "님과의 1:1 채팅방");
+			roomId = createRoomAndGetRoomId("DIRECT", "ACTIVE", senderUserId + "_" + friendUserId + "_DIRECT");
 
 			log.info("새로운 채팅방의 newRoomId 생성 완료 : {}", roomId);
 
-			chatMapper.insertRoomMember(roomId, senderId, "MEMBER");
-			chatMapper.insertRoomMember(roomId, friendUserId, "MEMBER");
+			chatMapper.insertRoomMember(roomId, senderUserId, "MEMBER", friendNickname + "님과의 채팅방");
+			chatMapper.insertRoomMember(roomId, friendUserId, "MEMBER", senderNickname + "님과의 채팅방");
 
-			roomMemberCache.cacheRoomMembers(roomId, Set.of(senderId, friendUserId));
+			roomMemberCache.cacheRoomMembers(roomId, Set.of(senderUserId, friendUserId));
 
 			isNewRoom = true;
 
-			log.info("roomId={}  user1 : {}, user2 : {} 추가", roomId, senderId, friendUserId);
+			log.info("roomId={}  user1 : {}, user2 : {} 추가", roomId, senderUserId, friendUserId);
 		}
 
 		if (!isNewRoom) {
@@ -100,7 +102,7 @@ public class ChatServiceImpl implements ChatService {
 		}
 
 		// 2. 메시지 조회. --> if 다음 else 안 쓰는 이유? 1. nesting(중첩)때문에.가독성저하.조건흐름추적어려움.  2.Pyramid of Doom형태로 else의 else의 else...가 되버리기 때문.
-		log.info("{}과 {}의 채팅방 이미 존재. : {}  --> 이전 채팅내역 불러오기 시작.", senderId, friendUserId, roomId);
+		log.info("{}과 {}의 채팅방 이미 존재. : {}  --> 이전 채팅내역 불러오기 시작.", senderUserId, friendUserId, roomId);
 		//		List<ChatDTO> messages = chatMapper.getMessages(roomId);
 
 		// 3. DTO 조립
@@ -174,62 +176,87 @@ public class ChatServiceImpl implements ChatService {
 	}
 
 	@Override
-	public List<ChatRoomListDTO> getMyChatRooms(Long userId) {
-		return chatMapper.getMyChatRooms(userId);
-	}
-
-	@Override
-	public EnterGroupResponseDTO createGroupRoom(Long hostUserId, String roomName, List<String> selectedFriPubIdList, String hostNickname) {
+	public EnterGroupResponseDTO createGroupRoom(SessionUserDTO host, String roomName, List<String> selectedFriendPublicIdList) {
 
 		if (roomName == null || roomName.trim().isEmpty()) {
-			roomName = hostNickname + "의 단톡방";
+			roomName = host.getNickname() + "님의 단톡방";
 		}
 
-		Long roomId = createRoomAndGetRoomId(hostNickname, hostNickname, roomName);
+		Long roomId = createRoomAndGetRoomId("GROUP", "ACTIVE", roomName);
 
-		List<ChatMemberDTO> insertList = new ArrayList<>(); // UserProfileResponseDTO 대신, 내부 Mappiing용으로 GroupRoomMemberDTO 타입 생성 .
+		List<ChatMemberDTO> groupRoomMemberList = new ArrayList<>(); // UserProfileResponseDTO 대신, 내부 Mappiing용으로 GroupRoomMemberDTO 타입 생성 .
 
 		// 1. pubId로 userId찾아서 insert를 위한 profileInfo getting.
-		for (String pubId : selectedFriPubIdList) {
-			ChatMemberDTO member = userMapper.findUserInfoByPublicId(pubId);
+
+		// 방장 먼저 넣어줌.
+		ChatMemberDTO hostInfo = ChatMemberDTO.from(host); // 정적 팩토리 메소드(static factory method). 자세한 설명은 chatMdto ㄱㄱ.
+		groupRoomMemberList.add(hostInfo);
+
+		for (String pubId : selectedFriendPublicIdList) {
+			ChatMemberDTO memberInfo = userMapper.findUserInfoByPublicId(pubId);
 			// insertList.add(member); // 여기서 추가 안하고 밑의 if문에서 추가.
 
-			if (member != null) {
-				insertList.add(member);
+			if (memberInfo != null) {
+				groupRoomMemberList.add(memberInfo);
 			}
+
+		} // groupRoomMemberList에 ChatMemberDTO 형태로 모든 단톡방 멤버 정보 add.
+
+		// 2. gRML에서 userId만 추출하여 insert 사전 작업 하기.
+		Set<Long> groupRoomMemberUserIdSet = new LinkedHashSet<>();
+		//		groupRoomMemberUserIdSet.add(hostInfo.getUserId()); // 이미 groupRoomMemberList에 .add(hostInfo)했기 때문에, 중벅이라 안 써도딘당.
+
+		for (ChatMemberDTO member : groupRoomMemberList) {
+			groupRoomMemberUserIdSet.add(member.getUserId());
 		}
 
-		// userId로 insert작업 준비
-		Set<Long> memberUserIds = new LinkedHashSet<>();
-		memberUserIds.add(hostUserId);
-
-		for (ChatMemberDTO member : insertList) {
-			memberUserIds.add(member.getUserId());
+		// 3. insert
+		for (Long id : groupRoomMemberUserIdSet) {
+			String role = id.equals(host.getUserId()) ? "HOST" : "MEMBER";
+			chatMapper.insertRoomMember(roomId, id, role, roomName);
 		}
 
-		// insert
-		chatMapper.insertRoomMember(roomId, hostUserId, "HOST");
+		// 단톡방 session
+		roomMemberCache.cacheRoomMembers(roomId, groupRoomMemberUserIdSet);
 
-		for (Long id : memberUserIds) {
-			chatMapper.insertRoomMember(roomId, id, "MEMBER");
+		// 4. response Data 조립
+		List<UserProfileResponseDTO> responseMemberList = new ArrayList<>();
+
+		for (ChatMemberDTO m : groupRoomMemberList) {
+			responseMemberList.add(new UserProfileResponseDTO(m.getPublicId(), m.getNickname(), m.getFriendCode(), m.getProfileImg()));
 		}
+
+		Long roomMemberCount = (long) responseMemberList.size();
+
+		EnterGroupResponseDTO resData = new EnterGroupResponseDTO(roomId, roomName, roomMemberCount, responseMemberList);
+
+		log.info("GroupCreated : {} {} {} {}", roomId, roomName, roomMemberCount, responseMemberList);
+
+		return resData;
 
 	}// createGroupRoom
 
-}//serviceImpl
+	@Override
+	public List<ChatRoomListDTO> getMyAllRooms(Long userId) {
+		List<ChatRoomListDTO> list = chatMapper.getMyChatRooms(userId);
+		return list;
+	}
 
-//	@Override
-//	public Long insertMessage(Long roomId, Long senderId, String msgText) {
-//		ChatDTO dto = new ChatDTO();
-//		dto.setRoomId(roomId);
-//		dto.setSenderId(senderId);
-//		dto.setMsgText(msgText);
-//
-//		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
-//		Long messageId = dto.getMessageId();
-//
-//		return messageId;
-//	}
+}//serviceImpl
+	//
+	//
+	//	@Override
+	//	public Long insertMessage(Long roomId, Long senderId, String msgText) {
+	//		ChatDTO dto = new ChatDTO();
+	//		dto.setRoomId(roomId);
+	//		dto.setSenderId(senderId);
+	//		dto.setMsgText(msgText);
+	//
+	//		chatMapper.insertMessage(dto); //과거의 params.put 방식도 사용 가능하나, 오타위험 안정성 낮음 등의 이유로 dto가 더 낫다. 실무도 dto 더 많이씀.
+	//		Long messageId = dto.getMessageId();
+	//
+	//		return messageId;
+	//	}
 
 //if (roomId != null) {
 //	log.info("{}과 {}의 채팅방 이미 존재 : {}", user1, user2, roomId);

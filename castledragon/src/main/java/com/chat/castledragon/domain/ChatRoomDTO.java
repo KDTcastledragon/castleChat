@@ -14,11 +14,11 @@ public class ChatRoomDTO {
 	private Long roomId;
 
 	private String roomType;
+	private String roomStatus;
 	private String roomName;
+	//	private String roomImg;
 
 	private Long createdBy;
-
-	private String roomStatus;
 
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;

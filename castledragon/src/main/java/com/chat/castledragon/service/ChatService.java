@@ -8,9 +8,10 @@ import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterGroupResponseDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
+import com.chat.castledragon.domain.SessionUserDTO;
 
 public interface ChatService {
-	EnterRoomResponseDTO enterDirectRoom(Long senderId, String friendPublicId);
+	EnterRoomResponseDTO enterDirectRoom(Long senderId, String senderNickname, String friendPublicId);
 
 	List<ChatMessageResponseDTO> getPrevMessagesInRoom(Long roomId);
 
@@ -18,9 +19,10 @@ public interface ChatService {
 
 	void updateLastRead(Long roomId, Long userId, Long lastReadMessageId);
 
-	List<ChatRoomListDTO> getMyChatRooms(Long userId);
-
 	ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
 
-	EnterGroupResponseDTO createGroupRoom(Long hostUserId, String roomName, List<String> selectedFriPubIdList, String hostNickname);
+	EnterGroupResponseDTO createGroupRoom(SessionUserDTO host, String roomName, List<String> selectedFriendPublicIdList);
+
+	List<ChatRoomListDTO> getMyAllRooms(Long userId);
+
 }

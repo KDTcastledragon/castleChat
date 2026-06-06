@@ -21,12 +21,12 @@
    ) = 2
 	</select>
 
-	<insert id="createRoom" parameterType="com.chat.castledragon.domain.ChatRoomsDTO" useGeneratedKeys="true" keyProperty="roomId">
+	<insert id="createRoom" parameterType="com.chat.castledragon.domain.ChatRoomDTO" useGeneratedKeys="true" keyProperty="roomId">
 	INSERT INTO chat_rooms(room_type, room_status) VALUES (#{roomType}, #{roomStatus})
 	</insert>
 
 	<insert id="insertRoomMember">
-	INSERT INTO room_members(room_id, user_id , role) VALUES (#{roomId}, #{userId}, #{role})
+	INSERT INTO room_members(room_id, user_id , role , custom_room_name) VALUES (#{roomId}, #{userId}, #{role} , #{roomName})
 	</insert>
 	
 	<!-- <select id="getMessages" resultType="com.chat.castledragon.domain.ChatDTO">
@@ -104,53 +104,70 @@ WHERE rm.room_id = #{roomId}
 	</select>
 	
 	<select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
-	SELECT
-    r.room_id AS roomId,
-    u.user_id AS targetUserId,
-    u.login_id AS targetLoginId,
+    SELECT
+        r.room_id AS room_id,
+        r.room_type AS room_type,
+        r.room_name AS room_name,
 
-    COUNT(DISTINCT m.message_id) AS unreadCount,
+        COALESCE(
+            me.custom_room_name,
+            CASE
+                WHEN r.room_type = 'DIRECT' THEN (
+                    SELECT u.nickname
+                    FROM room_members other_rm
+                    JOIN users u
+                      ON u.user_id = other_rm.user_id
+                    WHERE other_rm.room_id = r.room_id
+                      AND other_rm.user_id != me.user_id
+                      AND other_rm.left_at IS NULL
+                    LIMIT 1
+                )
+                ELSE r.room_name
+            END
+        ) AS display_room_name,
 
-    (
-        SELECT msg_text
-        FROM chat_messages
-        WHERE room_id = r.room_id
-        ORDER BY message_id DESC
-        LIMIT 1
-    ) AS lastMessage,
+        COUNT(DISTINCT m.message_id) AS unread_count,
 
-    (
-        SELECT created_at
-        FROM chat_messages
-        WHERE room_id = r.room_id
-        ORDER BY message_id DESC
-        LIMIT 1
-    ) AS lastMessageTime
+        (
+            SELECT cm.message_text
+            FROM chat_messages cm
+            WHERE cm.room_id = r.room_id
+            ORDER BY cm.message_id DESC
+            LIMIT 1
+        ) AS last_message,
 
-	FROM room_members me
-	
-	JOIN room_members other
-	ON me.room_id = other.room_id
-	AND other.user_id != me.user_id
-	
-	JOIN users u
-	ON other.user_id = u.user_id
-	
-	JOIN chat_rooms r
-	ON r.room_id = me.room_id
-	
-	LEFT JOIN chat_messages m
-	ON m.room_id = r.room_id
-	AND m.message_id > IFNULL(me.last_read_message_id, 0)
-	AND m.sender_id != me.user_id
-	
-	WHERE me.user_id = #{userId}
-	
-	GROUP BY r.room_id, u.user_id
-	
-	ORDER BY lastMessageTime DESC
-	
-	</select>
+        (
+            SELECT cm.created_at
+            FROM chat_messages cm
+            WHERE cm.room_id = r.room_id
+            ORDER BY cm.message_id DESC
+            LIMIT 1
+        ) AS last_message_time
+
+    FROM room_members me
+
+    JOIN chat_rooms r
+      ON r.room_id = me.room_id
+
+    LEFT JOIN chat_messages m
+      ON m.room_id = r.room_id
+     AND m.message_id > IFNULL(me.last_read_message_id, 0)
+     AND m.sender_id != me.user_id
+
+    WHERE me.user_id = #{userId}
+      AND me.left_at IS NULL
+      AND r.room_status = 'ACTIVE'
+
+    GROUP BY
+        r.room_id,
+        r.room_type,
+        r.room_name,
+        me.custom_room_name,
+        me.user_id,
+        me.last_read_message_id
+
+    ORDER BY last_message_time DESC, r.room_id DESC
+</select>
 	
 	<select id="findActiveRoomMemberIds" resultType="long">
 	    SELECT user_id

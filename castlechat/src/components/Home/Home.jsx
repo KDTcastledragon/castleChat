@@ -13,6 +13,7 @@ import { useAddFriend } from '../../hooks/useAddFriend';
 import { useFriendList } from '../../hooks/useFriendList';
 import { useReceivedFriendRequests } from '../../hooks/useReceivedFriendRequests';
 import { useRespondFriendRequest } from '../../hooks/useRespondFriendRequest';
+import { useGetMyAllRooms } from '../../hooks/useGetMyAllRooms';
 
 import ChatBox from '../Chattings/ChatBox';
 
@@ -26,6 +27,7 @@ function Home() {
     const { data: userList = [] } = useUsers(!!me);
     const { data: friendList = [] } = useFriendList(!!me);
     const { data: receivedFriendRequests = [] } = useReceivedFriendRequests(!!me);
+    const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
     const logoutMutation = useLogout();
     const addFriendMutation = useAddFriend();
     const respondFriendRequestMutation = useRespondFriendRequest();
@@ -289,14 +291,16 @@ function Home() {
         });
     };
 
-    // ==== 채팅방 ===================================================
+    // ==== 채팅방 입장 ===================================================
     const enterDirectRoom = async (friInfo) => {
         try {
             const res = await axios.post(`/chat/enterDirectRoom`, {
                 friendPublicId: friInfo.publicId
             });
 
-            const openedRoomId = res.data.roomId;
+            const createdDirectRoom = res.data;
+
+            const openedRoomId = createdDirectRoom.roomId;
 
             const ws = wsRef.current;
 
@@ -310,7 +314,7 @@ function Home() {
 
             ws.send(JSON.stringify({
                 requestId: crypto.randomUUID(),
-                wsType: "ENTER_DIRECT_ROOM",
+                wsType: "ENTER_ROOM", // ENTER_DIRECT/GROUP_ROOM 으로 개인/단톡을 나눌 필요는 없다. 어차피 '입장'이기 때문.
                 payload: {
                     roomId: openedRoomId,
                 }
@@ -344,6 +348,8 @@ function Home() {
                     ...prev,
                     {
                         roomId: openedRoomId,
+                        roomType: createdDirectRoom.roomType,
+                        roomName: createdDirectRoom.roomName,
                         // 여기서 fri정보를 첨가.
                         // friPublicId: friInfo.publicId,
                         // friNickname: friInfo.nickname,
@@ -365,42 +371,108 @@ function Home() {
         }
     };
 
-    const inviteGroupRoom = async (roomName, selectedFriends) => {
+    const enterRoom = async () => {
+
+    }
+    // ====== 단톡방 만들기 ============================================================================
+    const createGroupRoom = async (roomName, selectedFriends) => {
         if (selectedFriends.length === 0) {
             alert(`초대할 친구를 선택해주세요.`);
             return;
         }
 
         try {
-            const selectedFriPubIdList = selectedFriends.map(f => f.publicId); // axios 즉시요청해서 객체 전부 보내지말고, 필터링 한번빼라.
+            const selectedFriendPublicIdList = selectedFriends.map(f => f.publicId); // axios 즉시요청해서 객체 전부 보내지말고, 필터링 한번빼라.
 
-            const res = await axios.post(`/chat/enterGroupRoom`, {
+            // const res = await axios.post(`/chat/createGroupRoom`, {
+            await axios.post(`/chat/createGroupRoom`, {
                 roomName: roomName,
-                selectedFriPubIdList: selectedFriPubIdList
+                selectedFriendPublicIdList: selectedFriendPublicIdList
             });
 
-            const openedGroupRoomId = res.data.roomId;
+            // const createdGroupRoom = res.data;
 
-            const ws = wsRef.current;
+            // const ws = wsRef.current;
 
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    requestId: crypto.randomUUID(),
-                    wsType: "ENTER_GROUP_ROOM",
-                    payload: {
-                        roomName: roomName,
-                        roomId: openedGroupRoomId
-                    }
-                }));
-            }
+            // if (ws && ws.readyState === WebSocket.OPEN) {
+            //     ws.send(JSON.stringify({
+            //         requestId: crypto.randomUUID(),
+            //         wsType: "ENTER_GROUP_ROOM",  // CREATE는 이미 위에서 했으니, roomSession에 enter만 하자.
+            //         payload: {
+            //             roomId: createdGroupRoom.roomId
+            //             // roomName: createdGroupRoomName, // 이 둘은 필요할 거 같지만 필요 없당.
+            //             // groupRoomMemberList : groupRoomMemberList // 이 둘은 필요할 거 같지만 필요 없당.
+            //         }
+            //     }));
+            // }
 
-            console.log(`단톡방`);
+            // setChatWindows(prev => [
+            //     ...prev,
+            //     {
+            //         roomId: createdGroupRoom.roomId,
+            //         roomType: createdGroupRoom.roomType,
+            //         roomName: createdGroupRoom.roomName,
+            //         memberList: createdGroupRoom.memberList,
+            //         x: 420 + prev.length * 30,
+            //         y: 120 + prev.length * 30,
+            //         zIndex: Date.now()
+            //     }
+            // ]);
 
+            await refetchMyAllRooms();
+
+            setRoomName('');
+            setSelectedFriendList([]);
+
+            console.log(`단톡방 만들기 성공`);
 
         } catch (e) {
             console.log(`단톡실패`);
         }
-    }
+    }// createGroupRoom
+
+    const enterRoomFromList = (room) => {
+        const ws = wsRef.current;
+
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.log('WebSocket 방 입장 전송 실패');
+            return;
+        }
+
+        ws.send(JSON.stringify({
+            requestId: crypto.randomUUID(),
+            wsType: "ENTER_ROOM",
+            payload: {
+                roomId: room.roomId
+            }
+        }));
+
+        setChatWindows(prev => {
+            const alreadyOpen = prev.some(
+                win => Number(win.roomId) === Number(room.roomId)
+            );
+
+            if (alreadyOpen) {
+                return prev.map(win =>
+                    Number(win.roomId) === Number(room.roomId)
+                        ? { ...win, zIndex: Date.now() }
+                        : win
+                );
+            }
+
+            return [
+                ...prev,
+                {
+                    roomId: room.roomId,
+                    roomType: room.roomType,
+                    roomName: room.displayRoomName || room.roomName,
+                    x: 420 + prev.length * 30,
+                    y: 120 + prev.length * 30,
+                    zIndex: Date.now()
+                }
+            ];
+        });
+    };
 
 
 
@@ -431,7 +503,7 @@ function Home() {
                         &nbsp;&nbsp;&nbsp;
                         <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder='단톡방 이름 입력...' />
                         <button
-                            onClick={() => inviteGroupRoom(roomName, selectedFriendList)}
+                            onClick={() => createGroupRoom(roomName, selectedFriendList)}
                         >
                             단톡초대하기
                         </button>
@@ -503,6 +575,23 @@ function Home() {
                 )) : (
                     <div>받은 친구 요청 없음</div>
                 )}
+
+                <div className='chatRoomListSection'>
+                    <div>내 채팅방 목록</div>
+
+                    {myAllRooms.length > 0 ? myAllRooms.map((room) => (
+                        <div key={room.roomId}>
+                            <span>{room.displayRoomName || room.roomName}</span>
+                            <span> / {room.roomType}</span>
+                            &nbsp;&nbsp;
+                            <button onClick={() => enterRoomFromList(room)}>
+                                채팅
+                            </button>
+                        </div>
+                    )) : (
+                        <div>채팅방 없음</div>
+                    )}
+                </div>
             </div>
 
             {/**========= 유저 검색 및 친구추가 =================== */}
@@ -551,7 +640,10 @@ function Home() {
                     isWsConnectedRef={isWsConnectedRef}
 
                     roomId={win.roomId}
+                    roomType={win.roomType}
+                    roomName={win.roomName}
                     friend={win.friend}
+                    memberList={win.memberList}
 
                     registerRoomHandler={(roomId, handler) => {
                         roomHandlersRef.current[roomId] = handler;
