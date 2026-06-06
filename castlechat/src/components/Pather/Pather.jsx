@@ -2,10 +2,8 @@
 
 import Header from '../Home/Header';
 import RouteBody from '../Home/RouteBody';
-import LogIn from '../LogIn/LoginPage';
 
 function Pather() {
-    const adminCode = sessionStorage.getItem('adminCode');
 
     return (
         <>

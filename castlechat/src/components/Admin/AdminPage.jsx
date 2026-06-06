@@ -11,7 +11,7 @@ function AdminPage() {
     // ===< return >===========================================================================================================
     return (
         <div className='AdminPageContainer'>
-            <div></div>
+            <div>admin</div>
         </div>
     );
 }

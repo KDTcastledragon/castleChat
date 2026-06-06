@@ -70,7 +70,7 @@ function LoginPage() {
 
                     <div className='findAndJoinBox'>
                         <button onClick={() => navigator('/')}>아이디/비밀번호 찾기</button>
-                        <button onClick={() => navigator('/JoinPage')}>회원가입</button>
+                        <button onClick={() => navigator('/joinPage')}>회원가입</button>
                         <button onClick={() => navigator('/')}>Home</button>
                     </div>
                 </div>
