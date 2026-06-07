@@ -1,5 +1,6 @@
 import './FriendList.css';
-
+import axios from 'axios';
+import { useState } from 'react';
 import { useMe } from '../../hooks/useMe';
 import { useFriendList } from '../../hooks/useFriendList';
 import { useAddFriend } from '../../hooks/useAddFriend';
@@ -8,10 +9,10 @@ import { useReceivedFriendRequests } from '../../hooks/useReceivedFriendRequests
 import { useRespondFriendRequest } from '../../hooks/useRespondFriendRequest';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useSearchUsers } from '../../hooks/useSearchUsers';
+import { useGetMyAllRooms } from '../../hooks/useGetMyAllRooms';
 
 
-
-function FriendList() {
+function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const { data: friendList = [] } = useFriendList(!!me);
     const [roomName, setRoomName] = useState('');

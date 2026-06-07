@@ -1,11 +1,16 @@
 import './ChatList.css';
-
+import axios from 'axios';
+import { useState } from 'react';
 import { useMe } from '../../hooks/useMe';
 import { useGetMyAllRooms } from '../../hooks/useGetMyAllRooms';
+import ChatBox from './ChatBox';
 
-function ChatList() {
+function ChatList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const [chatWindows, setChatWindows] = useState([]);
+    const [roomName, setRoomName] = useState('');
+    const [selectedFriendList, setSelectedFriendList] = useState([]);
+    const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
 
     // ==== 채팅방 옮기기 기본 설정 ===============================================================================
     const closeChatWindow = (roomId) => {
