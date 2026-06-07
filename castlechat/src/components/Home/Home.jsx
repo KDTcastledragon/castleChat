@@ -6,6 +6,8 @@ import { useNavigate, Navigate } from 'react-router-dom'; //  Navigate : “화�
 
 import { useMe } from '../../hooks/useMe';
 import { useLogout } from '../../hooks/useLogout';
+import ChatList from '../Chattings/ChatList';
+import FriendList from '../Friend/FriendList';
 
 
 function Home() {
@@ -138,11 +140,31 @@ function Home() {
             <div className='loginSection'>
                 {me ?
                     <>
-                        <div>{me.profileImg ? me.profileImg : '프사 없음'}</div>
-                        <div className='loginForm'> {me.nickname} 님 안녕하세요.</div>
-                        <div>{me.publicId}</div>
-                        <div>{me.friendCode}</div>
-                        <button onClick={() => logout()}>로그아웃</button>
+                        <div className='loginForm'>
+                            <div>{me.nickname} 님 안녕하세요.</div>
+                            <div>{me.profileImg ? me.profileImg : '프사 없음'}</div>
+                            <div>{me.publicId}</div>
+                            <div>{me.friendCode}</div>
+                            <div>
+                                <button onClick={() => logout()}>로그아웃</button>
+                            </div>
+                        </div>
+
+                        <FriendList
+                            me={me}
+                            wsRef={wsRef}
+                            isWsConnectedRef={isWsConnectedRef}
+                            roomHandlersRef={roomHandlersRef}
+                        />
+
+                        <ChatList
+                            me={me}
+                            wsRef={wsRef}
+                            isWsConnectedRef={isWsConnectedRef}
+                            roomHandlersRef={roomHandlersRef}
+                        />
+
+
                     </>
                     :
                     <>
