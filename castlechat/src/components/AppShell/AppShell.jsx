@@ -1,21 +1,36 @@
-import './Home.css';
 
-import axios from 'axios';
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom'; //  Navigate : “화면 렌더링 중 조건에 따라 다른 주소로 보내는 컴포넌트”야.
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from 'react-redux';
 
-import { useMe } from '../../hooks/useMe';
-import { useLogout } from '../../hooks/useLogout';
-import ChatList from '../Chattings/ChatList';
-import FriendList from './FriendList';
+import Header from "../Home/Header"
+import RouteBody from "../Home/RouteBody"
 
+import { useMe } from "../../hooks/useMe";
+import { useLogout } from "../../hooks/useLogout";
+import { closeChatWindow, moveChatWindow, focusChatWindow } from '../../store/chatWindowsSlice';
 
-function Home() {
+import ChatBox from '../Chattings/ChatBox';
+
+// 1. me 조회
+// 2. WebSocket 연결
+// 3. wsRef
+// 4. isWsConnectedRef
+// 5. roomHandlersRef
+// 6. chatWindows
+// 7. openDirectRoom
+// 8. openRoomFromList
+// 9. ChatBox 렌더링
+
+function AppShell() {
     const navigator = useNavigate();
-
     const { data: me, isLoading: isCheckingLogin } = useMe();
-
     const logoutMutation = useLogout();
+
+    const dispatch = useDispatch();
+    const chatWindows = useSelector(state => state.chatWindows.windows);
+    // const [chatWindows, setChatWindows] = useState([]); // 이제부터 Redux가 관리한다.
+
     const isWsConnectedRef = useRef(false);
     const wsRef = useRef(null);
 
@@ -115,34 +130,58 @@ function Home() {
         }
     }, [me])
 
-    // ===== 로그아웃 ===========================================================================================
-    function logout() {
-        if (wsRef.current) {
-            wsRef.current.close();
-            wsRef.current = null;
-            console.log(`로그아웃 및 ws 연결종료`);
-        }
 
-        isWsConnectedRef.current = false;
 
-        logoutMutation.mutate(null, {
-            onSuccess: () => {
-                navigator('/login');
-            }
-        });
-    }
-
-    // ======< return >=======================================================================================================
     return (
-        <div className='HomeContainer'>
+        <>
+            <Header
+                isCheckingLogin={isCheckingLogin}
 
-            {/**============== 로그인 구역==================== */}
-            <div className='loginSection'>
+            // wsRef={wsRef}
+            // isWsConnectedRef={isWsConnectedRef}
+            // --> Header는 몰라두 댐.
+            />
 
-            </div>
+            <RouteBody
+                isCheckingLogin={isCheckingLogin}
+                wsRef={wsRef}
+                isWsConnectedRef={isWsConnectedRef}
+                roomHandlersRef={roomHandlersRef}
+            />
 
-        </div >
+            {chatWindows.map((win) => (
+                <ChatBox
+                    key={win.roomId}
+
+                    wsRef={wsRef}
+                    isWsConnectedRef={isWsConnectedRef}
+
+                    roomId={win.roomId}
+                    roomType={win.roomType}
+                    roomName={win.roomName}
+                    friend={win.friend}
+                    memberList={win.memberList}
+
+                    registerRoomHandler={(roomId, handler) => {
+                        roomHandlersRef.current[roomId] = handler;
+                    }}
+
+                    unregisterRoomHandler={(roomId) => {
+                        delete roomHandlersRef.current[roomId];
+                    }}
+
+                    x={win.x}
+                    y={win.y}
+                    zIndex={win.zIndex}
+
+                    exitChatRoom={() => dispatch(closeChatWindow(win.roomId))}
+                    onMove={(x, y) => dispatch(moveChatWindow({ roomId: win.roomId, x, y }))}
+                    onFocus={() => dispatch(focusChatWindow(win.roomId))}
+                />
+            ))}
+        </>
+
     );
 }
 
-export default Home;
+export default AppShell;

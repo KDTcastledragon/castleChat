@@ -1,14 +1,16 @@
 import './App.css';
-import Home from './components/Home/Home';
 
-import Pather from './components/Pather/Pather';
+import AppShell from './components/AppShell/AppShell';
+
+
 
 function App() {
   return (
     <div className="App">
-      <Pather></Pather>
+      <AppShell></AppShell>
     </div>
   );
 }
 
 export default App;
+

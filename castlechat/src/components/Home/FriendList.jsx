@@ -11,6 +11,9 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useSearchUsers } from '../../hooks/useSearchUsers';
 import { useGetMyAllRooms } from '../../hooks/useGetMyAllRooms';
 
+import { useDispatch } from 'react-redux';
+import { openChatWindow } from '../../store/chatWindowsSlice';
+
 
 function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
     const { data: me, isLoading: isCheckingLogin } = useMe();
@@ -23,6 +26,8 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
     const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
     const [chatWindows, setChatWindows] = useState([]);
 
+    const dispatch = useDispatch();
+
     const [searchWord, setSearchWord] = useState('');
     const debouncedSearchWord = useDebounce(searchWord, 500);
     const {
@@ -30,35 +35,37 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         isLoading: isSearching
     } = useSearchUsers(debouncedSearchWord);
 
-    // ==== 채팅방 옮기기 기본 설정 ===============================================================================
-    const closeChatWindow = (roomId) => {
-        setChatWindows(prev =>
-            prev.filter(win => Number(win.roomId) !== Number(roomId))
-        );
-    };
+    // 이제부턴 redux가 관리한다.
+    // // ==== 채팅방 옮기기 기본 설정 ===============================================================================
+    // const closeChatWindow = (roomId) => {
+    //     setChatWindows(prev =>
+    //         prev.filter(win => Number(win.roomId) !== Number(roomId))
+    //     );
+    // };
 
-    const moveChatWindow = (roomId, x, y) => {
-        setChatWindows(prev =>
-            prev.map(win =>
-                Number(win.roomId) === Number(roomId)
-                    ? { ...win, x, y }
-                    : win
-            )
-        );
-    };
+    // const moveChatWindow = (roomId, x, y) => {
+    //     setChatWindows(prev =>
+    //         prev.map(win =>
+    //             Number(win.roomId) === Number(roomId)
+    //                 ? { ...win, x, y }
+    //                 : win
+    //         )
+    //     );
+    // };
 
-    const focusChatWindow = (roomId) => {
-        setChatWindows(prev =>
-            prev.map(win =>
-                Number(win.roomId) === Number(roomId)
-                    ? { ...win, zIndex: Date.now() }
-                    : win
-            )
-        );
-    };
+    // const focusChatWindow = (roomId) => {
+    //     setChatWindows(prev =>
+    //         prev.map(win =>
+    //             Number(win.roomId) === Number(roomId)
+    //                 ? { ...win, zIndex: Date.now() }
+    //                 : win
+    //         )
+    //     );
+    // };
 
 
     // ==== 친구 추가 ==================================================
+
     function addFriend(targetPublicId) {
         addFriendMutation.mutate(targetPublicId, {
             onSuccess: () => {
@@ -104,10 +111,10 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         );
     }//respondFriendRequest
 
-    // ====== 친구 수락/거절 =======================================================================================================
-    const enterDirectRoom = async (friInfo) => {
+    // ====== 1:1 채팅 =======================================================================================================
+    const getOrCreateDirectRoom = async (friInfo) => {
         try {
-            const res = await axios.post(`/chat/enterDirectRoom`, {
+            const res = await axios.post(`/chat/getOrCreateDirectRoom`, {
                 friendPublicId: friInfo.publicId
             });
 
@@ -133,6 +140,17 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
                 }
             }));
 
+
+
+            dispatch(openChatWindow({
+                roomId: openedRoomId,
+                roomType: createdDirectRoom.roomType,
+                roomName: createdDirectRoom.roomName,
+                friend: friInfo
+            }));
+
+            // ===== 이제부턴 Redux가 관리한다. 위의 dispatch를 보라.============================================================
+
             // setChatWindows는 현재 열린 채팅창 목록을 변경하는 함수야.
             // prev는 변경 직전의 채팅창 배열이야.
             // e.g.)     prev = [
@@ -140,42 +158,42 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
             //                      { roomId: 7, friend: { nickname: '마법사' } }
             //                  ];
 
-            setChatWindows(prev => {
-                // 함수형 업데이트를 사용하는 이유는 채팅창을 연속으로 열거나 닫을 때 가장 최신 state를 기준으로 계산하기 위해서야.
-                // some()은 배열 안에 조건을 만족하는 요소가 하나라도 있는지 확인해서 true 또는 false를 반환해.
-                // prev 안에 openedRoomId와 같은 roomId를 가진 채팅창이 있는가?
-                const alreadyOpen = prev.some(
-                    win => Number(win.roomId) === Number(openedRoomId)
-                );
+            // setChatWindows(prev => {
+            //     // 함수형 업데이트를 사용하는 이유는 채팅창을 연속으로 열거나 닫을 때 가장 최신 state를 기준으로 계산하기 위해서야.
+            //     // some()은 배열 안에 조건을 만족하는 요소가 하나라도 있는지 확인해서 true 또는 false를 반환해.
+            //     // prev 안에 openedRoomId와 같은 roomId를 가진 채팅창이 있는가?
+            //     const alreadyOpen = prev.some(
+            //         win => Number(win.roomId) === Number(openedRoomId)
+            //     );
 
-                // ...win은 기존 채팅창 객체의 모든 정보를 복사한다는 뜻이야. 기존 정보는 유지하고 zIndex만 새 값으로 덮어써.
-                // 결과적으로 이미 열린 채팅창을 새로 만들지 않고 화면 맨 앞으로 가져오는 거야.
-                if (alreadyOpen) {
-                    return prev.map(win =>
-                        Number(win.roomId) === Number(openedRoomId)
-                            ? { ...win, zIndex: Date.now() }
-                            : win
-                    );
-                }
-                // [...prev, 새객체]는 기존 배열을 복사하고 끝에 새 채팅창 객체를 추가한다는 뜻이야.
-                return [
-                    ...prev,
-                    {
-                        roomId: openedRoomId,
-                        roomType: createdDirectRoom.roomType,
-                        roomName: createdDirectRoom.roomName,
-                        // 여기서 fri정보를 첨가.
-                        // friPublicId: friInfo.publicId,
-                        // friNickname: friInfo.nickname,
-                        // friProfileImg: friInfo.profileImg,
-                        // friCode: friInfo.friendCode,
-                        friend: friInfo,
-                        x: 420 + prev.length * 30,
-                        y: 120 + prev.length * 30,
-                        zIndex: Date.now() // : 현재 시간을 큰 숫자로 사용해서, 가장 최근에 열린 창이 가장 위에 보이도록 하는 방식이야.
-                    }
-                ];
-            });
+            //     // ...win은 기존 채팅창 객체의 모든 정보를 복사한다는 뜻이야. 기존 정보는 유지하고 zIndex만 새 값으로 덮어써.
+            //     // 결과적으로 이미 열린 채팅창을 새로 만들지 않고 화면 맨 앞으로 가져오는 거야.
+            //     if (alreadyOpen) {
+            //         return prev.map(win =>
+            //             Number(win.roomId) === Number(openedRoomId)
+            //                 ? { ...win, zIndex: Date.now() }
+            //                 : win
+            //         );
+            //     }
+            //     // [...prev, 새객체]는 기존 배열을 복사하고 끝에 새 채팅창 객체를 추가한다는 뜻이야.
+            //     return [
+            //         ...prev,
+            //         {
+            //             roomId: openedRoomId,
+            //             roomType: createdDirectRoom.roomType,
+            //             roomName: createdDirectRoom.roomName,
+            //             // 여기서 fri정보를 첨가.
+            //             // friPublicId: friInfo.publicId,
+            //             // friNickname: friInfo.nickname,
+            //             // friProfileImg: friInfo.profileImg,
+            //             // friCode: friInfo.friendCode,
+            //             friend: friInfo,
+            //             x: 420 + prev.length * 30,
+            //             y: 120 + prev.length * 30,
+            //             zIndex: Date.now() // : 현재 시간을 큰 숫자로 사용해서, 가장 최근에 열린 창이 가장 위에 보이도록 하는 방식이야.
+            //         }
+            //     ];
+            // });
 
             // alert(`${openedRoomId}입장!`);
 
@@ -185,7 +203,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         }
     };
 
-    // ====== 단톡방 만들기 ============================================================================
+    // ====== 단톡방 ============================================================================
     const createGroupRoom = async (roomName, selectedFriends) => {
         if (selectedFriends.length === 0) {
             alert(`초대할 친구를 선택해주세요.`);
@@ -242,7 +260,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         }
     }// createGroupRoom
 
-    const enterRoomFromList = (room) => {
+    const enterRoom = (room) => {
         const ws = wsRef.current;
 
         if (!ws || ws.readyState !== WebSocket.OPEN) {
