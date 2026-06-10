@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 // 내부 join용 DTO.  publicId로 userId 조회 & publicId로 profile 조회 & userProfile조립 --> query를 2배로 해야됨. 그냥 column중복되도 dto새로 하나 파는게 낫다.
-public class ChatMemberDTO {
+public class ChatUserLookupDTO {
 	private Long userId;
 
 	private String publicId;
@@ -19,14 +19,14 @@ public class ChatMemberDTO {
 
 	private String profileImg;
 
-	public static ChatMemberDTO from(SessionUserDTO me) {
-		return new ChatMemberDTO(me.getUserId(), me.getPublicId(), me.getNickname(), me.getFriendCode(), me.getProfileImg());
+	public static ChatUserLookupDTO from(SessionUserDTO me) {
+		return new ChatUserLookupDTO(me.getUserId(), me.getPublicId(), me.getNickname(), me.getFriendCode(), me.getProfileImg());
 	}
 
 	// 가능은하다. 공부용으로 임시 추가.
 	// 필요하면 from을 여러 개 만들 수 있어. 이걸 오버로딩이라고 해.
-	public static ChatMemberDTO from(UserDTO user) {
-		return new ChatMemberDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+	public static ChatUserLookupDTO from(UserDTO user) {
+		return new ChatUserLookupDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
 	}
 
 	// static : 객체를 먼저 만들지 않고 클래스 이름으로 바로 호출 가능. DTO me = new DTO() 이런거 일일이 안해도된다. --> ChatMemberDTO야, 이 me를 바탕으로 네 객체 하나 만들어줘

@@ -5,13 +5,12 @@ import java.util.Set;
 
 import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
-import com.chat.castledragon.domain.EnterGroupResponseDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendMessageDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 
 public interface ChatService {
-	EnterRoomResponseDTO enterDirectRoom(Long senderId, String senderNickname, String friendPublicId);
+	EnterRoomResponseDTO getOrCreateDirectRoom(SessionUserDTO me, String friendPublicId);
 
 	List<ChatMessageResponseDTO> getPrevMessagesInRoom(Long roomId);
 
@@ -21,7 +20,7 @@ public interface ChatService {
 
 	ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
 
-	EnterGroupResponseDTO createGroupRoom(SessionUserDTO host, String roomName, List<String> selectedFriendPublicIdList);
+	EnterRoomResponseDTO createGroupRoom(SessionUserDTO host, String roomName, String roomThumbnail, List<String> selectedFriendPublicIdList);
 
 	List<ChatRoomListDTO> getMyAllRooms(Long userId);
 

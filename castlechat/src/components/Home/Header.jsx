@@ -1,8 +1,7 @@
 import './Header.css';
 
 import { useNavigate } from 'react-router-dom';
-import { useMe } from '../../hooks/useMe';
-import { useLogout } from '../../hooks/useLogout';
+import { useMe, useLogout } from '../../hooks/useAuthUser';
 
 function Header() {
 
@@ -11,22 +10,10 @@ function Header() {
     const { data: me } = useMe();
     const logoutMutation = useLogout();
 
-    // ===== 로그아웃 ===========================================================================================
-    // function logout() {
-    //     if (wsRef.current) {
-    //         wsRef.current.close();
-    //         wsRef.current = null;
-    //         console.log(`로그아웃 및 ws 연결종료`);
-    //     }
-
-    //     isWsConnectedRef.current = false;
-
-    //     logoutMutation.mutate(null, {
-    //         onSuccess: () => {
-    //             navigator('/login');
-    //         }
-    //     });
-    // }
+    // ====== 로그아웃 ===========================================================================================
+    function logout() {
+        logoutMutation.mutate();
+    }
 
     // ======< return >=======================================================================================================
     return (
@@ -37,8 +24,14 @@ function Header() {
                         <div>{me.profileImg ? me.profileImg : '프사 없음'}</div>
                         <div>{me.nickname}</div>
                         <div>{me.friendCode}</div>
-                        {/* <div><button onClick={logout}>로그아웃</button></div> */}
-                        <div><button onClick={() => alert(`logout`)}>로그아웃</button></div>
+                        <div>
+                            <button
+                                onClick={logout}
+                                disabled={logoutMutation.isPending}
+                            >
+                                로그아웃
+                            </button>
+                        </div>
 
                         <div className='headerButton'>
                             <button onClick={() => nav('/')}>친구목록</button>

@@ -39,6 +39,21 @@
 	select user_id,public_id, nickname, friend_code, profile_img from users where public_id=#{publicId}
 	</select>
 	
+	<select id="findUserInfoByPublicIdList"
+        resultType="com.chat.castledragon.domain.ChatUserLookupDTO">
+    SELECT
+        user_id AS userId,
+        public_id AS publicId,
+        nickname,
+        friend_code AS friendCode,
+        profile_img AS profileImg
+    FROM users
+    WHERE public_id IN
+    <foreach collection="publicIds" item="publicId" open="(" separator="," close=")">
+        #{publicId}
+    </foreach>
+</select>
+	
     
      <update id="changePassword">
     	update user set password = #{encodedNewPassword} where id = #{id}

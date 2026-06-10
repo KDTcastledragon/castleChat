@@ -34,4 +34,5 @@ public class WsAuth {
 
 		return me;
 	}
+
 }// getLoginUser

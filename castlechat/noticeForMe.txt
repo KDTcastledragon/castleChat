@@ -1,0 +1,22 @@
+
+
+// api layer
+// - 어디로 요청할지
+// - 어떤 method인지
+// - request/response data
+
+// hook/component layer
+// - 언제 호출할지
+// - 성공하면 뭘 할지
+// - 실패하면 뭘 보여줄지
+
+// git status -> git add . -> git status -> git commit -m "리팩토링중" -> git push  // untracked File 확인 필요.
+
+
+// chatList나 friList에서 chatBox를 렌더링 시키지 않고!, appshell에서 chatbox를 랜더링 시키는 이유가,
+// friList chatList settings 왔다갔다해도 chatList에 떠있는 chatBox를 unmount시키지 않게 하기 위함인거지????
+// 만약 chatList에서만 rendering시킨다면, friList나 settings로 화면을 전환했을때 chatBox가 unmount되나??
+// 그렇다면 chatList랑 friList에서 동시에 chatBox를 렌더링 시킨다면(friList에서도 1:1 채팅이 가능해야 하기때문에) 어떻게 되지? 꼬이나?
+
+--> FriendList / ChatList / Settings를 왔다 갔다 해도
+열려 있는 ChatBox가 unmount되지 않게 하려고

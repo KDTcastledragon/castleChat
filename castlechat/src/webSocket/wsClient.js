@@ -3,6 +3,7 @@
 let ws = null; // wsRef.current대체.  “전역 변수”처럼 보이지만, 정확히는 모듈 스코프 변수임. 이 파일 안에서만 직접 접근 가능하고, 밖에서는 함수로만 접근함.
 
 let isConnected = false; // isWsConnectedRef 대체.
+let isManualDisconnect = false;
 
 const roomHandlers = {};
 
@@ -30,6 +31,8 @@ export function connectWs() {
     if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
         return;
     }
+
+    isManualDisconnect = false; // 수동 종료 직후 재연결 같은 흐름에서 플래그가 애매하게 남는 걸 막기 위해서야.
 
     // const ws = new WebSocket(~) : AppShell에서와 다르게 const가 안 되는 이유? 
     // 핵심은 스코프 차이야. AppShell에서는 useEffect 한 번 실행 안에서만 쓰니까 const로 충분.
@@ -70,6 +73,11 @@ export function connectWs() {
             case 'TYPING_START':
             case 'TYPING_STOP': {
                 const roomId = wsEvt.payload?.roomId;
+
+                if (roomId == null) { // roomId가 없으면 roomHandlers[undefined]를 보게 됨. 큰 문제는 아니지만, 명시적으로 막으면 더 좋음.
+                    return;
+                }
+
                 roomHandlers[roomId]?.(wsEvt);
                 break;
             }
@@ -80,14 +88,33 @@ export function connectWs() {
     };
 
     ws.onclose = (evt) => {
-        console.log('WebSocket 종료', {
-            code: evt.code,
-            reason: evt.reason,
-            wasClean: evt.wasClean
-        });
+        if (isManualDisconnect) {
+
+            console.log('WebSocket 수동 종료', {
+                code: evt.code,
+                reason: evt.reason,
+                wasClean: evt.wasClean
+            });
+
+            isManualDisconnect = false;
+
+        } else {
+            console.log('WebSocket 비정상/외부 종료', {
+                code: evt.code,
+                reason: evt.reason,
+                wasClean: evt.wasClean
+            });
+        }
 
         isConnected = false;
-        ws = null;
+
+        // 현재 살아있는 최신 ws를 실수로 지우지 않기 위해서, 아래의 조건을 둔거다. 닫힌 소켓이 현재 모듈이 들고 있는 ws와 같은 소켓일 때만 null 처리.
+        // ws가 evt.target이 아니면? === 닫힌 건 예전 소켓이고, 현재 ws는 이미 다른 새 소켓이다. 그래서! 비우면 안 됨.
+        // ws !== evt.target이라면? === 현재 ws는 다른 최신 연결일 가능성이 있다. --> 그래서, 유지해야만 한다.
+        if (ws === evt.target) {
+            ws = null;
+        }
+
     };
 
     ws.onerror = (evt) => {
@@ -95,26 +122,49 @@ export function connectWs() {
     };
 }
 
-export function disconnectChatWs() {
-    if (ws) {
-        ws.close();
-        ws = null;
+// ws가 있으면 close 요청. 모듈 변수 ws를 null로 변경. isConnected false 처리
+export function disconnectWs(action) {
+    const targetWs = ws;
+
+    isManualDisconnect = true;
+    isConnected = false;
+    ws = null;
+
+    Object.keys(roomHandlers).forEach((roomId) => {
+        delete roomHandlers[roomId];
+    });
+
+    if (targetWs && (targetWs.readyState === WebSocket.OPEN || targetWs.readyState === WebSocket.CONNECTING)) {
+        targetWs.close(1000, action);
     }
 
-    isConnected = false;
-}
+}//disconnectWs
 
-export function sendWs(data) {
+// export function sendWs_legacy(data) {
+//     if (!ws || ws.readyState !== WebSocket.OPEN) {
+//         console.log('WS 연결 안 됨');
+//         return false;
+//     }
+
+//     ws.send(JSON.stringify(data));
+//     return true;
+// }
+
+export function sendWs(wsType, payload = {}) {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
         console.log('WS 연결 안 됨');
         return false;
     }
 
-    ws.send(JSON.stringify(data));
+    ws.send(JSON.stringify({
+        requestId: crypto.randomUUID(),
+        wsType: wsType,
+        payload: payload
+    }));
     return true;
 }
 
-export function isChatWsConnected() {
+export function isWsConnected() {
     return isConnected && ws?.readyState === WebSocket.OPEN;
 }
 
@@ -125,3 +175,18 @@ export function registerRoomHandler(roomId, handler) {
 export function unregisterRoomHandler(roomId) {
     delete roomHandlers[roomId];
 }
+
+
+// ws 객체 대략 구조
+// WebSocket {
+//     binaryType: "blob",
+//     bufferedAmount: 0,
+//     extensions: "",
+//     onclose: ƒ,
+//     onerror: ƒ,
+//     onmessage: ƒ,
+//     onopen: ƒ,
+//     protocol: "",
+//     readyState: 1,
+//     url: "ws://localhost:8080/ws/chat"
+// }

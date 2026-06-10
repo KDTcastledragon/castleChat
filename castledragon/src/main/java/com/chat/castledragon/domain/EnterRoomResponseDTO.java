@@ -10,14 +10,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class EnterRoomResponseDTO {
-
 	private Long roomId;
 
-	private Long targetUserId;
+	private String roomType;
 
-	private String targetLoginId;
+	private String customRoomName;
+	private String customRoomThumbnail;
 
-	private List<ChatMessageDTO> messages;
+	private Long roomMemberCount;
+
+	private List<RoomMemberResponseDTO> memberList;
 
 	private Long lastReadMessageId;
 }

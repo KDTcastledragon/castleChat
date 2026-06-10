@@ -2,6 +2,7 @@ import './ChatBox.css';
 
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
+import { sendWs } from '../../webSocket/wsClient';
 
 // home에서 me항목 하나씩 일일히 다 넘기게 되면 Home이 ChatBox 내부에서 뭘 쓰는지 너무 많이 관여하게 돼. 그래서 me를 통째로 받는게 좋다.
 function ChatBox({ me, wsRef, isWsConnectedRef, roomId, roomType, roomName, friend, memberList, registerRoomHandler,
@@ -134,15 +135,17 @@ function ChatBox({ me, wsRef, isWsConnectedRef, roomId, roomType, roomName, frie
 
                     if (lastOtherMsgInRoom !== undefined) {
 
-                        wsRef.current.send(JSON.stringify({
-                            requestId: crypto.randomUUID(),
-                            wsType: "READ_MSG",
-                            payload: {
-                                roomId: roomId,
-                                lastReadMessageId: lastOtherMsgInRoom.messageId // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
-                            }
-                        }));
-                    } // if-lastMsg
+                        sendWs("READ_MSG", { roomId: roomId, lastReadMessageId: lastOtherMsgInRoom.messageId });
+
+                        // wsRef.current.send(JSON.stringify({
+                        //     requestId: crypto.randomUUID(),
+                        //     wsType: "READ_MSG",
+                        //     payload: {
+                        //         roomId: roomId,
+                        //         lastReadMessageId: lastOtherMsgInRoom.messageId // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
+                        //     }
+                        // }));
+                    }
                 }
 
             } catch (error) { // 추후 실패 처리 로직 설계를 위해. 

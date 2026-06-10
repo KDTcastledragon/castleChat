@@ -6,7 +6,7 @@ import Home from "./Home";
 import FriendList from "./FriendList";
 import ChatBox from "../Chattings/ChatBox";
 import ChatList from "../Chattings/ChatList";
-import Settings from "../Settings/Settings";
+import Settings from "../settings/Settings";
 import AdminPage from "../Admin/AdminPage";
 
 function RouteBody({ me, isCheckingLogin, wsRef, isWsConnectedRef, roomHandlersRef }) {

@@ -1,21 +1,21 @@
 import './FriendList.css';
 import axios from 'axios';
 import { useState } from 'react';
-import { useMe } from '../../hooks/useMe';
-import { useFriendList } from '../../hooks/useFriendList';
-import { useAddFriend } from '../../hooks/useAddFriend';
+import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
-import { useReceivedFriendRequests } from '../../hooks/useReceivedFriendRequests';
-import { useRespondFriendRequest } from '../../hooks/useRespondFriendRequest';
+import { useMe } from '../../hooks/useAuthUser';
+import { useFriendList, useAddFriend, useReceivedFriendRequests, useRespondFriendRequest } from '../../hooks/useFriend';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useSearchUsers } from '../../hooks/useSearchUsers';
 import { useGetMyAllRooms } from '../../hooks/useGetMyAllRooms';
 
-import { useDispatch } from 'react-redux';
 import { openChatWindow } from '../../store/chatWindowsSlice';
+import { sendWs } from '../../webSocket/wsClient';
 
 
-function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
+function FriendList() {
+    const nav = useNavigate();
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const { data: friendList = [] } = useFriendList(!!me);
     const [roomName, setRoomName] = useState('');
@@ -24,7 +24,6 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
     const respondFriendRequestMutation = useRespondFriendRequest();
     const { data: receivedFriendRequests = [] } = useReceivedFriendRequests(!!me);
     const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
-    const [chatWindows, setChatWindows] = useState([]);
 
     const dispatch = useDispatch();
 
@@ -35,37 +34,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         isLoading: isSearching
     } = useSearchUsers(debouncedSearchWord);
 
-    // 이제부턴 redux가 관리한다.
-    // // ==== 채팅방 옮기기 기본 설정 ===============================================================================
-    // const closeChatWindow = (roomId) => {
-    //     setChatWindows(prev =>
-    //         prev.filter(win => Number(win.roomId) !== Number(roomId))
-    //     );
-    // };
-
-    // const moveChatWindow = (roomId, x, y) => {
-    //     setChatWindows(prev =>
-    //         prev.map(win =>
-    //             Number(win.roomId) === Number(roomId)
-    //                 ? { ...win, x, y }
-    //                 : win
-    //         )
-    //     );
-    // };
-
-    // const focusChatWindow = (roomId) => {
-    //     setChatWindows(prev =>
-    //         prev.map(win =>
-    //             Number(win.roomId) === Number(roomId)
-    //                 ? { ...win, zIndex: Date.now() }
-    //                 : win
-    //         )
-    //     );
-    // };
-
-
     // ==== 친구 추가 ==================================================
-
     function addFriend(targetPublicId) {
         addFriendMutation.mutate(targetPublicId, {
             onSuccess: () => {
@@ -79,7 +48,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
 
                 if (e.response?.status === 401) {
                     alert('로그인이 필요합니다.');
-                    navigator('/login');
+                    nav('/login');
                     return;
                 }
 
@@ -87,7 +56,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
                 console.log(e);
             }
         });
-    }
+    }//addFriend
 
     // ====== 친구 수락/거절 =======================================================================================================
     function respondFriendRequest(publicId, action) {
@@ -111,6 +80,26 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         );
     }//respondFriendRequest
 
+    const enterRoom = async (room, enterType) => {
+
+        const res = null;
+
+        if (enterType === "DIRECT") {
+            res = await axios.post(`/chat/getOrCreateDirectRoom`, { friendPublicId: friInfo.publicId })
+        } else if (enterType === "GROUP") {
+            res = await axios.post(`/chat/enterGroupRoom`, { roomId: openedRoomId })
+        }
+
+        sendWs("ENTER_ROOM", { roomId: room.roomId })
+
+        dispatch(openChatWindow({
+            roomId: room.roomId,
+            roomType: room.roomType,
+            roomName: room.roomName
+        }));
+
+    };
+
     // ====== 1:1 채팅 =======================================================================================================
     const getOrCreateDirectRoom = async (friInfo) => {
         try {
@@ -122,25 +111,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
 
             const openedRoomId = createdDirectRoom.roomId;
 
-            const ws = wsRef.current;
-
-            if (!ws || ws.readyState !== WebSocket.OPEN) {
-                console.log('WebSocket 방 입장 전송 실패', {
-                    ws,
-                    readyState: ws?.readyState
-                });
-                return;
-            }
-
-            ws.send(JSON.stringify({
-                requestId: crypto.randomUUID(),
-                wsType: "ENTER_ROOM", // ENTER_DIRECT/GROUP_ROOM 으로 개인/단톡을 나눌 필요는 없다. 어차피 '입장'이기 때문.
-                payload: {
-                    roomId: openedRoomId,
-                }
-            }));
-
-
+            sendWs("ENTER_ROOM", { roomId: openedRoomId });
 
             dispatch(openChatWindow({
                 roomId: openedRoomId,
@@ -149,59 +120,13 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
                 friend: friInfo
             }));
 
-            // ===== 이제부턴 Redux가 관리한다. 위의 dispatch를 보라.============================================================
-
-            // setChatWindows는 현재 열린 채팅창 목록을 변경하는 함수야.
-            // prev는 변경 직전의 채팅창 배열이야.
-            // e.g.)     prev = [
-            //                      { roomId: 4, friend: { nickname: '공성전차' } },
-            //                      { roomId: 7, friend: { nickname: '마법사' } }
-            //                  ];
-
-            // setChatWindows(prev => {
-            //     // 함수형 업데이트를 사용하는 이유는 채팅창을 연속으로 열거나 닫을 때 가장 최신 state를 기준으로 계산하기 위해서야.
-            //     // some()은 배열 안에 조건을 만족하는 요소가 하나라도 있는지 확인해서 true 또는 false를 반환해.
-            //     // prev 안에 openedRoomId와 같은 roomId를 가진 채팅창이 있는가?
-            //     const alreadyOpen = prev.some(
-            //         win => Number(win.roomId) === Number(openedRoomId)
-            //     );
-
-            //     // ...win은 기존 채팅창 객체의 모든 정보를 복사한다는 뜻이야. 기존 정보는 유지하고 zIndex만 새 값으로 덮어써.
-            //     // 결과적으로 이미 열린 채팅창을 새로 만들지 않고 화면 맨 앞으로 가져오는 거야.
-            //     if (alreadyOpen) {
-            //         return prev.map(win =>
-            //             Number(win.roomId) === Number(openedRoomId)
-            //                 ? { ...win, zIndex: Date.now() }
-            //                 : win
-            //         );
-            //     }
-            //     // [...prev, 새객체]는 기존 배열을 복사하고 끝에 새 채팅창 객체를 추가한다는 뜻이야.
-            //     return [
-            //         ...prev,
-            //         {
-            //             roomId: openedRoomId,
-            //             roomType: createdDirectRoom.roomType,
-            //             roomName: createdDirectRoom.roomName,
-            //             // 여기서 fri정보를 첨가.
-            //             // friPublicId: friInfo.publicId,
-            //             // friNickname: friInfo.nickname,
-            //             // friProfileImg: friInfo.profileImg,
-            //             // friCode: friInfo.friendCode,
-            //             friend: friInfo,
-            //             x: 420 + prev.length * 30,
-            //             y: 120 + prev.length * 30,
-            //             zIndex: Date.now() // : 현재 시간을 큰 숫자로 사용해서, 가장 최근에 열린 창이 가장 위에 보이도록 하는 방식이야.
-            //         }
-            //     ];
-            // });
-
-            // alert(`${openedRoomId}입장!`);
+            nav('/ChatList');
 
         } catch (e) {
             console.log(`채팅방 열기 실패!`);
             console.log(e);
         }
-    };
+    };//getOrCreateDirectRoom
 
     // ====== 단톡방 ============================================================================
     const createGroupRoom = async (roomName, selectedFriends) => {
@@ -219,35 +144,6 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
                 selectedFriendPublicIdList: selectedFriendPublicIdList
             });
 
-            // const createdGroupRoom = res.data;
-
-            // const ws = wsRef.current;
-
-            // if (ws && ws.readyState === WebSocket.OPEN) {
-            //     ws.send(JSON.stringify({
-            //         requestId: crypto.randomUUID(),
-            //         wsType: "ENTER_GROUP_ROOM",  // CREATE는 이미 위에서 했으니, roomSession에 enter만 하자.
-            //         payload: {
-            //             roomId: createdGroupRoom.roomId
-            //             // roomName: createdGroupRoomName, // 이 둘은 필요할 거 같지만 필요 없당.
-            //             // groupRoomMemberList : groupRoomMemberList // 이 둘은 필요할 거 같지만 필요 없당.
-            //         }
-            //     }));
-            // }
-
-            // setChatWindows(prev => [
-            //     ...prev,
-            //     {
-            //         roomId: createdGroupRoom.roomId,
-            //         roomType: createdGroupRoom.roomType,
-            //         roomName: createdGroupRoom.roomName,
-            //         memberList: createdGroupRoom.memberList,
-            //         x: 420 + prev.length * 30,
-            //         y: 120 + prev.length * 30,
-            //         zIndex: Date.now()
-            //     }
-            // ]);
-
             await refetchMyAllRooms();
 
             setRoomName('');
@@ -258,55 +154,15 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         } catch (e) {
             console.log(`단톡실패`);
         }
-    }// createGroupRoom
+    };// createGroupRoom
 
-    const enterRoom = (room) => {
-        const ws = wsRef.current;
 
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            console.log('WebSocket 방 입장 전송 실패');
-            return;
-        }
-
-        ws.send(JSON.stringify({
-            requestId: crypto.randomUUID(),
-            wsType: "ENTER_ROOM",
-            payload: {
-                roomId: room.roomId
-            }
-        }));
-
-        setChatWindows(prev => {
-            const alreadyOpen = prev.some(
-                win => Number(win.roomId) === Number(room.roomId)
-            );
-
-            if (alreadyOpen) {
-                return prev.map(win =>
-                    Number(win.roomId) === Number(room.roomId)
-                        ? { ...win, zIndex: Date.now() }
-                        : win
-                );
-            }
-
-            return [
-                ...prev,
-                {
-                    roomId: room.roomId,
-                    roomType: room.roomType,
-                    roomName: room.displayRoomName || room.roomName,
-                    x: 420 + prev.length * 30,
-                    y: 120 + prev.length * 30,
-                    zIndex: Date.now()
-                }
-            ];
-        });
-    };
 
     // ===== 친구 목록 체크 박스 설정=================================================================
     const isFriendSelected = (publicId) => {
         return selectedFriendList.some(friend => friend.publicId === publicId);
     };
+
     const toggleFriendSelect = (friend) => {
         setSelectedFriendList(prev => {
             const alreadySelected = prev.some(
@@ -323,16 +179,9 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
         });
     };
 
-    // const isAllSelected_legacy =
-    //     friendList.length > 0 &&
-    //     selectedFriendList.length === friendList.length;
-    const isAllSelected =
-        friendList.length > 0 &&
-        friendList.every(friend =>
-            selectedFriendList.some(
-                selectedFriend => selectedFriend.publicId === friend.publicId
-            )
-        );
+    const isAllSelected = friendList.length > 0 && friendList.every(friend => selectedFriendList.some(
+        selectedFriend => selectedFriend.publicId === friend.publicId));
+
     const toggleSelectAllFriends = () => {
         setSelectedFriendList(prev => {
             const isAllSelectedNow =
@@ -346,7 +195,6 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
             return friendList;
         });
     };
-
 
     // ======< return >=======================================================================================================
     return (
@@ -367,7 +215,7 @@ function FriendList({ wsRef, isWsConnectedRef, roomHandlersRef }) {
                         <span>{friend.nickname}</span>
                         <span>{friend.friendCode}</span>
                         &nbsp;&nbsp;
-                        <button onClick={() => enterDirectRoom(friend)}>
+                        <button onClick={() => getOrCreateDirectRoom(friend)}>
                             채팅
                         </button>
                     </div>

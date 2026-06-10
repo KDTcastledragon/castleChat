@@ -148,15 +148,13 @@ public class WsChatEventHandler {
 
 		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
 
-		log.info("{} 유저의 sendMsg 전송 시도! ", me.getUserId());
+		log.info("{} 유저의 wsSendMsg 전송 시도! ", me.getUserId());
 
 		if (payload.getRoomId() == null || payload.getMessageText() == null) {
 			log.warn("SEND_MSG Data 누락 : {} / {}", payload.getRoomId(), payload.getMessageText());
 			wsOutboundWriter.responseFail(session, dto, "MSG_SEND_FAIL", "SEND_MSG 필수값 누락");
 			return;
 		}
-
-		//		ChatDTO chat = new ChatDTO();
 
 		try {
 
@@ -167,18 +165,6 @@ public class WsChatEventHandler {
 			ChatMessageResponseDTO resChat = chatService.sendMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
 
 			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
-
-			//			Long messageId = chatService.insertMessage(payload.getRoomId(), payload.getSenderId(), payload.getMsgText());
-			//			chat.setMessageId(messageId);
-			//			chat.setRoomId(payload.getRoomId());
-			//			chat.setSenderId(payload.getSenderId());
-			//			chat.setSenderLoginId(payload.getSenderLoginId());
-			//			chat.setMsgText(payload.getMsgText());
-			//			chat.setUnreadCount(null);
-			//			ChatHandler는 insertMessage 직접 호출하지 않는다.
-			//			ChatHandler는 ChatDTO new 하지 않는다.
-			//			ChatHandler는 viewingUserIds만 구해서 Service에 넘긴다.
-			//			Service가 메시지 저장 + unreadCount 계산 + ChatDTO 조립을 한다.
 
 			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
 

@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.castledragon.domain.ChatMemberDTO;
+import com.chat.castledragon.domain.ChatUserLookupDTO;
 import com.chat.castledragon.domain.UserDTO;
 import com.chat.castledragon.domain.UserProfileResponseDTO;
 
@@ -32,6 +32,8 @@ public interface UserMapper {
 
 	List<UserDTO> friendList(Long userId);
 
-	ChatMemberDTO findUserInfoByPublicId(String publicId);
+	ChatUserLookupDTO findUserInfoByPublicId(String publicId);
+
+	List<ChatUserLookupDTO> findUserInfoByPublicIdList(@Param("publicIds") List<String> publicIds);
 
 }

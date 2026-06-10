@@ -16,12 +16,11 @@ public class ChatRoomDTO {
 	private String roomType;
 	private String roomStatus;
 	private String roomName;
-	//	private String roomImg;
-
 	private Long createdBy;
 
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
+	private LocalDateTime deactivatedAt;
 }
 
 //✔ChatRoomsDTO 쓰는곳 
