@@ -1,14 +1,9 @@
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
-
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { openChatWindow } from '../store/chatWindowsSlice';
-import { sendWs } from '../webSocket/wsClient';
-import {
-    getOrCreateDirectRoomApi,
-    createGroupRoomApi,
-    enterExistingRoomApi
-} from '../api/chatApi';
+import { emitWs } from '../webSocket/wsClient';
+import { getOrCreateDirectRoomApi, createGroupRoomApi, enterExistingRoomApi, getMyAllRoomsApi } from '../api/chatApi';
 
 export function useChatRoomActions() {
     const dispatch = useDispatch();
@@ -16,7 +11,7 @@ export function useChatRoomActions() {
     const queryClient = useQueryClient();
 
     function openRoom(roomInfo) {
-        sendWs("ENTER_ROOM", { roomId: roomInfo.roomId });
+        emitWs("ENTER_ROOM", { roomId: roomInfo.roomId });
 
         dispatch(openChatWindow({
             roomId: roomInfo.roomId,
@@ -72,4 +67,13 @@ export function useChatRoomActions() {
         createGroupRoom,
         enterExistingRoom
     };
+}
+
+export function useGetMyAllRooms(enabled) {
+    return useQuery({
+        queryKey: ['myAllRooms'],
+        queryFn: getMyAllRoomsApi,
+        enabled,
+        retry: false
+    });
 }

@@ -26,7 +26,7 @@ function AppShell() {
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
-        // if (!me) return;
+        if (!me) return;
 
         connectWs();
 
@@ -49,7 +49,6 @@ function AppShell() {
                     roomId={win.roomId}
                     roomType={win.roomType}
                     roomName={win.roomName}
-                    friend={win.friend}
                     memberList={win.memberList}
 
                     x={win.x}

@@ -2,8 +2,7 @@ import { Route, Routes } from "react-router-dom";
 
 import JoinPage from "../Join/JoinPage";
 import LoginPage from "../LogIn/LoginPage";
-import Home from "./Home";
-import FriendList from "./FriendList";
+import FriendList from "./Friends";
 import ChatBox from "../Chattings/ChatBox";
 import ChatList from "../Chattings/ChatList";
 import Settings from "../settings/Settings";

@@ -35,7 +35,7 @@
 	select user_id from users where public_id =#{publicId} and status ='ACTIVE'
 	</select>
 	
-	<select id="findUserInfoByPublicId" resultType="com.chat.castledragon.domain.ChatMemberDTO">
+	<select id="findUserInfoByPublicId" resultType="com.chat.castledragon.domain.ChatUserLookupDTO">
 	select user_id,public_id, nickname, friend_code, profile_img from users where public_id=#{publicId}
 	</select>
 	

@@ -18,7 +18,7 @@ public interface ChatMapper {
 	//	void createRoom(@Param("roomType") String roomType, @Param("roomStatus") String roomStatus); //roomId를 받을 parameter가 없다.
 	int createRoom(ChatRoomDTO dto); //DTO내부 getter를 통해 접근 가능해서, 이렇게만 적어도 된다.
 
-	void insertRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("role") String role, @Param("customRoomName") String customRoomName, @Param("customRoomThumbnail") String customRoomThumbnail, String memberStatus);
+	void insertRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("role") String role, @Param("customRoomName") String customRoomName, @Param("customRoomThumbnail") String customRoomThumbnail, @Param("memberStatus") String memberStatus);
 
 	List<ChatMessageDTO> getMessages(Long roomId);
 

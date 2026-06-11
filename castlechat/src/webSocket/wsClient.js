@@ -1,11 +1,21 @@
-// webSocket module scope
+// < WEBSOCKET MODULE SCOPE >
 
+// ====== 1. module state =========================================================================================================
 let ws = null; // wsRef.current대체.  “전역 변수”처럼 보이지만, 정확히는 모듈 스코프 변수임. 이 파일 안에서만 직접 접근 가능하고, 밖에서는 함수로만 접근함.
-
 let isConnected = false; // isWsConnectedRef 대체.
 let isManualDisconnect = false;
-
 const roomHandlers = {};
+
+// ====== 2. constants =========================================================================================================
+const WS_TYPES = {
+    CONNECT_USER: "CONNECT_USER",
+    ENTER_ROOM: "ENTER_ROOM",
+    EXIT_ROOM: "EXIT_ROOM",
+    SEND_MSG: "SEND_MSG",
+    READ_MSG: "READ_MSG",
+    TYPING_START: "TYPING_START",
+    TYPING_STOP: "TYPING_STOP"
+};
 
 // 왜 appshell에서는 useRef를 쓴거야? 여기서는 단순히 let 변수로써 단순한 구조로 되는데?
 // --> React 컴포넌트 안에서는 let 변수가 렌더링 때마다 '초기화'되기 때문에 useRef를 쓴다. React 모듈 바깥에서는 렌더링이 없기 때문에 let 변수가 유지된다.
@@ -16,6 +26,21 @@ const roomHandlers = {};
 // 그래서, const wsRef = useRef(null); --->>> wsRef.current === null 인거임.
 // 왜 굳이 .current가 있냐? useRef는 렌더링 사이에서도 같은 객체를 유지함. 
 // --> React는 이 wsRef 객체 자체를 계속 같은 걸로 유지해줘. 그리고 우리는 그 안의 current 값만 바꿔.
+
+// ====== 3. func =========================================================================================================
+export function emitWs(wsType, payload = {}) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        console.log('WS 연결 안 됨');
+        return false;
+    }
+
+    ws.send(JSON.stringify({
+        requestId: crypto.randomUUID(),
+        wsType: wsType,
+        payload: payload
+    }));
+    return true;
+}
 
 export function connectWs() {
     // 이미 연결되어 있거나 연결 중이면 새 WebSocket을 또 만들지 말라는 방어 코드
@@ -48,11 +73,17 @@ export function connectWs() {
 
         console.log('CONNECT_WEBSOCKET_OK');
 
-        sendWs({
-            requestId: crypto.randomUUID(),
-            wsType: 'CONNECT_USER',
-            payload: {}
-        });
+        // sendWs({
+        //     requestId: crypto.randomUUID(),
+        //     wsType: 'CONNECT_USER',
+        //     payload: {}
+        // });
+        // 이렇게 보내면 gg..오류나버린다. 아래와 같은.
+        //com.fasterxml.jackson.databind.exc.MismatchedInputException: Cannot deserialize value of type `java.lang.String` from Object value (token `JsonToken.START_OBJECT`)
+        //  at [Source: REDACTED (`StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION` disabled); line: 1, column: 62] (through reference chain: com.chat.castledragon.domain.WebSocketDTO["wsType"])
+
+        // sendWs('CONNECT_USER', {}); // 이게 맞다.
+        emitWsConnectUser(); // 리팩토링 버전.
     };
 
     ws.onmessage = (evt) => {
@@ -140,7 +171,7 @@ export function disconnectWs(action) {
 
 }//disconnectWs
 
-// export function sendWs_legacy(data) {
+// export function sendWs_legacy(data) { //현재의 emitWs legacy버전임.
 //     if (!ws || ws.readyState !== WebSocket.OPEN) {
 //         console.log('WS 연결 안 됨');
 //         return false;
@@ -149,20 +180,6 @@ export function disconnectWs(action) {
 //     ws.send(JSON.stringify(data));
 //     return true;
 // }
-
-export function sendWs(wsType, payload = {}) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-        console.log('WS 연결 안 됨');
-        return false;
-    }
-
-    ws.send(JSON.stringify({
-        requestId: crypto.randomUUID(),
-        wsType: wsType,
-        payload: payload
-    }));
-    return true;
-}
 
 export function isWsConnected() {
     return isConnected && ws?.readyState === WebSocket.OPEN;
@@ -176,6 +193,42 @@ export function unregisterRoomHandler(roomId) {
     delete roomHandlers[roomId];
 }
 
+export function emitWsConnectUser() {
+    return emitWs(WS_TYPES.CONNECT_USER);
+}
+
+export function emitWsEnterRoom(roomId) {
+    return emitWs(WS_TYPES.ENTER_ROOM, { roomId: roomId }); // WS_TYPES.ENTER_ROOM은 그냥 객체 안에 저장해둔 문자열을 꺼내 쓰는 것이야. 
+    // Back-end에서 ENTER_ROOM wsType 처리를 ENTER_CHAT_ROOM_NOW로 변경한다고 했을때, 
+    // 위의 WS_TYPES안의 ENTER_ROOM:"ENTER_ROOM"에서 "ENTER_ROOM" --> "ENTER_CHAT_ROOM_NOW"로 바꿔주기만 하면됨.
+    // Java에서 상수 쓰는 거랑 비슷해. public static final String ENTER_ROOM = "ENTER_ROOM"; JS에서는 객체로 상수 모음집을 만든 거라고 보면 돼.
+}
+
+export function emitWsExitRoom(roomId) {
+    return emitWs(WS_TYPES.EXIT_ROOM, { roomId: roomId });
+}
+
+export function emitWsSendMessage(roomId, messageText) {
+    return emitWs(WS_TYPES.SEND_MSG, {
+        roomId: roomId,
+        messageText: messageText
+    });
+}
+
+export function emitWsReadMessage(roomId, lastReadMessageId) {
+    return emitWs(WS_TYPES.READ_MSG, {
+        roomId: roomId,
+        lastReadMessageId: lastReadMessageId // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
+    });
+}
+
+export function emitWsTypingStart(roomId) {
+    return emitWs(WS_TYPES.TYPING_START, { roomId: roomId });
+}
+
+export function emitWsTypingStop(roomId) {
+    return emitWs(WS_TYPES.TYPING_STOP, { roomId: roomId });
+}
 
 // ws 객체 대략 구조
 // WebSocket {

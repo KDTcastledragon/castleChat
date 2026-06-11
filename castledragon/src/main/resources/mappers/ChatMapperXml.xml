@@ -61,7 +61,7 @@
 	</insert>
 
 	<insert id="insertRoomMember">
-	INSERT INTO room_members(room_id, user_id , role , custom_room_name) VALUES (#{roomId}, #{userId}, #{role} , #{roomName})
+	INSERT INTO room_members(room_id, user_id , role , custom_room_name,custom_room_thumbnail,member_status) VALUES (#{roomId}, #{userId}, #{role} , #{customRoomName},#{customRoomThumbnail},#{memberStatus})
 	</insert>
 	
 	<!-- <select id="getMessages" resultType="com.chat.castledragon.domain.ChatDTO">

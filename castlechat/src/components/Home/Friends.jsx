@@ -1,31 +1,32 @@
-import './FriendList.css';
-import axios from 'axios';
+import './Friends.css';
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import { useMe } from '../../hooks/useAuthUser';
-import { useFriendList, useAddFriend, useReceivedFriendRequests, useRespondFriendRequest } from '../../hooks/useFriend';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useSearchUsers } from '../../hooks/useSearchUsers';
-import { useGetMyAllRooms } from '../../hooks/useGetMyAllRooms';
+import { useChatRoomActions } from '../../hooks/useChatRoom';
+import { useFriendList, useAddFriend, useReceivedFriendRequests, useRespondFriendRequest } from '../../hooks/useFriend';
 
-import { openChatWindow } from '../../store/chatWindowsSlice';
-import { sendWs } from '../../webSocket/wsClient';
+// import { useDispatch } from 'react-redux';
+// import { openChatWindow } from '../../store/chatWindowsSlice';
+// import { sendWs } from '../../webSocket/wsClient';
 
 
 function FriendList() {
     const nav = useNavigate();
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const { data: friendList = [] } = useFriendList(!!me);
+
     const [roomName, setRoomName] = useState('');
+    const [roomThumbnail, setRoomThumbnail] = useState('');
     const [selectedFriendList, setSelectedFriendList] = useState([]);
     const addFriendMutation = useAddFriend();
     const respondFriendRequestMutation = useRespondFriendRequest();
     const { data: receivedFriendRequests = [] } = useReceivedFriendRequests(!!me);
-    const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
 
-    const dispatch = useDispatch();
+    // const dispatch = useDispatch();
+
 
     const [searchWord, setSearchWord] = useState('');
     const debouncedSearchWord = useDebounce(searchWord, 500);
@@ -33,6 +34,8 @@ function FriendList() {
         data: searchUsersResults = [],
         isLoading: isSearching
     } = useSearchUsers(debouncedSearchWord);
+
+    const { getOrCreateDirectRoom, createGroupRoom, enterExistingRoom } = useChatRoomActions();
 
     // ==== 친구 추가 ==================================================
     function addFriend(targetPublicId) {
@@ -80,85 +83,102 @@ function FriendList() {
         );
     }//respondFriendRequest
 
-    const enterRoom = async (room, enterType) => {
 
-        const res = null;
-
-        if (enterType === "DIRECT") {
-            res = await axios.post(`/chat/getOrCreateDirectRoom`, { friendPublicId: friInfo.publicId })
-        } else if (enterType === "GROUP") {
-            res = await axios.post(`/chat/enterGroupRoom`, { roomId: openedRoomId })
-        }
-
-        sendWs("ENTER_ROOM", { roomId: room.roomId })
-
-        dispatch(openChatWindow({
-            roomId: room.roomId,
-            roomType: room.roomType,
-            roomName: room.roomName
-        }));
-
-    };
-
-    // ====== 1:1 채팅 =======================================================================================================
-    const getOrCreateDirectRoom = async (friInfo) => {
+    // 또 만드는 단톡만들기..
+    async function createGroupRoom2() {
         try {
-            const res = await axios.post(`/chat/getOrCreateDirectRoom`, {
-                friendPublicId: friInfo.publicId
-            });
-
-            const createdDirectRoom = res.data;
-
-            const openedRoomId = createdDirectRoom.roomId;
-
-            sendWs("ENTER_ROOM", { roomId: openedRoomId });
-
-            dispatch(openChatWindow({
-                roomId: openedRoomId,
-                roomType: createdDirectRoom.roomType,
-                roomName: createdDirectRoom.roomName,
-                friend: friInfo
-            }));
-
-            nav('/ChatList');
-
-        } catch (e) {
-            console.log(`채팅방 열기 실패!`);
-            console.log(e);
-        }
-    };//getOrCreateDirectRoom
-
-    // ====== 단톡방 ============================================================================
-    const createGroupRoom = async (roomName, selectedFriends) => {
-        if (selectedFriends.length === 0) {
-            alert(`초대할 친구를 선택해주세요.`);
-            return;
-        }
-
-        try {
-            const selectedFriendPublicIdList = selectedFriends.map(f => f.publicId); // axios 즉시요청해서 객체 전부 보내지말고, 필터링 한번빼라.
-
-            // const res = await axios.post(`/chat/createGroupRoom`, {
-            await axios.post(`/chat/createGroupRoom`, {
-                roomName: roomName,
-                selectedFriendPublicIdList: selectedFriendPublicIdList
-            });
-
-            await refetchMyAllRooms();
-
+            await createGroupRoom(roomName, roomThumbnail, selectedFriendList, true)
             setRoomName('');
             setSelectedFriendList([]);
-
-            console.log(`단톡방 만들기 성공`);
-
+            console.log(`createGR2`);
         } catch (e) {
-            console.log(`단톡실패`);
+            alert(`cgr2 실패`);
         }
-    };// createGroupRoom
+    }
+
+    // // 구조만 짜본 func 실제 사용하지 않았음
+    // const enterRoom = async (room, enterType) => {
+
+    //     const res = null;
+
+    //     if (enterType === "DIRECT") {
+    //         res = await axios.post(`/chat/getOrCreateDirectRoom`, { friendPublicId: friInfo.publicId })
+    //     } else if (enterType === "GROUP") {
+    //         res = await axios.post(`/chat/enterGroupRoom`, { roomId: openedRoomId })
+    //     }
+
+    //     sendWs("ENTER_ROOM", { roomId: room.roomId })
+
+    //     dispatch(openChatWindow({
+    //         roomId: room.roomId,
+    //         roomType: room.roomType,
+    //         roomName: room.roomName
+    //     }));
+
+    // };
+
+    // // ====== 1:1 채팅 =======================================================================================================
+    // const getOrCreateDirectRoom = async (friInfo) => {
+    //     try {
+    //         const res = await axios.post(`/chat/getOrCreateDirectRoom`, {
+    //             friendPublicId: friInfo.publicId
+    //         });
+
+    //         const createdDirectRoom = res.data;
+
+    //         const openedRoomId = createdDirectRoom.roomId;
+
+    //         sendWs("ENTER_ROOM", { roomId: openedRoomId });
+
+    //         dispatch(openChatWindow({
+    //             roomId: openedRoomId,
+    //             roomType: createdDirectRoom.roomType,
+    //             roomName: createdDirectRoom.roomName,
+    //             friend: friInfo
+    //         }));
+
+    //         nav('/ChatList');
+
+    //     } catch (e) {
+    //         console.log(`채팅방 열기 실패!`);
+    //         console.log(e);
+    //     }
+    // };//getOrCreateDirectRoom
+
+    // // ====== 단톡방 ============================================================================
+    // const createGroupRoom = async (roomName, selectedFriends) => {
+    //     if (selectedFriends.length === 0) {
+    //         alert(`초대할 친구를 선택해주세요.`);
+    //         return;
+    //     }
+
+    //     try {
+    //         const selectedFriendPublicIdList = selectedFriends.map(f => f.publicId); // axios 즉시요청해서 객체 전부 보내지말고, 필터링 한번빼라.
+
+    //         // const res = await axios.post(`/chat/createGroupRoom`, {
+    //         await axios.post(`/chat/createGroupRoom`, {
+    //             roomName: roomName,
+    //             selectedFriendPublicIdList: selectedFriendPublicIdList
+    //         });
+
+    //         await refetchMyAllRooms();
+
+    //         setRoomName('');
+    //         setSelectedFriendList([]);
+
+    //         console.log(`단톡방 만들기 성공`);
+
+    //     } catch (e) {
+    //         console.log(`단톡실패`);
+    //     }
+    // };// createGroupRoom
 
 
 
     // ===== 친구 목록 체크 박스 설정=================================================================
+
+
+
     const isFriendSelected = (publicId) => {
         return selectedFriendList.some(friend => friend.publicId === publicId);
     };
@@ -225,23 +245,21 @@ function FriendList() {
             </div>
 
             {/* <div>{selectedFriendList}</div> */} {/** Object그 자체는 React가 rendering 할 수 없다. */}
-            <div>단톡 초대 체크된 친구들</div>
-            <br />
-            <input
-                type="checkbox"
-                checked={isAllSelected}
-                onChange={toggleSelectAllFriends}
-            />
-            <span>모두선택</span>
-            &nbsp;&nbsp;&nbsp;
-            <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder='단톡방 이름 입력...' />
-            <button
-                onClick={() => createGroupRoom(roomName, selectedFriendList)}
-            >
-                단톡초대하기
-            </button>
-            <div></div>
-            <br />
+            <div className='developChecked'>단톡 초대 체크된 친구들
+
+                <br />
+                <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={toggleSelectAllFriends}
+                />
+                <span>모두선택</span>
+                &nbsp;&nbsp;&nbsp;
+                <input type="text" value={roomName} onChange={(e) => setRoomName(e.target.value)} placeholder='단톡방 이름 입력...' />
+                <button onClick={createGroupRoom2}>
+                    단톡초대하기
+                </button>
+            </div>
             <div>
                 {/* <pre>{JSON.stringify(selectedFriendList, null, 2)}</pre> */} {/**객체 정보 다 보기 */}
                 {selectedFriendList.map(friend => friend.nickname).join(', ')} {/**닉만 보기. */}
@@ -249,30 +267,57 @@ function FriendList() {
 
             {/**========= 친구 요청 목록=================== */}
             <div className='friendsAlertList'>
-                <div>친구 요청 목록</div>
+                <div>
+                    <span>요청받은 목록</span>
+                    {receivedFriendRequests.length > 0 ? receivedFriendRequests.map((requestUser) => (
+                        <div key={requestUser.publicId}>
+                            <span>{requestUser.nickname}</span>
+                            <span>{requestUser.friendCode}</span>
+                            &nbsp;&nbsp;
+                            <button
+                                onClick={() => respondFriendRequest(requestUser.publicId, 'ACCEPT')}
+                                disabled={respondFriendRequestMutation.isPending}
+                            >
+                                수락
+                            </button>
 
-                {receivedFriendRequests.length > 0 ? receivedFriendRequests.map((requestUser) => (
-                    <div key={requestUser.publicId}>
-                        <span>{requestUser.nickname}</span>
-                        <span>{requestUser.friendCode}</span>
-                        &nbsp;&nbsp;
-                        <button
-                            onClick={() => respondFriendRequest(requestUser.publicId, 'ACCEPT')}
-                            disabled={respondFriendRequestMutation.isPending}
-                        >
-                            수락
-                        </button>
+                            <button
+                                onClick={() => respondFriendRequest(requestUser.publicId, 'REJECT')}
+                                disabled={respondFriendRequestMutation.isPending}
+                            >
+                                거절
+                            </button>
+                        </div>
+                    )) : (
+                        <div>받은 친구 요청 없음</div>
+                    )}
+                </div>
 
-                        <button
-                            onClick={() => respondFriendRequest(requestUser.publicId, 'REJECT')}
-                            disabled={respondFriendRequestMutation.isPending}
-                        >
-                            거절
-                        </button>
-                    </div>
-                )) : (
-                    <div>받은 친구 요청 없음</div>
-                )}
+                <div>
+                    <span>내가 요청한 목록</span>
+                    {receivedFriendRequests.length > 0 ? receivedFriendRequests.map((requestUser) => (
+                        <div key={requestUser.publicId}>
+                            <span>{requestUser.nickname}</span>
+                            <span>{requestUser.friendCode}</span>
+                            &nbsp;&nbsp;
+                            <button
+                                onClick={() => respondFriendRequest(requestUser.publicId, 'ACCEPT')}
+                                disabled={respondFriendRequestMutation.isPending}
+                            >
+                                수락
+                            </button>
+
+                            <button
+                                onClick={() => respondFriendRequest(requestUser.publicId, 'REJECT')}
+                                disabled={respondFriendRequestMutation.isPending}
+                            >
+                                거절
+                            </button>
+                        </div>
+                    )) : (
+                        <div>받은 친구 요청 없음</div>
+                    )}
+                </div>
 
             </div>
 

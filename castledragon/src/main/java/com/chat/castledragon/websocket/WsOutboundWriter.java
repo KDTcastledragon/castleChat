@@ -16,13 +16,14 @@ import lombok.extern.log4j.Log4j2;
 @Component
 public class WsOutboundWriter {
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper; // "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" 오류 막기 위해.
 
 	private final WsSessionRegistry wsSessionRegistry;
 
 	// 생성자 주입
-	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry) {
+	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper) {
 		this.wsSessionRegistry = wsSessionRegistry;
+		this.objectMapper = objectMapper;
 	}
 
 	//	====== broadcast ===========================================================================================================

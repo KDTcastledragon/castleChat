@@ -18,39 +18,56 @@ function Header() {
     // ======< return >=======================================================================================================
     return (
         <div className='HeaderContainer'>
-            <div className='headerUserInfo'>
-                {me ?
-                    <div className='loginedHeader'>
-                        <div>{me.profileImg ? me.profileImg : '프사 없음'}</div>
-                        <div>{me.nickname}</div>
-                        <div>{me.friendCode}</div>
-                        <div>
-                            <button
-                                onClick={logout}
-                                disabled={logoutMutation.isPending}
-                            >
-                                로그아웃
-                            </button>
+            {me ?
+                <div className='loginedHeader'>
+                    <div className='loginedUserProfileBox'>
+                        <div className='loginedUserProfileImg'>
+                            <img className="headerProfileImg"
+                                src="/images/mococo_question.png"
+                                alt="-_-" />
                         </div>
-
-                        <div className='headerButton'>
-                            <button onClick={() => nav('/')}>친구목록</button>
-                            <button onClick={() => nav('/chatList')}>채팅</button>
-                            <button onClick={() => nav('/settings')}>설정</button>
-                        </div>
-
-                    </div>
-                    :
-                    <div className='logoutedHeader'>
-                        <span>CastleChat</span>
-                        <div className='headerButton'>
-                            <button onClick={() => nav('/')}>친구목록</button>
-                            <button onClick={() => nav('/chatList')}>채팅</button>
-                            <button onClick={() => nav('/settings')}>설정</button>
+                        <div className='loginedUserNickname'><span>{me.nickname}</span></div>
+                        <div className='loginedUserFriendCode'><span>{me.friendCode}</span></div>
+                        <div className='loginedUserLogoutButton'>
+                            <button onClick={logout}>로그아웃</button>
                         </div>
                     </div>
-                }
-            </div>
+
+                    <div className='headerButtonSection'>
+                        <button onClick={() => nav('/')}>친구목록</button>
+                        <button onClick={() => nav('/chatList')}>채팅</button>
+                        <button onClick={() => nav('/settings')}>설정</button>
+                    </div>
+
+                </div>
+                :
+                <div className='loginedHeader'>
+                    caslteChat
+
+                </div>
+            }
+
+            {/* <div className='loginedHeader'>
+                <div className='loginedUserProfileBox'>
+                    <div className='loginedUserProfileImg'>
+                        <img className="headerProfileImg"
+                            src="/images/mococo_question.png"
+                            alt="-_-" />
+                    </div>
+                    <div className='loginedUserNickname'><span>공성전차</span></div>
+                    <div className='loginedUserFriendCode'><span>#8475621</span></div>
+                    <div className='loginedUserLogoutButton'>
+                        <button onClick={() => alert(`로그아웃`)}>로그아웃</button>
+                    </div>
+                </div>
+
+                <div className='headerButtonSection'>
+                    <button onClick={() => nav('/')}>친구목록</button>
+                    <button onClick={() => nav('/chatList')}>채팅</button>
+                    <button onClick={() => nav('/settings')}>설정</button>
+                </div>
+
+            </div> */}
 
         </div>
     );

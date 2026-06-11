@@ -42,6 +42,8 @@ dependencies {
 	/** public_id 생성을 위한 ULID */
 	implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
 	
+	/** implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'  정 안되면 얘라도 넣어서...*/ 
+	
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
