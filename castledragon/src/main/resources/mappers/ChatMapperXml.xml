@@ -72,6 +72,45 @@
     	INSERT INTO chat_messages(room_id, sender_id, message_text,created_at) VALUES(#{roomId}, #{senderId}, #{messageText},#{createdAt})
 	</insert>
 	
+	<select id="loadMessagesInRoom" resultType="com.chat.castledragon.domain.ChatMessageResponseDTO">
+	    SELECT *
+	    FROM (
+	        SELECT
+	            m.message_id,
+	            m.room_id,
+	            u.public_id AS sender_public_id,
+	            m.message_text,
+	            m.created_at,
+	
+	            (
+	                SELECT COUNT(*)
+	                FROM room_members rm
+	                WHERE rm.room_id = m.room_id
+	                  AND rm.member_status = 'ACTIVE'
+	                  AND rm.user_id != m.sender_id
+	                  AND (
+	                      rm.last_read_message_id IS NULL
+	                      OR rm.last_read_message_id &lt; m.message_id
+	                  )
+	            ) AS unread_count
+	
+	        FROM chat_messages m
+	
+	        JOIN users u
+	          ON u.user_id = m.sender_id
+	
+	        WHERE m.room_id = #{roomId}
+	
+	        <if test="beforeMessageId != null">
+	            AND m.message_id &lt; #{beforeMessageId}
+	        </if>
+	
+	        ORDER BY m.message_id DESC
+	        LIMIT #{size}
+	    ) t
+	    ORDER BY t.message_id ASC
+	</select>
+	
 	<select id="getPrevMessagesInRoom" resultType="com.chat.castledragon.domain.ChatMessageResponseDTO">
 	SELECT
         m.message_id,

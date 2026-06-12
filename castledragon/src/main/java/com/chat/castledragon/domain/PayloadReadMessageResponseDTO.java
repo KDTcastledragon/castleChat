@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PayloadReadMessageResponseDTO {
 	private Long roomId;
-	private Long lastReadMessageId;
+	private Long updatedLastReadMessageId;
 
 	private String readerPublicId;
 	private String readerNickname;

@@ -185,7 +185,7 @@ public class WsChatEventHandler {
 		//		payload.setRoomId(1L);
 		//		payload.setLastReadMessageId(6L);
 		//		--->
-		PayloadReadMessageRequestDTO payload = convertPayload(dto, PayloadReadMessageRequestDTO.class);
+		PayloadReadMessageRequestDTO payload = convertPayload(dto, PayloadReadMessageRequestDTO.class); // ws내부의 payload를 꺼낸다.
 
 		if (payload.getRoomId() == null || payload.getLastReadMessageId() == null) {
 			log.info("readMsg 필수 값 누락 : {} / {}", payload.getRoomId(), payload.getLastReadMessageId());
@@ -193,7 +193,7 @@ public class WsChatEventHandler {
 			return;
 		}
 
-		chatService.updateLastRead(payload.getRoomId(), myUserId, payload.getLastReadMessageId());
+		chatService.updateLastRead(payload.getRoomId(), myUserId, payload.getLastReadMessageId()); // last_read 업뎃시킴.
 
 		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), payload.getLastReadMessageId(), me.getPublicId(), me.getNickname());
 

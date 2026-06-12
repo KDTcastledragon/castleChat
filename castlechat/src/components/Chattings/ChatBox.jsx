@@ -125,41 +125,42 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         // RoomHandler function
         registerRoomHandler(roomId, (wsEvt) => {
 
-            // 1. 전송한 메세지 '실시간' 화면에 띄우기
+            // 1. '본인/타인'이 전송한 메세지 '실시간' 화면에 띄우기
             if (wsEvt.wsType === "MSG_CREATED") {
-                const newMsg = wsEvt.payload;
-                setPrevChattings(prev => [...prev, newMsg]);
+                const newMsg = wsEvt.payload; // “방금 생성된 새 메시지”를 꺼내는 거야.
+                setPrevChattings(prev => [...prev, newMsg]); // 실시간으로 받은 새 메시지를 화면 아래에 추가하는 코드야. 
+                // newMsg를 prevChattings배열의 맨 끝에 새롭게 추가해주는거야. ...prev는 이전의 메세지들이지.
 
                 if (newMsg.senderPublicId !== myPublicId) {
+                    // 새 메시지를 보낸 사람이 내가 아니면, 나는 지금 이 방을 보고 있으니까 그 메시지를 읽은 것으로 서버에 알려라.
 
-                    emitWsReadMessage(roomId, newMsg.messageId);
+                    emitWsReadMessage(roomId, newMsg.messageId); // 서버에게 READ_MSG 전송.
 
                 }
             }// if 1.
 
-            // 2. 전송한 메세지 읽기 처리
+            // 2. 서버가 다시 보내주는 read 이벤트를 처리. 읽음 요청의 결과를 화면에 반영하는 곳.
             if (wsEvt.wsType === "MSG_READ") {
                 const readInfo = wsEvt.payload;
+                const updatedMessages = readInfo.updatedMessages || []; //  이번 읽음 처리로 unreadCount가 갱신되어야 하는 메시지 목록
 
                 setPrevChattings(prev =>
                     prev.map(msg => {
-                        // const isMyMsg = Number(msg.senderId) === Number(userID);
-                        const isReadTarget = Number(msg.messageId) <= Number(readInfo.lastReadMessageId); // lastReadMessageId까지 읽었으니까, 그 이후 메시지들은 읽음 처리 대상.
-                        const isReaderOwnMessage = msg.senderPublicId === readInfo.readerPublicId;
+                        const updated = updatedMessages.find(
+                            item => Number(item.messageId) === Number(msg.messageId)
+                        );
 
-                        // if (isMyMsg && isReadTarget) {
-                        if (isReadTarget && !isReaderOwnMessage) {
-                            return {
-                                ...msg,
-                                unreadCount: Math.max(Number(msg.unreadCount || 0) - 1, 0) // “READ 이벤트 하나 오면 무조건 1 줄인다”는 뜻이야.
-                                // 근데 같은 사람이 같은 메시지까지 여러 번 읽음 이벤트를 보내면 계속 줄어들어. 그래서 문제 생김.
-                            };
+                        if (!updated) {
+                            return msg;
                         }
 
-                        return msg;
+                        return {
+                            ...msg,
+                            unreadCount: updated.unreadCount
+                        };
                     })
                 );
-            }// if 2.
+            }// if.2
 
             // 3.
             if (wsEvt.wsType === "TYPING_START") {
@@ -351,3 +352,28 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 }
 
 export default ChatBox;
+
+
+// // 2. 전송한 메세지 읽기 처리
+// if (wsEvt.wsType === "MSG_READ") {
+//     const readInfo = wsEvt.payload;
+
+//     setPrevChattings(prev =>
+//         prev.map(msg => {
+//             // const isMyMsg = Number(msg.senderId) === Number(userID);
+//             const isReadTarget = Number(msg.messageId) <= Number(readInfo.lastReadMessageId); // lastReadMessageId까지 읽었으니까, 그 이후 메시지들은 읽음 처리 대상.
+//             const isReaderOwnMessage = msg.senderPublicId === readInfo.readerPublicId;
+
+//             // if (isMyMsg && isReadTarget) {
+//             if (isReadTarget && !isReaderOwnMessage) {
+//                 return {
+//                     ...msg,
+//                     unreadCount: Math.max(Number(msg.unreadCount || 0) - 1, 0) // “READ 이벤트 하나 오면 무조건 1 줄인다”는 뜻이야.
+//                     // 근데 같은 사람이 같은 메시지까지 여러 번 읽음 이벤트를 보내면 계속 줄어들어. 그래서 문제 생김.
+//                 };
+//             }
+
+//             return msg;
+//         })
+//     );
+// }// if 2.

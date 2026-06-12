@@ -92,7 +92,7 @@ public class ChatServiceImpl implements ChatService {
 			chatMapper.insertRoomMember(room.getRoomId(), friendInfo.getUserId(), "MEMBER", senderInfo.getNickname()
 					+ "님과의 채팅방", senderInfo.getProfileImg(), "ACTIVE");
 
-			roomMemberCache.cacheRoomMembers(room.getRoomId(), Set.of(senderInfo.getUserId(), friendInfo.getUserId()));
+			roomMemberCache.initOrReplaceRoomMembers(room.getRoomId(), Set.of(senderInfo.getUserId(), friendInfo.getUserId()));
 
 			log.info("roomId={}  user1 : {}, user2 : {} newRoomCreated", room.getRoomId(), senderInfo.getUserId(), friendInfo.getUserId());
 		} else {
@@ -177,7 +177,7 @@ public class ChatServiceImpl implements ChatService {
 			roomMemberList.add(new RoomMemberResponseDTO(member.getPublicId(), member.getNickname(), member.getFriendCode(), member.getProfileImg(), role));
 		}
 
-		roomMemberCache.cacheRoomMembers(createdRoom.getRoomId(), new LinkedHashSet<>(roomMemberMap.keySet()));
+		roomMemberCache.initOrReplaceRoomMembers(createdRoom.getRoomId(), new LinkedHashSet<>(roomMemberMap.keySet()));
 
 		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(createdRoom.getRoomId(), createdRoom.getRoomType(), customRoomName, customRoomThumbnail, (long) roomMemberList.size(), roomMemberList, null);
 
@@ -222,14 +222,14 @@ public class ChatServiceImpl implements ChatService {
 		chatMapper.insertMessage(insertChat); // DB에 Msg 저장.
 
 		// 현재 방을 보고 있는 사람들은 메시지를 즉시 받은 상태니까 읽은 사람으로 본다. 보낸 사람도 자기 메시지는 당연히 읽은 상태니까 추가한다.
-		Set<Long> connectedRoomMemberIds = new HashSet<>(viewingUserIds);
-		connectedRoomMemberIds.add(senderUserId);
+		Set<Long> viewingRoomMemberIds = new HashSet<>(viewingUserIds);
+		viewingRoomMemberIds.add(senderUserId);
 
-		connectedRoomMemberIds.retainAll(totalRoomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
+		viewingRoomMemberIds.retainAll(totalRoomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
 
-		log.info("{}방의 총 유저 : {}  , 현재 연결된 유저 : {}", roomId, totalRoomMemberIds, connectedRoomMemberIds);
+		log.info("{}방의 총 유저 : {}  , 현재 연결된 유저 : {}", roomId, totalRoomMemberIds, viewingRoomMemberIds);
 
-		Long unreadCount = (long) (totalRoomMemberIds.size() - connectedRoomMemberIds.size()); // 안 읽은 사람 수 계산.
+		Long unreadCount = (long) (totalRoomMemberIds.size() - viewingRoomMemberIds.size()); // 안 읽은 사람 수 계산.
 
 		log.info("unreadCount : {}", unreadCount);
 
@@ -244,6 +244,8 @@ public class ChatServiceImpl implements ChatService {
 		resChat.setMessageText(insertChat.getMessageText());
 		resChat.setCreatedAt(insertChat.getCreatedAt());
 		resChat.setUnreadCount(unreadCount);
+
+		log.info("chatServ -> wsHandler 채팅data 이동 : {}", resChat);
 
 		return resChat;
 	}

@@ -4,7 +4,7 @@
 let ws = null; // wsRef.current대체.  “전역 변수”처럼 보이지만, 정확히는 모듈 스코프 변수임. 이 파일 안에서만 직접 접근 가능하고, 밖에서는 함수로만 접근함.
 let isConnected = false; // isWsConnectedRef 대체.
 let isManualDisconnect = false;
-const roomHandlers = {};
+const roomHandlers = {}; // 방별 이벤트 처리 함수 보관소야.
 
 // ====== 2. constants =========================================================================================================
 const WS_TYPES = {
@@ -87,7 +87,7 @@ export function connectWs() {
     };
 
     ws.onmessage = (evt) => {
-        const wsEvt = JSON.parse(evt.data);
+        const wsEvt = JSON.parse(evt.data); // evt.data는 서버가 보낸 JSON 문자열이야.
         console.log('ws 수신', wsEvt);
 
         switch (wsEvt.wsType) {
