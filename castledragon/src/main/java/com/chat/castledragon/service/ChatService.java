@@ -18,7 +18,7 @@ public interface ChatService {
 
 	void updateLastRead(Long roomId, Long userId, Long lastReadMessageId);
 
-	ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
+	ChatMessageResponseDTO createMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds);
 
 	EnterRoomResponseDTO createGroupRoom(SessionUserDTO host, String roomName, String roomThumbnail, List<String> selectedFriendPublicIdList);
 

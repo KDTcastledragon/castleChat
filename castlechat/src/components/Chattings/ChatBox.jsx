@@ -90,17 +90,17 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
             try {
                 // 1. '이미 전송처리된' 이전 메시지 조회
-                const prevMsgInThisRoom = await axios.get(`/chat/getPrevMessagesInRoom/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
+                const loadedMessagesInRoom = await axios.get(`/chat/loadMessagesInRoom/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
 
                 // console.log(`getPrevMsg --> ${JSON.stringify(prevMsgInThisRoom.data, null, 2)}`); // null, 2 가 들여쓰기 해줌.
-                console.log(`${JSON.stringify(prevMsgInThisRoom.data)}`);
+                console.log(`${JSON.stringify(loadedMessagesInRoom.data)}`);
 
-                setPrevChattings(prevMsgInThisRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
+                setPrevChattings(loadedMessagesInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
 
-                // 2. 마지막 메시지 읽음 처리
-                if (prevMsgInThisRoom.data.length) {
+                // 2. 마지막 메시지의 id 기준으로 읽음 처리
+                if (loadedMessagesInRoom.data.length) {
 
-                    const lastOtherMsgInRoom = [...prevMsgInThisRoom.data].reverse().find(msg => msg.senderPublicId !== myPublicId);
+                    const lastOtherMsgInRoom = [...loadedMessagesInRoom.data].reverse().find(msg => msg.senderPublicId !== myPublicId);
 
                     if (lastOtherMsgInRoom !== undefined) {
 
@@ -139,7 +139,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                 }
             }// if 1.
 
-            // 2. 서버가 다시 보내주는 read 이벤트를 처리. 읽음 요청의 결과를 화면에 반영하는 곳.
+            // 2. 서버가 다시 보내주는 read 이벤트를 처리. 읽음 요청의 결과를 화면에 반영하는 곳. unreadCount 컨트롤
             if (wsEvt.wsType === "MSG_READ") {
                 const readInfo = wsEvt.payload;
                 const updatedMessages = readInfo.updatedMessages || []; //  이번 읽음 처리로 unreadCount가 갱신되어야 하는 메시지 목록
@@ -223,22 +223,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         setChatMessage('');
     }
 
-    // ================ 채팅창 닫기 ===============================================
-    const closeChatAndExitRoom = () => {
-        if (isTypingRef.current) {
-            isTypingRef.current = false;
-            emitWsTypingStop(roomId);
-        }
-
-        if (typingTimerRef.current) {
-            clearTimeout(typingTimerRef.current);
-            typingTimerRef.current = null;
-        }
-
-        emitWsExitRoom(roomId);
-        exitChatRoom(); // chatBox창 unmount.
-    };
-
+    // ================ 채팅 메시지 핸들러 ===============================================
     const handleChatMessageChange = (e) => {
         const nextValue = e.target.value;
 
@@ -269,6 +254,24 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             }, 90000);
         }
     };
+
+    // ================ 채팅창 닫기 ===============================================
+    const closeChatAndExitRoom = () => {
+        if (isTypingRef.current) {
+            isTypingRef.current = false;
+            emitWsTypingStop(roomId);
+        }
+
+        if (typingTimerRef.current) {
+            clearTimeout(typingTimerRef.current);
+            typingTimerRef.current = null;
+        }
+
+        emitWsExitRoom(roomId);
+        exitChatRoom(); // chatBox창 unmount.
+    };
+
+
 
     // ======< return >=======================================================================================================
     return (

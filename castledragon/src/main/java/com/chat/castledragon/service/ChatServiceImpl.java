@@ -188,7 +188,7 @@ public class ChatServiceImpl implements ChatService {
 	// ====== 메시지 보내기 ==========================================================================================================================
 	@Override
 	@Transactional
-	public ChatMessageResponseDTO sendMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+	public ChatMessageResponseDTO createMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
 		Long roomId = payload.getRoomId();
 
 		// WsHandler에서 검사하긴 했지만, Service에서도 독립적인 방어 필요함.
@@ -221,21 +221,33 @@ public class ChatServiceImpl implements ChatService {
 		insertChat.setCreatedAt(now);
 		chatMapper.insertMessage(insertChat); // DB에 Msg 저장.
 
-		// 현재 방을 보고 있는 사람들은 메시지를 즉시 받은 상태니까 읽은 사람으로 본다. 보낸 사람도 자기 메시지는 당연히 읽은 상태니까 추가한다.
-		Set<Long> viewingRoomMemberIds = new HashSet<>(viewingUserIds);
-		viewingRoomMemberIds.add(senderUserId);
+		//		// --> 카톡도 한번에 urc계산값을 보내지 않는다. 일단 rM수-1만큼 보내고, fe에서 readMsg를 보내서 아주빠르게 urc를 감소시킨다. 그래서, viewing 필요없다.
+		//		// 현재 방을 보고 있는 사람들은 메시지를 즉시 받은 상태니까 읽은 사람으로 본다. 보낸 사람도 자기 메시지는 당연히 읽은 상태니까 추가한다.
+		//		Set<Long> viewingRoomMemberIds = new HashSet<>(viewingUserIds);
+		//		viewingRoomMemberIds.add(senderUserId);
+		//
+		//		viewingRoomMemberIds.retainAll(totalRoomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
+		//
+		//		log.info("{}방의 총 유저 : {}  , 현재 연결된 유저 : {}", roomId, totalRoomMemberIds, viewingRoomMemberIds);
+		//
+		//		Long unreadCount = (long) (totalRoomMemberIds.size() - viewingRoomMemberIds.size()); // 안 읽은 사람 수 계산.
+		//
+		//		log.info("unreadCount : {}", unreadCount);
+		//
+		//		if (unreadCount < 0) {
+		//			unreadCount = 0L; // == (long) 0;
+		//		}
 
-		viewingRoomMemberIds.retainAll(totalRoomMemberIds); // 혹시 이상한 userId가 섞였더라도 실제 방 멤버만 남긴다.
+		//		근데 왜 urc나 roomMC같은 건 int최대인 21억을 넘지않는데, 굳이 int 안 쓰는 이유는?
+		//		네, unreadCount나 roomMemberCount 자체는 현실적으로 int 범위를 넘지 않을 가능성이 큽니다.
+		//		다만 프로젝트의 주요 식별자가 BIGINT 기반이고, MyBatis의 COUNT 결과도 Long으로 받는 경우가 많아서 DTO/API 계층에서는 Long으로 통일했습니다.
+		//		타입을 섞으면 int/long 변환이 반복되고, 추후 DB 집계값이나 Redis size 결과와도 타입 불일치가 생겨서 Long을 선택했습니다.
+		//		DB의 COUNT(*) 결과나 Redis Set size 결과는 Java에서 Long으로 다루는 게 자연스럽고,
+		//		room_id/user_id/message_id도 BIGINT라 채팅 도메인에서는 숫자 타입을 Long 중심으로 맞췄습니다.
+		//		실제 화면 표시 단계에서는 필요하면 Number/int로 변환할 수 있지만,
+		//		서버 내부 DTO에서는 타입 일관성을 우선했습니다.
 
-		log.info("{}방의 총 유저 : {}  , 현재 연결된 유저 : {}", roomId, totalRoomMemberIds, viewingRoomMemberIds);
-
-		Long unreadCount = (long) (totalRoomMemberIds.size() - viewingRoomMemberIds.size()); // 안 읽은 사람 수 계산.
-
-		log.info("unreadCount : {}", unreadCount);
-
-		if (unreadCount < 0) {
-			unreadCount = 0L; // == (long) 0;
-		}
+		Long unreadCount = Math.max(totalRoomMemberIds.size() - 1L, 0L);
 
 		ChatMessageResponseDTO resChat = new ChatMessageResponseDTO();
 		resChat.setMessageId(insertChat.getMessageId());
@@ -248,7 +260,7 @@ public class ChatServiceImpl implements ChatService {
 		log.info("chatServ -> wsHandler 채팅data 이동 : {}", resChat);
 
 		return resChat;
-	}
+	}// sendMsg
 
 	@Override
 	public List<ChatMessageResponseDTO> getPrevMessagesInRoom(Long roomId) {

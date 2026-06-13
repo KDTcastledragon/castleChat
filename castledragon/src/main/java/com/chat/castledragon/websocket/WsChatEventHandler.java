@@ -162,7 +162,7 @@ public class WsChatEventHandler {
 
 			//			ChatMessageDTO chat = chatService.sendMessage(me.getUserId(), payload, viewingUserIds);
 
-			ChatMessageResponseDTO resChat = chatService.sendMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
+			ChatMessageResponseDTO resChat = chatService.createMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
 
 			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 
