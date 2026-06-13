@@ -15,14 +15,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.castledragon.cache.RoomMemberCache;
 import com.chat.castledragon.domain.ChatMessageDTO;
-import com.chat.castledragon.domain.ChatMessageResponseDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.ChatUserLookupDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
-import com.chat.castledragon.domain.PayloadSendMessageDTO;
+import com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageRequestDTO;
 import com.chat.castledragon.domain.RoomMemberResponseDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
+import com.chat.castledragon.domain.UpdatedUnreadMessagesDTO;
 import com.chat.castledragon.mapper.ChatMapper;
 import com.chat.castledragon.mapper.UserMapper;
 
@@ -188,7 +190,7 @@ public class ChatServiceImpl implements ChatService {
 	// ====== 메시지 보내기 ==========================================================================================================================
 	@Override
 	@Transactional
-	public ChatMessageResponseDTO createMessage(Long senderUserId, String senderPublicId, PayloadSendMessageDTO payload, Set<Long> viewingUserIds) {
+	public PayloadSendChatMessageResponseDTO createChatMessage(Long senderUserId, String senderPublicId, PayloadSendChatMessageRequestDTO payload, Set<Long> viewingUserIds) {
 		Long roomId = payload.getRoomId();
 
 		// WsHandler에서 검사하긴 했지만, Service에서도 독립적인 방어 필요함.
@@ -249,7 +251,7 @@ public class ChatServiceImpl implements ChatService {
 
 		Long unreadCount = Math.max(totalRoomMemberIds.size() - 1L, 0L);
 
-		ChatMessageResponseDTO resChat = new ChatMessageResponseDTO();
+		PayloadSendChatMessageResponseDTO resChat = new PayloadSendChatMessageResponseDTO();
 		resChat.setMessageId(insertChat.getMessageId());
 		resChat.setRoomId(insertChat.getRoomId());
 		resChat.setSenderPublicId(senderPublicId);
@@ -263,15 +265,33 @@ public class ChatServiceImpl implements ChatService {
 	}// sendMsg
 
 	@Override
-	public List<ChatMessageResponseDTO> getPrevMessagesInRoom(Long roomId) {
-		List<ChatMessageResponseDTO> chatList = chatMapper.getPrevMessagesInRoom(roomId);
-		return chatList;
+	@Transactional
+	public PayloadReadChatMessageResponseDTO readChatMessage(Long roomId, Long readerUserId, String readerPublicId, Long newLastReadMessageId) {
+
+		Long oldLastReadMsgId = chatMapper.findLastReadMessageId(roomId, readerUserId);
+
+		if (oldLastReadMsgId != null && oldLastReadMsgId >= newLastReadMessageId) {
+			PayloadReadChatMessageResponseDTO resDTO = new PayloadReadChatMessageResponseDTO(roomId, readerPublicId, oldLastReadMsgId, List.of());
+			return resDTO;
+		}
+
+		chatMapper.updateLastRead(roomId, readerUserId, newLastReadMessageId);
+
+		List<UpdatedUnreadMessagesDTO> updatedChatList = chatMapper.getUpdatedUnreadCountChatMessages(roomId, oldLastReadMsgId, newLastReadMessageId);
+
+		return new PayloadReadChatMessageResponseDTO(roomId, readerPublicId, newLastReadMessageId, updatedChatList);
 	}
 
 	@Override
-	public void updateLastRead(Long roomId, Long userId, Long lastReadMessageId) {
-		chatMapper.updateLastRead(roomId, userId, lastReadMessageId);
+	public List<PayloadSendChatMessageResponseDTO> loadMessagesInRoom(Long roomId) {
+		List<PayloadSendChatMessageResponseDTO> chatList = chatMapper.loadMessagesInRoom(roomId);
+		return chatList;
 	}
+	//
+	//	@Override
+	//	public void updateLastRead(Long roomId, Long userId, Long lastReadMessageId) {
+	//		chatMapper.updateLastRead(roomId, userId, lastReadMessageId);
+	//	}
 
 	@Override
 	public List<ChatRoomListDTO> getMyAllRooms(Long userId) {

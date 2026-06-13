@@ -1,5 +1,7 @@
 package com.chat.castledragon.domain;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,10 +9,10 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayloadReadMessageResponseDTO {
+public class PayloadReadChatMessageResponseDTO {
 	private Long roomId;
+	private String readerPublicId;
 	private Long updatedLastReadMessageId;
 
-	private String readerPublicId;
-	private String readerNickname;
+	private List<UpdatedUnreadMessagesDTO> updatedMessages;
 }

@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.castledragon.domain.ChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterGroupRequestDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.service.ChatService;
 import com.chat.castledragon.service.UserService;
@@ -80,9 +80,9 @@ public class ChatController {
 		return ResponseEntity.ok(roomInfo);
 	}
 
-	@GetMapping("getPrevMessagesInRoom/{roomId}")
-	public List<ChatMessageResponseDTO> getMessages(@PathVariable("roomId") Long roomId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
-		List<ChatMessageResponseDTO> prevMessages = chatService.getPrevMessagesInRoom(roomId);
+	@GetMapping("loadMessagesInRoom/{roomId}")
+	public List<PayloadSendChatMessageResponseDTO> getMessages(@PathVariable("roomId") Long roomId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
+		List<PayloadSendChatMessageResponseDTO> prevMessages = chatService.loadMessagesInRoom(roomId);
 		log.info("prevMsg불러옴. : {}", prevMessages);
 		return prevMessages;
 	}

@@ -72,7 +72,7 @@
     	INSERT INTO chat_messages(room_id, sender_id, message_text,created_at) VALUES(#{roomId}, #{senderId}, #{messageText},#{createdAt})
 	</insert>
 	
-	<select id="loadMessagesInRoom" resultType="com.chat.castledragon.domain.ChatMessageResponseDTO">
+	<select id="loadMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO">
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -106,12 +106,12 @@
 	        </if>
 	
 	        ORDER BY m.message_id DESC
-	        LIMIT #{size}
+	        LIMIT 20
 	    ) t
 	    ORDER BY t.message_id ASC
 	</select>
 	
-	<select id="getPrevMessagesInRoom" resultType="com.chat.castledragon.domain.ChatMessageResponseDTO">
+	<select id="getPrevMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO">
 	SELECT
         m.message_id,
         m.room_id,
@@ -163,6 +163,10 @@
 
 	</select>
 	
+	<select id="findLastReadMessageId" resultType="Long">
+		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}
+	</select>
+	
 	<update id="updateLastRead">
     	UPDATE room_members SET last_read_message_id = #{lastReadMessageId} WHERE room_id = #{roomId} AND user_id = #{userId}
 	</update>
@@ -175,6 +179,33 @@ WHERE rm.room_id = #{roomId}
   AND rm.last_read_message_id >= #{messageId}
   AND rm.user_id != #{senderId}
 	</select>
+	
+	<select id="getUpdatedUnreadCountChatMessages"
+        resultType="com.chat.castledragon.domain.UpdatedUnreadMessagesDTO">
+    SELECT
+        m.message_id AS messageId,
+        (
+            SELECT COUNT(*)
+            FROM room_members rm
+            WHERE rm.room_id = m.room_id
+              AND rm.member_status = 'ACTIVE'
+              AND rm.user_id != m.sender_id
+              AND (
+                  rm.last_read_message_id IS NULL
+                  OR rm.last_read_message_id &lt; m.message_id
+              )
+        ) AS unreadCount
+    FROM chat_messages m
+    WHERE m.room_id = #{roomId}
+
+    <if test="oldLastReadMsgId != null">
+        AND m.message_id &gt; #{oldLastReadMsgId}
+    </if>
+
+      AND m.message_id &lt;= #{newLastReadMessageId}
+
+    ORDER BY m.message_id ASC
+</select>
 	
 	<select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
     SELECT

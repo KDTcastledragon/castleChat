@@ -8,12 +8,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.ChatMessageResponseDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadExitRoomDTO;
-import com.chat.castledragon.domain.PayloadReadMessageRequestDTO;
-import com.chat.castledragon.domain.PayloadReadMessageResponseDTO;
-import com.chat.castledragon.domain.PayloadSendMessageDTO;
+import com.chat.castledragon.domain.PayloadReadChatMessageRequestDTO;
+import com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageRequestDTO;
 import com.chat.castledragon.domain.PayloadTypingRequestDTO;
 import com.chat.castledragon.domain.PayloadTypingResponseDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
@@ -146,7 +146,7 @@ public class WsChatEventHandler {
 		//		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
 		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
-		PayloadSendMessageDTO payload = convertPayload(dto, PayloadSendMessageDTO.class);
+		PayloadSendChatMessageRequestDTO payload = convertPayload(dto, PayloadSendChatMessageRequestDTO.class);
 
 		log.info("{} 유저의 wsSendMsg 전송 시도! ", me.getUserId());
 
@@ -162,7 +162,7 @@ public class WsChatEventHandler {
 
 			//			ChatMessageDTO chat = chatService.sendMessage(me.getUserId(), payload, viewingUserIds);
 
-			ChatMessageResponseDTO resChat = chatService.createMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
+			PayloadSendChatMessageResponseDTO resChat = chatService.createChatMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
 
 			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 
@@ -178,14 +178,13 @@ public class WsChatEventHandler {
 
 	//	====== 메세지 읽기 ===========================================================================================================
 	void handleReadMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
 		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
 		//		PayloadReadMessageDTO payload = new PayloadReadMessageDTO(); <--- @NoArgsConstructor가 없어서, 이 부분에서 터져버리는거다. 코드는 딱 1줄이라 티가나질않아서 찾기 빡셈.@NoArgsConstructor 넣고, req res 나누고 코드 쫌만 바꿨는데, 채팅 urc문제 다 해결함;;ㄷ;; 뭐야;
 		//		payload.setRoomId(1L);
 		//		payload.setLastReadMessageId(6L);
 		//		--->
-		PayloadReadMessageRequestDTO payload = convertPayload(dto, PayloadReadMessageRequestDTO.class); // ws내부의 payload를 꺼낸다.
+		PayloadReadChatMessageRequestDTO payload = convertPayload(dto, PayloadReadChatMessageRequestDTO.class); // ws내부의 payload를 꺼낸다.
 
 		if (payload.getRoomId() == null || payload.getLastReadMessageId() == null) {
 			log.info("readMsg 필수 값 누락 : {} / {}", payload.getRoomId(), payload.getLastReadMessageId());
@@ -193,11 +192,15 @@ public class WsChatEventHandler {
 			return;
 		}
 
-		chatService.updateLastRead(payload.getRoomId(), myUserId, payload.getLastReadMessageId()); // last_read 업뎃시킴.
+		//		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), me.getPublicId(), payload.getLastReadMessageId(), updatedUnreadCount);
 
-		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), payload.getLastReadMessageId(), me.getPublicId(), me.getNickname());
+		//		List<UpdatedUnreadMessagesDTO> updatedMessages = chatService.readChatMessage(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getLastReadMessageId());
+		//		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), me.getPublicId(), payload.getLastReadMessageId(), // 얘 어캐하지?
+		//				updatedMessages);
 
-		log.info("{}({})번 유저가 {}번방 {}번 메시지까지 읽음", myUserId, me.getNickname(), payload.getRoomId(), payload.getLastReadMessageId());
+		PayloadReadChatMessageResponseDTO responsePayload = chatService.readChatMessage(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getLastReadMessageId());
+
+		log.info("{}({}) 유저가 {}번방 {}번 메시지까지 읽음", me.getNickname(), me.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
 
 		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", responsePayload, dto.getRequestId());
 		//		responseOk(session, dto, "READ_MSG_OK", payload);

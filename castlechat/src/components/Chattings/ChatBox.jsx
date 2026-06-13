@@ -123,11 +123,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         initChatRoom();
 
         // RoomHandler function
-        registerRoomHandler(roomId, (wsEvt) => {
+        registerRoomHandler(roomId, (wsResponse) => {
 
             // 1. '본인/타인'이 전송한 메세지 '실시간' 화면에 띄우기
-            if (wsEvt.wsType === "MSG_CREATED") {
-                const newMsg = wsEvt.payload; // “방금 생성된 새 메시지”를 꺼내는 거야.
+            if (wsResponse.wsType === "MSG_CREATED") {
+                const newMsg = wsResponse.payload; // “방금 생성된 새 메시지”를 꺼내는 거야.
                 setPrevChattings(prev => [...prev, newMsg]); // 실시간으로 받은 새 메시지를 화면 아래에 추가하는 코드야. 
                 // newMsg를 prevChattings배열의 맨 끝에 새롭게 추가해주는거야. ...prev는 이전의 메세지들이지.
 
@@ -140,9 +140,14 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             }// if 1.
 
             // 2. 서버가 다시 보내주는 read 이벤트를 처리. 읽음 요청의 결과를 화면에 반영하는 곳. unreadCount 컨트롤
-            if (wsEvt.wsType === "MSG_READ") {
-                const readInfo = wsEvt.payload;
-                const updatedMessages = readInfo.updatedMessages || []; //  이번 읽음 처리로 unreadCount가 갱신되어야 하는 메시지 목록
+            if (wsResponse.wsType === "MSG_READ") {
+                const wsPayload = wsResponse.payload;
+
+                if (!wsPayload) { return; }
+
+                const updatedMessages = wsPayload.updatedMessages || []; //  이번 읽음 처리로 unreadCount가 갱신되어야 하는 메시지 목록
+
+                if (updatedMessages.length === 0) { return; }
 
                 setPrevChattings(prev =>
                     prev.map(msg => {
@@ -163,8 +168,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             }// if.2
 
             // 3.
-            if (wsEvt.wsType === "TYPING_START") {
-                const typingInfo = wsEvt.payload;
+            if (wsResponse.wsType === "TYPING_START") {
+                const typingInfo = wsResponse.payload;
 
                 if (typingInfo.publicId === myPublicId) {
                     return;
@@ -184,8 +189,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             }
 
             // 4.
-            if (wsEvt.wsType === "TYPING_STOP") {
-                const typingInfo = wsEvt.payload;
+            if (wsResponse.wsType === "TYPING_STOP") {
+                const typingInfo = wsResponse.payload;
 
                 setTypingUsers(prev =>
                     prev.filter(user => user.publicId !== typingInfo.publicId)
@@ -200,7 +205,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     }, [roomId, myPublicId]); // 내부에서 roomId, myPublicId를 씀. 최소한 이렇게 가는 게 맞아. 이렇게 해야 roomId/myPublicId 준비된 뒤 정상 등록됨.
 
     // ================ 메세지 전송 (WebSocket) =========================================================== 
-    function sendMessage() {
+    function sendChatMessage() {
         if (isTypingRef.current) {
             isTypingRef.current = false;
             // sendWs("TYPING_STOP", { roomId: roomId });
@@ -275,83 +280,85 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     // ======< return >=======================================================================================================
     return (
-        <div
-            className='chattingRoomSection'
-            style={{
-                left: x,
-                top: y,
-                zIndex
-            }}
-            onMouseDown={onFocus}
-        >
-            <div className='chatListTitle' onMouseDown={startDrag}>
-                <span>{roomName}</span>
-                {/* <span>{roomType}</span> */}
-                &nbsp;&nbsp;
-                <button
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={closeChatAndExitRoom}
-                >
-                    닫기
-                </button>
-            </div>
-
-            <div className='chattingBox'>
-                {prevChattings && prevChattings.length > 0 ?
-                    prevChattings.map((d, i) => (
-                        <div
-                            key={d.messageId}
-                            className={`chatRow ${d.senderPublicId === myPublicId ? 'mine' : 'other'}`}
-                        >
-                            {d.senderPublicId === myPublicId && (
-                                <div className='messageInfo'>
-                                    <div className='unreadCount'>{d.unreadCount}</div>
-                                    <div className='formatTime'>{formatTime(d.createdAt)}</div>
-                                </div>
-                            )}
-
-                            <div className='messageWrap'>
-                                <div className="messageText">{d.messageText}</div>
-                            </div>
-
-                            {d.senderPublicId !== myPublicId && (
-                                <div className='messageInfo'>
-                                    <div className='unreadCount'>{d.unreadCount}</div>
-                                    <div className='formatTime'>{formatTime(d.createdAt)}</div>
-                                </div>
-                            )}
-                        </div>
-                    ))
-                    :
-                    <div>친구와 새로운 이야기를 시작해보세요.</div>
-                }
-
-                {/** 이게 핵심이다. */}
-                <div ref={chatEndRef} />
-            </div>
-            {typingUsers.length > 0 && (
-                <div className="typingNotice">
-                    {typingUsers.map(typingUser => typingUser.nickname).join(', ')}님이 입력 중...
+        <div className='chatBoxContainer'>
+            <div
+                className='chattingRoomSection'
+                style={{
+                    left: x,
+                    top: y,
+                    zIndex
+                }}
+                onMouseDown={onFocus}
+            >
+                <div className='chatListTitle' onMouseDown={startDrag}>
+                    <span>{roomName}</span>
+                    {/* <span>{roomType}</span> */}
+                    &nbsp;&nbsp;
+                    <button
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={closeChatAndExitRoom}
+                    >
+                        닫기
+                    </button>
                 </div>
-            )}
 
-            <div className='inputChat'>
-                <textarea
-                    type="text"
-                    value={chatMessage}
-                    // onChange={(e) => setChatMessage(e.target.value)}
-                    onChange={handleChatMessageChange}
-                    placeholder='여기에 메세지 입력...'
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault(); // 줄바꿈 막기
-                            sendMessage();
-                        }
-                    }} />
-                <button onClick={sendMessage}>전송</button> {/** () => sendMessage() 굳이 안 써도 된당 */}
+                <div className='chattingBox'>
+                    {prevChattings && prevChattings.length > 0 ?
+                        prevChattings.map((d, i) => (
+                            <div
+                                key={d.messageId}
+                                className={`chatRow ${d.senderPublicId === myPublicId ? 'mine' : 'other'}`}
+                            >
+                                {d.senderPublicId === myPublicId && (
+                                    <div className='messageInfo'>
+                                        <div className='unreadCount'>{d.unreadCount}</div>
+                                        <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                    </div>
+                                )}
+
+                                <div className='messageWrap'>
+                                    <div className="messageText">{d.messageText}</div>
+                                </div>
+
+                                {d.senderPublicId !== myPublicId && (
+                                    <div className='messageInfo'>
+                                        <div className='unreadCount'>{d.unreadCount}</div>
+                                        <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                        :
+                        <div>친구와 새로운 이야기를 시작해보세요.</div>
+                    }
+
+                    {/** 이게 핵심이다. */}
+                    <div ref={chatEndRef} />
+                </div>
+                {typingUsers.length > 0 && (
+                    <div className="typingNotice">
+                        {typingUsers.map(typingUser => typingUser.nickname).join(', ')}님이 입력 중...
+                    </div>
+                )}
+
+                <div className='inputChat'>
+                    <textarea
+                        type="text"
+                        value={chatMessage}
+                        // onChange={(e) => setChatMessage(e.target.value)}
+                        onChange={handleChatMessageChange}
+                        placeholder='여기에 메세지 입력...'
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault(); // 줄바꿈 막기
+                                sendChatMessage();
+                            }
+                        }} />
+                    <button onClick={sendChatMessage}>전송</button> {/** () => sendChatMessage() 굳이 안 써도 된당 */}
+                </div>
             </div>
-        </div>
-    );
+
+        </div>);
 }
 
 export default ChatBox;

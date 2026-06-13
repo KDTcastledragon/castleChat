@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PayloadReadMessageRequestDTO {
-	private Long roomId;
-	private Long lastReadMessageId;
-
+public class UpdatedUnreadMessagesDTO {
+	private Long messageId;
+	private Long unreadCount;
 }
