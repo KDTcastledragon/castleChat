@@ -16,6 +16,7 @@ import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterGroupRequestDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
+import com.chat.castledragon.domain.RoomIdRequestDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.service.ChatService;
 import com.chat.castledragon.service.UserService;
@@ -80,24 +81,50 @@ public class ChatController {
 		return ResponseEntity.ok(roomInfo);
 	}
 
-	@GetMapping("loadMessagesInRoom/{roomId}")
-	public List<PayloadSendChatMessageResponseDTO> getMessages(@PathVariable("roomId") Long roomId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
-		List<PayloadSendChatMessageResponseDTO> prevMessages = chatService.loadMessagesInRoom(roomId);
-		log.info("prevMsg불러옴. : {}", prevMessages);
-		return prevMessages;
+	@GetMapping("/enterExistedRoom/{roomId}")
+	public ResponseEntity<?> enterExistedRoom(@PathVariable("roomId") Long roomId, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		EnterRoomResponseDTO roomInfo = chatService.enterExistedRoom(roomId, me);
+
+		return ResponseEntity.ok().body(roomInfo);
 	}
 
-	@GetMapping("/getMyAllRooms")
-	public ResponseEntity<?> getMyAllRooms(HttpSession session) {
+	@GetMapping("/loadMessagesInRoom/{roomId}")
+	public List<PayloadSendChatMessageResponseDTO> getMessages(@PathVariable("roomId") Long roomId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
+		List<PayloadSendChatMessageResponseDTO> loadedMessagesInRoom = chatService.loadMessagesInRoom(roomId);
+		log.info("loadMessagesInRoom불러옴. : {}", loadedMessagesInRoom);
+		return loadedMessagesInRoom;
+	}
+
+	@GetMapping("/getMyAllChatRooms")
+	public ResponseEntity<?> getMyAllChatRooms(HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
 
 		if (me == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		List<ChatRoomListDTO> roomList = chatService.getMyAllRooms(me.getUserId());
+		List<ChatRoomListDTO> roomList = chatService.getMyAllChatRooms(me.getUserId());
 
 		return ResponseEntity.ok(roomList);
+	}
+
+	@PostMapping("/leftRoom")
+	public ResponseEntity<?> leftRoom(@RequestBody RoomIdRequestDTO req, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		chatService.leftRoom(req.getRoomId(), me);
+
+		return ResponseEntity.ok().build();
 	}
 } // enterRoom 끝.
 

@@ -20,6 +20,4 @@ public class EnterRoomResponseDTO {
 	private Long roomMemberCount;
 
 	private List<RoomMemberResponseDTO> memberList;
-
-	private Long lastReadMessageId;
 }

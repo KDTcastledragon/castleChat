@@ -14,15 +14,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.castledragon.cache.RoomMemberCache;
-import com.chat.castledragon.domain.ChatMessageDTO;
-import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
-import com.chat.castledragon.domain.ChatRoomDTO;
+import com.chat.castledragon.domain.ChatMessagesDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
+import com.chat.castledragon.domain.ChatRoomsDTO;
 import com.chat.castledragon.domain.ChatUserLookupDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadSendChatMessageRequestDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.RoomMemberResponseDTO;
+import com.chat.castledragon.domain.RoomMembersDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.UpdatedUnreadMessagesDTO;
 import com.chat.castledragon.mapper.ChatMapper;
@@ -44,8 +45,8 @@ public class ChatServiceImpl implements ChatService {
 	RoomMemberCache roomMemberCache;
 
 	// ====== 방 생성 ==========================================================================================================================
-	private ChatRoomDTO createRoom(String roomType, String roomStatus, String roomName, Long createdBy) {
-		ChatRoomDTO room = new ChatRoomDTO();
+	private ChatRoomsDTO createRoom(String roomType, String roomStatus, String roomName, Long createdBy) {
+		ChatRoomsDTO room = new ChatRoomsDTO();
 		room.setRoomType(roomType);
 		room.setRoomStatus(roomStatus);
 		room.setRoomName(roomName);
@@ -79,7 +80,7 @@ public class ChatServiceImpl implements ChatService {
 		}
 
 		// 1. 기존 room 조회
-		ChatRoomDTO room = chatMapper.findDirectRoom(senderInfo.getUserId(), friendInfo.getUserId());
+		ChatRoomsDTO room = chatMapper.findDirectRoom(senderInfo.getUserId(), friendInfo.getUserId());
 
 		if (room == null) {
 			log.info("새로운 채팅방(roomId) 생성 시작");
@@ -109,7 +110,7 @@ public class ChatServiceImpl implements ChatService {
 		friendProfile.add(new RoomMemberResponseDTO(friendInfo.getPublicId(), friendInfo.getNickname(), friendInfo.getFriendCode(), friendInfo.getProfileImg(), "MEMBER"));
 
 		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(room.getRoomId(), room.getRoomType(), friendInfo.getNickname()
-				+ "님과의 채팅방", friendInfo.getProfileImg(), 2L, friendProfile, null); // 굳이 2를 안 쓸 이유가 없다.
+				+ "님과의 채팅방", friendInfo.getProfileImg(), 2L, friendProfile); // 굳이 2를 안 쓸 이유가 없다.
 
 		log.info("Direct resRoom : {}", resRoom);
 
@@ -146,7 +147,7 @@ public class ChatServiceImpl implements ChatService {
 			customRoomName = host.getNickname() + "님의 단톡방";
 		}
 
-		ChatRoomDTO createdRoom = createRoom("GROUP", "ACTIVE", "H:" + host.getUserId() + "M:" + (long) (selectedFriendPublicIdList.size() + 1), host.getUserId());
+		ChatRoomsDTO createdRoom = createRoom("GROUP", "ACTIVE", "H:" + host.getUserId() + "M:" + (long) (selectedFriendPublicIdList.size() + 1), host.getUserId());
 
 		//		List<ChatUserLookupDTO> groupRoomMemberList = new ArrayList<>(); // list는 중복 제거가 좀 약하다. 그래서 map쓰자.
 		Map<Long, ChatUserLookupDTO> roomMemberMap = new LinkedHashMap<>(); // 굳이 HashMap 안쓰고 LinkedHash쓰는 이유는? 디버깅할때 좀 편하려고. 순서가 안정적이라 로그/응답 확인할 때 덜 헷갈림.
@@ -181,7 +182,7 @@ public class ChatServiceImpl implements ChatService {
 
 		roomMemberCache.initOrReplaceRoomMembers(createdRoom.getRoomId(), new LinkedHashSet<>(roomMemberMap.keySet()));
 
-		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(createdRoom.getRoomId(), createdRoom.getRoomType(), customRoomName, customRoomThumbnail, (long) roomMemberList.size(), roomMemberList, null);
+		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(createdRoom.getRoomId(), createdRoom.getRoomType(), customRoomName, customRoomThumbnail, (long) roomMemberList.size(), roomMemberList);
 
 		return resRoom;
 
@@ -216,7 +217,7 @@ public class ChatServiceImpl implements ChatService {
 		LocalDateTime now = LocalDateTime.now(); // 서버시간 기준으로 한다. FE에서 time을 조작할 수도 있기 때문이다. 우린 서버를 신뢰한다.
 		// DB에서 created_at default current_timestamp로 넣는 구조면, insert 후에 MyBatis가 createdAt까지 자동으로 채워주지는 않아. useGeneratedKeys로 보통 messageId만 들어와.
 
-		ChatMessageDTO insertChat = new ChatMessageDTO();
+		ChatMessagesDTO insertChat = new ChatMessagesDTO();
 		insertChat.setRoomId(roomId);
 		insertChat.setSenderId(senderUserId);
 		insertChat.setMessageText(payload.getMessageText());
@@ -259,7 +260,7 @@ public class ChatServiceImpl implements ChatService {
 		resChat.setCreatedAt(insertChat.getCreatedAt());
 		resChat.setUnreadCount(unreadCount);
 
-		log.info("chatServ -> wsHandler 채팅data 이동 : {}", resChat);
+		//		log.info("chatServ -> wsHandler 채팅data 이동 : {}", resChat);
 
 		return resChat;
 	}// sendMsg
@@ -267,6 +268,8 @@ public class ChatServiceImpl implements ChatService {
 	@Override
 	@Transactional
 	public PayloadReadChatMessageResponseDTO readChatMessage(Long roomId, Long readerUserId, String readerPublicId, Long newLastReadMessageId) {
+
+		chatMapper.lockRoomForUpdate(roomId); // last_read update + urc 계산이 동시에 꼬이지 않게, 메서드 시작 시 room row lock을 잡는다.
 
 		Long oldLastReadMsgId = chatMapper.findLastReadMessageId(roomId, readerUserId);
 
@@ -277,12 +280,15 @@ public class ChatServiceImpl implements ChatService {
 
 		chatMapper.updateLastRead(roomId, readerUserId, newLastReadMessageId);
 
-		List<UpdatedUnreadMessagesDTO> updatedChatList = chatMapper.getUpdatedUnreadCountChatMessages(roomId, oldLastReadMsgId, newLastReadMessageId);
+		log.info("READ_MSG 계산 시작 roomId={}, readerUserId={}, oldLast={}, newLast={}", roomId, readerUserId, oldLastReadMsgId, newLastReadMessageId);
 
+		List<UpdatedUnreadMessagesDTO> updatedChatList = chatMapper.getUpdatedUnreadCountChatMessages(roomId, oldLastReadMsgId, newLastReadMessageId);
+		log.info("READ_MSG 계산 결과 roomId={}, readerUserId={}, updatedMessages={}", roomId, readerUserId, updatedChatList);
 		return new PayloadReadChatMessageResponseDTO(roomId, readerPublicId, newLastReadMessageId, updatedChatList);
 	}
 
 	@Override
+	@Transactional
 	public List<PayloadSendChatMessageResponseDTO> loadMessagesInRoom(Long roomId) {
 		List<PayloadSendChatMessageResponseDTO> chatList = chatMapper.loadMessagesInRoom(roomId);
 		return chatList;
@@ -294,9 +300,61 @@ public class ChatServiceImpl implements ChatService {
 	//	}
 
 	@Override
-	public List<ChatRoomListDTO> getMyAllRooms(Long userId) {
-		List<ChatRoomListDTO> roomList = chatMapper.getMyChatRooms(userId);
+	public List<ChatRoomListDTO> getMyAllChatRooms(Long userId) {
+		List<ChatRoomListDTO> roomList = chatMapper.getMyAllChatRooms(userId);
 		return roomList;
+	}
+
+	@Override
+	public EnterRoomResponseDTO enterExistedRoom(Long roomId, SessionUserDTO me) {
+		ChatRoomsDTO room = chatMapper.getRoomByRoomId(roomId);
+		if (room == null) {
+			throw new IllegalArgumentException("존재하지 않는 채팅방입니다.");
+		}
+
+		RoomMembersDTO myInfo = chatMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
+
+		if (myInfo == null) {
+			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
+		}
+
+		List<RoomMemberResponseDTO> memberList = chatMapper.getRoomMemberProfilesByRoomId(roomId);
+
+		if (memberList == null || memberList.isEmpty()) {
+			throw new IllegalStateException("채팅방 멤버 정보를 찾을 수 없습니다.");
+		}
+
+		EnterRoomResponseDTO resdto = new EnterRoomResponseDTO(roomId, room.getRoomType(), myInfo.getCustomRoomName(), myInfo.getCustomRoomThumbnail(), (long) memberList.size(), memberList);
+
+		return resdto;
+	}
+
+	@Override
+	@Transactional
+	public void leftRoom(Long roomId, SessionUserDTO me) {
+		if (roomId == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
+		}
+
+		RoomMembersDTO myRoomMember = chatMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
+
+		if (myRoomMember == null) {
+			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
+		}
+
+		if ("HOST".equals(myRoomMember.getRole())) {
+			throw new IllegalStateException("방장은 아직 나갈 수 없습니다.");
+		}
+
+		if ("LEFT".equals(myRoomMember.getMemberStatus())) {
+			return;
+		}
+
+		chatMapper.leftRoom(roomId, me.getUserId());
+
+		//		chatMapper.decreaseActiveMemberCount(roomId);
+
+		roomMemberCache.removeRoomMember(roomId, me.getUserId());
 	}
 
 }//serviceImpl

@@ -3,11 +3,11 @@ package com.chat.castledragon.service;
 import java.util.List;
 import java.util.Set;
 
-import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.ChatRoomListDTO;
 import com.chat.castledragon.domain.EnterRoomResponseDTO;
 import com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadSendChatMessageRequestDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 
 public interface ChatService {
@@ -23,8 +23,12 @@ public interface ChatService {
 
 	EnterRoomResponseDTO createGroupRoom(SessionUserDTO host, String roomName, String roomThumbnail, List<String> selectedFriendPublicIdList);
 
-	List<ChatRoomListDTO> getMyAllRooms(Long userId);
+	List<ChatRoomListDTO> getMyAllChatRooms(Long userId);
 
 	PayloadReadChatMessageResponseDTO readChatMessage(Long roomId, Long readerUserId, String readerPuublicId, Long newlastReadMessageId);
+
+	EnterRoomResponseDTO enterExistedRoom(Long roomId, SessionUserDTO me);
+
+	void leftRoom(Long roomId, SessionUserDTO me);
 
 }

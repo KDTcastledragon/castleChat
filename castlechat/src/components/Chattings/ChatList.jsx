@@ -26,14 +26,21 @@ function ChatList() {
     // ======< return >=======================================================================================================
     return (
         <div className='ChatListContainer'>
-            {myAllRooms.map((r) => (
-                <div key={r.roomId}>
-                    <span>{r.customRoomName}</span>
-                    <span>{r.roomType}</span>
-                    <span>{r.roomMemberCount}</span>
-                    <button onClick={() => enterExistingRoom(r)}>채팅</button>
-                </div>
-            ))}
+            <div className='chatList'>
+                <div className='chatListTitle'><span>채팅방 목록</span></div>
+                {myAllRooms.map((r) => (
+                    <div className='chatListBox' key={r.roomId}>
+                        <span>{r.roomId}-</span>
+                        <span>{r.roomType}</span>
+                        <span>/</span>&nbsp;
+                        <span>{r.customRoomName}</span>&nbsp;&nbsp;&nbsp;
+                        <span>{r.roomType === 'DIRECT' ? null : '/'}</span>&nbsp;&nbsp;
+                        <span>{r.roomType === 'DIRECT' ? null : `${r.activeMemberCount}명`}</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp;
+                        <button onClick={() => enterExistingRoom(r.roomId)}>채팅</button>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }

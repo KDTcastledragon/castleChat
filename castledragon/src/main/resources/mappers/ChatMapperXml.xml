@@ -37,7 +37,7 @@
    ) = 2
 	</select> -->
 	
-	<select id="findDirectRoom" resultType="com.chat.castledragon.domain.ChatRoomDTO">
+	<select id="findDirectRoom" resultType="com.chat.castledragon.domain.ChatRoomsDTO">
     SELECT cr.*
     FROM room_members rm
     JOIN chat_rooms cr
@@ -56,7 +56,7 @@
        ) = 2
 </select>
 
-	<insert id="createRoom" parameterType="com.chat.castledragon.domain.ChatRoomDTO" useGeneratedKeys="true" keyProperty="roomId">
+	<insert id="createRoom" parameterType="com.chat.castledragon.domain.ChatRoomsDTO" useGeneratedKeys="true" keyProperty="roomId">
 	INSERT INTO chat_rooms(room_type, room_name,created_by,room_status) VALUES (#{roomType}, #{roomStatus} , #{createdBy} , #{roomStatus})
 	</insert>
 
@@ -68,11 +68,11 @@
     	SELECT * FROM messages WHERE room_id = #{roomId} ORDER BY created_at ASC
 	</select> -->
 	
-	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatMessageDTO" useGeneratedKeys="true" keyProperty="messageId">
+	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatMessagesDTO" useGeneratedKeys="true" keyProperty="messageId">
     	INSERT INTO chat_messages(room_id, sender_id, message_text,created_at) VALUES(#{roomId}, #{senderId}, #{messageText},#{createdAt})
 	</insert>
 	
-	<select id="loadMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO">
+	<select id="loadMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO">
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -101,9 +101,9 @@
 	
 	        WHERE m.room_id = #{roomId}
 	
-	        <if test="beforeMessageId != null">
+	       <!--  <if test="beforeMessageId != null">
 	            AND m.message_id &lt; #{beforeMessageId}
-	        </if>
+	        </if> -->
 	
 	        ORDER BY m.message_id DESC
 	        LIMIT 20
@@ -111,37 +111,9 @@
 	    ORDER BY t.message_id ASC
 	</select>
 	
-	<select id="getPrevMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO">
-	SELECT
-        m.message_id,
-        m.room_id,
-        u.public_id AS sender_public_id,
-        m.message_text,
-        m.created_at,
-
-        (
-            SELECT COUNT(*)
-            FROM room_members rm
-            WHERE rm.room_id = m.room_id
-              AND rm.user_id != m.sender_id
-              AND (
-                  rm.last_read_message_id IS NULL
-                  OR rm.last_read_message_id &lt; m.message_id
-              )
-        ) AS unread_count
-
-    FROM chat_messages m
-
-    JOIN users u
-      ON u.user_id = m.sender_id
-
-    WHERE m.room_id = #{roomId}
-
-    ORDER BY m.message_id ASC
-
-	</select>
 	
-	<select id="getMessages" resultType="com.chat.castledragon.domain.ChatMessageDTO">
+	
+	<select id="getMessages" resultType="com.chat.castledragon.domain.ChatMessagesDTO">
 	SELECT m.*,
 	
 	    (
@@ -180,8 +152,7 @@ WHERE rm.room_id = #{roomId}
   AND rm.user_id != #{senderId}
 	</select>
 	
-	<select id="getUpdatedUnreadCountChatMessages"
-        resultType="com.chat.castledragon.domain.UpdatedUnreadMessagesDTO">
+	<select id="getUpdatedUnreadCountChatMessages" resultType="com.chat.castledragon.domain.UpdatedUnreadMessagesDTO">
     SELECT
         m.message_id AS messageId,
         (
@@ -206,8 +177,140 @@ WHERE rm.room_id = #{roomId}
 
     ORDER BY m.message_id ASC
 </select>
+
+<select id="getMyAllChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
+    SELECT
+        r.room_id AS roomId,
+        r.room_type AS roomType,
+
+        COALESCE(
+            me.custom_room_name,
+            CASE
+                WHEN r.room_type = 'DIRECT' THEN (
+                    SELECT u.nickname
+                    FROM room_members other_rm
+                    JOIN users u
+                      ON u.user_id = other_rm.user_id
+                    WHERE other_rm.room_id = r.room_id
+                      AND other_rm.user_id != me.user_id
+                      AND other_rm.member_status = 'ACTIVE'
+                    LIMIT 1
+                )
+                ELSE r.room_name
+            END
+        ) AS customRoomName,
+
+        me.custom_room_thumbnail AS customRoomThumbnail,
+
+        (
+            SELECT COUNT(*)
+            FROM room_members rm_count
+            WHERE rm_count.room_id = r.room_id
+              AND rm_count.member_status = 'ACTIVE'
+        ) AS activeMemberCount,
+
+        COUNT(DISTINCT m.message_id) AS unreadCount,
+
+        (
+            SELECT cm.message_text
+            FROM chat_messages cm
+            WHERE cm.room_id = r.room_id
+            ORDER BY cm.message_id DESC
+            LIMIT 1
+        ) AS lastMessage,
+
+        (
+            SELECT cm.created_at
+            FROM chat_messages cm
+            WHERE cm.room_id = r.room_id
+            ORDER BY cm.message_id DESC
+            LIMIT 1
+        ) AS lastMessageTime
+
+    FROM room_members me
+
+    JOIN chat_rooms r
+      ON r.room_id = me.room_id
+
+    LEFT JOIN chat_messages m
+      ON m.room_id = r.room_id
+     AND m.message_id > IFNULL(me.last_read_message_id, 0)
+     AND m.sender_id != me.user_id
+
+    WHERE me.user_id = #{userId}
+      AND me.member_status = 'ACTIVE'
+      AND r.room_status = 'ACTIVE'
+
+    GROUP BY
+        r.room_id,
+        r.room_type,
+        r.room_name,
+        me.custom_room_name,
+        me.custom_room_thumbnail,
+        me.user_id,
+        me.last_read_message_id
+
+    ORDER BY lastMessageTime DESC, r.room_id DESC
+</select>
 	
-	<select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
+	
+	
+	<select id="findActiveRoomMemberIds" resultType="long">
+	    SELECT user_id
+	    FROM room_members
+	    WHERE room_id = #{roomId}
+	      AND left_at IS NULL
+	</select>
+	
+	<select id="getRoomByRoomId" resultType="com.chat.castledragon.domain.ChatRoomsDTO">
+	select * from chat_rooms where room_id =#{roomId}
+	</select>
+	
+	<select id="getMyInfoFromRoomMembers" resultType="com.chat.castledragon.domain.RoomMembersDTO">
+	select * from room_members where room_id=#{roomId} and user_id = #{userId} AND member_status = 'ACTIVE'
+	</select>
+	
+	<select id="getRoomMemberProfilesByRoomId"
+        resultType="com.chat.castledragon.domain.RoomMemberResponseDTO">
+    SELECT
+        u.public_id AS publicId,
+        u.nickname AS nickname,
+        u.friend_code AS friendCode,
+        u.profile_img AS profileImg,
+        rm.role AS role
+    FROM room_members rm
+    JOIN users u
+      ON u.user_id = rm.user_id
+    WHERE rm.room_id = #{roomId}
+      AND rm.member_status = 'ACTIVE'
+    ORDER BY rm.room_member_id ASC
+</select>
+
+<select id="lockRoomForUpdate" resultType="Long">
+    SELECT room_id
+    FROM chat_rooms
+    WHERE room_id = #{roomId}
+    FOR UPDATE
+</select>
+
+	<update id="leftRoom">
+	    UPDATE room_members
+	    SET
+	        member_status = 'LEFT',
+	        left_at = NOW()
+	    WHERE room_id = #{roomId}
+	      AND user_id = #{userId}
+	      AND member_status = 'ACTIVE'
+	</update>
+	
+	<update id="decreaseActiveMemberCount">
+	    UPDATE chat_rooms
+	    SET active_member_count = GREATEST(active_member_count - 1, 0)
+	    WHERE room_id = #{roomId}
+	</update>
+</mapper>
+
+<!-- <select id="getMyAllChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
     SELECT
         r.room_id AS room_id,
         r.room_type AS room_type,
@@ -271,15 +374,38 @@ WHERE rm.room_id = #{roomId}
         me.last_read_message_id
 
     ORDER BY last_message_time DESC, r.room_id DESC
-</select>
+</select> -->
+
+<!-- <select id="getPrevMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO">
+	SELECT
+        m.message_id,
+        m.room_id,
+        u.public_id AS sender_public_id,
+        m.message_text,
+        m.created_at,
+
+        (
+            SELECT COUNT(*)
+            FROM room_members rm
+            WHERE rm.room_id = m.room_id
+              AND rm.user_id != m.sender_id
+              AND (
+                  rm.last_read_message_id IS NULL
+                  OR rm.last_read_message_id &lt; m.message_id
+              )
+        ) AS unread_count
+
+    FROM chat_messages m
+
+    JOIN users u
+      ON u.user_id = m.sender_id
+
+    WHERE m.room_id = #{roomId}
+
+    ORDER BY m.message_id ASC
+
+	</select> -->
 	
-	<select id="findActiveRoomMemberIds" resultType="long">
-	    SELECT user_id
-	    FROM room_members
-	    WHERE room_id = #{roomId}
-	      AND left_at IS NULL
-	</select>
-</mapper>
 		<!-- <select id="getMyChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
 	
 	SELECT

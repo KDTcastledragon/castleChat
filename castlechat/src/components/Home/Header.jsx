@@ -42,8 +42,16 @@ function Header() {
                 </div>
                 :
                 <div className='loginedHeader'>
-                    caslteChat
-
+                    caslteChat &nbsp;&nbsp;
+                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                    <div><button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                        <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                        <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                        <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
+                    </div>
                 </div>
             }
 

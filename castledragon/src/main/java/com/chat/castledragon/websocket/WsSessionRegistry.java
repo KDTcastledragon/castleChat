@@ -63,6 +63,34 @@ public class WsSessionRegistry {
 		return new HashSet<>(sessions.keySet());
 	}
 
+	Map<Long, WebSocketSession> getRoomSessions(Long roomId) {
+		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
+
+		if (sessions == null || sessions.isEmpty()) {
+			return Map.of();
+		}
+
+		sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
+
+		return sessions;
+	}
+
+	void exitRoom(Long roomId, Long userId) {
+		Map<Long, WebSocketSession> userMap = roomSessions.get(roomId);
+
+		if (userMap == null || userMap.isEmpty()) {
+			return;
+		}
+
+		userMap.remove(userId);
+
+		if (userMap.isEmpty()) {
+			roomSessions.remove(roomId);
+		}
+
+		log.info("{}번 유저 {}번방 roomSession 제거", userId, roomId);
+	}
+
 }// WsSessionRegistry
 
 //private Long getLoginUserId(WebSocketSession session) { // --> 중복이라 불필요함.

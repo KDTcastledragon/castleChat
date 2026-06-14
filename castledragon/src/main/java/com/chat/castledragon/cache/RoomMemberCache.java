@@ -113,7 +113,7 @@ public class RoomMemberCache {
 
 		Set<String> values = redisTemplate.opsForSet().members(key);
 
-		log.info("Redis 방 멤버 set 조회 : {}", values);
+		//		log.info("Redis 방 멤버 set 조회 : {}", values);
 
 		if (values == null || values.isEmpty()) {
 			return Set.of(); // --> Set<Long> = Set.of() --> [];
@@ -130,11 +130,11 @@ public class RoomMemberCache {
 
 		if (!cachedMembers.isEmpty()) {
 
-			log.info("MembersRedis 존재. 저장된 Redis 반환. : {}", cachedMembers);
+			//			log.info("MembersRedis 존재. 저장된 Redis 반환. : {}", cachedMembers);
 			return cachedMembers;
 		}
 
-		log.info("MembersRedis 없음. DB조회 후, Redis 저장 필요.");
+		//		log.info("MembersRedis 없음. DB조회 후, Redis 저장 필요.");
 
 		List<Long> dbMembers = dbLoader.get();
 
@@ -146,7 +146,7 @@ public class RoomMemberCache {
 
 		String createdRedisKey = initOrReplaceRoomMembers(roomId, memberSet);
 
-		log.info("DB조회 후, MembersRedis 저장 성공. key : {}", createdRedisKey);
+		//		log.info("DB조회 후, MembersRedis 저장 성공. key : {}", createdRedisKey);
 		return memberSet;
 	}
 
@@ -168,11 +168,24 @@ public class RoomMemberCache {
 		return count;
 	}
 
-	//	cd D:\castleDragonProjects\castleChat\castledragon .\gradlew.bat clean compileJava --refresh-dependencies : redis gradle dependency 의존성 해결.(결과적으로 안되긴 함.)
+	public void removeRoomMember(Long roomId, Long userId) {
+		String key = roomMembersKey(roomId);
 
-	//	IDE에서 castledragon 프로젝트를 Gradle Refresh
-	//	Eclipse/STS : castledragon 우클릭 → Gradle → Refresh Gradle Project
-	//	그래도 안 되면 : Project Clean Project → Clean
-	//	VS Code : Ctrl + Shift + P → Java: Clean Java Language Server Workspace
-	//	IntelliJ : Gradle 탭 → Reload All Gradle Projects
+		Boolean exists = redisTemplate.hasKey(key);
+
+		if (!Boolean.TRUE.equals(exists)) {
+			return;
+		}
+
+		redisTemplate.opsForSet().remove(key, String.valueOf(userId));
+	}
+
 }
+
+//	cd D:\castleDragonProjects\castleChat\castledragon .\gradlew.bat clean compileJava --refresh-dependencies : redis gradle dependency 의존성 해결.(결과적으로 안되긴 함.)
+
+//	IDE에서 castledragon 프로젝트를 Gradle Refresh
+//	Eclipse/STS : castledragon 우클릭 → Gradle → Refresh Gradle Project
+//	그래도 안 되면 : Project Clean Project → Clean
+//	VS Code : Ctrl + Shift + P → Java: Clean Java Language Server Workspace
+//	IntelliJ : Gradle 탭 → Reload All Gradle Projects

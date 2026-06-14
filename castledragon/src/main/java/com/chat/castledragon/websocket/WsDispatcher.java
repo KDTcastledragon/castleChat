@@ -45,7 +45,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 		WebSocketDTO dto = null;
 
 		try {
-			log.info("WebSocket_msg 도착 : {}", message.getPayload());
+			//			log.info("WebSocket_msg 도착 : {}", message.getPayload());
 
 			//		ChatDTO dto = objectMapper.readValue(message.getPayload(), ChatDTO.class); // JSON 문자열을 ChatDTO 객체로 바꿔라 --> WebSocketDTO로 변경되어 legacy.
 			dto = objectMapper.readValue(message.getPayload(), WebSocketDTO.class);
@@ -64,6 +64,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			case "EXIT_ROOM" -> wsChatEventHandler.handleExitRoom(session, dto);
 			case "TYPING_START" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_START");
 			case "TYPING_STOP" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_STOP");
+			case "LEFT_ROOM" -> wsChatEventHandler.handleLeftRoom(session, dto);
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
@@ -105,6 +106,8 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 		//		});
 
 		wsSessionRegistry.removeSessionAllRooms(session);
+
+		wsOutboundWriter.removeSessionLock(session);
 
 		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.

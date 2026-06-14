@@ -6,8 +6,8 @@ import Header from "../Home/Header"
 import RouteBody from "../Home/RouteBody"
 
 import { useMe } from "../../hooks/useAuthUser";
-import { closeChatWindow, moveChatWindow, focusChatWindow } from '../../store/chatWindowsSlice';
-import { connectWs, disconnectWs } from "../../webSocket/wsClient";
+import { closeChatWindow, moveChatWindow, focusChatWindow, clearChatWindows } from '../../store/chatWindowsSlice';
+import { connectWs, disconnectWs, registerWsCloseListener } from "../../webSocket/wsClient";
 
 import ChatBox from '../Chattings/ChatBox';
 
@@ -35,6 +35,14 @@ function AppShell() {
             disconnectWs('AppShell_UNMOUNT');
         }
     }, [me])
+
+    useEffect(() => {
+        const unregister = registerWsCloseListener(() => {
+            dispatch(clearChatWindows());
+        });
+
+        return unregister;
+    }, [dispatch]);
 
     return (
         <>

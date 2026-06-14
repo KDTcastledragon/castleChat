@@ -17,8 +17,14 @@ public class RoomMembersDTO {
 
 	private String role;
 
+	private String customRoomName;
+	private String customRoomThumbnail;
+	private String memberStatus;
+
 	private LocalDateTime joinedAt;
 	private LocalDateTime leftAt;
+	private LocalDateTime kickedAt;
+	private LocalDateTime bannedAt;
 
 	private Long lastReadMessageId;
 

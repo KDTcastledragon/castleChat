@@ -6,16 +6,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class ChatMessageDTO {
-	private Long messageId;
-
+public class PayloadRoomNoticeDTO {
 	private Long roomId;
-	private Long senderId;
-
-	private String messageText;
-
+	private String noticeType;
+	private String message;
 	private LocalDateTime createdAt;
 }

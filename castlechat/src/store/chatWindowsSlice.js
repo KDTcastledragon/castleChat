@@ -30,8 +30,8 @@ const chatWindowsSlice = createSlice({
                 roomName: room.displayRoomName || room.roomName,
                 friend: room.friend || null,
                 memberList: room.memberList || [],
-                x: 420 + state.windows.length * 30,
-                y: 120 + state.windows.length * 30,
+                x: 560 + state.windows.length * 30,
+                y: 90 + state.windows.length * 30,
                 zIndex: Date.now()
             });
         },

@@ -1,5 +1,6 @@
 package com.chat.castledragon.websocket;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8,14 +9,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadEnterRoomDTO;
 import com.chat.castledragon.domain.PayloadExitRoomDTO;
 import com.chat.castledragon.domain.PayloadReadChatMessageRequestDTO;
 import com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO;
+import com.chat.castledragon.domain.PayloadRoomNoticeDTO;
 import com.chat.castledragon.domain.PayloadSendChatMessageRequestDTO;
+import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
 import com.chat.castledragon.domain.PayloadTypingRequestDTO;
 import com.chat.castledragon.domain.PayloadTypingResponseDTO;
+import com.chat.castledragon.domain.RoomIdRequestDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
 import com.chat.castledragon.service.ChatService;
@@ -148,7 +151,7 @@ public class WsChatEventHandler {
 
 		PayloadSendChatMessageRequestDTO payload = convertPayload(dto, PayloadSendChatMessageRequestDTO.class);
 
-		log.info("{} 유저의 wsSendMsg 전송 시도! ", me.getUserId());
+		//		log.info("{} 유저의 wsSendMsg 전송 시도! ", me.getUserId());
 
 		if (payload.getRoomId() == null || payload.getMessageText() == null) {
 			log.warn("SEND_MSG Data 누락 : {} / {}", payload.getRoomId(), payload.getMessageText());
@@ -166,7 +169,7 @@ public class WsChatEventHandler {
 
 			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 
-			log.info("{}번 유저가 {}번방으로 메시지 전송: {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
+			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
 
 		} catch (Exception e) {
 			log.error("메시지 저장 실패", e);
@@ -200,7 +203,7 @@ public class WsChatEventHandler {
 
 		PayloadReadChatMessageResponseDTO responsePayload = chatService.readChatMessage(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getLastReadMessageId());
 
-		log.info("{}({}) 유저가 {}번방 {}번 메시지까지 읽음", me.getNickname(), me.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
+		//		log.info("{}({}) 유저가 {}번방 {}번 메시지까지 읽음", me.getNickname(), me.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
 
 		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", responsePayload, dto.getRequestId());
 		//		responseOk(session, dto, "READ_MSG_OK", payload);
@@ -222,9 +225,26 @@ public class WsChatEventHandler {
 
 		PayloadTypingResponseDTO responsePayload = new PayloadTypingResponseDTO(payload.getRoomId(), me.getPublicId(), me.getNickname());
 
-		log.info("{} in room={}", eventType, responsePayload.getRoomId());
+		//		log.info("{} in room={}", eventType, responsePayload.getRoomId());
 
 		wsOutboundWriter.broadcastToRoomExceptUser(payload.getRoomId(), eventType, responsePayload, dto.getRequestId(), me.getUserId());
+	}
+
+	//	====== 채팅방 나가기 ===========================================================================================================
+	void handleLeftRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		SessionUserDTO me = wsAuth.requireLoginUser(session);
+		RoomIdRequestDTO payload = convertPayload(dto, RoomIdRequestDTO.class);
+
+		if (payload.getRoomId() == null) {
+			wsOutboundWriter.responseFail(session, dto, "LEFT_ROOM_FAIL", "roomId 없음");
+			return;
+		}
+
+		wsSessionRegistry.exitRoom(payload.getRoomId(), me.getUserId());
+
+		PayloadRoomNoticeDTO notice = new PayloadRoomNoticeDTO(payload.getRoomId(), "MEMBER_LEFT", me.getNickname() + "님이 나갔습니다.", LocalDateTime.now());
+
+		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_NOTICE", notice, dto.getRequestId());
 	}
 
 }

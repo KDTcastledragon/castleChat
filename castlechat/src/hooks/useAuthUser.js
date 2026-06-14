@@ -2,10 +2,13 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { loginApi, logoutApi, meApi } from '../api/userApi';
 import { disconnectWs } from '../webSocket/wsClient';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { clearChatWindows } from '../store/chatWindowsSlice';
 
 // ====== 로그인 =============================================================================================================
 export function useLogin() {
     const queryClient = useQueryClient();
+
 
     return useMutation({
         mutationFn: loginApi,
@@ -19,6 +22,7 @@ export function useLogin() {
 export function useLogout() {
     const queryClient = useQueryClient();
     const nav = useNavigate();
+    const dispatch = useDispatch();
 
     return useMutation({
         // mutationFn: logoutApi,
@@ -31,8 +35,9 @@ export function useLogout() {
             // queryClient.setQueryData(['me'], null);
             // queryClient.removeQueries({ queryKey: ['users'] });
             // clear()가 위의 두줄포함 싹싹 비워줌.
-            queryClient.clear();
 
+            dispatch(clearChatWindows());
+            queryClient.clear();
             nav('/login');
         },
     });

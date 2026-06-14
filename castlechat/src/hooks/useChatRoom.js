@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { openChatWindow } from '../store/chatWindowsSlice';
 import { emitWs } from '../webSocket/wsClient';
-import { getOrCreateDirectRoomApi, createGroupRoomApi, enterExistingRoomApi, getMyAllRoomsApi } from '../api/chatApi';
+import { getOrCreateDirectRoomApi, createGroupRoomApi, enterExistedRoomApi, getMyAllRoomsApi } from '../api/chatApi';
 
 export function useChatRoomActions() {
     const dispatch = useDispatch();
@@ -55,8 +55,8 @@ export function useChatRoomActions() {
     }
 
     // getOr & enterExist -> 둘 다 “방 정보 반환”이라 겹쳐 보이지만, 식별자가 다르다는 점에서 역할이 분명히 달라.
-    async function enterExistingRoom(room) {
-        const roomInfo = await enterExistingRoomApi(room.roomId);
+    async function enterExistingRoom(roomId) {
+        const roomInfo = await enterExistedRoomApi(roomId);
         openRoom(roomInfo);
         return roomInfo;
     }

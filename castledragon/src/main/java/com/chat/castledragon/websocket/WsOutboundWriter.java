@@ -2,6 +2,7 @@ package com.chat.castledragon.websocket;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -24,6 +25,21 @@ public class WsOutboundWriter {
 	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper) {
 		this.wsSessionRegistry = wsSessionRegistry;
 		this.objectMapper = objectMapper;
+	}
+
+	// TEXT_PARTIAL_WRITING 해결용. 같은 WebSocketSession에 동시에 sendMessage가 들어가는 것을 막기 위한 session별 lock.
+	private final Map<String, Object> sessionSendLocks = new ConcurrentHashMap<>();
+
+	private Object getSessionSendLock(WebSocketSession session) {
+		return sessionSendLocks.computeIfAbsent(session.getId(), id -> new Object());
+	}
+
+	public void removeSessionLock(WebSocketSession session) {
+		if (session == null) {
+			return;
+		}
+
+		sessionSendLocks.remove(session.getId());
 	}
 
 	//	====== broadcast ===========================================================================================================
@@ -83,9 +99,14 @@ public class WsOutboundWriter {
 			}
 
 			try {
-				if (s.isOpen()) {
-					s.sendMessage(new TextMessage(payload));
+				synchronized (getSessionSendLock(s)) {
+					if (s.isOpen()) {
+						s.sendMessage(new TextMessage(payload));
+					}
 				}
+				//				if (s.isOpen()) {
+				//					s.sendMessage(new TextMessage(payload));
+				//				}
 			} catch (Exception e) {
 				log.error("typing broadcast 실패", e);
 			}
@@ -124,7 +145,12 @@ public class WsOutboundWriter {
 		}
 
 		String payload = objectMapper.writeValueAsString(dto);
-		session.sendMessage(new TextMessage(payload));
+
+		//		session.sendMessage(new TextMessage(payload));
+
+		synchronized (getSessionSendLock(session)) {
+			session.sendMessage(new TextMessage(payload));
+		}
 	}
 
 }

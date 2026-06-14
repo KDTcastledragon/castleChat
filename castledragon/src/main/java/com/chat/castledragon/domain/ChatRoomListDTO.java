@@ -11,9 +11,11 @@ public class ChatRoomListDTO {
 
 	private String roomType;
 
-	private String roomName;
+	private String customRoomName;
 
-	private String displayRoomName;
+	private String customRoomThumbnail;
+
+	private Long activeMemberCount;
 
 	private Long unreadCount;
 

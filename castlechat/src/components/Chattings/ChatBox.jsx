@@ -2,14 +2,17 @@ import './ChatBox.css';
 
 import axios from 'axios';
 import { useEffect, useState, useRef } from 'react';
-import { emitWsExitRoom, emitWsReadMessage, emitWsSendMessage, emitWsTypingStart, emitWsTypingStop, registerRoomHandler, unregisterRoomHandler } from '../../webSocket/wsClient';
+import { emitWsExitRoom, emitWsLeftRoom, emitWsReadMessage, emitWsSendMessage, emitWsTypingStart, emitWsTypingStop, registerRoomHandler, unregisterRoomHandler } from '../../webSocket/wsClient';
 import { useMe } from '../../hooks/useAuthUser';
+import { useQueryClient } from '@tanstack/react-query';
+import { leftRoomApi } from '../../api/chatApi';
 
 function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
 
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
+    const queryClient = useQueryClient();
     const { data: me } = useMe(); // { date : me} 아님. 오타 주의
 
     const { publicId: myPublicId, nickname: myNickname, friendCode: myFriendCode, profileImg: myProfileImg } = me || {}; // me가 null일경우, undefined상태로 만듦.
@@ -161,7 +164,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
                         return {
                             ...msg,
-                            unreadCount: updated.unreadCount
+                            unreadCount: Math.min(Number(msg.unreadCount ?? updated.unreadCount), Number(updated.unreadCount))
+                            // unreadCount: updated.unreadCount // 서버에서 2가 먼저 오고, 늦게 3이 도착하면 화면 숫자가 다시 증가할 수 있음. 읽음 숫자는 같은 메시지 기준으로 줄어들 수는 있어도 다시 늘어나면 이상함.
                         };
                     })
                 );
@@ -195,6 +199,22 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                 setTypingUsers(prev =>
                     prev.filter(user => user.publicId !== typingInfo.publicId)
                 );
+            }//if4.
+
+            // 5. 채팅방 나가기 ws 처리.
+            if (wsResponse.wsType === "ROOM_NOTICE") {
+                const notice = wsResponse.payload;
+
+                setPrevChattings(prev => [
+                    ...prev,
+                    {
+                        messageId: `notice-${crypto.randomUUID()}`,
+                        roomId: notice.roomId,
+                        messageText: notice.message,
+                        messageType: 'SYSTEM',
+                        createdAt: notice.createdAt
+                    }
+                ]);
             }
         });
 
@@ -276,7 +296,20 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         exitChatRoom(); // chatBox창 unmount.
     };
 
+    async function leftRoom() {
+        try {
+            await leftRoomApi(roomId);
 
+            emitWsLeftRoom(roomId);
+            // emitWsExitRoom(roomId);
+            exitChatRoom();
+
+            queryClient.invalidateQueries({ queryKey: ['myAllRooms'] }); // ChatList rerendering은 바로 이 줄에서 일어남.
+        } catch (e) {
+            console.error('방 나가기 실패', e);
+            alert('방 나가기 실패');
+        }
+    }
 
     // ======< return >=======================================================================================================
     return (
@@ -300,11 +333,18 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     >
                         닫기
                     </button>
+                    <button
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={leftRoom}
+                    >
+                        방 나가기
+                    </button>
                 </div>
 
                 <div className='chattingBox'>
-                    {prevChattings && prevChattings.length > 0 ?
+                    {/* {prevChattings && prevChattings.length > 0 ?
                         prevChattings.map((d, i) => (
+
                             <div
                                 key={d.messageId}
                                 className={`chatRow ${d.senderPublicId === myPublicId ? 'mine' : 'other'}`}
@@ -328,6 +368,45 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                                 )}
                             </div>
                         ))
+                        :
+                        <div>친구와 새로운 이야기를 시작해보세요.</div>
+                    } */}
+
+                    {prevChattings && prevChattings.length > 0 ?
+                        prevChattings.map((d) => {
+                            if (d.messageType === 'SYSTEM') {
+                                return (
+                                    <div key={d.messageId} className="systemMessage">
+                                        {d.messageText}
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div
+                                    key={d.messageId}
+                                    className={`chatRow ${d.senderPublicId === myPublicId ? 'mine' : 'other'}`}
+                                >
+                                    {d.senderPublicId === myPublicId && (
+                                        <div className='messageInfo'>
+                                            <div className='unreadCount'>{d.unreadCount}</div>
+                                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                        </div>
+                                    )}
+
+                                    <div className='messageWrap'>
+                                        <div className="messageText">{d.messageText}</div>
+                                    </div>
+
+                                    {d.senderPublicId !== myPublicId && (
+                                        <div className='messageInfo'>
+                                            <div className='unreadCount'>{d.unreadCount}</div>
+                                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
                         :
                         <div>친구와 새로운 이야기를 시작해보세요.</div>
                     }

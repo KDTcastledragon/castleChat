@@ -6,6 +6,7 @@ let isConnected = false; // isWsConnectedRef 대체.
 let isManualDisconnect = false;
 const roomHandlers = {}; // 방별 이벤트 처리 함수 보관소야.
 
+
 // ====== 2. constants =========================================================================================================
 const WS_TYPES = {
     CONNECT_USER: "CONNECT_USER",
@@ -14,7 +15,8 @@ const WS_TYPES = {
     SEND_MSG: "SEND_MSG",
     READ_MSG: "READ_MSG",
     TYPING_START: "TYPING_START",
-    TYPING_STOP: "TYPING_STOP"
+    TYPING_STOP: "TYPING_STOP",
+    LEFT_ROOM: "LEFT_ROOM"
 };
 
 // 왜 appshell에서는 useRef를 쓴거야? 여기서는 단순히 let 변수로써 단순한 구조로 되는데?
@@ -102,7 +104,8 @@ export function connectWs() {
             case 'MSG_CREATED':
             case 'MSG_READ':
             case 'TYPING_START':
-            case 'TYPING_STOP': {
+            case 'TYPING_STOP':
+            case 'ROOM_NOTICE': {
                 const roomId = wsEvt.payload?.roomId;
 
                 if (roomId == null) { // roomId가 없으면 roomHandlers[undefined]를 보게 됨. 큰 문제는 아니지만, 명시적으로 막으면 더 좋음.
@@ -130,11 +133,9 @@ export function connectWs() {
             isManualDisconnect = false;
 
         } else {
-            console.log('WebSocket 비정상/외부 종료', {
-                code: evt.code,
-                reason: evt.reason,
-                wasClean: evt.wasClean
-            });
+            console.log('WebSocket 비정상/외부 종료', { code: evt.code, reason: evt.reason, wasClean: evt.wasClean });
+
+            notifyWsClosed({ code: evt.code, reason: evt.reason, wasClean: evt.wasClean });
         }
 
         isConnected = false;
@@ -228,6 +229,25 @@ export function emitWsTypingStart(roomId) {
 
 export function emitWsTypingStop(roomId) {
     return emitWs(WS_TYPES.TYPING_STOP, { roomId: roomId });
+}
+
+export function emitWsLeftRoom(roomId) {
+    return emitWs(WS_TYPES.LEFT_ROOM, { roomId: roomId });
+}
+
+// wsClient.js에 “WS close listener”를 하나 만들자. wsClient는 Redux를 직접 몰라야 하니까, AppShell이 listener를 등록해서 dispatch하는 구조가 제일 깔끔해.
+const wsCloseListeners = new Set();
+
+export function registerWsCloseListener(listener) {
+    wsCloseListeners.add(listener);
+
+    return () => {
+        wsCloseListeners.delete(listener);
+    };
+}
+
+function notifyWsClosed(closeInfo) {
+    wsCloseListeners.forEach(listener => listener(closeInfo));
 }
 
 // ws 객체 대략 구조

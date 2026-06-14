@@ -75,12 +75,20 @@
 
 /* ====[채팅방]============================================= */
 .chatBoxContainer {
-    position: absolute;
-    left: 750px;
-    width: 300px;
-    height: 660px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.chattingRoomSection {
+    position: fixed;
+    width: 400px;
     background-color: rgb(252, 255, 198);
     border: 1px solid black;
+    pointer-events: auto;
 }
 
 .chattingBox {
