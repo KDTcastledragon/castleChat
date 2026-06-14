@@ -99,10 +99,16 @@ public class ChatServiceImpl implements ChatService {
 
 			log.info("roomId={}  user1 : {}, user2 : {} newRoomCreated", room.getRoomId(), senderInfo.getUserId(), friendInfo.getUserId());
 		} else {
+			chatMapper.reactivateRoomMember(room.getRoomId(), senderInfo.getUserId());
+			chatMapper.reactivateRoomMember(room.getRoomId(), friendInfo.getUserId());
+
 			Long finalRoomId = room.getRoomId();
-			roomMemberCache.getOrLoadRoomMembers(finalRoomId, () -> chatMapper.findActiveRoomMemberIds(finalRoomId));
+			//			roomMemberCache.getOrLoadRoomMembers(room.getRoomId(), () -> chatMapper.findActiveRoomMemberIds(room.getRoomId()));
+			//			roomMemberCache.getOrLoadRoomMembers(finalRoomId, () -> chatMapper.findActiveRoomMemberIds(finalRoomId));
 			// 여기서 finalRoomId를 쓰는 이유는 람다 안에서 사용하는 지역 변수는 Java에서 effectively final이어야 하기 때문이야. 
 			// roomId는 위에서 값이 바뀌었으니 람다 안에서 바로 쓰면 오류가 날 수 있어.
+
+			roomMemberCache.initOrReplaceRoomMembers(room.getRoomId(), Set.of(senderInfo.getUserId(), friendInfo.getUserId()));
 		}
 
 		// 3. DTO 조립
