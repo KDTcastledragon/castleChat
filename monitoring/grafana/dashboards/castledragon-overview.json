@@ -1,0 +1,165 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "panels": [
+        {
+            "type": "stat",
+            "title": "Spring Boot 상태",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "up{job=\"castledragon\"}",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "JVM Heap 메모리",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(jvm_memory_used_bytes{job=\"castledragon\",area=\"heap\"})",
+                    "legendFormat": "Heap used",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 6,
+                "y": 0
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "System CPU 사용률",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "system_cpu_usage{job=\"castledragon\"} * 100",
+                    "legendFormat": "CPU",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percent"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 15,
+                "y": 0
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "HTTP 초당 요청 수",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(http_server_requests_seconds_count{job=\"castledragon\"}[1m]))",
+                    "legendFormat": "requests/sec",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 0,
+                "y": 8
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "HTTP 평균 응답시간",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "(sum(rate(http_server_requests_seconds_sum{job=\"castledragon\"}[1m])) / clamp_min(sum(rate(http_server_requests_seconds_count{job=\"castledragon\"}[1m])), 0.001)) * 1000",
+                    "legendFormat": "average latency",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "ms"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 8,
+                "y": 8
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "DB 활성 Connection",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "hikaricp_connections_active{job=\"castledragon\"}",
+                    "legendFormat": "active connections",
+                    "refId": "A"
+                }
+            ],
+            "gridPos": {
+                "h": 8,
+                "w": 8,
+                "x": 16,
+                "y": 8
+            }
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 39,
+    "tags": [
+        "castledragon",
+        "spring-boot"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-15m",
+        "to": "now"
+    },
+    "timezone": "browser",
+    "title": "CastleDragon Overview",
+    "uid": "castledragon-overview",
+    "version": 1
+}

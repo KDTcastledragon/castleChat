@@ -1,0 +1,337 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "graphTooltip": 0,
+    "links": [],
+    "panels": [
+        {
+            "type": "stat",
+            "title": "현재 WebSocket 연결 수",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(chat_ws_connected_sessions{job=\"castledragon\"})",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "auto"
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 0,
+                "y": 0
+            }
+        },
+        {
+            "type": "stat",
+            "title": "현재 활성 채팅방 수",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(chat_room_active_count{job=\"castledragon\"})",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "auto"
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 6,
+                "y": 0
+            }
+        },
+        {
+            "type": "stat",
+            "title": "현재 Room Viewing Session 수",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(chat_room_viewing_sessions{job=\"castledragon\"})",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "auto"
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 12,
+                "y": 0
+            }
+        },
+        {
+            "type": "stat",
+            "title": "WebSocket Broadcast 실패",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(chat_broadcast_fail_total{job=\"castledragon\"})",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "textMode": "auto"
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 6,
+                "x": 18,
+                "y": 0
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "초당 메시지 처리량",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(chat_send_message_total{job=\"castledragon\"}[1m]))",
+                    "legendFormat": "messages/sec",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "showPoints": "auto"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            }
+        },
+        {
+            "type": "timeseries",
+            "title": "초당 READ_MSG 처리량",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "castle-prometheus"
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(chat_read_message_total{job=\"castledragon\"}[1m]))",
+                    "legendFormat": "read-events/sec",
+                    "refId": "A"
+                }
+            ],
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "showPoints": "auto"
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 8
+            }
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 39,
+    "tags": [
+        "castledragon",
+        "websocket"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-15m",
+        "to": "now"
+    },
+    "timezone": "browser",
+    "title": "CastleDragon WebSocket Monitoring",
+    "uid": "castledragon-websocket",
+    "version": 1
+}

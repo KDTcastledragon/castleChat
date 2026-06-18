@@ -21,6 +21,7 @@ import com.chat.castledragon.domain.PayloadTypingResponseDTO;
 import com.chat.castledragon.domain.RoomIdRequestDTO;
 import com.chat.castledragon.domain.SessionUserDTO;
 import com.chat.castledragon.domain.WebSocketDTO;
+import com.chat.castledragon.monitoring.ChatMetrics;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,13 +39,16 @@ public class WsChatEventHandler {
 	private final WsOutboundWriter wsOutboundWriter;
 	private final WsAuth wsAuth;
 	private final ChatService chatService;
+	private final ChatMetrics chatMetrics;
 
 	// 생성자 주입
-	public WsChatEventHandler(WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter, WsAuth wsAuth, ChatService chatService) {
+	public WsChatEventHandler(WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter, WsAuth wsAuth, ChatService chatService,
+			ChatMetrics chatMetrics) {
 		this.wsSessionRegistry = wsSessionRegistry;
 		this.wsOutboundWriter = wsOutboundWriter;
 		this.wsAuth = wsAuth;
 		this.chatService = chatService;
+		this.chatMetrics = chatMetrics;
 	}
 
 	// chatService를 생성자로 받습니다.
@@ -166,9 +170,8 @@ public class WsChatEventHandler {
 			//			ChatMessageDTO chat = chatService.sendMessage(me.getUserId(), payload, viewingUserIds);
 
 			PayloadSendChatMessageResponseDTO resChat = chatService.createChatMessage(me.getUserId(), me.getPublicId(), payload, viewingUserIds);
-
+			chatMetrics.incrementSendMessage();
 			wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
-
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
 
 		} catch (Exception e) {
@@ -204,7 +207,7 @@ public class WsChatEventHandler {
 		PayloadReadChatMessageResponseDTO responsePayload = chatService.readChatMessage(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getLastReadMessageId());
 
 		//		log.info("{}({}) 유저가 {}번방 {}번 메시지까지 읽음", me.getNickname(), me.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
-
+		chatMetrics.incrementSendMessage();
 		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", responsePayload, dto.getRequestId());
 		//		responseOk(session, dto, "READ_MSG_OK", payload);
 	}

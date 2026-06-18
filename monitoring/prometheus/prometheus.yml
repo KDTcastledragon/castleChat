@@ -1,0 +1,14 @@
+# FE나 BE 어느 한쪽의 소스코드가 아니라, 프로젝트 전체를 관측하는 인프라 설정.
+
+global:
+  scrape_interval: 5s # 5초마다 Spring Boot metric을 가져옴
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: "castledragon" # Prometheus 내부에서 사용할 서버 이름
+    metrics_path: "/actuator/prometheus" # metric을 가져올 endpoint
+
+    static_configs:
+      - targets:
+          - "host.docker.internal:8080" # Docker 컨테이너에서 Windows 호스트의 Spring Boot에 접근하는 주소
+

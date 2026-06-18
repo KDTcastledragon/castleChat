@@ -91,6 +91,18 @@ public class WsSessionRegistry {
 		log.info("{}번 유저 {}번방 roomSession 제거", userId, roomId);
 	}
 
+	public int getConnectedSessionCount() {
+		return connectedUserSessions.size();
+	}
+
+	public int getActiveRoomCount() {
+		return roomSessions.size();
+	}
+
+	public int getRoomViewingSessionCount() {
+		return roomSessions.values().stream().mapToInt(Map::size).sum();
+	}
+
 }// WsSessionRegistry
 
 //private Long getLoginUserId(WebSocketSession session) { // --> 중복이라 불필요함.
