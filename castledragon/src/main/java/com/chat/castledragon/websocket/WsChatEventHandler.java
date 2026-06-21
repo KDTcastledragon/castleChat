@@ -25,10 +25,12 @@ import com.chat.castledragon.monitoring.ChatMetrics;
 import com.chat.castledragon.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
+@RequiredArgsConstructor
 public class WsChatEventHandler {
 
 	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
@@ -42,14 +44,14 @@ public class WsChatEventHandler {
 	private final ChatMetrics chatMetrics;
 
 	// 생성자 주입
-	public WsChatEventHandler(WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter, WsAuth wsAuth, ChatService chatService,
-			ChatMetrics chatMetrics) {
-		this.wsSessionRegistry = wsSessionRegistry;
-		this.wsOutboundWriter = wsOutboundWriter;
-		this.wsAuth = wsAuth;
-		this.chatService = chatService;
-		this.chatMetrics = chatMetrics;
-	}
+	//	public WsChatEventHandler(WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter, WsAuth wsAuth, ChatService chatService,
+	//			ChatMetrics chatMetrics) {
+	//		this.wsSessionRegistry = wsSessionRegistry;
+	//		this.wsOutboundWriter = wsOutboundWriter;
+	//		this.wsAuth = wsAuth;
+	//		this.chatService = chatService;
+	//		this.chatMetrics = chatMetrics;
+	//	}
 
 	// chatService를 생성자로 받습니다.
 	// Spring이 ChatHandler를 만들 때, 이미 Bean으로 등록된 ChatService를 찾아서 넣어줍니다. 이걸 생성자 주입이라고 합니다.

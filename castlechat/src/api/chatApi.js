@@ -36,3 +36,11 @@ export async function leftRoomApi(roomId) {
 
     return res.data;
 }
+
+export async function deleteMsgApi(msgId) {
+    const res = await axios.post(`/chat/deleteMsg`, {
+        msgId: msgId
+    });
+
+    return res.data;
+}
