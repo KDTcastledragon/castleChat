@@ -4,9 +4,11 @@ import java.io.Serializable;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 
 // 서버가 요청자를 식별하고 인가하기 위한 최소 정보
 public class SessionUserDTO implements Serializable {

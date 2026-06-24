@@ -1,3 +1,7 @@
+/** =========================================================================================================================== */
+/** ============================== root ============================== */
+/** =========================================================================================================================== */
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.5' apply false
@@ -38,4 +42,8 @@ subprojects {
     tasks.withType(Test).configureEach {
         useJUnitPlatform()
     }
+    
+    tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
 }

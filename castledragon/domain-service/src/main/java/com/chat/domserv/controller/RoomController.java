@@ -25,13 +25,25 @@ import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
-@RequestMapping("/chat")
+@RequestMapping("/room")
 @AllArgsConstructor
 @Log4j2
-public class ChatController {
+public class RoomController {
 	UserService userService;
-
 	ChatService chatService;
+
+	//	domain-service에 남길 것
+	//	getOrCreateDirectRoom
+	//	createGroupRoom
+	//	enterExistedRoom
+	//	loadMessagesInRoom
+	//	getMyAllChatRooms
+
+	//	이유:
+	//	HTTP request/response로 충분함
+	//	실시간 room event queue 순서 보장이 핵심 아님
+	//	방 생성/조회/이력 조회는 DB transaction + query 성격
+	//	프론트가 방 정보를 받아 렌더링하는 API
 
 	@PostMapping("/getOrCreateDirectRoom") // 무조건 “방(room)”을 먼저 만든다
 	public ResponseEntity<?> getOrCreateDirectRoom(@RequestBody Map<String, Object> data, HttpSession session) {
@@ -125,37 +137,4 @@ public class ChatController {
 
 		return ResponseEntity.ok().build();
 	}
-} // enterRoom 끝.
-
-//@PostMapping("/updateLastRead") --> http 에서 ws로 read/send 이벤트를 처리할 것이기 때문에.
-//public void updateLastRead(@RequestBody Map<String, Object> data) {
-//
-//	if (data == null) {
-//		return;
-//	}
-//
-//	Object roomObj = data.get("roomId");
-//	Object userObj = data.get("userId");
-//	Object lastObj = data.get("lastReadMessageId");
-//
-//	if (roomObj == null || userObj == null || lastObj == null) {
-//		log.warn("updateLastRead null 데이터: {}", data);
-//		return;
-//	}
-//
-//	Long roomId = Long.valueOf(roomObj.toString());
-//	Long userId = Long.valueOf(userObj.toString());
-//	Long lastReadMessageId = Long.valueOf(lastObj.toString());
-//
-//	chatService.updateLastRead(roomId, userId, lastReadMessageId);
-//}
-
-//	@PostMapping("/updateLastRead")
-//	public void updateLastRead(@RequestBody Map<String, Object> data) {
-//
-//		Long roomId = Long.valueOf(data.get("roomId").toString());
-//		Long userId = Long.valueOf(data.get("userId").toString());
-//		Long lastReadMessageId = Long.valueOf(data.get("lastReadMessageId").toString());
-//
-//		chatService.updateLastRead(roomId, userId, lastReadMessageId);
-//	}
+}

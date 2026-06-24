@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.castledragon.domain.FriendDTO;
-import com.chat.castledragon.domain.SessionUserDTO;
-import com.chat.castledragon.domain.UserProfileResponseDTO;
-import com.chat.castledragon.service.FriendService;
+import com.chat.cmctr.dto.FriendDTO;
+import com.chat.cmctr.dto.SessionUserDTO;
+import com.chat.cmctr.dto.UserProfileResponseDTO;
+import com.chat.domserv.service.FriendService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;

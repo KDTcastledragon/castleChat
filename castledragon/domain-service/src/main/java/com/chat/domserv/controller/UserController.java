@@ -13,28 +13,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.castledragon.domain.LoginRequestDTO;
-import com.chat.castledragon.domain.SessionUserDTO;
-import com.chat.castledragon.domain.UserDTO;
-import com.chat.castledragon.domain.UserProfileResponseDTO;
-import com.chat.castledragon.service.UserService;
-import com.chat.castledragon.websocket.WsDispatcher;
+import com.chat.cmctr.dto.SessionUserDTO;
+import com.chat.cmctr.dto.UserProfileResponseDTO;
+import com.chat.domserv.domain.LoginRequestDTO;
+import com.chat.domserv.domain.UserDTO;
+import com.chat.domserv.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
-import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
 @RequestMapping("/user")
-@AllArgsConstructor
 @Log4j2
 public class UserController {
 	UserService userService;
-
 	PasswordEncoder pwEncoder;
-
 	WsDispatcher wsDispatcher; // private final을 꼭 붙여야 하나??
 
+	// ======[ 로그인 ]=================================================================================================
 	@PostMapping("/login")
 	public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginData, HttpSession session) {
 		log.info("{}의 login 시도  :", loginData.getLoginId());
@@ -54,19 +50,7 @@ public class UserController {
 		return ResponseEntity.ok(loginResponse);
 	}// login
 
-	@GetMapping("/isMe")
-	public ResponseEntity<?> isMe(HttpSession session) {
-		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (loginUser == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
-		}
-
-		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser.getFriendCode(), loginUser.getProfileImg()); // friCode = null
-
-		return ResponseEntity.ok(isMeTrue);
-	}// isMe
-
+	// ======[ 로그아웃 ]=================================================================================================
 	@PostMapping("/logout")
 	public ResponseEntity<?> logout(HttpSession session) {
 
@@ -81,7 +65,21 @@ public class UserController {
 		return ResponseEntity.ok().build();
 	}// logout
 
-	// ====[중복체크]========================================================================================
+	// ======[ 중복체크 ]=================================================================================================
+	@GetMapping("/isMe")
+	public ResponseEntity<?> isMe(HttpSession session) {
+		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (loginUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser.getFriendCode(), loginUser.getProfileImg()); // friCode = null
+
+		return ResponseEntity.ok(isMeTrue);
+	}// isMe
+
+	// ======[ 중복체크 ]=================================================================================================
 	@PostMapping("/loginIdDuplicateCheck")
 	public ResponseEntity<?> idDupCheck(@RequestBody UserDTO data) {
 		try {
