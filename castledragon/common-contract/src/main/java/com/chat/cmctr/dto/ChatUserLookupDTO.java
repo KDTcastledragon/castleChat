@@ -1,4 +1,4 @@
-package com.chat.castledragon.domain;
+package com.chat.cmctr.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

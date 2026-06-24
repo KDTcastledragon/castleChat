@@ -1,4 +1,4 @@
-package com.chat.castledragon.mapper;
+package com.chat.domserv.mapper;
 
 import java.util.List;
 
