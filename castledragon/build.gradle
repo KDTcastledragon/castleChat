@@ -1,4 +1,46 @@
 plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.5' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+}
+
+allprojects {
+    group = 'com.chat'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
+        }
+    }
+
+    configurations {
+        compileOnly {
+            extendsFrom annotationProcessor
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.5"
+        }
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+}
+
+/*plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
@@ -30,23 +72,23 @@ dependencies {
 	
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.5'
 	
-	/** BCryptPasswordEncoder */
+	* BCryptPasswordEncoder 
 	implementation 'org.springframework.security:spring-security-crypto'
 	
-	/** → Redis 접속/조작 도구 */
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	* Redis에 명령을 보내는 RedisTemplate, Lettuce client 제공
 	
-	/** → HttpSession을 Redis에 저장하게 해주는 Spring Session 기능 */
 	implementation 'org.springframework.session:spring-session-data-redis'
+	* HttpSession을 Redis에 저장하는 Filter와 Repository 제공 
 	
-	/** public_id 생성을 위한 ULID */
+	* public_id 생성을 위한 ULID 
 	implementation 'com.github.f4b6a3:ulid-creator:5.2.3'
 	
-	/** Actuator Prometheus 의존성 추가 */
+	* Actuator Prometheus 의존성 추가 
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 	
-	/** implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'  정 안되면 얘라도 넣어서...*/ 
+	* implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'  정 안되면 얘라도 넣어서... 
 	
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -61,4 +103,4 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
-}
+}*/

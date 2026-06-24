@@ -9,7 +9,6 @@ export async function getOrCreateDirectRoomApi(friendPublicId) {
     const res = await axios.post('/chat/getOrCreateDirectRoom', {
         friendPublicId: friendPublicId
     });
-
     return res.data;
 }
 
@@ -25,7 +24,6 @@ export async function createGroupRoomApi(data) {
 // 이미 'created'된 enterRoom의 info를 get하기 위해서는 결국 http request api가 필요하다.
 export async function enterExistedRoomApi(roomId) {
     const res = await axios.get(`/chat/enterExistedRoom/${roomId}`);
-
     return res.data;
 }
 
