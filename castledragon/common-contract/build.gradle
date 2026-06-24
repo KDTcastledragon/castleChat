@@ -1,0 +1,13 @@
+plugins {
+    id 'java-library'
+    /** 실행 jar가 아니라 다른 module이 가져다 쓰는 라이브러리라서. */
+}
+
+description = 'common contract'
+
+dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-annotations'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+}

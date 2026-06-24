@@ -1,5 +1,6 @@
 rootProject.name = 'castledragon'
 
+include 'common-contract'
 include 'domain-service'
 include 'ws-gateway'
 include 'chat-orchestrator'
