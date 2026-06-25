@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.SessionUserDTO;
+import com.chat.contract.domain.SessionUserDTO;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -16,7 +16,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 public class WsSessionRegistry {
 
-	final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
+	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
 	// final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	// final : 이 클래스가 생성될 때 주입받은 WsSessionRegistry 참조를 나중에 다른 객체로 바꿔치기하지 못하게 막는 것.
 	// -> 여러 클래스가 각자 Map을 만들지 않고 Spring이 만든 WsSessionRegistry 하나를 공유해서하나의 접속 명부를 공통 관리하게 한다
@@ -34,13 +34,43 @@ public class WsSessionRegistry {
 	//	   └─ userId
 	//	      └─ WebSocketSession
 
-	final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
+	private final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
 	//	ConcurrentHashMap 왜 씀?? 일반 HashMap은 여러 thread가 동시에 수정하면 문제가 생길 수 있습니다.그래서 thread-safe한 Map인 ConcurrentHashMap씀. 동시에 여러 요청이 건드려도 일반 HashMap보다 안전한 Map
 	//	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
 
+	// ====== 로그인 유저 등록 ===========================================================================================================
+	public void registerConnectedUser(WebSocketSession session, SessionUserDTO loginUser) {
+		connectedUserSessions.put(session, loginUser);
+	}
+
+	public SessionUserDTO removeConnectedUser(WebSocketSession session) {
+		return connectedUserSessions.remove(session);
+	}
+
+	// ====== roomSession에 등록 ===========================================================================================================
+	public void enterRoomSession(Long roomId, Long userId, WebSocketSession session) {
+		roomSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put(userId, session);
+	}
+
+	// ====== roomSession에서 삭제 ===========================================================================================================
+	public void exitRoomSession(Long roomId, Long userId) {
+		Map<Long, WebSocketSession> enteredUserInfo = roomSessions.get(roomId);
+
+		if (enteredUserInfo == null || enteredUserInfo.isEmpty()) {
+			log.info("{} 유저는 방에 접속중이 아닙니다.", userId);
+			return;
+		}
+
+		enteredUserInfo.remove(userId);
+
+		if (enteredUserInfo.isEmpty()) {
+			roomSessions.remove(roomId);
+		}
+	}
+
 	// ====== 모든 방 exit 처리 ===========================================================================================================
 	// 사용자가 보내는 WS 이벤트가 아니라 연결 종료 cleanup 내부 동작이야. 그래서 이건 private으로 둔다.
-	void removeSessionAllRooms(WebSocketSession session) {
+	public void removeSessionAllRooms(WebSocketSession session) {
 		roomSessions.forEach((roomId, userMap) -> {
 			userMap.entrySet().removeIf(entry -> entry.getValue().equals(session));
 
@@ -51,7 +81,7 @@ public class WsSessionRegistry {
 	}
 
 	// ====== 현재 채팅방 접속중인 유저찾기 ===========================================================================================================
-	Set<Long> getViewingUserIds(Long roomId) {
+	public Set<Long> getViewingUserIds(Long roomId) {
 		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
@@ -63,7 +93,7 @@ public class WsSessionRegistry {
 		return new HashSet<>(sessions.keySet());
 	}
 
-	Map<Long, WebSocketSession> getRoomSessions(Long roomId) {
+	public Map<Long, WebSocketSession> getRoomSessions(Long roomId) {
 		Map<Long, WebSocketSession> sessions = roomSessions.get(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
@@ -73,22 +103,6 @@ public class WsSessionRegistry {
 		sessions.entrySet().removeIf(entry -> !entry.getValue().isOpen());
 
 		return sessions;
-	}
-
-	void exitRoom(Long roomId, Long userId) {
-		Map<Long, WebSocketSession> userMap = roomSessions.get(roomId);
-
-		if (userMap == null || userMap.isEmpty()) {
-			return;
-		}
-
-		userMap.remove(userId);
-
-		if (userMap.isEmpty()) {
-			roomSessions.remove(roomId);
-		}
-
-		log.info("{}번 유저 {}번방 roomSession 제거", userId, roomId);
 	}
 
 	public int getConnectedSessionCount() {

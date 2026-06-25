@@ -6,7 +6,7 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
-import com.chat.wsgate.websocket.WsDispatcher;
+import com.chat.wsgate.dispatcher.WsDispatcher;
 
 @Configuration
 @EnableWebSocket

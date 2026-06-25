@@ -8,7 +8,7 @@ import lombok.extern.log4j.Log4j2;
 
 @RestControllerAdvice
 @Log4j2
-public class GlobalExceptionHandler {
+public class WsGateExceptionHandler {
 
 	@ExceptionHandler(IllegalArgumentException.class)
 	public ResponseEntity<?> illl() {

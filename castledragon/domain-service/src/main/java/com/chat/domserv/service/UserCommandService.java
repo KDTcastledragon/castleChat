@@ -1,55 +1,24 @@
 package com.chat.domserv.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.chat.contract.domain.UserProfileResponseDTO;
 import com.chat.domserv.domain.UserDTO;
 import com.chat.domserv.mapper.UserMapper;
 import com.chat.domserv.usecase.UserCommandUseCase;
-import com.chat.domserv.usecase.UserQueryUseCase;
 
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
-public class UserService implements UserCommandUseCase, UserQueryUseCase {
+public class UserCommandService implements UserCommandUseCase {
 	@Autowired
 	UserMapper userMapper;
 
 	@Autowired
 	PasswordEncoder encoder;
-
-	@Override
-	public UserDTO login(String loginId, String password) {
-		UserDTO user = userMapper.getUserByLoginId(loginId);
-
-		if (user == null) {
-			log.info("id 없음");
-			return null;
-		}
-
-		if (!encoder.matches(password, user.getPassword())) {
-			log.info("pw 일치하지않음");
-			return null;
-		}
-		return user;
-	}
-
-	@Override
-	public boolean loginIdDuplicateCheck(String loginId) {
-		UserDTO existLoginId = userMapper.getUser(loginId);
-
-		if (existLoginId == null) {
-			return false;
-		} else {
-			return true;
-		}
-	}
 
 	@Override
 	public boolean join(String loginId, String password, String nickname) {
@@ -89,15 +58,19 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 	}
 
 	@Override
-	public List<UserProfileResponseDTO> searchUsers(String searchWord, Long userId) {
-		List<UserProfileResponseDTO> list = userMapper.searchUsers(searchWord, userId);
-		return list;
-	}
+	public UserDTO login(String loginId, String password) {
+		UserDTO user = userMapper.getUserByLoginId(loginId);
 
-	@Override
-	public List<UserDTO> friendList(Long user_id) {
-		List<UserDTO> list = userMapper.friendList(user_id);
-		return list;
+		if (user == null) {
+			log.info("id 없음");
+			return null;
+		}
+
+		if (!encoder.matches(password, user.getPassword())) {
+			log.info("pw 일치하지않음");
+			return null;
+		}
+		return user;
 	}
 
 	@Override
@@ -114,23 +87,5 @@ public class UserService implements UserCommandUseCase, UserQueryUseCase {
 		int isWithdrawed = userMapper.withdrawMember(id);
 
 		return isWithdrawed > 0;
-	}
-
-	@Override
-	public List<UserDTO> allUsers() {
-		List<UserDTO> list = userMapper.allUsers();
-		return list;
-	}
-
-	@Override
-	public Long findUserIdByPublicId(String publicId) {
-		Long userId = userMapper.findUserIdByPublicId(publicId);
-		return userId;
-	}
-
-	@Override
-	public UserDTO getUser(String id) {
-		UserDTO userPw = userMapper.getUser(id);
-		return userPw;
 	}
 }

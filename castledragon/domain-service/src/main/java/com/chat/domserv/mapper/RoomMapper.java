@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Param;
 
 import com.chat.contract.domain.ChatRoomListDTO;
 import com.chat.contract.domain.ChatRoomsDTO;
+import com.chat.contract.domain.RoomMemberResponseDTO;
+import com.chat.contract.domain.RoomMembersDTO;
 
 @Mapper
 public interface RoomMapper {
@@ -22,6 +24,15 @@ public interface RoomMapper {
 
 	ChatRoomsDTO findDirectRoom(@Param("user1") Long user1, @Param("user2") Long user2);
 
+	ChatRoomsDTO getRoomByRoomId(Long roomId);
+
+	RoomMembersDTO getMyInfoFromRoomMembers(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
+	List<RoomMemberResponseDTO> getRoomMemberProfilesByRoomId(Long roomId);
+
+	void leftRoom(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
+	void reactivateRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
 }
 
 // Mapper는 SQL 소유권 기준으로 RoomMapper, MessageMapper, UserMapper처럼 도메인별로 유지했다.

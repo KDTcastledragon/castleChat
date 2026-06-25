@@ -1,4 +1,4 @@
-package com.chat.wsgate.websocket;
+package com.chat.wsgate.dispatcher;
 
 import java.util.Map;
 import java.util.Objects;
@@ -9,8 +9,11 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.chat.castledragon.domain.SessionUserDTO;
-import com.chat.castledragon.domain.WebSocketDTO;
+import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.WebSocketDTO;
+import com.chat.wsgate.websocket.WsChatEventHandler;
+import com.chat.wsgate.websocket.WsOutboundWriter;
+import com.chat.wsgate.websocket.WsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;

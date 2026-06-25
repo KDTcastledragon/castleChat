@@ -1,21 +1,17 @@
 package com.chat.domserv.service;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import com.chat.contract.domain.UserProfileResponseDTO;
 import com.chat.domserv.mapper.FriendMapper;
 import com.chat.domserv.usecase.FriendCommandUseCase;
-import com.chat.domserv.usecase.FriendQueryUseCase;
 
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
-public class FriendService implements FriendCommandUseCase, FriendQueryUseCase {
+public class FriendCommandService implements FriendCommandUseCase {
 	@Autowired
 	FriendMapper friendMapper;
 
@@ -35,21 +31,6 @@ public class FriendService implements FriendCommandUseCase, FriendQueryUseCase {
 			log.info("이미 친구이거나 친구 요청 존재: myUserId={}, targetUserId={}", myUserId, targetUserId);
 			throw e;
 		}
-	}
-
-	@Override
-	public List<UserProfileResponseDTO> getFriendList(Long userId) {
-		List<UserProfileResponseDTO> list = friendMapper.getFriendList(userId);
-		log.info("{}의 현재 친구 목록 : {}", userId, list);
-		return (list);
-	}
-
-	@Override
-	public List<UserProfileResponseDTO> getReceivedFriendRequests(Long userId) {
-		List<UserProfileResponseDTO> list = friendMapper.getReceivedFriendRequests(userId);
-		log.info("{}의 현재 친구추가 요청 목록 : {}", userId, list);
-
-		return (list);
 	}
 
 	@Override
@@ -74,5 +55,4 @@ public class FriendService implements FriendCommandUseCase, FriendQueryUseCase {
 
 		return updated > 0;
 	}
-
 }

@@ -30,8 +30,8 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 public class UserController {
 	PasswordEncoder pwEncoder; // 추후 Service로 이동.
-	UserCommandUseCase ucService;
-	UserQueryUseCase uqService;
+	UserCommandUseCase usrCmdUseCase;
+	UserQueryUseCase usrQryUseCase;
 
 	// ======[ 회원가입 ]===================================================================================================
 	@PostMapping("/join")
@@ -50,7 +50,7 @@ public class UserController {
 
 			log.info("회원가입 : {} {} {} {} {}", loginId, password, nickname);// 추후 삭제.
 
-			boolean isJoined = ucService.join(loginId, password, nickname);
+			boolean isJoined = usrCmdUseCase.join(loginId, password, nickname);
 
 			log.info("뭐가문제냐구웅웅웅 : {}", isJoined);
 
@@ -74,7 +74,7 @@ public class UserController {
 
 			String loginId = data.getLoginId() != null ? data.getLoginId() : null;
 
-			boolean isDuplicated = uqService.loginIdDuplicateCheck(loginId);
+			boolean isDuplicated = usrQryUseCase.loginIdDuplicateCheck(loginId);
 
 			if (isDuplicated) {
 				return ResponseEntity.status(HttpStatus.CONFLICT).body("conflict");
@@ -91,7 +91,7 @@ public class UserController {
 	public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginData, HttpSession session) {
 		log.info("{}의 login 시도  :", loginData.getLoginId());
 
-		UserDTO user = ucService.login(loginData.getLoginId(), loginData.getPassword());
+		UserDTO user = usrCmdUseCase.login(loginData.getLoginId(), loginData.getPassword());
 
 		if (user == null) {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
@@ -156,7 +156,7 @@ public class UserController {
 			return ResponseEntity.ok(List.of());
 		}
 
-		List<UserProfileResponseDTO> searchedList = uqService.searchUsers(searchWord.trim(), me.getUserId());
+		List<UserProfileResponseDTO> searchedList = usrQryUseCase.searchUsers(searchWord.trim(), me.getUserId());
 
 		log.info("{} 유저의 {} 검색결과 : {}", me.getNickname(), searchWord, searchedList);
 
@@ -171,13 +171,13 @@ public class UserController {
 			String prevPw = pwData.get("prevPw");
 			String newPw = pwData.get("newPw");
 
-			UserDTO dto = uqService.getUser(id);
+			UserDTO dto = usrQryUseCase.getUser(id);
 
 			log.info("비밀번호 일치? {} {}", prevPw, dto.getPassword());
 
 			if (pwEncoder.matches(prevPw, dto.getPassword())) {
 
-				boolean isChanged = ucService.changePassWord(id, newPw);
+				boolean isChanged = usrCmdUseCase.changePassWord(id, newPw);
 				log.info("비밀번호 변경됨? {}", isChanged);
 
 				return ResponseEntity.ok().body(id); // 200
@@ -194,7 +194,7 @@ public class UserController {
 	@GetMapping("/allUsers")
 	public ResponseEntity<?> allUsers() {
 		//		log.info("allUsers");
-		List<UserDTO> list = uqService.allUsers();
+		List<UserDTO> list = usrQryUseCase.allUsers();
 
 		return ResponseEntity.ok(list);
 	}

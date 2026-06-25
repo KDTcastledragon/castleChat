@@ -12,31 +12,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.contract.domain.ChatMessageViewDTO;
-import com.chat.contract.domain.ChatRoomListDTO;
 import com.chat.contract.domain.ChatRoomsDTO;
 import com.chat.contract.domain.ChatUserLookupDTO;
 import com.chat.contract.domain.EnterRoomResponseDTO;
 import com.chat.contract.domain.RoomMemberResponseDTO;
 import com.chat.contract.domain.RoomMembersDTO;
 import com.chat.contract.domain.SessionUserDTO;
-import com.chat.domserv.mapper.ChatMapper;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.mapper.UserMapper;
-import com.chat.domserv.usecase.ChatQueryUseCase;
 import com.chat.domserv.usecase.RoomCommandUseCase;
-import com.chat.domserv.usecase.RoomQueryUseCase;
 import com.chat.redis.cache.RoomMemberCache;
 
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
-public class RoomService implements RoomCommandUseCase, RoomQueryUseCase, ChatQueryUseCase {
-
-	@Autowired
-	ChatMapper chatMapper;
-
+public class RoomCommandService implements RoomCommandUseCase {
 	@Autowired
 	RoomMapper roomMapper;
 
@@ -101,8 +92,8 @@ public class RoomService implements RoomCommandUseCase, RoomQueryUseCase, ChatQu
 
 			log.info("roomId={}  user1 : {}, user2 : {} newRoomCreated", room.getRoomId(), senderInfo.getUserId(), friendInfo.getUserId());
 		} else {
-			chatMapper.reactivateRoomMember(room.getRoomId(), senderInfo.getUserId());
-			chatMapper.reactivateRoomMember(room.getRoomId(), friendInfo.getUserId());
+			roomMapper.reactivateRoomMember(room.getRoomId(), senderInfo.getUserId());
+			roomMapper.reactivateRoomMember(room.getRoomId(), friendInfo.getUserId());
 
 			Long finalRoomId = room.getRoomId();
 			//			roomMemberCache.getOrLoadRoomMembers(room.getRoomId(), () -> chatMapper.findActiveRoomMemberIds(room.getRoomId()));
@@ -197,43 +188,13 @@ public class RoomService implements RoomCommandUseCase, RoomQueryUseCase, ChatQu
 	}// createGroupRoom
 
 	@Override
-	public List<ChatRoomListDTO> getMyAllChatRooms(Long userId) {
-		List<ChatRoomListDTO> roomList = roomMapper.getMyAllChatRooms(userId);
-		return roomList;
-	}
-
-	@Override
-	public EnterRoomResponseDTO enterExistedRoom(Long roomId, SessionUserDTO me) {
-		ChatRoomsDTO room = chatMapper.getRoomByRoomId(roomId);
-		if (room == null) {
-			throw new IllegalArgumentException("존재하지 않는 채팅방입니다.");
-		}
-
-		RoomMembersDTO myInfo = chatMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
-
-		if (myInfo == null) {
-			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
-		}
-
-		List<RoomMemberResponseDTO> memberList = chatMapper.getRoomMemberProfilesByRoomId(roomId);
-
-		if (memberList == null || memberList.isEmpty()) {
-			throw new IllegalStateException("채팅방 멤버 정보를 찾을 수 없습니다.");
-		}
-
-		EnterRoomResponseDTO resdto = new EnterRoomResponseDTO(roomId, room.getRoomType(), myInfo.getCustomRoomName(), myInfo.getCustomRoomThumbnail(), (long) memberList.size(), memberList);
-
-		return resdto;
-	}
-
-	@Override
 	@Transactional
 	public void leftRoom(Long roomId, SessionUserDTO me) {
 		if (roomId == null) {
 			throw new IllegalArgumentException("roomId가 없습니다.");
 		}
 
-		RoomMembersDTO myRoomMember = chatMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
+		RoomMembersDTO myRoomMember = roomMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
 
 		if (myRoomMember == null) {
 			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
@@ -247,17 +208,10 @@ public class RoomService implements RoomCommandUseCase, RoomQueryUseCase, ChatQu
 			return;
 		}
 
-		chatMapper.leftRoom(roomId, me.getUserId());
+		roomMapper.leftRoom(roomId, me.getUserId());
 
 		//		chatMapper.decreaseActiveMemberCount(roomId);
 
 		roomMemberCache.removeRoomMember(roomId, me.getUserId());
-	}
-
-	@Override
-	@Transactional
-	public List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId) {
-		List<ChatMessageViewDTO> chatList = chatMapper.loadMessagesInRoom(roomId);
-		return chatList;
 	}
 }

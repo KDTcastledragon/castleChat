@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.WebSocketDTO;
-import com.chat.castledragon.monitoring.ChatMetrics;
+import com.chat.contract.domain.WebSocketDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -22,14 +21,15 @@ public class WsOutboundWriter {
 
 	private final WsSessionRegistry wsSessionRegistry;
 
-	private final ChatMetrics chatMetrics;
+	//	private final ChatMetrics chatMetrics;
 
 	// 생성자 주입
-	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper, ChatMetrics chatMetrics) {
+	//	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper, ChatMetrics chatMetrics) {
+	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper) {
 
 		this.wsSessionRegistry = wsSessionRegistry;
 		this.objectMapper = objectMapper;
-		this.chatMetrics = chatMetrics;
+		//		this.chatMetrics = chatMetrics;
 	}
 
 	// TEXT_PARTIAL_WRITING 해결용. 같은 WebSocketSession에 동시에 sendMessage가 들어가는 것을 막기 위한 session별 lock.

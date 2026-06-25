@@ -11,8 +11,6 @@ public interface UserQueryUseCase {
 
 	UserDTO getUser(String id);
 
-	List<UserDTO> friendList(Long userId);
-
 	List<UserProfileResponseDTO> searchUsers(String searchWord, Long userId);
 
 	Long findUserIdByPublicId(String publicId);

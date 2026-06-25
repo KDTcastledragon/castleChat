@@ -11,10 +11,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.cmctr.dto.FriendDTO;
-import com.chat.cmctr.dto.SessionUserDTO;
-import com.chat.cmctr.dto.UserProfileResponseDTO;
-import com.chat.domserv.service.FriendService;
+import com.chat.contract.domain.FriendDTO;
+import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.UserProfileResponseDTO;
+import com.chat.domserv.usecase.FriendCommandUseCase;
+import com.chat.domserv.usecase.FriendQueryUseCase;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -25,9 +26,8 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class FriendController {
-	private final FriendService friendService;
-
-	//	private final UserService userService;
+	FriendCommandUseCase friCmdUseCase;
+	FriendQueryUseCase friqryUseCase;
 
 	@PostMapping("/addFriend")
 	public ResponseEntity<?> addFriend(@RequestBody FriendDTO requestData, HttpSession session) {
@@ -38,7 +38,7 @@ public class FriendController {
 		}
 
 		try {
-			boolean result = friendService.addFriend(me.getUserId(), requestData.getPublicId());
+			boolean result = friCmdUseCase.addFriend(me.getUserId(), requestData.getPublicId());
 
 			if (!result) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("친구 요청 실패"); // 400
@@ -60,7 +60,7 @@ public class FriendController {
 		}
 
 		try {
-			List<UserProfileResponseDTO> list = friendService.getFriendList(me.getUserId());
+			List<UserProfileResponseDTO> list = friqryUseCase.getFriendList(me.getUserId());
 
 			log.info("{} 의 친구 목록 : {}", me.getUserId(), list);
 
@@ -80,7 +80,7 @@ public class FriendController {
 		}
 
 		try {
-			List<UserProfileResponseDTO> list = friendService.getReceivedFriendRequests(me.getUserId());
+			List<UserProfileResponseDTO> list = friqryUseCase.getReceivedFriendRequests(me.getUserId());
 
 			log.info("{} 의 친구추가 요청 목록 : {}", me.getUserId(), list);
 
@@ -101,7 +101,7 @@ public class FriendController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		boolean result = friendService.respondFriendRequest(me.getUserId(), requestData.getPublicId(), requestData.getAction());
+		boolean result = friCmdUseCase.respondFriendRequest(me.getUserId(), requestData.getPublicId(), requestData.getAction());
 
 		if (!result) {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("친구 요청 응답 실패");

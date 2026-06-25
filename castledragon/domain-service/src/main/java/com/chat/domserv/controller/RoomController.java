@@ -32,10 +32,10 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class RoomController {
-	RoomCommandUseCase rcService;
-	RoomQueryUseCase rqService;
-	UserQueryUseCase uqService;
-	ChatQueryUseCase cqService;
+	RoomCommandUseCase romCmdUseCase;
+	RoomQueryUseCase romQryUseCase;
+	UserQueryUseCase usrQryUseCase;
+	ChatQueryUseCase ChtQryUseCase;
 
 	public boolean sessionCheck(HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
@@ -60,7 +60,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("친구아이디없음.");
 		}
 
-		String nick = uqService.getUser(friendPublicId).getNickname(); // 개발과정에서 임시로 씀. 추후 삭제.
+		String nick = usrQryUseCase.getUser(friendPublicId).getNickname(); // 개발과정에서 임시로 씀. 추후 삭제.
 
 		log.info("1:1 채팅방 입장 시도 : {} --> {} ", me.getNickname(), nick); // 개발과정에서 임시로 씀. 추후 삭제.
 
@@ -68,7 +68,7 @@ public class RoomController {
 
 		//		Long targetUserId = Long.valueOf(data.get("targetUserId").toString());
 
-		EnterRoomResponseDTO roomInfo = rcService.getOrCreateDirectRoom(me, friendPublicId);
+		EnterRoomResponseDTO roomInfo = romCmdUseCase.getOrCreateDirectRoom(me, friendPublicId);
 
 		return ResponseEntity.ok(roomInfo);
 	}
@@ -88,7 +88,7 @@ public class RoomController {
 
 		log.info("단톡방 생성 시도 : {} --> {} ", me.getNickname(), groupRoomData);
 
-		EnterRoomResponseDTO roomInfo = rcService.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getRoomThumbnail(), groupRoomData.getSelectedFriendPublicIdList());
+		EnterRoomResponseDTO roomInfo = romCmdUseCase.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getRoomThumbnail(), groupRoomData.getSelectedFriendPublicIdList());
 
 		log.info("GroupRoom roomInfo res : {}", roomInfo);
 		return ResponseEntity.ok(roomInfo);
@@ -102,7 +102,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		EnterRoomResponseDTO roomInfo = rqService.enterExistedRoom(roomId, me);
+		EnterRoomResponseDTO roomInfo = romQryUseCase.enterExistedRoom(roomId, me);
 
 		return ResponseEntity.ok().body(roomInfo);
 	}
@@ -115,7 +115,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		List<ChatMessageViewDTO> loadedMessagesInRoom = cqService.loadMessagesInRoom(roomId);
+		List<ChatMessageViewDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId);
 		log.info("loadMessagesInRoom불러옴. : {}", loadedMessagesInRoom);
 
 		return ResponseEntity.ok(loadedMessagesInRoom);
@@ -129,7 +129,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		List<ChatRoomListDTO> roomList = rqService.getMyAllChatRooms(me.getUserId());
+		List<ChatRoomListDTO> roomList = romQryUseCase.getMyAllChatRooms(me.getUserId());
 
 		return ResponseEntity.ok(roomList);
 	}
@@ -142,7 +142,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		rcService.leftRoom(req.getRoomId(), me);
+		romCmdUseCase.leftRoom(req.getRoomId(), me);
 
 		return ResponseEntity.ok().build();
 	}

@@ -5,57 +5,6 @@
 
 <mapper namespace="com.chat.domserv.mapper.RoomMapper">
 
-	<select id="findRoomId" resultType="long">
-	SELECT rm.room_id
-	FROM room_members rm
-	JOIN chat_rooms cr
-	    ON rm.room_id = cr.room_id
-	WHERE cr.room_type = 'DIRECT'
-	  AND rm.user_id IN (#{user1}, #{user2})
-	GROUP BY rm.room_id
-	HAVING COUNT(DISTINCT rm.user_id) = 2
-	   AND (
-       SELECT COUNT(*)
-       FROM room_members
-       WHERE room_id = rm.room_id
-   ) = 2
-	</select>
-	
-	<!-- <select id="findDirectRoom" resultType="com.chat.castledragon.domain.ChatRoomDTO">
-	SELECT *
-	FROM room_members rm
-	JOIN chat_rooms cr
-	    ON rm.room_id = cr.room_id
-	WHERE cr.room_type = 'DIRECT'
-	  AND rm.user_id IN (#{user1}, #{user2})
-	GROUP BY rm.room_id
-	HAVING COUNT(DISTINCT rm.user_id) = 2
-	   AND (
-       SELECT COUNT(*)
-       FROM room_members
-       WHERE room_id = rm.room_id
-   ) = 2
-	</select> -->
-	
-	<!-- <select id="findDirectRoom" resultType="com.chat.castledragon.domain.ChatRoomsDTO">
-	    SELECT cr.*
-	    FROM room_members rm
-	    JOIN chat_rooms cr
-	      ON rm.room_id = cr.room_id
-	    WHERE cr.room_type = 'DIRECT'
-	      AND cr.room_status = 'ACTIVE'
-	      AND rm.left_at IS NULL
-	      AND rm.user_id IN (#{user1}, #{user2})
-	    GROUP BY cr.room_id
-	    HAVING COUNT(DISTINCT rm.user_id) = 2
-	       AND (
-	           SELECT COUNT(*)
-	           FROM room_members rm2
-	           WHERE rm2.room_id = cr.room_id
-	             AND rm2.left_at IS NULL 나간 멤버까지 세면 나중에 이상해짐. 그래서 추가.
-	       ) = 2
-	</select> -->
-	
 	<select id="findDirectRoom" resultType="com.chat.contract.domain.ChatRoomsDTO">
 	    SELECT cr.*
 	    FROM chat_rooms cr
@@ -74,15 +23,11 @@
 	</select>
 
 	<insert id="createRoom" parameterType="com.chat.contract.domain.ChatRoomsDTO" useGeneratedKeys="true" keyProperty="roomId">
-	INSERT INTO chat_rooms(room_type, room_name,created_by,room_status) VALUES (#{roomType}, #{roomStatus} , #{createdBy} , #{roomStatus})
+	INSERT INTO chat_rooms(room_type, room_name, room_status, created_by) VALUES (#{roomType}, #{roomName} , #{roomStatus} ,#{createdBy})
 	</insert>
 
 	<insert id="insertRoomMember">
 	INSERT INTO room_members(room_id, user_id , role , custom_room_name,custom_room_thumbnail,member_status) VALUES (#{roomId}, #{userId}, #{role} , #{customRoomName},#{customRoomThumbnail},#{memberStatus})
-	</insert>
-	
-	<insert id="insertMessage" parameterType="com.chat.contract.domain.ChatMessagesDTO" useGeneratedKeys="true" keyProperty="messageId">
-    	INSERT INTO chat_messages(room_id, sender_id, message_text,created_at) VALUES(#{roomId}, #{senderId}, #{messageText},#{createdAt})
 	</insert>
 	
 	<select id="loadMessagesInRoom" resultType="com.chat.contract.domain.ChatMessageViewDTO">
@@ -123,7 +68,6 @@
 	    ) t
 	    ORDER BY t.message_id ASC
 	</select>
-	
 	
 	<select id="findLastReadMessageId" resultType="Long">
 		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}
@@ -243,8 +187,6 @@ WHERE rm.room_id = #{roomId}
     ORDER BY lastMessageTime DESC, r.room_id DESC
 </select>
 	
-	
-	
 	<select id="findActiveRoomMemberIds" resultType="long">
 	    SELECT user_id
 	    FROM room_members
@@ -274,14 +216,14 @@ WHERE rm.room_id = #{roomId}
     WHERE rm.room_id = #{roomId}
       AND rm.member_status = 'ACTIVE'
     ORDER BY rm.room_member_id ASC
-</select>
+	</select>
 
-<select id="lockRoomForUpdate" resultType="Long">
+	<select id="lockRoomForUpdate" resultType="Long">
     SELECT room_id
     FROM chat_rooms
     WHERE room_id = #{roomId}
     FOR UPDATE
-</select>
+	</select>
 
 	<update id="leftRoom">
 	    UPDATE room_members
@@ -300,13 +242,14 @@ WHERE rm.room_id = #{roomId}
 	</update>
 	
 	<update id="reactivateRoomMember">
-    UPDATE room_members
-    SET
-        member_status = 'ACTIVE',
-        left_at = NULL
-    WHERE room_id = #{roomId}
-      AND user_id = #{userId}
-</update>
+	    UPDATE room_members
+	    SET
+	        member_status = 'ACTIVE',
+	        left_at = NULL
+	    WHERE room_id = #{roomId}
+	      AND user_id = #{userId}
+	</update>
+
 </mapper>
 
 <!-- <select id="getMyAllChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">
@@ -455,6 +398,43 @@ WHERE rm.room_id = #{roomId}
 	ORDER BY lastMessageTime DESC
 
 </select> -->
+
+
+	<!-- <select id="findDirectRoom" resultType="com.chat.castledragon.domain.ChatRoomDTO">
+	SELECT *
+	FROM room_members rm
+	JOIN chat_rooms cr
+	    ON rm.room_id = cr.room_id
+	WHERE cr.room_type = 'DIRECT'
+	  AND rm.user_id IN (#{user1}, #{user2})
+	GROUP BY rm.room_id
+	HAVING COUNT(DISTINCT rm.user_id) = 2
+	   AND (
+       SELECT COUNT(*)
+       FROM room_members
+       WHERE room_id = rm.room_id
+   ) = 2
+	</select> -->
+	
+	<!-- <select id="findDirectRoom" resultType="com.chat.castledragon.domain.ChatRoomsDTO">
+	    SELECT cr.*
+	    FROM room_members rm
+	    JOIN chat_rooms cr
+	      ON rm.room_id = cr.room_id
+	    WHERE cr.room_type = 'DIRECT'
+	      AND cr.room_status = 'ACTIVE'
+	      AND rm.left_at IS NULL
+	      AND rm.user_id IN (#{user1}, #{user2})
+	    GROUP BY cr.room_id
+	    HAVING COUNT(DISTINCT rm.user_id) = 2
+	       AND (
+	           SELECT COUNT(*)
+	           FROM room_members rm2
+	           WHERE rm2.room_id = cr.room_id
+	             AND rm2.left_at IS NULL 나간 멤버까지 세면 나중에 이상해짐. 그래서 추가.
+	       ) = 2
+	</select> -->
+	
 	
 	
 	<!-- <insert id="insertMessage">
