@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.cmctr.dto.ChatRoomListDTO;
-import com.chat.cmctr.dto.EnterGroupRequestDTO;
-import com.chat.cmctr.dto.EnterRoomResponseDTO;
-import com.chat.cmctr.dto.RoomIdRequestDTO;
-import com.chat.cmctr.dto.SessionUserDTO;
-import com.chat.domserv.service.ChatService;
+import com.chat.contract.domain.ChatRoomListDTO;
+import com.chat.contract.domain.EnterGroupRequestDTO;
+import com.chat.contract.domain.EnterRoomResponseDTO;
+import com.chat.contract.domain.RoomIdRequestDTO;
+import com.chat.contract.domain.SessionUserDTO;
 import com.chat.domserv.service.UserService;
+import com.chat.domserv.usecase.ChatQueryUseCase;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -30,8 +30,20 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ChatController {
 	UserService userService;
+	ChatQueryUseCase cqService;
+	//	interface는 사용하는 쪽이 구현체의 구체 클래스에 의존하지 않게 하는 계약이다.
+	//	Controller는 ChatServiceImpl인지, MockChatService인지, CachedChatService인지 몰라도 됨. ChatService 계약에 정의된 메서드만 호출하면 됨.
+	// 단, ChatService interface에 없는 impl구현체 고유 메서드는 controller가 호출할 수 없다.
+	// 현재 chat interface는 controller layer와 service layer의 경계가 된다.
+	// interface는 “사용하는 쪽이 구현체의 구체적인 존재를 몰라도 약속된 기능을 사용할 수 있게 하는 계약”이다.
 
-	ChatService chatService;
+	//	실무적으로 interface가 의미 있으려면 보통 이유가 있어야 함.
+	//	1. 구현체 교체 가능성
+	//	2. 외부 기술 의존성 분리
+	//	3. 테스트 fake/mock 주입
+	//	4. use case 경계 명확화
+	//	5. 여러 구현체 전략 선택
+	//	6. module/process 간 계약 분리
 
 	@PostMapping("/getOrCreateDirectRoom") // 무조건 “방(room)”을 먼저 만든다
 	public ResponseEntity<?> getOrCreateDirectRoom(@RequestBody Map<String, Object> data, HttpSession session) {

@@ -1,6 +1,8 @@
 rootProject.name = 'castledragon'
 
 include 'common-contract'
+include 'common-redis'
+
 include 'domain-service'
 include 'websocket-gateway'
 include 'chat-orchestrator'

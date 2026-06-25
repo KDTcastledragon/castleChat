@@ -2,16 +2,77 @@ package com.chat.domserv.service;
 
 import java.util.List;
 
-import com.chat.cmctr.dto.UserProfileResponseDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.stereotype.Service;
 
-public interface FriendService {
+import com.chat.contract.domain.UserProfileResponseDTO;
+import com.chat.domserv.mapper.FriendMapper;
+import com.chat.domserv.usecase.FriendCommandUseCase;
+import com.chat.domserv.usecase.FriendQueryUseCase;
 
-	boolean addFriend(Long myUserId, String targetPublicId);
+import lombok.extern.log4j.Log4j2;
 
-	List<UserProfileResponseDTO> getFriendList(Long userId);
+@Service
+@Log4j2
+public class FriendService implements FriendCommandUseCase, FriendQueryUseCase {
+	@Autowired
+	FriendMapper friendMapper;
 
-	List<UserProfileResponseDTO> getReceivedFriendRequests(Long userId);
+	@Override
+	public boolean addFriend(Long myUserId, String targetPublicId) {
+		Long targetUserId = friendMapper.findUserIdByPublicId(targetPublicId);
 
-	boolean respondFriendRequest(Long userId, String publicId, String action);
+		if (targetUserId == null || (myUserId.equals(targetUserId))) {
+			return false;
+		}
+
+		try {
+			int addedFriend = friendMapper.addFriend(myUserId, targetUserId);
+			return addedFriend > 0;
+
+		} catch (DuplicateKeyException e) {
+			log.info("이미 친구이거나 친구 요청 존재: myUserId={}, targetUserId={}", myUserId, targetUserId);
+			throw e;
+		}
+	}
+
+	@Override
+	public List<UserProfileResponseDTO> getFriendList(Long userId) {
+		List<UserProfileResponseDTO> list = friendMapper.getFriendList(userId);
+		log.info("{}의 현재 친구 목록 : {}", userId, list);
+		return (list);
+	}
+
+	@Override
+	public List<UserProfileResponseDTO> getReceivedFriendRequests(Long userId) {
+		List<UserProfileResponseDTO> list = friendMapper.getReceivedFriendRequests(userId);
+		log.info("{}의 현재 친구추가 요청 목록 : {}", userId, list);
+
+		return (list);
+	}
+
+	@Override
+	public boolean respondFriendRequest(Long myUserId, String requesterPublicId, String action) {
+		Long requesterUserId = friendMapper.findUserIdByPublicId(requesterPublicId);
+
+		if (requesterUserId == null || myUserId.equals(requesterUserId)) {
+			return false;
+		}
+
+		String nextStatus;
+
+		if ("ACCEPT".equals(action)) {
+			nextStatus = "ACCEPTED";
+		} else if ("REJECT".equals(action)) {
+			nextStatus = "REJECTED";
+		} else {
+			return false;
+		}
+
+		int updated = friendMapper.respondFriendRequest(myUserId, requesterUserId, nextStatus);
+
+		return updated > 0;
+	}
 
 }

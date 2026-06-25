@@ -9,20 +9,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.castledragon.domain.PayloadEnterRoomDTO;
-import com.chat.castledragon.domain.PayloadExitRoomDTO;
-import com.chat.castledragon.domain.PayloadReadChatMessageRequestDTO;
-import com.chat.castledragon.domain.PayloadReadChatMessageResponseDTO;
-import com.chat.castledragon.domain.PayloadRoomNoticeDTO;
-import com.chat.castledragon.domain.PayloadSendChatMessageRequestDTO;
-import com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO;
-import com.chat.castledragon.domain.PayloadTypingRequestDTO;
-import com.chat.castledragon.domain.PayloadTypingResponseDTO;
-import com.chat.castledragon.domain.RoomIdRequestDTO;
-import com.chat.castledragon.domain.SessionUserDTO;
-import com.chat.castledragon.domain.WebSocketDTO;
-import com.chat.castledragon.monitoring.ChatMetrics;
-import com.chat.castledragon.service.ChatService;
+import com.chat.cmctr.dto.PayloadRoomNoticeDTO;
+import com.chat.cmctr.dto.RoomIdRequestDTO;
+import com.chat.cmctr.dto.SessionUserDTO;
+import com.chat.cmctr.dto.WebSocketDTO;
+import com.chat.wsgate.domain.PayloadEnterRoomDTO;
+import com.chat.wsgate.domain.PayloadExitRoomDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;

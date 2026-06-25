@@ -12,13 +12,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.cmctr.dto.ChatRoomListDTO;
-import com.chat.cmctr.dto.EnterGroupRequestDTO;
-import com.chat.cmctr.dto.EnterRoomResponseDTO;
-import com.chat.cmctr.dto.RoomIdRequestDTO;
-import com.chat.cmctr.dto.SessionUserDTO;
-import com.chat.domserv.service.ChatService;
-import com.chat.domserv.service.UserService;
+import com.chat.contract.domain.ChatMessageViewDTO;
+import com.chat.contract.domain.ChatRoomListDTO;
+import com.chat.contract.domain.EnterGroupRequestDTO;
+import com.chat.contract.domain.EnterRoomResponseDTO;
+import com.chat.contract.domain.RoomIdRequestDTO;
+import com.chat.contract.domain.SessionUserDTO;
+import com.chat.domserv.usecase.ChatQueryUseCase;
+import com.chat.domserv.usecase.RoomCommandUseCase;
+import com.chat.domserv.usecase.RoomQueryUseCase;
+import com.chat.domserv.usecase.UserQueryUseCase;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
@@ -29,21 +32,20 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class RoomController {
-	UserService userService;
-	ChatService chatService;
+	RoomCommandUseCase rcService;
+	RoomQueryUseCase rqService;
+	UserQueryUseCase uqService;
+	ChatQueryUseCase cqService;
 
-	//	domain-service에 남길 것
-	//	getOrCreateDirectRoom
-	//	createGroupRoom
-	//	enterExistedRoom
-	//	loadMessagesInRoom
-	//	getMyAllChatRooms
+	public boolean sessionCheck(HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
 
-	//	이유:
-	//	HTTP request/response로 충분함
-	//	실시간 room event queue 순서 보장이 핵심 아님
-	//	방 생성/조회/이력 조회는 DB transaction + query 성격
-	//	프론트가 방 정보를 받아 렌더링하는 API
+		if (me == null) {
+			return false;
+		}
+
+		return true;
+	}
 
 	@PostMapping("/getOrCreateDirectRoom") // 무조건 “방(room)”을 먼저 만든다
 	public ResponseEntity<?> getOrCreateDirectRoom(@RequestBody Map<String, Object> data, HttpSession session) {
@@ -58,7 +60,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("친구아이디없음.");
 		}
 
-		String nick = userService.getUser(friendPublicId).getNickname(); // 개발과정에서 임시로 씀. 추후 삭제.
+		String nick = uqService.getUser(friendPublicId).getNickname(); // 개발과정에서 임시로 씀. 추후 삭제.
 
 		log.info("1:1 채팅방 입장 시도 : {} --> {} ", me.getNickname(), nick); // 개발과정에서 임시로 씀. 추후 삭제.
 
@@ -66,7 +68,7 @@ public class RoomController {
 
 		//		Long targetUserId = Long.valueOf(data.get("targetUserId").toString());
 
-		EnterRoomResponseDTO roomInfo = chatService.getOrCreateDirectRoom(me, friendPublicId);
+		EnterRoomResponseDTO roomInfo = rcService.getOrCreateDirectRoom(me, friendPublicId);
 
 		return ResponseEntity.ok(roomInfo);
 	}
@@ -86,7 +88,7 @@ public class RoomController {
 
 		log.info("단톡방 생성 시도 : {} --> {} ", me.getNickname(), groupRoomData);
 
-		EnterRoomResponseDTO roomInfo = chatService.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getRoomThumbnail(), groupRoomData.getSelectedFriendPublicIdList());
+		EnterRoomResponseDTO roomInfo = rcService.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getRoomThumbnail(), groupRoomData.getSelectedFriendPublicIdList());
 
 		log.info("GroupRoom roomInfo res : {}", roomInfo);
 		return ResponseEntity.ok(roomInfo);
@@ -100,16 +102,23 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		EnterRoomResponseDTO roomInfo = chatService.enterExistedRoom(roomId, me);
+		EnterRoomResponseDTO roomInfo = rqService.enterExistedRoom(roomId, me);
 
 		return ResponseEntity.ok().body(roomInfo);
 	}
 
 	@GetMapping("/loadMessagesInRoom/{roomId}")
-	public List<PayloadSendChatMessageResponseDTO> getMessages(@PathVariable("roomId") Long roomId) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능
-		List<PayloadSendChatMessageResponseDTO> loadedMessagesInRoom = chatService.loadMessagesInRoom(roomId);
+	public ResponseEntity<?> getMessages(@PathVariable("roomId") Long roomId, HttpSession session) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능.
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		List<ChatMessageViewDTO> loadedMessagesInRoom = cqService.loadMessagesInRoom(roomId);
 		log.info("loadMessagesInRoom불러옴. : {}", loadedMessagesInRoom);
-		return loadedMessagesInRoom;
+
+		return ResponseEntity.ok(loadedMessagesInRoom);
 	}
 
 	@GetMapping("/getMyAllChatRooms")
@@ -120,7 +129,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		List<ChatRoomListDTO> roomList = chatService.getMyAllChatRooms(me.getUserId());
+		List<ChatRoomListDTO> roomList = rqService.getMyAllChatRooms(me.getUserId());
 
 		return ResponseEntity.ok(roomList);
 	}
@@ -133,7 +142,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		chatService.leftRoom(req.getRoomId(), me);
+		rcService.leftRoom(req.getRoomId(), me);
 
 		return ResponseEntity.ok().build();
 	}

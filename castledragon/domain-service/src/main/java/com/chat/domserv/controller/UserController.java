@@ -13,93 +13,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.cmctr.dto.SessionUserDTO;
-import com.chat.cmctr.dto.UserProfileResponseDTO;
+import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.UserProfileResponseDTO;
 import com.chat.domserv.domain.LoginRequestDTO;
 import com.chat.domserv.domain.UserDTO;
-import com.chat.domserv.service.UserService;
+import com.chat.domserv.usecase.UserCommandUseCase;
+import com.chat.domserv.usecase.UserQueryUseCase;
 
 import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @RestController
 @RequestMapping("/user")
 @Log4j2
+@AllArgsConstructor
 public class UserController {
-	UserService userService;
-	PasswordEncoder pwEncoder;
-	WsDispatcher wsDispatcher; // private final을 꼭 붙여야 하나??
+	PasswordEncoder pwEncoder; // 추후 Service로 이동.
+	UserCommandUseCase ucService;
+	UserQueryUseCase uqService;
 
-	// ======[ 로그인 ]=================================================================================================
-	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginData, HttpSession session) {
-		log.info("{}의 login 시도  :", loginData.getLoginId());
-
-		UserDTO user = userService.login(loginData.getLoginId(), loginData.getPassword());
-
-		if (user == null) {
-			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
-		}
-
-		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
-
-		session.setAttribute("LOGIN_USER", sessionUser);
-
-		UserProfileResponseDTO loginResponse = new UserProfileResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
-
-		return ResponseEntity.ok(loginResponse);
-	}// login
-
-	// ======[ 로그아웃 ]=================================================================================================
-	@PostMapping("/logout")
-	public ResponseEntity<?> logout(HttpSession session) {
-
-		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (loginUser != null) {
-			wsDispatcher.closeUserWebSocketConnection(loginUser.getUserId());
-		}
-
-		session.invalidate();
-
-		return ResponseEntity.ok().build();
-	}// logout
-
-	// ======[ 중복체크 ]=================================================================================================
-	@GetMapping("/isMe")
-	public ResponseEntity<?> isMe(HttpSession session) {
-		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (loginUser == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
-		}
-
-		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser.getFriendCode(), loginUser.getProfileImg()); // friCode = null
-
-		return ResponseEntity.ok(isMeTrue);
-	}// isMe
-
-	// ======[ 중복체크 ]=================================================================================================
-	@PostMapping("/loginIdDuplicateCheck")
-	public ResponseEntity<?> idDupCheck(@RequestBody UserDTO data) {
-		try {
-			log.info("");
-
-			String loginId = data.getLoginId() != null ? data.getLoginId() : null;
-
-			boolean isDuplicated = userService.loginIdDuplicateCheck(loginId);
-
-			if (isDuplicated) {
-				return ResponseEntity.status(HttpStatus.CONFLICT).body("conflict");
-			} else {
-				return ResponseEntity.ok().build();
-			}
-		} catch (Exception e) {
-			throw e;
-		}
-	}// logIdDupCheck
-
-	// ====[회원가입]========================================================================================
+	// ======[ 회원가입 ]===================================================================================================
 	@PostMapping("/join")
 	public ResponseEntity<?> join(@RequestBody UserDTO data) {
 		try {
@@ -116,7 +50,7 @@ public class UserController {
 
 			log.info("회원가입 : {} {} {} {} {}", loginId, password, nickname);// 추후 삭제.
 
-			boolean isJoined = userService.join(loginId, password, nickname);
+			boolean isJoined = ucService.join(loginId, password, nickname);
 
 			log.info("뭐가문제냐구웅웅웅 : {}", isJoined);
 
@@ -132,7 +66,82 @@ public class UserController {
 		}
 	}// join
 
-	//====[비밀번호 변경]==========================================
+	// ======[ 회원가입시, ID 중복체크 ]===================================================================================================
+	@PostMapping("/loginIdDuplicateCheck")
+	public ResponseEntity<?> idDupCheck(@RequestBody UserDTO data) {
+		try {
+			log.info("");
+
+			String loginId = data.getLoginId() != null ? data.getLoginId() : null;
+
+			boolean isDuplicated = uqService.loginIdDuplicateCheck(loginId);
+
+			if (isDuplicated) {
+				return ResponseEntity.status(HttpStatus.CONFLICT).body("conflict");
+			} else {
+				return ResponseEntity.ok().build();
+			}
+		} catch (Exception e) {
+			throw e;
+		}
+	}// logIdDupCheck
+
+	// ======[ 로그인 ]===================================================================================================
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginData, HttpSession session) {
+		log.info("{}의 login 시도  :", loginData.getLoginId());
+
+		UserDTO user = ucService.login(loginData.getLoginId(), loginData.getPassword());
+
+		if (user == null) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
+		}
+
+		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+
+		session.setAttribute("LOGIN_USER", sessionUser);
+
+		UserProfileResponseDTO loginResponse = new UserProfileResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+
+		return ResponseEntity.ok(loginResponse);
+	}// login
+
+	// ======[ 로그아웃 ]===================================================================================================
+	@PostMapping("/logout")
+	public ResponseEntity<?> logout(HttpSession session) {
+
+		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		//	▶▶▶ Multi Process로 jar들을 모두 분리하여 module화 시켰기 때문에, wsDp를 직접 부르면 안된다. client쪽에서 자발적으로 ws.close()하도록 변경.
+		//		if (loginUser != null) {
+		//			wsDispatcher.closeUserWebSocketConnection(loginUser.getUserId());
+		//		}
+
+		if (loginUser == null) {
+			return ResponseEntity.ok().build();
+		}
+
+		session.invalidate();
+
+		return ResponseEntity.ok().build();
+	}// logout
+
+	// ======[ 현재 로그인 여부 상태 확인 ]===================================================================================================
+	// ▶ client의 Front Request를 무조건 신뢰하면 안된다. 항상 Back에서 검증을 해야한다.
+	@GetMapping("/isMe")
+	public ResponseEntity<?> isMe(HttpSession session) {
+		SessionUserDTO loginUser = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (loginUser == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser.getFriendCode(), loginUser.getProfileImg()); // friCode = null
+
+		return ResponseEntity.ok(isMeTrue);
+	}// isMe
+
+	// ======[ 검색어로 유저 검색 (친구 추가를 위한 선기능) ]===================================================================================================
 	@GetMapping("/searchUsers")
 	public ResponseEntity<?> searchUsers(@RequestParam("searchWord") String searchWord, HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
@@ -147,14 +156,14 @@ public class UserController {
 			return ResponseEntity.ok(List.of());
 		}
 
-		List<UserProfileResponseDTO> searchedList = userService.searchUsers(searchWord.trim(), me.getUserId());
+		List<UserProfileResponseDTO> searchedList = uqService.searchUsers(searchWord.trim(), me.getUserId());
 
 		log.info("{} 유저의 {} 검색결과 : {}", me.getNickname(), searchWord, searchedList);
 
 		return ResponseEntity.ok(searchedList);
 	}
 
-	//====[비밀번호 변경]==========================================
+	// ======[ 비밀번호 변경 ]===================================================================================================
 	@PostMapping("/changePassword")
 	public ResponseEntity<?> changePassword(@RequestBody Map<String, String> pwData) {
 		try {
@@ -162,13 +171,13 @@ public class UserController {
 			String prevPw = pwData.get("prevPw");
 			String newPw = pwData.get("newPw");
 
-			UserDTO dto = userService.getUser(id);
+			UserDTO dto = uqService.getUser(id);
 
 			log.info("비밀번호 일치? {} {}", prevPw, dto.getPassword());
 
 			if (pwEncoder.matches(prevPw, dto.getPassword())) {
 
-				boolean isChanged = userService.changePassWord(id, newPw);
+				boolean isChanged = ucService.changePassWord(id, newPw);
 				log.info("비밀번호 변경됨? {}", isChanged);
 
 				return ResponseEntity.ok().body(id); // 200
@@ -185,7 +194,7 @@ public class UserController {
 	@GetMapping("/allUsers")
 	public ResponseEntity<?> allUsers() {
 		//		log.info("allUsers");
-		List<UserDTO> list = userService.allUsers();
+		List<UserDTO> list = uqService.allUsers();
 
 		return ResponseEntity.ok(list);
 	}

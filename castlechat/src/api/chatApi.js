@@ -1,19 +1,19 @@
 import axios from "axios";
 
 export const getMyAllRoomsApi = async () => {
-    const res = await axios.get(`/chat/getMyAllChatRooms`);
+    const res = await axios.get(`/room/getMyAllChatRooms`);
     return res.data;
 }
 
 export async function getOrCreateDirectRoomApi(friendPublicId) {
-    const res = await axios.post('/chat/getOrCreateDirectRoom', {
+    const res = await axios.post('/room/getOrCreateDirectRoom', {
         friendPublicId: friendPublicId
     });
     return res.data;
 }
 
 export async function createGroupRoomApi(data) {
-    const res = await axios.post('/chat/createGroupRoom', data);
+    const res = await axios.post('/room/createGroupRoom', data);
     return res.data;
 }
 
@@ -23,12 +23,12 @@ export async function createGroupRoomApi(data) {
 // enter때는 '기존'의 정보를 'get'만 해야하기때문에. 근데 creGroupRoom은 '새로운 room'의 info를 주는거니까
 // 이미 'created'된 enterRoom의 info를 get하기 위해서는 결국 http request api가 필요하다.
 export async function enterExistedRoomApi(roomId) {
-    const res = await axios.get(`/chat/enterExistedRoom/${roomId}`);
+    const res = await axios.get(`/room/enterExistedRoom/${roomId}`);
     return res.data;
 }
 
 export async function leftRoomApi(roomId) {
-    const res = await axios.post(`/chat/leftRoom`, {
+    const res = await axios.post(`/room/leftRoom`, {
         roomId: roomId
     });
 

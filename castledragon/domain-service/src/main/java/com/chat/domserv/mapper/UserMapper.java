@@ -5,9 +5,9 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.castledragon.domain.ChatUserLookupDTO;
-import com.chat.castledragon.domain.UserDTO;
-import com.chat.castledragon.domain.UserProfileResponseDTO;
+import com.chat.contract.domain.ChatUserLookupDTO;
+import com.chat.contract.domain.UserProfileResponseDTO;
+import com.chat.domserv.domain.UserDTO;
 
 @Mapper
 public interface UserMapper {

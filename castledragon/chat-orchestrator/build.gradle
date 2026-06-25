@@ -1,3 +1,7 @@
+/** =========================================================================================================================== */
+/** ============================== chat-orchestrator ============================== */
+/** =========================================================================================================================== */
+
 plugins {
     id 'org.springframework.boot'
 }
@@ -11,6 +15,7 @@ dependencies {
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     
     implementation project(':common-contract')
+    implementation project(':common-redis')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 

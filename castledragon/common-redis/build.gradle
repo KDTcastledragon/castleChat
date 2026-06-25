@@ -1,0 +1,19 @@
+/** =========================================================================================================================== */
+/** ============================== common-redis ============================== */
+/** =========================================================================================================================== */
+plugins {
+    id 'java-library'
+}
+
+description = 'common redis'
+
+dependencies {
+    api project(':common-contract')
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
