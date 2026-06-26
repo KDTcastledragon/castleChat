@@ -1,8 +1,5 @@
 package com.chat.wsgate.dispatcher;
 
-import java.util.Map;
-import java.util.Objects;
-
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -11,9 +8,9 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
-import com.chat.wsgate.websocket.WsChatEventHandler;
-import com.chat.wsgate.websocket.WsOutboundWriter;
-import com.chat.wsgate.websocket.WsSessionRegistry;
+import com.chat.wsgate.handler.GatewayWsEventHandler;
+import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
+import com.chat.wsgate.session.WsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -24,15 +21,15 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	private final WsChatEventHandler wsChatEventHandler;
+	private final GatewayWsEventHandler gwWsEventHandler;
 	private final WsSessionRegistry wsSessionRegistry;
-	private final WsOutboundWriter wsOutboundWriter;
+	private final GateWayWsOutboundWriter gateWayWsOutboundWriter;
 
 	// 생성자 주입
-	public WsDispatcher(WsChatEventHandler wsChatEventHandler, WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter) {
-		this.wsChatEventHandler = wsChatEventHandler;
+	public WsDispatcher(GatewayWsEventHandler gwWsEventHandler, WsSessionRegistry wsSessionRegistry, GateWayWsOutboundWriter gateWayWsOutboundWriter) {
+		this.gwWsEventHandler = gwWsEventHandler;
 		this.wsSessionRegistry = wsSessionRegistry;
-		this.wsOutboundWriter = wsOutboundWriter;
+		this.gateWayWsOutboundWriter = gateWayWsOutboundWriter;
 	}
 
 	//	====== 연결 이후 메소드 ===========================================================================================================
@@ -59,19 +56,19 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			}
 
 			switch (dto.getWsType()) {
-			case "CONNECT_USER" -> wsChatEventHandler.handleConnectUser(session, dto);
-			case "ENTER_ROOM" -> wsChatEventHandler.handleEnterRoom(session, dto);
-			case "ENTER_GROUP_ROOM" -> wsChatEventHandler.handleEnterRoom(session, dto);
+			case "CONNECT_USER" -> gwWsEventHandler.handleConnectUser(session, dto);
+			case "ENTER_ROOM" -> gwWsEventHandler.handleEnterRoom(session, dto);
+			case "ENTER_GROUP_ROOM" -> gwWsEventHandler.handleEnterRoom(session, dto);
+			case "EXIT_ROOM" -> gwWsEventHandler.handleExitRoom(session, dto);
+			case "TYPING_START" -> gwWsEventHandler.handleTyping(session, dto, "TYPING_START");
+			case "TYPING_STOP" -> gwWsEventHandler.handleTyping(session, dto, "TYPING_STOP");
 			case "SEND_MSG" -> wsChatEventHandler.handleSendMessage(session, dto);
 			case "READ_MSG" -> wsChatEventHandler.handleReadMessage(session, dto);
-			case "EXIT_ROOM" -> wsChatEventHandler.handleExitRoom(session, dto);
-			case "TYPING_START" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_START");
-			case "TYPING_STOP" -> wsChatEventHandler.handleTyping(session, dto, "TYPING_STOP");
 			case "LEFT_ROOM" -> wsChatEventHandler.handleLeftRoom(session, dto);
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
-				wsOutboundWriter.responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
+				gateWayWsOutboundWriter.responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
 			}// default
 
 			}// switch-case
@@ -80,7 +77,7 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			log.error("WebSocket 메시지 처리 실패: {}", message.getPayload(), e);
 
 			if (dto != null && session.isOpen()) {
-				wsOutboundWriter.responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
+				gateWayWsOutboundWriter.responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
 			}
 		}// try-catch : 이렇게 하면 잘못된 payload가 와도 서버가 FAIL을 보내고, WebSocket 연결 자체는 최대한 유지할 수 있어.
 	} // handleTextMessage 끝.
@@ -88,7 +85,8 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 	// ====== ws 연결 종료 ===========================================================================================================
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-		SessionUserDTO connectedUser = wsSessionRegistry.connectedUserSessions.remove(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
+		wsSessionRegistry.removeSessionAllRooms(session);
+		SessionUserDTO connectedUser = wsSessionRegistry.removeSessionAllRooms(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
 		//	끊어진 sessionA를 key로 Map에서 찾음 sessionA -> { userId: 9, loginId: "a" } 삭제 -->
 		//	--> 삭제하면서 value인 { userId: 9, loginId: "a" } 반환 --> 그 반환값을 connectedUser 변수에 저장
 
@@ -110,23 +108,23 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
 		wsSessionRegistry.removeSessionAllRooms(session);
 
-		wsOutboundWriter.removeSessionLock(session);
+		gateWayWsOutboundWriter.removeSessionLock(session);
 
 		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.
 
 	// ====== ws 연결 강제 종료 (로그아웃) ===========================================================================================================
 	public void closeUserWebSocketConnection(Long userId) {
-		WebSocketSession targetSession = null;
-
-		for (Map.Entry<WebSocketSession, SessionUserDTO> entry : wsSessionRegistry.connectedUserSessions.entrySet()) {
-			SessionUserDTO connectedUser = entry.getValue();
-
-			if (Objects.equals(connectedUser.getUserId(), userId)) {
-				targetSession = entry.getKey();
-				break;
-			}
-		}
+		WebSocketSession targetSession = wsSessionRegistry.findSessionByUserId(userId);
+		// entrySet() : Map 안에 들어있는 key-value 한 쌍들을 전부 꺼내서 볼 수 있게 해주는 것
+		//		for (Map.Entry<WebSocketSession, SessionUserDTO> entry : wsSessionRegistry.connectedUserSessions.entrySet()) {
+		//			SessionUserDTO connectedUser = entry.getValue();
+		//
+		//			if (Objects.equals(connectedUser.getUserId(), userId)) {
+		//				targetSession = entry.getKey();
+		//				break;
+		//			}
+		//		}
 
 		if (targetSession == null) {
 			log.info("로그아웃 WS 대상 없음 userId={}", userId);

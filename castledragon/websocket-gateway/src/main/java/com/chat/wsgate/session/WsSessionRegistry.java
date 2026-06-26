@@ -1,4 +1,4 @@
-package com.chat.wsgate.websocket;
+package com.chat.wsgate.session;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -15,6 +15,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Component
 public class WsSessionRegistry {
+	private final Map<WebSocketSession, SessionUserDTO> WsSessionsToConnectedUser = new ConcurrentHashMap<>();
+	private final Map<Long, WebSocketSession> userIdToWsSessions = new ConcurrentHashMap<>();
 
 	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
 	// final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
@@ -34,17 +36,23 @@ public class WsSessionRegistry {
 	//	   └─ userId
 	//	      └─ WebSocketSession
 
-	private final Map<WebSocketSession, SessionUserDTO> connectedUserSessions = new ConcurrentHashMap<>();
 	//	ConcurrentHashMap 왜 씀?? 일반 HashMap은 여러 thread가 동시에 수정하면 문제가 생길 수 있습니다.그래서 thread-safe한 Map인 ConcurrentHashMap씀. 동시에 여러 요청이 건드려도 일반 HashMap보다 안전한 Map
 	//	private final Map<WebSocketSession, PayloadConnectUserDTO> connectedUserSessions = new ConcurrentHashMap<>(); // HashMap은 thread-safe하지 않아서 꼬일 수 있어.
 
 	// ====== 로그인 유저 등록 ===========================================================================================================
 	public void registerConnectedUser(WebSocketSession session, SessionUserDTO loginUser) {
-		connectedUserSessions.put(session, loginUser);
+		WsSessionsToConnectedUser.put(session, loginUser);
+		userIdToWsSessions.put(loginUser.getUserId(), session);
 	}
 
 	public SessionUserDTO removeConnectedUser(WebSocketSession session) {
-		return connectedUserSessions.remove(session);
+		SessionUserDTO removedUser = WsSessionsToConnectedUser.remove(session);
+
+		if (removedUser != null) {
+			userIdToWsSessions.remove(removedUser.getUserId(), session);
+		}
+
+		return removedUser;
 	}
 
 	// ====== roomSession에 등록 ===========================================================================================================
@@ -76,8 +84,17 @@ public class WsSessionRegistry {
 
 			if (userMap.isEmpty()) {
 				roomSessions.remove(roomId);
+
+				return;
 			}
 		});
+	}
+
+	public WebSocketSession findSessionByUserId(Long userId) {
+		//	WebSocketSession userSession = connectedUserSessions.entrySet().stream().filter(entry -> Objects.equals(entry.getValue().getUserId(), userId))
+		//	.map(Map.Entry::getKey).findFirst().orElse(null);
+		WebSocketSession userSession = userIdToWsSessions.get(userId); // 역 직렬화도 해줘야, O(n) -> O(1)로 조회시간이 확 줄어든다.
+		return userSession;
 	}
 
 	// ====== 현재 채팅방 접속중인 유저찾기 ===========================================================================================================
@@ -106,7 +123,7 @@ public class WsSessionRegistry {
 	}
 
 	public int getConnectedSessionCount() {
-		return connectedUserSessions.size();
+		return WsSessionsToConnectedUser.size();
 	}
 
 	public int getActiveRoomCount() {

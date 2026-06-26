@@ -1,4 +1,4 @@
-package com.chat.wsgate.websocket;
+package com.chat.wsgate.outbound;
 
 import java.util.Map;
 import java.util.Objects;
@@ -9,13 +9,14 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.domain.WebSocketDTO;
+import com.chat.wsgate.session.WsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-public class WsOutboundWriter {
+public class GateWayWsOutboundWriter {
 
 	private final ObjectMapper objectMapper; // "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" 오류 막기 위해.
 
@@ -25,7 +26,7 @@ public class WsOutboundWriter {
 
 	// 생성자 주입
 	//	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper, ChatMetrics chatMetrics) {
-	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper) {
+	public GateWayWsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper) {
 
 		this.wsSessionRegistry = wsSessionRegistry;
 		this.objectMapper = objectMapper;
@@ -48,8 +49,8 @@ public class WsOutboundWriter {
 	}
 
 	//	====== broadcast ===========================================================================================================
-	void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
-		Map<Long, WebSocketSession> sessions = wsSessionRegistry.roomSessions.get(roomId);
+	public void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
+		Map<Long, WebSocketSession> sessions = wsSessionRegistry.getRoomSessions(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 broadcast 대상 없음", roomId);
@@ -77,8 +78,8 @@ public class WsOutboundWriter {
 		}
 	}
 
-	void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
-		Map<Long, WebSocketSession> sessions = wsSessionRegistry.roomSessions.get(roomId);
+	public void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
+		Map<Long, WebSocketSession> sessions = wsSessionRegistry.getRoomSessions(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 typing broadcast 대상 없음", roomId);
@@ -119,7 +120,7 @@ public class WsOutboundWriter {
 	}
 
 	//	====== Success 응답 보내기 ===========================================================================================================
-	void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
+	public void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
 		WebSocketDTO response = new WebSocketDTO();
 
 		response.setRequestId(request.getRequestId());
@@ -131,7 +132,7 @@ public class WsOutboundWriter {
 	}
 
 	//	====== Fail 응답 보내기 ===========================================================================================================
-	void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
+	public void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
 		WebSocketDTO response = new WebSocketDTO();
 
 		response.setRequestId(request.getRequestId());
@@ -143,7 +144,7 @@ public class WsOutboundWriter {
 	}
 
 	//	====== 응답 Session에 보내기 ===========================================================================================================
-	void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
+	public void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		if (!session.isOpen()) {
 			log.info("responseToSession is Not Open");
 			return;

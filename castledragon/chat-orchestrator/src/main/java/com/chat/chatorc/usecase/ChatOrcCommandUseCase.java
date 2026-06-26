@@ -6,7 +6,7 @@ import com.chat.chatorc.dto.PayloadReadChatMessageResponseDTO;
 import com.chat.chatorc.dto.PayloadSendChatMessageRequestDTO;
 import com.chat.chatorc.dto.PayloadSendChatMessageResponseDTO;
 
-public interface ChatMsg {
+public interface ChatOrcCommandUseCase {
 
 	PayloadSendChatMessageResponseDTO createChatMessage(Long senderUserId, String senderPublicId, PayloadSendChatMessageRequestDTO payload, Set<Long> viewingUserIds);
 

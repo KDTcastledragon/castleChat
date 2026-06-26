@@ -1,4 +1,4 @@
-package com.chat.chatorc.dto;
+package com.chat.wsgate.domain;
 
 import lombok.Data;
 

@@ -15,6 +15,7 @@ dependencies {
     runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
     
     implementation project(':common-contract')
+    implementation 'net.devh:grpc-server-spring-boot-starter:3.1.0.RELEASE'
     implementation project(':common-redis')
 
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'

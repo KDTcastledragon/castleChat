@@ -6,11 +6,19 @@
 plugins {
     id 'java-library'
     /** 실행 jar가 아니라 다른 module이 가져다 쓰는 라이브러리라서. */
+    
+    id 'com.google.protobuf' version '0.9.4'
 }
 
 description = 'common contract'
 
 dependencies {
+	api 'io.grpc:grpc-stub:1.65.1'
+    api 'io.grpc:grpc-protobuf:1.65.1'
+    api 'com.google.protobuf:protobuf-java:3.25.3'
+
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
+    
     implementation 'com.fasterxml.jackson.core:jackson-annotations'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
 

@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.chat.contract.grpc";
+option java_outer_classname = "ChatOrcProto";
+
+service ChatOrc {
+  rpc SendMessage (SendMessageRequest) returns (SendMessageResponse);
+  rpc ReadMessage (ReadMessageRequest) returns (ReadMessageResponse);
+}
+
+message SendMessageRequest {
+  int64 room_id = 1;
+  int64 sender_user_id = 2;
+  string sender_public_id = 3;
+  string message_text = 4;
+  repeated int64 viewing_user_ids = 5;
+  string request_id = 6;
+}
+
+message SendMessageResponse {
+  int64 message_id = 1;
+  int64 room_id = 2;
+  string sender_public_id = 3;
+  string message_text = 4;
+  string created_at = 5;
+  int32 unread_count = 6;
+}
+
+message ReadMessageRequest {
+  int64 room_id = 1;
+  int64 reader_user_id = 2;
+  string reader_public_id = 3;
+  int64 last_read_message_id = 4;
+  string request_id = 5;
+}
+
+message ReadMessageResponse {
+  int64 room_id = 1;
+  string reader_public_id = 2;
+  int64 last_read_message_id = 3;
+}
