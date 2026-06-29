@@ -1,31 +1,47 @@
 package com.chat.chatorc.grpc;
 
 import com.chat.chatorc.usecase.ChatOrcCommandUseCase;
+import com.chat.chatorc.usecase.ChatOrcQueryUseCase;
+import com.chat.contract.command.CreateChatMessageCommand;
+import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.contract.grpc.ChatOrcGrpc;
-import com.chat.contract.grpc.SendMessageRequest;
-import com.chat.contract.grpc.SendMessageResponse;
+import com.chat.contract.grpc.CreateChatMessageRequest;
+import com.chat.contract.grpc.CreateChatMessageResponse;
 
 import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
 
 // TCP Request 받는 곳. 정확히는 gRPC 서버가 받는다.
 
 @GrpcService
+@RequiredArgsConstructor
 public class ChatOrcGrpcEndpoint extends ChatOrcGrpc.ChatOrcImplBase {
+	// ChatOrcGrpc.ChatOrcImplBase : proto에서 생성된 서버 계약.
 
 	private final ChatOrcCommandUseCase chatOrcCommandUseCase;
-
-	public ChatOrcGrpcEndpoint(ChatOrcCommandUseCase chatOrcCommandUseCase) {
-		this.chatOrcCommandUseCase = chatOrcCommandUseCase;
-	}
+	private final ChatOrcQueryUseCase chatOrcQueryUseCase;
 
 	@Override
-	public void sendMessage(SendMessageRequest request, StreamObserver<SendMessageResponse> responseObserver) {
+	public void createChatMessage(CreateChatMessageRequest request, StreamObserver<CreateChatMessageResponse> responseObserver) {
 		// 1. proto request -> 내부 command 변환
 		// 2. usecase 호출
 		// 3. 결과 -> proto response 변환
 
-		SendMessageResponse response = SendMessageResponse.newBuilder().setMessageId(1L).setRoomId(request.getRoomId()).setSenderPublicId(request.getSenderPublicId()).setMessageText(request.getMessageText()).setCreatedAt("2026-06-26T12:00:00").setUnreadCount(0).build();
+		// gRPC generated type을 service/usecase 안으로 끌고 들어오지 않기 위해서 cmd 생성.
+		CreateChatMessageCommand requestedCommand = new CreateChatMessageCommand(request.getRoomId(), request.getSenderUserId(), request
+				.getSenderPublicId(), request.getMessageText());
+
+		ChatMessageViewDTO cmdResult = chatOrcCommandUseCase.createChatMessage(requestedCommand);
+
+		CreateChatMessageResponse response = CreateChatMessageResponse.newBuilder()
+				.setMessageId(cmdResult.getMessageId())
+				.setRoomId(cmdResult.getRoomId())
+				.setSenderPublicId(cmdResult.getSenderPublicId())
+				.setMessageText(cmdResult.getMessageText())
+				.setCreatedAt(cmdResult.getCreatedAt().toString())
+				.setUnreadCount(cmdResult.getUnreadCount())
+				.build();
 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();

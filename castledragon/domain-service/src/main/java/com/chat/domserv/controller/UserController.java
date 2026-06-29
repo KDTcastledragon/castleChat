@@ -35,6 +35,8 @@ public class UserController {
 
 	// ======[ 회원가입 ]===================================================================================================
 	@PostMapping("/join")
+	//	너는 Controller 메소드를 직접 호출하지 않잖아.
+	//	HTTP request가 오면 Spring이 호출함. --> 먼소리고???????? 자세히 공부 ㄱ.
 	public ResponseEntity<?> join(@RequestBody UserDTO data) {
 		try {
 			log.info("");

@@ -8,10 +8,11 @@ import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsAuth;
+import com.chat.wsgate.client.ChatOrchestratorClient;
+import com.chat.wsgate.domain.PayloadReadChatMessageRequestDTO;
 import com.chat.wsgate.domain.PayloadSendChatMessageRequestDTO;
 import com.chat.wsgate.domain.PayloadTypingRequestDTO;
 import com.chat.wsgate.domain.PayloadTypingResponseDTO;
-import com.chat.wsgate.grpc.GrpcChatOrchestratorClient;
 import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
 import com.chat.wsgate.support.WsPayloadConverter;
 
@@ -27,7 +28,7 @@ public class GateWayWsChatHandler {
 
 	private final WsPayloadConverter wsPayloadConverter;
 
-	private final GrpcChatOrchestratorClient grpcChatOrcClient;
+	private final ChatOrchestratorClient chatOrcClient;
 
 	//	====== 메세지 전송 ===========================================================================================================
 	public void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -42,9 +43,11 @@ public class GateWayWsChatHandler {
 		}
 
 		try {
-			CreateChatMessageCommand CreateChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), payload.getMessageText());
+			// Command 생성. 최적화를 위해 me에서 publicId까지 꺼내고 함께 보낸다. orc에서 userId로 publicId를 DB에서 굳이 또 하는 것보다 좋음. session값이라 신뢰 가능.
+			CreateChatMessageCommand CreateChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
+					.getMessageText());
 
-			ChatMessageViewDTO resChat = grpcChatOrcClient.createMessage(CreateChtMsgCmd);
+			ChatMessageViewDTO resChat = chatOrcClient.createChatMessage(CreateChtMsgCmd);
 
 			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
@@ -64,7 +67,7 @@ public class GateWayWsChatHandler {
 		//		payload.setRoomId(1L);
 		//		payload.setLastReadMessageId(6L);
 		//		--->
-		PayloadReadChatMessageRequestDTO payload = convertPayload(dto, PayloadReadChatMessageRequestDTO.class); // ws내부의 payload를 꺼낸다.
+		PayloadReadChatMessageRequestDTO payload = wsPayloadConverter.convert(dto, PayloadReadChatMessageRequestDTO.class); // ws내부의 payload를 꺼낸다.
 
 		if (payload.getRoomId() == null || payload.getLastReadMessageId() == null) {
 			log.info("readMsg 필수 값 누락 : {} / {}", payload.getRoomId(), payload.getLastReadMessageId());
@@ -72,27 +75,16 @@ public class GateWayWsChatHandler {
 			return;
 		}
 
-		//		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), me.getPublicId(), payload.getLastReadMessageId(), updatedUnreadCount);
-
-		//		List<UpdatedUnreadMessagesDTO> updatedMessages = chatService.readChatMessage(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getLastReadMessageId());
-		//		PayloadReadMessageResponseDTO responsePayload = new PayloadReadMessageResponseDTO(payload.getRoomId(), me.getPublicId(), payload.getLastReadMessageId(), // 얘 어캐하지?
-		//				updatedMessages);
-
-		PayloadReadChatMessageResponseDTO responsePayload = chatService.readChatMessage(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getLastReadMessageId());
-
-		//		log.info("{}({}) 유저가 {}번방 {}번 메시지까지 읽음", me.getNickname(), me.getUserId(), payload.getRoomId(), payload.getLastReadMessageId());
-		chatMetrics.incrementSendMessage();
-		wsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", responsePayload, dto.getRequestId());
-		//		responseOk(session, dto, "READ_MSG_OK", payload);
+		gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", null, dto.getRequestId());
 	}
 
-	//	====== typing start/stop ===========================================================================================================
+	//	====== 채팅 입력 이벤트 start/stop ===========================================================================================================
 	public void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
 		//		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
 		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
 		//		PayloadTypingRequestDTO payload = convertPayload(dto, PayloadTypingRequestDTO.class);
-		PayloadTypingRequestDTO payload = convertPayload(dto, PayloadTypingRequestDTO.class);
+		PayloadTypingRequestDTO payload = wsPayloadConverter.convert(dto, PayloadTypingRequestDTO.class);
 
 		if (payload.getRoomId() == null) {
 			log.warn("TYPING Data roomId null");

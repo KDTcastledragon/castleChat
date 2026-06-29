@@ -1,32 +1,33 @@
-syntax = "proto3";
+syntax = "proto3"; //  protobuf 문법 버전
 
-option java_multiple_files = true;
-option java_package = "com.chat.contract.grpc";
+option java_multiple_files = true; // 생성 Java class를 여러 파일로 나눔
+option java_package = "com.chat.contract.grpc"; // 생성 Java class package
 option java_outer_classname = "ChatOrcProto";
 
+// gRPC API 묶음
 service ChatOrc {
-  rpc SendMessage (SendMessageRequest) returns (SendMessageResponse);
-  rpc ReadMessage (ReadMessageRequest) returns (ReadMessageResponse);
+  rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse); // 원격 호출 가능한 메소드. Remote Procedure Call.
+  rpc ReadChatMessage (ReadChatMessageRequest) returns (ReadChatMessageResponse);
 }
 
-message SendMessageRequest {
-  int64 room_id = 1;
+// 요청 데이터 구조
+message CreateChatMessageRequest {
+  int64 room_id = 1; // room_id라는 int64 필드. 1은 필드 번호.
   int64 sender_user_id = 2;
   string sender_public_id = 3;
   string message_text = 4;
-  string request_id = 6;
 }
 
-message SendMessageResponse {
+message CreateChatMessageResponse {
   int64 message_id = 1;
   int64 room_id = 2;
   string sender_public_id = 3;
   string message_text = 4;
   string created_at = 5;
-  int32 unread_count = 6;
+  int64 unread_count = 6; // int32로 하면 int -> Long 오류난다. 귀찮아짐. 그냥 int64로 가는게 맞다.
 }
 
-message ReadMessageRequest {
+message ReadChatMessageRequest {
   int64 room_id = 1;
   int64 reader_user_id = 2;
   string reader_public_id = 3;
@@ -34,7 +35,7 @@ message ReadMessageRequest {
   string request_id = 5;
 }
 
-message ReadMessageResponse {
+message ReadChatMessageResponse {
   int64 room_id = 1;
   string reader_public_id = 2;
   int64 last_read_message_id = 3;
