@@ -1,4 +1,4 @@
-package com.chat.wsgate.websocket;
+package com.chat.wsgate.exception;
 
 public class WsAuthException extends RuntimeException {
 	private static final long serialVersionUID = 1L; // 아래는 이걸 선언하지 않았을때의 WsAuthException 경고.

@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.domain.SessionUserDTO;
-import com.chat.wsgate.websocket.WsAuthException;
+import com.chat.wsgate.exception.WsAuthException;
 
 @Component
 public class WsAuth {

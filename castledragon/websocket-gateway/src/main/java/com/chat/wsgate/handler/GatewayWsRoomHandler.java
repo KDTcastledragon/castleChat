@@ -3,7 +3,6 @@ package com.chat.wsgate.handler;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.domain.PayloadRoomNoticeDTO;
@@ -13,8 +12,6 @@ import com.chat.contract.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsAuth;
 import com.chat.wsgate.domain.PayloadEnterRoomDTO;
 import com.chat.wsgate.domain.PayloadExitRoomDTO;
-import com.chat.wsgate.domain.PayloadTypingRequestDTO;
-import com.chat.wsgate.domain.PayloadTypingResponseDTO;
 import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
 import com.chat.wsgate.session.WsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,14 +22,14 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class GatewayWsEventHandler {
+public class GatewayWsRoomHandler {
 
 	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
 	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
 
 	private final WsSessionRegistry wsSessionRegistry;
-	private final GateWayWsOutboundWriter gateWayWsOutboundWriter;
+	private final GateWayWsOutboundWriter gwWsOutboundWriter;
 	private final WsAuth wsAuth;
 	//	private final ChatService chatService;
 	//	private final ChatMetrics chatMetrics;
@@ -63,29 +60,6 @@ public class GatewayWsEventHandler {
 		// Jackson은 사람이 아니라 Java에서 JSON을 다루는 대표 라이브러리 이름입니다. 오타 아니에요.
 	}
 
-	//	====== 유저 접속 ============================================================================================================
-	public void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		SessionUserDTO loginUser = wsAuth.getLoginUser(session);
-
-		if (loginUser == null) {
-			log.warn("인증되지 않은 WS CONNECT 요청. WSid={}", session.getId());
-			gateWayWsOutboundWriter.responseFail(session, dto, "CONNECT_USER_FAIL", "로그인이 필요합니다.");
-
-			if (session.isOpen()) {
-				session.close(CloseStatus.NOT_ACCEPTABLE);
-			}
-
-			return;
-		}
-
-		//		wsSessionRegistry.connectedUserSessions.put(session, myUserId);
-		wsSessionRegistry.registerConnectedUser(session, loginUser);
-
-		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
-		gateWayWsOutboundWriter.responseOk(session, dto, "CONNECT_USER_OK", loginUser);
-
-	}// handleConnectUser
-
 	//	====== 채팅방 입장 ===========================================================================================================
 	public void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
@@ -93,7 +67,7 @@ public class GatewayWsEventHandler {
 
 		if (payload.getRoomId() == null || myUserId == null) {
 			log.warn("ENTER_ROOM Data 누락 : {} / {}", payload.getRoomId(), myUserId);
-			gateWayWsOutboundWriter.responseFail(session, dto, "ENTER_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
+			gwWsOutboundWriter.responseFail(session, dto, "ENTER_ROOM_FAIL", "roomId 또는 userId가 없습니다.");
 			return;
 		}
 
@@ -101,7 +75,7 @@ public class GatewayWsEventHandler {
 		wsSessionRegistry.enterRoomSession(payload.getRoomId(), myUserId, session);
 
 		log.info("{}번 유저 {}번방 입장. wsSess등록.", myUserId, payload.getRoomId());
-		gateWayWsOutboundWriter.responseOk(session, dto, "ENTER_ROOM_OK", payload);
+		gwWsOutboundWriter.responseOk(session, dto, "ENTER_ROOM_OK", payload);
 
 	} // handleEnterRoom 끝.
 
@@ -112,14 +86,14 @@ public class GatewayWsEventHandler {
 		PayloadExitRoomDTO payload = convertPayload(dto, PayloadExitRoomDTO.class);
 
 		if (payload.getRoomId() == null || myUserId == null) {
-			gateWayWsOutboundWriter.responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId,userId가 없습니다.");
+			gwWsOutboundWriter.responseFail(session, dto, "EXIT_ROOM_FAIL", "roomId,userId가 없습니다.");
 			return;
 		}
 
 		wsSessionRegistry.exitRoomSession(payload.getRoomId(), myUserId);
 
 		log.info("{}번 유저 {}번방 Exit 처리", myUserId, payload.getRoomId());
-		gateWayWsOutboundWriter.responseOk(session, dto, "EXIT_ROOM_OK", payload);
+		gwWsOutboundWriter.responseOk(session, dto, "EXIT_ROOM_OK", payload);
 	}//exitRoom 끝.
 
 	//	====== 채팅방 나가기 ===========================================================================================================
@@ -128,7 +102,7 @@ public class GatewayWsEventHandler {
 		RoomIdRequestDTO payload = convertPayload(dto, RoomIdRequestDTO.class);
 
 		if (payload.getRoomId() == null) {
-			gateWayWsOutboundWriter.responseFail(session, dto, "LEFT_ROOM_FAIL", "roomId 없음");
+			gwWsOutboundWriter.responseFail(session, dto, "LEFT_ROOM_FAIL", "roomId 없음");
 			return;
 		}
 
@@ -136,28 +110,7 @@ public class GatewayWsEventHandler {
 
 		PayloadRoomNoticeDTO notice = new PayloadRoomNoticeDTO(payload.getRoomId(), "MEMBER_LEFT", me.getNickname() + "님이 나갔습니다.", LocalDateTime.now());
 
-		gateWayWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_NOTICE", notice, dto.getRequestId());
-	}
-
-	//	====== typing start/stop ===========================================================================================================
-	public void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
-		//		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
-		SessionUserDTO me = wsAuth.requireLoginUser(session);
-
-		//		PayloadTypingRequestDTO payload = convertPayload(dto, PayloadTypingRequestDTO.class);
-		PayloadTypingRequestDTO payload = convertPayload(dto, PayloadTypingRequestDTO.class);
-
-		if (payload.getRoomId() == null) {
-			log.warn("TYPING Data roomId null");
-			gateWayWsOutboundWriter.responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
-			return;
-		}
-
-		PayloadTypingResponseDTO responsePayload = new PayloadTypingResponseDTO(payload.getRoomId(), me.getPublicId(), me.getNickname());
-
-		//		log.info("{} in room={}", eventType, responsePayload.getRoomId());
-
-		gateWayWsOutboundWriter.broadcastToRoomExceptUser(payload.getRoomId(), eventType, responsePayload, dto.getRequestId(), me.getUserId());
+		gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_NOTICE", notice, dto.getRequestId());
 	}
 
 }
