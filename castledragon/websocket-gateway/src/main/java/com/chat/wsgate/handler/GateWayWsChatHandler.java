@@ -3,7 +3,7 @@ package com.chat.wsgate.handler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.contract.command.SendChatMessageCommand;
+import com.chat.contract.command.CreateChatMessageCommand;
 import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
@@ -13,7 +13,6 @@ import com.chat.wsgate.domain.PayloadTypingRequestDTO;
 import com.chat.wsgate.domain.PayloadTypingResponseDTO;
 import com.chat.wsgate.grpc.GrpcChatOrchestratorClient;
 import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
-import com.chat.wsgate.session.WsSessionRegistry;
 import com.chat.wsgate.support.WsPayloadConverter;
 
 import lombok.RequiredArgsConstructor;
@@ -26,15 +25,12 @@ public class GateWayWsChatHandler {
 	private final WsAuth wsAuth;
 	private final GateWayWsOutboundWriter gwWsOutboundWriter;
 
-	private final WsSessionRegistry wsSessionRegistry;
-
 	private final WsPayloadConverter wsPayloadConverter;
 
 	private final GrpcChatOrchestratorClient grpcChatOrcClient;
 
 	//	====== 메세지 전송 ===========================================================================================================
 	public void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		//		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
 		SessionUserDTO me = wsAuth.requireLoginUser(session);
 
 		PayloadSendChatMessageRequestDTO payload = wsPayloadConverter.convert(dto, PayloadSendChatMessageRequestDTO.class);
@@ -46,9 +42,9 @@ public class GateWayWsChatHandler {
 		}
 
 		try {
-			SendChatMessageCommand sendChtMsgCmd = new SendChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getMessageText(), dto.getRequestId());
+			CreateChatMessageCommand CreateChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), payload.getMessageText());
 
-			ChatMessageViewDTO resChat = grpcChatOrcClient.sendMessage(sendChtMsgCmd);
+			ChatMessageViewDTO resChat = grpcChatOrcClient.createMessage(CreateChtMsgCmd);
 
 			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
@@ -58,7 +54,6 @@ public class GateWayWsChatHandler {
 			gwWsOutboundWriter.responseFail(session, dto, "MSG_SEND_FAIL", "메시지 저장 실패");
 			return;
 		}
-		//		responseOk(session, dto, "SEND_MSG_OK", chat);
 	}
 
 	//	====== 메세지 읽기 ===========================================================================================================

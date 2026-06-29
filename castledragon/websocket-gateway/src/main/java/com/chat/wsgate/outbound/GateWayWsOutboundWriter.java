@@ -9,7 +9,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.domain.WebSocketDTO;
-import com.chat.wsgate.session.WsSessionRegistry;
+import com.chat.wsgate.session.GateWayWsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.log4j.Log4j2;
@@ -20,15 +20,15 @@ public class GateWayWsOutboundWriter {
 
 	private final ObjectMapper objectMapper; // "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" 오류 막기 위해.
 
-	private final WsSessionRegistry wsSessionRegistry;
+	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
 
 	//	private final ChatMetrics chatMetrics;
 
 	// 생성자 주입
 	//	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper, ChatMetrics chatMetrics) {
-	public GateWayWsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper) {
+	public GateWayWsOutboundWriter(GateWayWsSessionRegistry gateWayWsSessionRegistry, ObjectMapper objectMapper) {
 
-		this.wsSessionRegistry = wsSessionRegistry;
+		this.gateWayWsSessionRegistry = gateWayWsSessionRegistry;
 		this.objectMapper = objectMapper;
 		//		this.chatMetrics = chatMetrics;
 	}
@@ -50,7 +50,7 @@ public class GateWayWsOutboundWriter {
 
 	//	====== broadcast ===========================================================================================================
 	public void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
-		Map<Long, WebSocketSession> sessions = wsSessionRegistry.getRoomSessions(roomId);
+		Map<Long, WebSocketSession> sessions = gateWayWsSessionRegistry.getRoomSessions(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 broadcast 대상 없음", roomId);
@@ -79,7 +79,7 @@ public class GateWayWsOutboundWriter {
 	}
 
 	public void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
-		Map<Long, WebSocketSession> sessions = wsSessionRegistry.getRoomSessions(roomId);
+		Map<Long, WebSocketSession> sessions = gateWayWsSessionRegistry.getRoomSessions(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 typing broadcast 대상 없음", roomId);

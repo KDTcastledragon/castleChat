@@ -13,7 +13,7 @@ import com.chat.wsgate.auth.WsAuth;
 import com.chat.wsgate.domain.PayloadEnterRoomDTO;
 import com.chat.wsgate.domain.PayloadExitRoomDTO;
 import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
-import com.chat.wsgate.session.WsSessionRegistry;
+import com.chat.wsgate.session.GateWayWsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class GatewayWsRoomHandler {
 	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
 
-	private final WsSessionRegistry wsSessionRegistry;
+	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
 	private final GateWayWsOutboundWriter gwWsOutboundWriter;
 	private final WsAuth wsAuth;
 	//	private final ChatService chatService;
@@ -72,7 +72,7 @@ public class GatewayWsRoomHandler {
 		}
 
 		//		wsSessionRegistry.roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(myUserId, session);
-		wsSessionRegistry.enterRoomSession(payload.getRoomId(), myUserId, session);
+		gateWayWsSessionRegistry.enterRoomSession(payload.getRoomId(), myUserId, session);
 
 		log.info("{}번 유저 {}번방 입장. wsSess등록.", myUserId, payload.getRoomId());
 		gwWsOutboundWriter.responseOk(session, dto, "ENTER_ROOM_OK", payload);
@@ -90,7 +90,7 @@ public class GatewayWsRoomHandler {
 			return;
 		}
 
-		wsSessionRegistry.exitRoomSession(payload.getRoomId(), myUserId);
+		gateWayWsSessionRegistry.exitRoomSession(payload.getRoomId(), myUserId);
 
 		log.info("{}번 유저 {}번방 Exit 처리", myUserId, payload.getRoomId());
 		gwWsOutboundWriter.responseOk(session, dto, "EXIT_ROOM_OK", payload);

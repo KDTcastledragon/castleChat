@@ -7,10 +7,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SendChatMessageCommand {
+public class CreateChatMessageCommand {
 	private Long roomId;
 	private Long senderUserId;
-	private String senderPublicId;
 	private String messageText;
-	private String requestId;
+	//	private String senderPublicId;
+	//	private String requestId;
 }

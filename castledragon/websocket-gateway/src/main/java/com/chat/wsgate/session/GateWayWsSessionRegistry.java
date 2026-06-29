@@ -14,11 +14,11 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-public class WsSessionRegistry {
-	private final Map<WebSocketSession, SessionUserDTO> WsSessionsToConnectedUser = new ConcurrentHashMap<>();
-	private final Map<Long, WebSocketSession> userIdToWsSessions = new ConcurrentHashMap<>();
+public class GateWayWsSessionRegistry {
+	private final Map<WebSocketSession, SessionUserDTO> wsSessionsToConnectedUser = new ConcurrentHashMap<>();
+	private final Map<Long, WebSocketSession> userIdToWsSessions = new ConcurrentHashMap<>(); // userId:ws 1:1대응이라서 단수형으로 naming.
 
-	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
+	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>(); // room하나에 여러 sessions들어가서 복수형으로 naming.
 	// final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	// final : 이 클래스가 생성될 때 주입받은 WsSessionRegistry 참조를 나중에 다른 객체로 바꿔치기하지 못하게 막는 것.
 	// -> 여러 클래스가 각자 Map을 만들지 않고 Spring이 만든 WsSessionRegistry 하나를 공유해서하나의 접속 명부를 공통 관리하게 한다
@@ -41,12 +41,12 @@ public class WsSessionRegistry {
 
 	// ====== 로그인 유저 등록 ===========================================================================================================
 	public void registerConnectedUser(WebSocketSession session, SessionUserDTO loginUser) {
-		WsSessionsToConnectedUser.put(session, loginUser);
+		wsSessionsToConnectedUser.put(session, loginUser);
 		userIdToWsSessions.put(loginUser.getUserId(), session);
 	}
 
 	public SessionUserDTO removeConnectedUser(WebSocketSession session) {
-		SessionUserDTO removedUser = WsSessionsToConnectedUser.remove(session);
+		SessionUserDTO removedUser = wsSessionsToConnectedUser.remove(session);
 
 		if (removedUser != null) {
 			userIdToWsSessions.remove(removedUser.getUserId(), session);
@@ -90,6 +90,7 @@ public class WsSessionRegistry {
 		});
 	}
 
+	// ====== userId PK로 WS 찾기 ===========================================================================================================
 	public WebSocketSession findSessionByUserId(Long userId) {
 		//	WebSocketSession userSession = connectedUserSessions.entrySet().stream().filter(entry -> Objects.equals(entry.getValue().getUserId(), userId))
 		//	.map(Map.Entry::getKey).findFirst().orElse(null);
@@ -123,7 +124,7 @@ public class WsSessionRegistry {
 	}
 
 	public int getConnectedSessionCount() {
-		return WsSessionsToConnectedUser.size();
+		return wsSessionsToConnectedUser.size();
 	}
 
 	public int getActiveRoomCount() {
@@ -134,14 +135,4 @@ public class WsSessionRegistry {
 		return roomSessions.values().stream().mapToInt(Map::size).sum();
 	}
 
-}// WsSessionRegistry
-
-//private Long getLoginUserId(WebSocketSession session) { // --> 중복이라 불필요함.
-//		SessionUserDTO loginUser = getLoginUser(session);
-//
-//		if (loginUser == null) {
-//			return null;
-//		}
-//
-//		return Long.valueOf(loginUser.getUserId());
-//	}
+}// GateWayWsSessionRegistry

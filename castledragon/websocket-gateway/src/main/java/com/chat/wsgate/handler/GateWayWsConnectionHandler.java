@@ -8,7 +8,7 @@ import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsAuth;
 import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
-import com.chat.wsgate.session.WsSessionRegistry;
+import com.chat.wsgate.session.GateWayWsSessionRegistry;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class GateWayWsConnectionHandler {
 	private final WsAuth wsAuth;
-	private final WsSessionRegistry wsSessionRegistry;
+	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
 
 	private final GateWayWsOutboundWriter gateWayWsOutboundWriter;
 
@@ -38,7 +38,7 @@ public class GateWayWsConnectionHandler {
 		}
 
 		//		wsSessionRegistry.connectedUserSessions.put(session, myUserId);
-		wsSessionRegistry.registerConnectedUser(session, loginUser);
+		gateWayWsSessionRegistry.registerConnectedUser(session, loginUser);
 
 		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
 		gateWayWsOutboundWriter.responseOk(session, dto, "CONNECT_USER_OK", loginUser);
