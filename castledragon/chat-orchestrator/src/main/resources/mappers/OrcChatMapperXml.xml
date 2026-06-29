@@ -9,5 +9,9 @@
 	  values(#{roomId},#{senderId},#{messageText},#{createdAt})
   </insert>
   
+  <select id="findAllActiveMemberIdsInRoom" resultType="Long">
+  select user_id from room_members where room_id = #{roomId} and member_status = 'ACTIVE'
+  </select>
+  
   
   </mapper>

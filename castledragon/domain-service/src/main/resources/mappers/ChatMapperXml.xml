@@ -5,11 +5,6 @@
 
 <mapper namespace="com.chat.castledragon.mapper.ChatMapper">
 
-	<insert id="insertMessage" parameterType="com.chat.castledragon.domain.ChatMessagesDTO" useGeneratedKeys="true" keyProperty="messageId">
-    	INSERT INTO chat_messages(room_id, sender_id, message_text,created_at) 
-    	VALUES(#{roomId}, #{senderId}, #{messageText},#{createdAt})
-	</insert>
-	
 	<select id="loadMessagesInRoom" resultType="com.chat.castledragon.domain.PayloadSendChatMessageResponseDTO">
 	    SELECT *
 	    FROM (
