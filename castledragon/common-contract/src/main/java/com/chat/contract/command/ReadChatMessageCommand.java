@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ReadChatMessageCommand {
 	private Long roomId;
-	private Long senderUserId;
-	private String senderPublicId;
-	private String messageText;
-	private String requestId;
+	private Long readerUserId;
+	private String readerPublicId;
+	private Long lastReadMessageId;
+	//	private String requestId;
 }

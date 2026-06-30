@@ -10,10 +10,12 @@ import java.util.stream.Collectors;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
+@RequiredArgsConstructor
 public class RoomMemberCache {
 	private final StringRedisTemplate redisTemplate; // redisTemplate란? Spring이 제공하는 Redis 조작하는 명령 실행 도구야. DB에서 MyBatis Mapper가 SQL 실행 도구인 느낌.
 	//	private final RedisTemplate<String, Long> redisTemplate; // 가능은 한데, 쓰기 개빡세다. 
@@ -32,10 +34,6 @@ public class RoomMemberCache {
 
 	private static final Duration ROOM_MEMBERS_TTL = Duration.ofHours(48);
 	private static final Duration ROOM_MEMBERS_TTL_REFRESH_THRESHOLD = Duration.ofHours(1);
-
-	public RoomMemberCache(StringRedisTemplate redisTemplate) {
-		this.redisTemplate = redisTemplate;
-	}
 
 	// key Name make function 이당. 왜 함수로 빼냐? 여기저기서 직접 문자열을 만들면 위험해. 오타 나면 Redis key가 갈라져버림. 그래서 key 규칙을 한 메소드에 고정한 거야.
 	private String roomMembersKey(Long roomId) {

@@ -76,9 +76,15 @@ public class GateWayWsChatHandler {
 			return;
 		}
 
-		ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand();
+		try {
+			ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
+					.getLastReadMessageId());
 
-		gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", null, dto.getRequestId());
+			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", null, dto.getRequestId());
+		} catch (Exception e) {
+
+		}
+
 	}
 
 	//	====== 채팅 입력 이벤트 start/stop ===========================================================================================================

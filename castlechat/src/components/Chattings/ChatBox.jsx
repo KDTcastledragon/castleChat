@@ -22,6 +22,9 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     const isTypingRef = useRef(false);
     const typingTimerRef = useRef(null);
 
+    const pendingReadMessageIdRef = useRef(null);
+    const readDebounceTimerRef = useRef(null);
+
     const formatTime = (isoString) => {
         const date = new Date(isoString);
         return date.toTimeString().split(" ")[0];
@@ -106,8 +109,10 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     const lastOtherMsgInRoom = [...loadedMessagesInRoom.data].reverse().find(msg => msg.senderPublicId !== myPublicId);
 
                     if (lastOtherMsgInRoom !== undefined) {
-
-                        emitWsReadMessage(roomId, lastOtherMsgInRoom.messageId); // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
+                        scheduleReadMessage(lastOtherMsgInRoom.messageId);
+                        // emitWsReadMessage(roomId, lastOtherMsgInRoom.messageId); 
+                        // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
+                        // 근데, 이거조차도 db query를 탄다. 대용량과 맞지 않아서. debounce로 변경 적용.
 
                     }
                 }
@@ -136,8 +141,9 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
                 if (newMsg.senderPublicId !== myPublicId) {
                     // 새 메시지를 보낸 사람이 내가 아니면, 나는 지금 이 방을 보고 있으니까 그 메시지를 읽은 것으로 서버에 알려라.
-
-                    emitWsReadMessage(roomId, newMsg.messageId); // 서버에게 READ_MSG 전송.
+                    scheduleReadMessage(newMsg.messageId);
+                    // emitWsReadMessage(roomId, newMsg.messageId); // 서버에게 READ_MSG 전송.
+                    // debounce로 변경. legacy 처리.
 
                 }
             }// if 1.
@@ -219,6 +225,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         });
 
         return () => {
+            flushPendingReadMessage(); // debounce 적용.
+
             unregisterRoomHandler(roomId);
         };
 
@@ -279,9 +287,50 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             }, 90000);
         }
     };
+    // ====== 메시지 읽기 요청 Debounce 처리 ===============================================
+    function scheduleReadMessage(messageId) {
+        if (!messageId) return;
+
+        pendingReadMessageIdRef.current = Math.max(
+            Number(pendingReadMessageIdRef.current ?? 0),
+            Number(messageId)
+        );
+
+        if (readDebounceTimerRef.current) {
+            clearTimeout(readDebounceTimerRef.current);
+        }
+
+        readDebounceTimerRef.current = setTimeout(() => {
+            const lastReadMessageId = pendingReadMessageIdRef.current;
+
+            if (lastReadMessageId) {
+                emitWsReadMessage(roomId, lastReadMessageId);
+            }
+
+            pendingReadMessageIdRef.current = null;
+            readDebounceTimerRef.current = null;
+        }, 300);
+    }
+    function flushPendingReadMessage() {
+        const lastReadMessageId = pendingReadMessageIdRef.current;
+
+        if (readDebounceTimerRef.current) {
+            clearTimeout(readDebounceTimerRef.current);
+            readDebounceTimerRef.current = null;
+        }
+
+        if (lastReadMessageId) {
+            emitWsReadMessage(roomId, lastReadMessageId);
+        }
+
+        pendingReadMessageIdRef.current = null;
+    }
 
     // ================ 채팅창 닫기 ===============================================
     const closeChatAndExitRoom = () => {
+        flushPendingReadMessage();
+
+
         if (isTypingRef.current) {
             isTypingRef.current = false;
             emitWsTypingStop(roomId);
@@ -298,6 +347,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     async function leftRoom() {
         try {
+            flushPendingReadMessage();
+
             await leftRoomApi(roomId);
 
             emitWsLeftRoom(roomId);

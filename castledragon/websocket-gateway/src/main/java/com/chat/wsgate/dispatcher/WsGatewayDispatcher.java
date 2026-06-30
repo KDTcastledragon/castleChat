@@ -21,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
+public class WsGatewayDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
