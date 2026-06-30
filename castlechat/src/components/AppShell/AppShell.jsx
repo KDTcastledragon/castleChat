@@ -26,15 +26,16 @@ function AppShell() {
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
-        if (!me) return;
-
+        if (!me?.publicId) return;
         connectWs();
+    }, [me?.publicId]);
 
+    useEffect(() => {
         return () => {
             console.log(`AppShell UNMOUNT`);
             disconnectWs('AppShell_UNMOUNT');
-        }
-    }, [me])
+        };
+    }, []);
 
     useEffect(() => {
         const unregister = registerWsCloseListener(() => {
