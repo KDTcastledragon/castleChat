@@ -32,11 +32,15 @@ message ReadChatMessageRequest {
   int64 reader_user_id = 2;
   string reader_public_id = 3;
   int64 last_read_message_id = 4;
-  string request_id = 5;
 }
 
 message ReadChatMessageResponse {
   int64 room_id = 1;
   string reader_public_id = 2;
-  int64 last_read_message_id = 3;
+  int64 old_last_read_message_id = 3;
+  int64 last_read_message_id = 4;
+  bool updated = 5;
 }
+
+
+

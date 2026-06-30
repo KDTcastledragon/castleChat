@@ -3,7 +3,9 @@ package com.chat.contract.convert;
 import java.time.LocalDateTime;
 
 import com.chat.contract.domain.ChatMessageViewDTO;
+import com.chat.contract.domain.ReadPositionUpdateResponseDTO;
 import com.chat.contract.grpc.CreateChatMessageResponse;
+import com.chat.contract.grpc.ReadChatMessageResponse;
 
 public final class GrpcToDtoConverter {
 	// --> 이 클래스를 상속하지 못하게 막기 위해서, final 붙였다.
@@ -15,6 +17,12 @@ public final class GrpcToDtoConverter {
 	public static ChatMessageViewDTO convertGrpcToChtMsgViwDTO(CreateChatMessageResponse response) {
 		ChatMessageViewDTO convert = new ChatMessageViewDTO(response.getMessageId(), response.getRoomId(), response.getSenderPublicId(), response
 				.getMessageText(), LocalDateTime.parse(response.getCreatedAt()), response.getUnreadCount()); // int32 urc라서 안 맞았음.
+		return convert;
+	}
+
+	public static ReadPositionUpdateResponseDTO convertGrpcToReadPosUpdateResDto(ReadChatMessageResponse response) {
+		ReadPositionUpdateResponseDTO convert = new ReadPositionUpdateResponseDTO();
+
 		return convert;
 	}
 }
