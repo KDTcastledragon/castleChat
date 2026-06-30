@@ -1,5 +1,7 @@
 package com.chat.chatorc.service;
 
-public class ChatOrcQueryService {
+import com.chat.chatorc.usecase.ChatOrcQueryUseCase;
+
+public class ChatOrcQueryService implements ChatOrcQueryUseCase {
 
 }

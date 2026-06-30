@@ -1,23 +1,26 @@
 package com.chat.domserv.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
 import com.chat.domserv.mapper.FriendMapper;
+import com.chat.domserv.mapper.UserMapper;
 import com.chat.domserv.usecase.FriendCommandUseCase;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
+@RequiredArgsConstructor
 public class FriendCommandService implements FriendCommandUseCase {
-	@Autowired
-	FriendMapper friendMapper;
+	private final FriendMapper friendMapper;
+	private final UserMapper userMapper;
 
+	// ====== 친구 추가 요청 ===============================================================================================================================
 	@Override
 	public boolean addFriend(Long myUserId, String targetPublicId) {
-		Long targetUserId = friendMapper.findUserIdByPublicId(targetPublicId);
+		Long targetUserId = userMapper.findUserIdByPublicId(targetPublicId);
 
 		if (targetUserId == null || (myUserId.equals(targetUserId))) {
 			return false;
@@ -33,9 +36,10 @@ public class FriendCommandService implements FriendCommandUseCase {
 		}
 	}
 
+	// ====== 친구 수락/거절 응답 ======================================================================================================================
 	@Override
 	public boolean respondFriendRequest(Long myUserId, String requesterPublicId, String action) {
-		Long requesterUserId = friendMapper.findUserIdByPublicId(requesterPublicId);
+		Long requesterUserId = userMapper.findUserIdByPublicId(requesterPublicId);
 
 		if (requesterUserId == null || myUserId.equals(requesterUserId)) {
 			return false;

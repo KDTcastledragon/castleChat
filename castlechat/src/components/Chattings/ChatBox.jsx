@@ -93,7 +93,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
             try {
                 // 1. '이미 전송처리된' 이전 메시지 조회
-                const loadedMessagesInRoom = await axios.get(`/chat/loadMessagesInRoom/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
+                const loadedMessagesInRoom = await axios.get(`/room/loadMessagesInRoom/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
 
                 // console.log(`getPrevMsg --> ${JSON.stringify(prevMsgInThisRoom.data, null, 2)}`); // null, 2 가 들여쓰기 해줌.
                 console.log(`${JSON.stringify(loadedMessagesInRoom.data)}`);
@@ -411,7 +411,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                         <div>친구와 새로운 이야기를 시작해보세요.</div>
                     }
 
-                    {/** 이게 핵심이다. */}
+                    {/** 자동으로 스크롤다운 */}
                     <div ref={chatEndRef} />
                 </div>
                 {typingUsers.length > 0 && (

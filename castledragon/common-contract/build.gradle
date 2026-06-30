@@ -13,9 +13,12 @@ plugins {
 description = 'common contract'
 
 dependencies {
-	api 'io.grpc:grpc-stub:1.65.1'
-    api 'io.grpc:grpc-protobuf:1.65.1'
-    api 'com.google.protobuf:protobuf-java:3.25.3'
+    /*api 'io.grpc:grpc-stub:1.68.1' --> gRPC version 충돌. io.grpc.InternalGlobalInterceptors 발생해서 올렸다가 안됨........ㅠ..
+	api 'io.grpc:grpc-protobuf:1.68.1' */
+    
+    api 'io.grpc:grpc-stub:1.63.0'
+	api 'io.grpc:grpc-protobuf:1.63.0'
+	api 'com.google.protobuf:protobuf-java:3.25.3'
 
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53'
     
@@ -28,12 +31,16 @@ dependencies {
 
 protobuf {
     protoc {
-        artifact = 'com.google.protobuf:protoc:3.25.3'
+        /** artifact = 'com.google.protobuf:protoc:3.25.3' */
+        /** artifact = 'com.google.protobuf:protoc:3.25.5'*/ /** --> 버전업 했지만 실패. */
+        artifact = 'com.google.protobuf:protoc:3.25.3' /** --> 버전 강제 통일. */
     }
 
     plugins {
         grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.65.1'
+            /** artifact = 'io.grpc:protoc-gen-grpc-java:1.65.1' */
+            /** artifact = 'io.grpc:protoc-gen-grpc-java:1.68.1'*/ /** --> 버전업 했지만, 실패. */
+            artifact = 'io.grpc:protoc-gen-grpc-java:1.63.0' /** --> 버전 강제 통일. */
         }
     }
 

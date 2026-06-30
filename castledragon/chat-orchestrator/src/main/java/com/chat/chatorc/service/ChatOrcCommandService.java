@@ -27,6 +27,7 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 
 	private final RoomMemberCache roomMemberCache;
 
+	// ====== 메시지 보내기 ==========================================================================================================================
 	@Override
 	@Transactional
 	public ChatMessageViewDTO createChatMessage(CreateChatMessageCommand command) {

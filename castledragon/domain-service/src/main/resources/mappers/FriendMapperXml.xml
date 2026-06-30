@@ -3,18 +3,14 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.chat.castledragon.mapper.FriendMapper">
+<mapper namespace="com.chat.domserv.mapper.FriendMapper">
 
-	<select id="findUserIdByPublicId" resultType="long">
-	select user_id from users where public_id =#{targetPublicId} and status ='ACTIVE'
-	</select>
-	
 	<insert id="addFriend">
 		INSERT INTO friendships (requester_user_id,receiver_user_id,status)
 		VALUES (#{myUserId},#{targetUserId},'PENDING')
 	</insert>
 	
-	<select id="getFriendList" resultType="com.chat.castledragon.domain.UserProfileResponseDTO">
+	<select id="getFriendList" resultType="com.chat.contract.domain.UserProfileResponseDTO">
 		SELECT 
 	    u.public_id,
 	    u.nickname,
@@ -32,7 +28,7 @@
 	  AND u.status = 'ACTIVE'
 	</select>
 	
-	<select id="getReceivedFriendRequests" resultType="com.chat.castledragon.domain.UserProfileResponseDTO">
+	<select id="getReceivedFriendRequests" resultType="com.chat.contract.domain.UserProfileResponseDTO">
 		SELECT
 	    u.public_id,
 	    u.nickname,

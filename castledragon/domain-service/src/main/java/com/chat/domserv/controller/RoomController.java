@@ -88,7 +88,8 @@ public class RoomController {
 
 		log.info("단톡방 생성 시도 : {} --> {} ", me.getNickname(), groupRoomData);
 
-		EnterRoomResponseDTO roomInfo = romCmdUseCase.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getRoomThumbnail(), groupRoomData.getSelectedFriendPublicIdList());
+		EnterRoomResponseDTO roomInfo = romCmdUseCase
+				.createGroupRoom(me, groupRoomData.getRoomName(), groupRoomData.getRoomThumbnail(), groupRoomData.getSelectedFriendPublicIdList());
 
 		log.info("GroupRoom roomInfo res : {}", roomInfo);
 		return ResponseEntity.ok(roomInfo);
@@ -115,6 +116,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
+		log.info("loadMessagesInRoom 호출 해보자. : {}", me.getNickname());
 		List<ChatMessageViewDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId);
 		log.info("loadMessagesInRoom불러옴. : {}", loadedMessagesInRoom);
 

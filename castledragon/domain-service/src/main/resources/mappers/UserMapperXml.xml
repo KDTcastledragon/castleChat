@@ -3,22 +3,22 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
-  <mapper namespace="com.chat.castledragon.mapper.UserMapper">
+  <mapper namespace="com.chat.domserv.mapper.UserMapper">
   
  	<insert id="join">
 	INSERT INTO users(public_id, login_id, password, nickname, friend_code)
 	VALUES(#{publicId}, #{loginId}, #{password}, #{nickname}, #{friendCode})
 	</insert>
 	
-	<select id="getUserByLoginId" resultType="com.chat.castledragon.domain.UserDTO">
+	<select id="getUserByLoginId" resultType="com.chat.domserv.domain.UserDTO">
   	select * from users where login_id = #{loginId};
   	</select>
   	
-	<select id="getUser" resultType="com.chat.castledragon.domain.UserDTO">
+	<select id="getUser" resultType="com.chat.domserv.domain.UserDTO">
   	select * from users where public_id = #{id};
   	</select>
   	
-  	<select id="searchUsers" resultType="com.chat.castledragon.domain.UserProfileResponseDTO" >
+  	<select id="searchUsers" resultType="com.chat.contract.domain.UserProfileResponseDTO" >
 	  	SELECT public_id, nickname, friend_code, profile_img
 		FROM users
 		WHERE status = 'ACTIVE'
@@ -31,16 +31,16 @@
 		LIMIT 20
   	</select>
   	
-  	<select id="findUserIdByPublicId" resultType="long">
+  	<select id="findUserIdByPublicId" resultType="java.lang.Long">
 	select user_id from users where public_id =#{publicId} and status ='ACTIVE'
 	</select>
 	
-	<select id="findUserInfoByPublicId" resultType="com.chat.castledragon.domain.ChatUserLookupDTO">
+	<select id="findUserInfoByPublicId" resultType="com.chat.contract.domain.ChatUserLookupDTO">
 	select user_id,public_id, nickname, friend_code, profile_img from users where public_id=#{publicId}
 	</select>
 	
 	<select id="findUserInfoByPublicIdList"
-        resultType="com.chat.castledragon.domain.ChatUserLookupDTO">
+        resultType="com.chat.contract.domain.ChatUserLookupDTO">
     SELECT
         user_id AS userId,
         public_id AS publicId,
@@ -63,7 +63,7 @@
     	delete from user where id = #{id}
     </delete>
     
-  	<select id="friendList" resultType="com.chat.castledragon.domain.UserDTO">
+  	<select id="friendList" resultType="com.chat.domserv.domain.UserDTO">
   	call get_friend_list(#{login_id});
   	</select>
   	
@@ -71,7 +71,7 @@
   	select login_id from users where user_id = #{userId};
   	</select>
   	
-  	<select id="allUsers" resultType="com.chat.castledragon.domain.UserDTO">
+  	<select id="allUsers" resultType="com.chat.domserv.domain.UserDTO">
   	select * from users;
   	</select>
   	

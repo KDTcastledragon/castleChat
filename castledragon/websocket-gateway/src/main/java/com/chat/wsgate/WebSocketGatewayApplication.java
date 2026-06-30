@@ -3,7 +3,7 @@ package com.chat.wsgate;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.chat")
 public class WebSocketGatewayApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(WebSocketGatewayApplication.class, args);

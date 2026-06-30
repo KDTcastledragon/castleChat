@@ -45,6 +45,7 @@ public class GateWayWsSessionRegistry {
 		userIdToWsSessions.put(loginUser.getUserId(), session);
 	}
 
+	// ====== 로그아웃 세션 삭제 ===========================================================================================================
 	public SessionUserDTO removeConnectedUser(WebSocketSession session) {
 		SessionUserDTO removedUser = wsSessionsToConnectedUser.remove(session);
 

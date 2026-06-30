@@ -1,7 +1,6 @@
 package com.chat.chatorc.grpc;
 
 import com.chat.chatorc.usecase.ChatOrcCommandUseCase;
-import com.chat.chatorc.usecase.ChatOrcQueryUseCase;
 import com.chat.contract.command.CreateChatMessageCommand;
 import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.contract.grpc.ChatOrcGrpc;
@@ -20,7 +19,9 @@ public class ChatOrcGrpcEndpoint extends ChatOrcGrpc.ChatOrcImplBase {
 	// ChatOrcGrpc.ChatOrcImplBase : proto에서 생성된 서버 계약.
 
 	private final ChatOrcCommandUseCase chatOrcCommandUseCase;
-	private final ChatOrcQueryUseCase chatOrcQueryUseCase;
+	// private final ChatOrcQueryUseCase chatOrcQueryUseCase; // 오류때문에 뺀다.
+	// Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: 
+	// Unsatisfied dependency expressed through constructor parameter 1: No qualifying bean of type 'com.chat.chatorc.usecase.ChatOrcQueryUseCase' available: expected at least 1 bean which qualifies as autowire candidate. Dependency annotations: {}
 
 	@Override
 	public void createChatMessage(CreateChatMessageRequest request, StreamObserver<CreateChatMessageResponse> responseObserver) {

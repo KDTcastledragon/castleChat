@@ -38,6 +38,7 @@ public class GrpcChatOrchestratorClient implements ChatOrchestratorClient {
 		//		gRPC returns는 proto message만 가능. Java DTO를 직접 response로 못 씀. 변환은 필수. 귀찮으면 helper로 분리.
 
 		ChatMessageViewDTO createdMsgResponse = GrpcToDtoConverter.convertGrpcToChtMsgViwDTO(chatOrcStub.createChatMessage(commandRequest));
+		log.info("createdMsg? grpcConverter! {}", createdMsgResponse);
 		// --> ws-gate의 gRPC client outBound call point. endPoint는 받는 쪽이다.
 
 		return createdMsgResponse;
