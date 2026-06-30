@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.command.CreateChatMessageCommand;
+import com.chat.contract.command.ReadChatMessageCommand;
 import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
@@ -44,10 +45,10 @@ public class GateWayWsChatHandler {
 
 		try {
 			// Command 생성. 최적화를 위해 me에서 publicId까지 꺼내고 함께 보낸다. orc에서 userId로 publicId를 DB에서 굳이 또 하는 것보다 좋음. session값이라 신뢰 가능.
-			CreateChatMessageCommand CreateChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
+			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getMessageText());
 
-			ChatMessageViewDTO resChat = chatOrcClient.createChatMessage(CreateChtMsgCmd);
+			ChatMessageViewDTO resChat = chatOrcClient.createChatMessage(createChtMsgCmd);
 
 			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
@@ -74,6 +75,8 @@ public class GateWayWsChatHandler {
 			gwWsOutboundWriter.responseFail(session, dto, "READ_MSG_FAIL", "READ_MSG 필수값 누락");
 			return;
 		}
+
+		ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand();
 
 		gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", null, dto.getRequestId());
 	}

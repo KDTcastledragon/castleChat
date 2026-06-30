@@ -44,4 +44,26 @@ public class GateWayWsConnectionHandler {
 		gateWayWsOutboundWriter.responseOk(session, dto, "CONNECT_USER_OK", loginUser);
 
 	}// handleConnectUser
+
+	// ====== 로그아웃 (연결 강제 종료) ===========================================================================================================
+	public void closeUserWebSocketConnection(Long userId) {
+		WebSocketSession targetSession = gateWayWsSessionRegistry.findSessionByUserId(userId);
+
+		if (targetSession == null) {
+			log.info("로그아웃 WS 대상 없음 userId={}", userId);
+			return;
+		}
+
+		if (!targetSession.isOpen()) {
+			log.info("이미 닫힌 {}님의 WS.", userId);
+			return;
+		} else {
+			try {
+				targetSession.close(CloseStatus.NORMAL);
+				log.info("{}님 WS로그아웃.", userId);
+			} catch (Exception e) {
+				log.error("{}님 WS 로그아웃 요청 실패. err: {}", userId, e);
+			}
+		}// else
+	}// closeUserSession
 }

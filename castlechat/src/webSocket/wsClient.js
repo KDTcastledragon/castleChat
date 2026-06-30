@@ -101,10 +101,11 @@ export function connectWs() {
                 console.log('ENTER_ROOM_OK');
                 break;
 
-            case 'MSG_CREATED':
-            case 'MSG_READ':
             case 'TYPING_START':
             case 'TYPING_STOP':
+            case 'MSG_CREATED':
+            case 'MSG_READ':
+            // case 'MSG_DELETED':
             case 'ROOM_NOTICE': {
                 const roomId = wsEvt.payload?.roomId;
 
@@ -209,6 +210,18 @@ export function emitWsExitRoom(roomId) {
     return emitWs(WS_TYPES.EXIT_ROOM, { roomId: roomId });
 }
 
+export function emitWsLeftRoom(roomId) {
+    return emitWs(WS_TYPES.LEFT_ROOM, { roomId: roomId });
+}
+
+export function emitWsTypingStart(roomId) {
+    return emitWs(WS_TYPES.TYPING_START, { roomId: roomId });
+}
+
+export function emitWsTypingStop(roomId) {
+    return emitWs(WS_TYPES.TYPING_STOP, { roomId: roomId });
+}
+
 export function emitWsSendMessage(roomId, messageText) {
     return emitWs(WS_TYPES.SEND_MSG, {
         roomId: roomId,
@@ -223,17 +236,6 @@ export function emitWsReadMessage(roomId, lastReadMessageId) {
     });
 }
 
-export function emitWsTypingStart(roomId) {
-    return emitWs(WS_TYPES.TYPING_START, { roomId: roomId });
-}
-
-export function emitWsTypingStop(roomId) {
-    return emitWs(WS_TYPES.TYPING_STOP, { roomId: roomId });
-}
-
-export function emitWsLeftRoom(roomId) {
-    return emitWs(WS_TYPES.LEFT_ROOM, { roomId: roomId });
-}
 
 // wsClient.js에 “WS close listener”를 하나 만들자. wsClient는 Redux를 직접 몰라야 하니까, AppShell이 listener를 등록해서 dispatch하는 구조가 제일 깔끔해.
 const wsCloseListeners = new Set();

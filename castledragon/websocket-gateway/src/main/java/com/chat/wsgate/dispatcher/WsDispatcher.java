@@ -50,11 +50,15 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 			case "ENTER_ROOM" -> gwWsRoomHandler.handleEnterRoom(session, dto);
 			case "ENTER_GROUP_ROOM" -> gwWsRoomHandler.handleEnterRoom(session, dto);
 			case "EXIT_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto);
-			case "LEFT_ROOM" -> gwWsRoomHandler.handleLeftRoom(session, dto);
+			case "LEFT_ROOM" -> gwWsRoomHandler.handleLeftRoom(session, dto); // 구현해야함
+			case "REENTER_ROOM" -> gwWsRoomHandler.handleLeftRoom(session, dto); // 구현해야함
 			case "TYPING_START" -> gwWsChatHandler.handleTyping(session, dto, "TYPING_START");
 			case "TYPING_STOP" -> gwWsChatHandler.handleTyping(session, dto, "TYPING_STOP");
 			case "SEND_MSG" -> gwWsChatHandler.handleSendMessage(session, dto);
 			case "READ_MSG" -> gwWsChatHandler.handleReadMessage(session, dto);
+			case "DELETE_MSG" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "APPLY_MSG" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
+
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
@@ -94,27 +98,5 @@ public class WsDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
 		log.info("ws 연결 종료 : WSid▶{}   status▶{}", session.getId(), status);
 	} // afterConnectionClosed 끝.
-
-	// ====== ws 연결 강제 종료 (로그아웃) ===========================================================================================================
-	public void closeUserWebSocketConnection(Long userId) {
-		WebSocketSession targetSession = gateWayWsSessionRegistry.findSessionByUserId(userId);
-
-		if (targetSession == null) {
-			log.info("로그아웃 WS 대상 없음 userId={}", userId);
-			return;
-		}
-
-		if (!targetSession.isOpen()) {
-			log.info("이미 닫힌 {}님의 WS.", userId);
-			return;
-		} else {
-			try {
-				targetSession.close(CloseStatus.NORMAL);
-				log.info("{}님 WS로그아웃.", userId);
-			} catch (Exception e) {
-				log.error("{}님 WS 로그아웃 요청 실패. err: {}", userId, e);
-			}
-		}// else
-	}// closeUserSession
 
 } // ChatHandler 끝.
