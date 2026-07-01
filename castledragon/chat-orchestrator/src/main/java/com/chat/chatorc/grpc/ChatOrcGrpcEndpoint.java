@@ -13,12 +13,14 @@ import com.chat.contract.grpc.ReadChatMessageResponse;
 
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import net.devh.boot.grpc.server.service.GrpcService;
 
 // TCP Request 받는 곳. 정확히는 gRPC 서버가 받는다.
 
 @GrpcService
 @RequiredArgsConstructor
+@Log4j2
 public class ChatOrcGrpcEndpoint extends ChatOrcGrpc.ChatOrcImplBase {
 	// ChatOrcGrpc.ChatOrcImplBase : proto에서 생성된 서버 계약.
 
@@ -61,6 +63,8 @@ public class ChatOrcGrpcEndpoint extends ChatOrcGrpc.ChatOrcImplBase {
 		ReadChatMessageCommand requestCommand = new ReadChatMessageCommand(request.getRoomId(), request.getReaderUserId(), request
 				.getReaderPublicId(), request.getLastReadMessageId());
 
+		log.info("gRPC EndPoint readCmd : {}", requestCommand);
+
 		ReadPositionUpdateResponseDTO cmdResult = chatOrcCommandUseCase.readChatMessage(requestCommand);
 
 		ReadChatMessageResponse response = ReadChatMessageResponse.newBuilder()
@@ -70,6 +74,8 @@ public class ChatOrcGrpcEndpoint extends ChatOrcGrpc.ChatOrcImplBase {
 				.setLastReadMessageId(cmdResult.getLastReadMessageId())
 				.setUpdated(cmdResult.getUpdated())
 				.build();
+
+		log.info("gRPC EndPoint readResponse : {}", response);
 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();

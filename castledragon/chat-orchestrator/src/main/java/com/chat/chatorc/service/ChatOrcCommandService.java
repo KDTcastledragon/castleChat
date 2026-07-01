@@ -106,8 +106,12 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 			throw new IllegalArgumentException("lastReadMessageId가 없습니다.");
 		}
 
+		log.info("gRPC chatOrc readService cmd : {}", command);
+
 		ReadPositionUpdateResult updateResult = roomReadPositionCache.updateIfGreater(command.getRoomId(), command.getReaderUserId(), command
 				.getLastReadMessageId(), () -> chatMapper.findLastReadMessageId(command.getRoomId(), command.getReaderUserId()));
+
+		log.info("gRPC chatOrc readService updateResult : {}", updateResult);
 
 		return new ReadPositionUpdateResponseDTO(command.getRoomId(), command.getReaderPublicId(), updateResult
 				.oldLastReadMessageId(), updateResult.newLastReadMessageId(), updateResult.updated());

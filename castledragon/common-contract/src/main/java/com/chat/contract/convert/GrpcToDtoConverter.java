@@ -23,6 +23,12 @@ public final class GrpcToDtoConverter {
 	public static ReadPositionUpdateResponseDTO convertGrpcToReadPosUpdateResDto(ReadChatMessageResponse response) {
 		ReadPositionUpdateResponseDTO convert = new ReadPositionUpdateResponseDTO();
 
+		convert.setRoomId(response.getRoomId());
+		convert.setReaderPublicId(response.getReaderPublicId());
+		convert.setOldLastReadMessageId(response.getOldLastReadMessageId());
+		convert.setLastReadMessageId(response.getLastReadMessageId());
+		convert.setUpdated(response.getUpdated());
+
 		return convert;
 	}
 }
