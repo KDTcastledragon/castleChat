@@ -12,10 +12,12 @@ import com.chat.contract.domain.WebSocketDTO;
 import com.chat.wsgate.session.GateWayWsSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
+@RequiredArgsConstructor
 public class GateWayWsOutboundWriter {
 
 	private final ObjectMapper objectMapper; // "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" 오류 막기 위해.
@@ -23,15 +25,6 @@ public class GateWayWsOutboundWriter {
 	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
 
 	//	private final ChatMetrics chatMetrics;
-
-	// 생성자 주입
-	//	public WsOutboundWriter(WsSessionRegistry wsSessionRegistry, ObjectMapper objectMapper, ChatMetrics chatMetrics) {
-	public GateWayWsOutboundWriter(GateWayWsSessionRegistry gateWayWsSessionRegistry, ObjectMapper objectMapper) {
-
-		this.gateWayWsSessionRegistry = gateWayWsSessionRegistry;
-		this.objectMapper = objectMapper;
-		//		this.chatMetrics = chatMetrics;
-	}
 
 	// TEXT_PARTIAL_WRITING 해결용. 같은 WebSocketSession에 동시에 sendMessage가 들어가는 것을 막기 위한 session별 lock.
 	private final Map<String, Object> sessionSendLocks = new ConcurrentHashMap<>();
@@ -44,8 +37,22 @@ public class GateWayWsOutboundWriter {
 		if (session == null) {
 			return;
 		}
-
 		sessionSendLocks.remove(session.getId());
+	}
+
+	private void sendSafely(WebSocketSession session, String payload) throws Exception {
+		if (session == null) {
+			return;
+		}
+
+		synchronized (getSessionSendLock(session)) {
+			if (!session.isOpen()) {
+				log.info("WebSocketSession is not open. sessionId={}", session.getId());
+				return;
+			}
+
+			session.sendMessage(new TextMessage(payload));
+		}
 	}
 
 	//	====== broadcast ===========================================================================================================
@@ -67,11 +74,14 @@ public class GateWayWsOutboundWriter {
 
 		String payload = objectMapper.writeValueAsString(event);
 
-		for (WebSocketSession s : sessions.values()) {
+		for (WebSocketSession sess : sessions.values()) {
 			try {
-				if (s.isOpen()) {
-					s.sendMessage(new TextMessage(payload));
-				}
+
+				sendSafely(sess, payload);
+
+				//	if (sess.isOpen()) {
+				//		sess.sendMessage(new TextMessage(payload));
+				//	}
 			} catch (Exception e) {
 				log.error("broadcast 실패", e);
 			}
@@ -98,21 +108,26 @@ public class GateWayWsOutboundWriter {
 
 		for (Map.Entry<Long, WebSocketSession> entry : sessions.entrySet()) {
 			Long userId = entry.getKey();
-			WebSocketSession s = entry.getValue();
+			WebSocketSession sess = entry.getValue();
 
 			if (Objects.equals(userId, excludedUserId)) { // userId.equals(excludedUserId) --> userId == null 일 경우 터질 수 있숨.
 				continue;
 			}
 
 			try {
-				synchronized (getSessionSendLock(s)) {
-					if (s.isOpen()) {
-						s.sendMessage(new TextMessage(payload));
-					}
-				}
-				//				if (s.isOpen()) {
-				//					s.sendMessage(new TextMessage(payload));
-				//				}
+				sendSafely(sess, payload);
+
+				// ======< legacy ver1 : singleProcess & lock 적용 >================================
+				//	synchronized (getSessionSendLock(sess)) {
+				//		if (sess.isOpen()) {
+				//			sess.sendMessage(new TextMessage(payload));
+				//		}
+				//	}
+
+				// ======< legacy ver0 : singleProcess >===========================================
+				//	if (s.isOpen()) {
+				//		s.sendMessage(new TextMessage(payload));
+				//	}
 			} catch (Exception e) {
 				log.error("typing broadcast 실패", e);
 			}
@@ -145,18 +160,19 @@ public class GateWayWsOutboundWriter {
 
 	//	====== 응답 Session에 보내기 ===========================================================================================================
 	public void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		if (!session.isOpen()) {
-			log.info("responseToSession is Not Open");
-			return;
-		}
-
 		String payload = objectMapper.writeValueAsString(dto);
+		sendSafely(session, payload);
 
-		//		session.sendMessage(new TextMessage(payload));
-
-		synchronized (getSessionSendLock(session)) {
-			session.sendMessage(new TextMessage(payload));
-		}
+		//		if (!session.isOpen()) {
+		//			log.info("responseToSession is Not Open");
+		//			return;
+		//		}
+		//
+		//		String payload = objectMapper.writeValueAsString(dto);
+		//
+		//		synchronized (getSessionSendLock(session)) {
+		//			session.sendMessage(new TextMessage(payload));
+		//		}
 	}
 
 }

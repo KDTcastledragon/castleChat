@@ -13,5 +13,9 @@
   select user_id from room_members where room_id = #{roomId} and member_status = 'ACTIVE'
   </select>
   
+  <select id="findLastReadMessageId" resultType="java.lang.Long">
+  select last_read_message_id from room_members where room_id=#{roomId} and user_id=#{userId} and member_status = 'ACTIVE'
+  </select>
+  
   
   </mapper>

@@ -1,7 +1,7 @@
 import './ChatBox.css';
 
 import axios from 'axios';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { emitWsExitRoom, emitWsLeftRoom, emitWsReadMessage, emitWsSendMessage, emitWsTypingStart, emitWsTypingStop, registerRoomHandler, unregisterRoomHandler } from '../../webSocket/wsClient';
 import { useMe } from '../../hooks/useAuthUser';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,12 +16,22 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     const { data: me } = useMe(); // { date : me} 아님. 오타 주의
 
     const { publicId: myPublicId, nickname: myNickname, friendCode: myFriendCode, profileImg: myProfileImg } = me || {}; // me가 null일경우, undefined상태로 만듦.
+    const memberMap = useMemo(() => {
+        const map = {};
+
+        memberList?.forEach(member => {
+            map[member.publicId] = member;
+        });
+
+        return map;
+    }, [memberList]);
 
     const chatEndRef = useRef(null);
 
     const isTypingRef = useRef(false);
     const typingTimerRef = useRef(null);
 
+    const readerReadPositionsRef = useRef({});
     const pendingReadMessageIdRef = useRef(null);
     const readDebounceTimerRef = useRef(null);
 
@@ -150,32 +160,78 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
             // 2. 서버가 다시 보내주는 read 이벤트를 처리. 읽음 요청의 결과를 화면에 반영하는 곳. unreadCount 컨트롤
             if (wsResponse.wsType === "MSG_READ") {
-                const wsPayload = wsResponse.payload;
+                const readPositionResponse = wsResponse.payload;
 
-                if (!wsPayload) { return; }
+                if (!readPositionResponse) return;
 
-                const updatedMessages = wsPayload.updatedMessages || []; //  이번 읽음 처리로 unreadCount가 갱신되어야 하는 메시지 목록
+                const readerPublicId = readPositionResponse.readerPublicId;
+                const serverOldLastReadMsgId = Number(readPositionResponse.oldLastReadMessageId ?? 0);
+                const serverNewLastReadMsgId = Number(readPositionResponse.lastReadMessageId ?? 0);
 
-                if (updatedMessages.length === 0) { return; }
+                if (!readerPublicId || !serverNewLastReadMsgId) return;
+
+                const knownLastReadMsgId = Number(readerReadPositionsRef.current[readerPublicId] ?? 0);
+
+                if (serverNewLastReadMsgId <= knownLastReadMsgId) {
+                    return;
+                }
+
+                const fromLastReadMsgId = Math.max(serverOldLastReadMsgId, knownLastReadMsgId);
+                const toLastReadMsgId = serverNewLastReadMsgId;
 
                 setPrevChattings(prev =>
                     prev.map(msg => {
-                        const updated = updatedMessages.find(
-                            item => Number(item.messageId) === Number(msg.messageId)
-                        );
+                        if (msg.messageType === 'SYSTEM') {
+                            return msg;
+                        }
 
-                        if (!updated) {
+                        const messageId = Number(msg.messageId);
+
+                        const shouldDecrease =
+                            messageId > fromLastReadMsgId &&
+                            messageId <= toLastReadMsgId &&
+                            msg.senderPublicId !== readerPublicId;
+
+                        if (!shouldDecrease) {
                             return msg;
                         }
 
                         return {
                             ...msg,
-                            unreadCount: Math.min(Number(msg.unreadCount ?? updated.unreadCount), Number(updated.unreadCount))
-                            // unreadCount: updated.unreadCount // 서버에서 2가 먼저 오고, 늦게 3이 도착하면 화면 숫자가 다시 증가할 수 있음. 읽음 숫자는 같은 메시지 기준으로 줄어들 수는 있어도 다시 늘어나면 이상함.
+                            unreadCount: Math.max(Number(msg.unreadCount ?? 0) - 1, 0)
                         };
                     })
                 );
-            }// if.2
+
+                readerReadPositionsRef.current[readerPublicId] = Math.max(knownLastReadMsgId, toLastReadMsgId);
+            }
+            // if (wsResponse.wsType === "MSG_READ") {
+            //     const wsPayload = wsResponse.payload;
+
+            //     if (!wsPayload) { return; }
+
+            //     const updatedMessages = wsPayload.updatedMessages || []; //  이번 읽음 처리로 unreadCount가 갱신되어야 하는 메시지 목록
+
+            //     if (updatedMessages.length === 0) { return; }
+
+            //     setPrevChattings(prev =>
+            //         prev.map(msg => {
+            //             const updated = updatedMessages.find(
+            //                 item => Number(item.messageId) === Number(msg.messageId)
+            //             );
+
+            //             if (!updated) {
+            //                 return msg;
+            //             }
+
+            //             return {
+            //                 ...msg,
+            //                 unreadCount: Math.min(Number(msg.unreadCount ?? updated.unreadCount), Number(updated.unreadCount))
+            //                 // unreadCount: updated.unreadCount // 서버에서 2가 먼저 오고, 늦게 3이 도착하면 화면 숫자가 다시 증가할 수 있음. 읽음 숫자는 같은 메시지 기준으로 줄어들 수는 있어도 다시 늘어나면 이상함.
+            //             };
+            //         })
+            //     );
+            // }// if.2
 
             // 3.
             if (wsResponse.wsType === "TYPING_START") {
@@ -423,7 +479,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                         <div>친구와 새로운 이야기를 시작해보세요.</div>
                     } */}
 
-                    {prevChattings && prevChattings.length > 0 ?
+                    {/* {prevChattings && prevChattings.length > 0 ?
                         prevChattings.map((d) => {
                             if (d.messageType === 'SYSTEM') {
                                 return (
@@ -450,6 +506,65 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                                     </div>
 
                                     {d.senderPublicId !== myPublicId && (
+                                        <div className='messageInfo'>
+                                            <div className='unreadCount'>{d.unreadCount}</div>
+                                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                        :
+                        <div>친구와 새로운 이야기를 시작해보세요.</div>
+                    } */}
+
+                    {prevChattings && prevChattings.length > 0 ?
+                        prevChattings.map((d) => {
+                            if (d.messageType === 'SYSTEM') {
+                                return (
+                                    <div key={d.messageId} className="systemMessage">
+                                        {d.messageText}
+                                    </div>
+                                );
+                            }
+
+                            const sender = memberMap[d.senderPublicId];
+                            const senderNickname = sender?.nickname ?? '알 수 없음';
+                            const senderProfileImg = sender?.profileImg ?? '/images/mococo_question.png';
+
+                            const isMine = d.senderPublicId === myPublicId;
+
+                            return (
+                                <div
+                                    key={d.messageId}
+                                    className={`chatRow ${isMine ? 'mine' : 'other'}`}
+                                >
+                                    {!isMine && (
+                                        <img
+                                            className="senderProfileImg"
+                                            src={senderProfileImg}
+                                            alt={senderNickname}
+                                        />
+                                    )}
+
+                                    {isMine && (
+                                        <div className='messageInfo'>
+                                            <div className='unreadCount'>{d.unreadCount}</div>
+                                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                        </div>
+                                    )}
+
+                                    <div className="messageContent">
+                                        {!isMine && (
+                                            <div className="senderNickname">{senderNickname}</div>
+                                        )}
+
+                                        <div className='messageWrap'>
+                                            <div className="messageText">{d.messageText}</div>
+                                        </div>
+                                    </div>
+
+                                    {!isMine && (
                                         <div className='messageInfo'>
                                             <div className='unreadCount'>{d.unreadCount}</div>
                                             <div className='formatTime'>{formatTime(d.createdAt)}</div>

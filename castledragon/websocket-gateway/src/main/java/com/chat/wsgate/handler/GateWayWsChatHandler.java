@@ -6,6 +6,7 @@ import org.springframework.web.socket.WebSocketSession;
 import com.chat.contract.command.CreateChatMessageCommand;
 import com.chat.contract.command.ReadChatMessageCommand;
 import com.chat.contract.domain.ChatMessageViewDTO;
+import com.chat.contract.domain.ReadPositionUpdateResponseDTO;
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsAuth;
@@ -48,9 +49,9 @@ public class GateWayWsChatHandler {
 			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getMessageText());
 
-			ChatMessageViewDTO resChat = chatOrcClient.createChatMessage(createChtMsgCmd);
+			ChatMessageViewDTO chatResponse = chatOrcClient.createChatMessage(createChtMsgCmd);
 
-			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", resChat, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
+			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_CREATED", chatResponse, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), payload.getRoomId(), payload.getMessageText());
 
 		} catch (Exception e) {
@@ -80,9 +81,17 @@ public class GateWayWsChatHandler {
 			ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getLastReadMessageId());
 
-			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", null, dto.getRequestId());
-		} catch (Exception e) {
+			ReadPositionUpdateResponseDTO readPositionResponse = chatOrcClient.readChatMessage(readChtMsgCmd);
 
+			if (!Boolean.TRUE.equals(readPositionResponse.getUpdated())) {
+				return;
+				//				throw new IllegalArgumentException("nono Boolean false."); // ,조용히 return 시켜야함.
+			}
+
+			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", readPositionResponse, dto.getRequestId());
+		} catch (Exception e) {
+			log.error("READ_MSG 읽음 처리 실패", e);
+			gwWsOutboundWriter.responseFail(session, dto, "READ_MSG_FAIL", "읽음처리실패");
 		}
 
 	}
@@ -96,7 +105,7 @@ public class GateWayWsChatHandler {
 		PayloadTypingRequestDTO payload = wsPayloadConverter.convert(dto, PayloadTypingRequestDTO.class);
 
 		if (payload.getRoomId() == null) {
-			log.warn("TYPING Data roomId null");
+			log.warn("타이핑 데이터 중 roomId null");
 			gwWsOutboundWriter.responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
 			return;
 		}

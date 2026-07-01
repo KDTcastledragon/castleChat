@@ -6,13 +6,16 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.chatorc.dto.PayloadReadChatMessageResponseDTO;
 import com.chat.chatorc.mapper.OrcChatMapper;
 import com.chat.chatorc.usecase.ChatOrcCommandUseCase;
 import com.chat.contract.command.CreateChatMessageCommand;
+import com.chat.contract.command.ReadChatMessageCommand;
 import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.contract.domain.ChatMessagesDTO;
+import com.chat.contract.domain.ReadPositionUpdateResponseDTO;
+import com.chat.redis.cache.ReadPositionUpdateResult;
 import com.chat.redis.cache.RoomMemberCache;
+import com.chat.redis.cache.RoomReadPositionCache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -26,6 +29,7 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 	private final OrcChatMapper chatMapper;
 
 	private final RoomMemberCache roomMemberCache;
+	private final RoomReadPositionCache roomReadPositionCache;
 
 	// ====== 메시지 보내기 ==========================================================================================================================
 	@Override
@@ -85,9 +89,28 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 	}
 
 	@Override
-	public PayloadReadChatMessageResponseDTO readChatMessage(Long roomId, Long readerUserId, String readerPuublicId, Long newlastReadMessageId) {
-		// TODO Auto-generated method stub
-		return null;
+	public ReadPositionUpdateResponseDTO readChatMessage(ReadChatMessageCommand command) {
+		if (command.getRoomId() == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
+		}
+
+		if (command.getReaderUserId() == null) {
+			throw new IllegalArgumentException("readerUserId가 없습니다.");
+		}
+
+		if (command.getReaderPublicId() == null) {
+			throw new IllegalArgumentException("readerPublicId가 없습니다.");
+		}
+
+		if (command.getLastReadMessageId() == null) {
+			throw new IllegalArgumentException("lastReadMessageId가 없습니다.");
+		}
+
+		ReadPositionUpdateResult updateResult = roomReadPositionCache.updateIfGreater(command.getRoomId(), command.getReaderUserId(), command
+				.getLastReadMessageId(), () -> chatMapper.findLastReadMessageId(command.getRoomId(), command.getReaderUserId()));
+
+		return new ReadPositionUpdateResponseDTO(command.getRoomId(), command.getReaderPublicId(), updateResult
+				.oldLastReadMessageId(), updateResult.newLastReadMessageId(), updateResult.updated());
 	}
 
 }

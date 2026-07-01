@@ -2,10 +2,14 @@ package com.chat.chatorc.grpc;
 
 import com.chat.chatorc.usecase.ChatOrcCommandUseCase;
 import com.chat.contract.command.CreateChatMessageCommand;
+import com.chat.contract.command.ReadChatMessageCommand;
 import com.chat.contract.domain.ChatMessageViewDTO;
+import com.chat.contract.domain.ReadPositionUpdateResponseDTO;
 import com.chat.contract.grpc.ChatOrcGrpc;
 import com.chat.contract.grpc.CreateChatMessageRequest;
 import com.chat.contract.grpc.CreateChatMessageResponse;
+import com.chat.contract.grpc.ReadChatMessageRequest;
+import com.chat.contract.grpc.ReadChatMessageResponse;
 
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +49,26 @@ public class ChatOrcGrpcEndpoint extends ChatOrcGrpc.ChatOrcImplBase {
 				.setMessageText(cmdResult.getMessageText())
 				.setCreatedAt(cmdResult.getCreatedAt().toString())
 				.setUnreadCount(cmdResult.getUnreadCount())
+				.build();
+
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
+
+	//====== 	
+	@Override
+	public void readChatMessage(ReadChatMessageRequest request, StreamObserver<ReadChatMessageResponse> responseObserver) {
+		ReadChatMessageCommand requestCommand = new ReadChatMessageCommand(request.getRoomId(), request.getReaderUserId(), request
+				.getReaderPublicId(), request.getLastReadMessageId());
+
+		ReadPositionUpdateResponseDTO cmdResult = chatOrcCommandUseCase.readChatMessage(requestCommand);
+
+		ReadChatMessageResponse response = ReadChatMessageResponse.newBuilder()
+				.setRoomId(cmdResult.getRoomId())
+				.setReaderPublicId(cmdResult.getReaderPublicId())
+				.setOldLastReadMessageId(cmdResult.getOldLastReadMessageId())
+				.setLastReadMessageId(cmdResult.getLastReadMessageId())
+				.setUpdated(cmdResult.getUpdated())
 				.build();
 
 		responseObserver.onNext(response);

@@ -122,3 +122,62 @@
     width: 60px;
     height: 100%;
 }
+
+/* ====================== */
+.chatRow {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    margin: 6px 0;
+}
+
+.chatRow.other {
+    justify-content: flex-start;
+}
+
+.chatRow.mine {
+    justify-content: flex-end;
+}
+
+.senderProfileImg {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.messageContent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 65%;
+}
+
+.senderNickname {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+
+.messageWrap {
+    max-width: 100%;
+}
+
+.messageText {
+    word-break: break-word;
+}
+
+.messageInfo {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    font-size: 11px;
+    color: #888;
+}
+
+.unreadCount {
+    color: orange;
+    font-weight: bold;
+}

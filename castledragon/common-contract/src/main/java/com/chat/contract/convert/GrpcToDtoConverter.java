@@ -14,7 +14,7 @@ public final class GrpcToDtoConverter {
 	}
 	// --> 이 클래스는 new 해서 객체 만들지 마라.
 
-	public static ChatMessageViewDTO convertGrpcToChtMsgViwDTO(CreateChatMessageResponse response) {
+	public static ChatMessageViewDTO convertGrpcToChatMsgViewDto(CreateChatMessageResponse response) {
 		ChatMessageViewDTO convert = new ChatMessageViewDTO(response.getMessageId(), response.getRoomId(), response.getSenderPublicId(), response
 				.getMessageText(), LocalDateTime.parse(response.getCreatedAt()), response.getUnreadCount()); // int32 urc라서 안 맞았음.
 		return convert;
