@@ -44,6 +44,19 @@
 	    ORDER BY t.message_id ASC
 	</select>
 	
+	<select id="findActiveRoomReadPositions" resultType="com.chat.contract.cache.RoomMemberReadPositionDTO">
+	SELECT
+		rm.user_id AS userId,
+		u.public_id AS publicId,
+		COALESCE(rm.last_read_message_id, 0) AS lastReadMessageId,
+		COALESCE(rm.visible_after_message_id, 0) AS visibleAfterMessageId
+	FROM room_members rm
+	JOIN users u
+	  ON u.user_id = rm.user_id
+	WHERE rm.room_id = #{roomId}
+	  AND rm.member_status = 'ACTIVE'
+</select>
+	
 	<!-- <select id="findLastReadMessageId" resultType="Long">
 		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}
 	</select>

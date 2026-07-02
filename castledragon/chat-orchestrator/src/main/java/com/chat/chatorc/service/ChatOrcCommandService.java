@@ -75,6 +75,12 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 			throw new IllegalStateException("insert Msg Failed");
 		}
 
+		// ====== sender의 lastReadMsg In Room도 적용시켜준다. 단, readMsg 흐름과 다르게 독립적으로 조용히. ==============================================================
+		ReadPositionUpdateResult rslt = roomReadPositionCache.updateIfGreater(command.getRoomId(), command.getSenderUserId(), msg
+				.getMessageId(), () -> chatMapper.findLastReadMessageId(command.getRoomId(), command.getSenderUserId()));
+		log.info("[sendMsg]redisGreater 결과 = room:{} sender:{} old:{} new:{}", command.getRoomId(), command.getSenderUserId(), rslt
+				.oldLastReadMessageId(), rslt.newLastReadMessageId());
+
 		Long unreadCount = Math.max(allActiveMemberIdsInRoom.size() - 1L, 0L); // 메시지 읽지 않은 멤버 수. (sender 제외)
 
 		ChatMessageViewDTO response = new ChatMessageViewDTO();
@@ -89,6 +95,7 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 	}
 
 	@Override
+	@Transactional
 	public ReadPositionUpdateResponseDTO readChatMessage(ReadChatMessageCommand command) {
 		if (command.getRoomId() == null) {
 			throw new IllegalArgumentException("roomId가 없습니다.");
@@ -110,6 +117,8 @@ public class ChatOrcCommandService implements ChatOrcCommandUseCase {
 
 		ReadPositionUpdateResult updateResult = roomReadPositionCache.updateIfGreater(command.getRoomId(), command.getReaderUserId(), command
 				.getLastReadMessageId(), () -> chatMapper.findLastReadMessageId(command.getRoomId(), command.getReaderUserId()));
+		log.info("[readMsg]redisGreater 결과 = room:{} reader:{} old:{} new:{}", command.getRoomId(), command.getReaderUserId(), updateResult
+				.oldLastReadMessageId(), updateResult.newLastReadMessageId());
 
 		log.info("gRPC chatOrc readService updateResult : {}", updateResult);
 

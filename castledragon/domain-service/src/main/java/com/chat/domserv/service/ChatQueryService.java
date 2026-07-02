@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.chat.contract.cache.RoomMemberReadPositionDTO;
 import com.chat.contract.domain.ChatMessageViewDTO;
 import com.chat.domserv.mapper.ChatMapper;
 import com.chat.domserv.usecase.ChatQueryUseCase;
@@ -21,11 +22,46 @@ public class ChatQueryService implements ChatQueryUseCase {
 
 	private final RoomReadPositionCache roomReadPositionCache;
 
+	private void warmUpRoomReadPositions(Long roomId) {
+		List<RoomMemberReadPositionDTO> members = chatMapper.findActiveRoomReadPositions(roomId);
+
+		if (members == null || members.isEmpty()) {
+			return;
+		}
+
+		for (RoomMemberReadPositionDTO member : members) {
+			Long dbLastReadMessageId = member.getLastReadMessageId() == null ? 0L : member.getLastReadMessageId();
+			Long visibleAfterMessageId = member.getVisibleAfterMessageId() == null ? 0L : member.getVisibleAfterMessageId();
+
+			Long warmUpLastReadMessageId = Math.max(dbLastReadMessageId, visibleAfterMessageId);
+
+			boolean warmed = roomReadPositionCache.warmUpIfGreater(roomId, member.getUserId(), warmUpLastReadMessageId);
+
+			if (warmed) {
+				log.info("room read-position warm-up. roomId={}, userId={}, lrm={}", roomId, member.getUserId(), warmUpLastReadMessageId);
+			}
+		}
+	}
+
 	@Override
-	@Transactional
+	@Transactional(readOnly = true)
 	public List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId) {
+		if (roomId == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
+		}
 
 		List<ChatMessageViewDTO> chatList = chatMapper.loadMessagesInRoom(roomId);
+
+		warmUpRoomReadPositions(roomId);
+
 		return chatList;
 	}
+
+	//	@Override
+	//	@Transactional
+	//	public List<ChatMessageViewDTO> loadMessagesInRoom_legacy(Long roomId) {
+	//
+	//		List<ChatMessageViewDTO> chatList = chatMapper.loadMessagesInRoom(roomId);
+	//		return chatList;
+	//	}
 }

@@ -36,13 +36,14 @@ public class GrpcChatOrchestratorClient implements ChatOrchestratorClient {
 				.setMessageText(command.getMessageText())
 				.build();
 
-		log.info("gRPC send Req: {}", commandRequest.toString());
+		//		log.info("gRPC send Req: {}", commandRequest.getRoomId(),commandRequest.getSenderUserId(),commandRequest.getSenderPublicId(),commandRequest.getMessageText());
 
 		// 계층 간 변환 : gRPC Response -> App DTO -> WebSocket JSON.
 		//		gRPC returns는 proto message만 가능. Java DTO를 직접 response로 못 씀. 변환은 필수. 귀찮으면 helper로 분리.
 
 		ChatMessageViewDTO createdMsgResponse = GrpcToDtoConverter.convertGrpcToChatMsgViewDto(chatOrcStub.createChatMessage(commandRequest));
-		log.info("gRPC createdMsgResponse : {}", createdMsgResponse);
+		log.info("gate-gRPC send 응답 : mId:{} rom:{} msg:{}", createdMsgResponse.getMessageId(), createdMsgResponse.getRoomId(), createdMsgResponse
+				.getMessageText());
 		// --> ws-gate의 gRPC client outBound call point. endPoint는 받는 쪽이다.
 
 		return createdMsgResponse;
@@ -58,12 +59,13 @@ public class GrpcChatOrchestratorClient implements ChatOrchestratorClient {
 				.setLastReadMessageId(command.getLastReadMessageId())
 				.build();
 
-		log.info("gRPC read Req: {}", commandRequest.toString());
+		//		log.info("gRPC read Req: {}", commandRequest.getRoomId(),commandRequest.getReaderUserId(),commandRequest.getLastReadMessageId());
 
 		ReadPositionUpdateResponseDTO readMsgResponse = GrpcToDtoConverter
 				.convertGrpcToReadPosUpdateResDto(chatOrcStub.readChatMessage(commandRequest));
 
-		log.info("gRPC readMsgResponse : {}", readMsgResponse);
+		log.info("gate-gRPC Read 응답 = rom:{} usr:{} old:{} new:{}", readMsgResponse.getRoomId(), command.getReaderUserId(), readMsgResponse
+				.getOldLastReadMessageId(), readMsgResponse.getLastReadMessageId());
 
 		return readMsgResponse;
 	}

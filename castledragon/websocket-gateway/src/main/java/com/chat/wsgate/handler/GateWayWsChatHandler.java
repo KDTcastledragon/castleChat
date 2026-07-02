@@ -86,13 +86,12 @@ public class GateWayWsChatHandler {
 			Boolean updatedLog4j2 = readPositionResponse == null ? null : readPositionResponse.getUpdated(); // log 확인용.
 
 			if (!Boolean.TRUE.equals(readPositionResponse.getUpdated())) {
-				log.info("[false]wsChatHandler.readMsg updated : {}", updatedLog4j2);
+				log.info("[false]gate-ChatHandler.읽음처리 응답 updated : {}", updatedLog4j2);
 				return;
 				//				throw new IllegalArgumentException("nono Boolean false."); // ,조용히 return 시켜야함.
 			}
 
-			log.info("[true]wsChatHandler.readMsg updated : {}", updatedLog4j2);
-			log.info("[true]wsChatHandler.readMsg readPositionResponse : {}", readPositionResponse);
+			log.info("[true]gate-ChatHandler.읽음처리 응답 : {}", readPositionResponse);
 
 			gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "MSG_READ", readPositionResponse, dto.getRequestId());
 		} catch (Exception e) {

@@ -1,7 +1,9 @@
 package com.chat.redis.cache;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -51,6 +53,40 @@ public class RoomReadPositionCache {
 			return {1, oldValue, newValue}
 			""";
 
+	private static final String WARM_UP_IF_GREATER_SCRIPT = """
+			local key = KEYS[1]
+			local field = ARGV[1]
+			local value = tonumber(ARGV[2])
+			local ttlSeconds = tonumber(ARGV[3])
+
+			if value == nil then
+			    value = 0
+			end
+
+			local currentValue = redis.call('HGET', key, field)
+
+			if currentValue == false then
+			    redis.call('HSET', key, field, value)
+			    redis.call('EXPIRE', key, ttlSeconds)
+			    return 1
+			end
+
+			currentValue = tonumber(currentValue)
+
+			if currentValue == nil then
+			    currentValue = 0
+			end
+
+			if value > currentValue then
+			    redis.call('HSET', key, field, value)
+			    redis.call('EXPIRE', key, ttlSeconds)
+			    return 1
+			end
+
+			redis.call('EXPIRE', key, ttlSeconds)
+			return 0
+			""";
+
 	private String readPositionKey(Long roomId) {
 		return "chat:room:" + roomId + ":read-position";
 	}
@@ -86,6 +122,19 @@ public class RoomReadPositionCache {
 		}
 
 		return new ReadPositionUpdateResult(updated, oldLrm, newLrm);
+	}
+
+	public boolean warmUpIfGreater(Long roomId, Long userId, Long dbLastReadMessageId) {
+		Long safeLastReadMessageId = dbLastReadMessageId == null ? 0L : dbLastReadMessageId;
+
+		DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+		script.setScriptText(WARM_UP_IF_GREATER_SCRIPT);
+		script.setResultType(Long.class);
+
+		Long result = redisTemplate.execute(script, List.of(readPositionKey(roomId)), String.valueOf(userId), String
+				.valueOf(safeLastReadMessageId), String.valueOf(READ_POSITION_TTL.getSeconds()));
+
+		return result != null && result == 1L;
 	}
 
 	private Long loadFallbackOldLastReadMessageId(Long roomId, Long userId, Supplier<Long> dbLoader) {
@@ -126,4 +175,21 @@ public class RoomReadPositionCache {
 
 		return Long.valueOf(String.valueOf(value));
 	}
+
+	public Map<String, Long> getDirtyReadPositions() {
+		Map<Object, Object> entries = redisTemplate.opsForHash().entries(dirtyReadPositionKey());
+
+		Map<String, Long> result = new HashMap<>();
+
+		for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+			result.put(String.valueOf(entry.getKey()), Long.valueOf(String.valueOf(entry.getValue())));
+		}
+
+		return result;
+	}
+
+	public void removeDirtyReadPosition(Long roomId, Long userId) {
+		redisTemplate.opsForHash().delete(dirtyReadPositionKey(), dirtyField(roomId, userId));
+	}
+
 }

@@ -1,10 +1,12 @@
-package com.chat.redis.cache;
+package com.chat.redis.backup;
 
 import java.time.Duration;
 import java.util.function.Supplier;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+
+import com.chat.redis.cache.ReadPositionUpdateResult;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
