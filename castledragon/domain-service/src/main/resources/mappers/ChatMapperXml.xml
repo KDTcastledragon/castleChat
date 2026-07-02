@@ -34,15 +34,17 @@
 	
 	        WHERE m.room_id = #{roomId}
 	
-	       <!--  <if test="beforeMessageId != null">
+	        <if test="beforeMessageId != null">
 	            AND m.message_id &lt; #{beforeMessageId}
-	        </if> -->
+	        </if>
 	
 	        ORDER BY m.message_id DESC
-	        LIMIT 20
+	        LIMIT #{limit}
 	    ) t
 	    ORDER BY t.message_id ASC
 	</select>
+
+	
 	
 	<select id="findActiveRoomReadPositions" resultType="com.chat.contract.cache.RoomMemberReadPositionDTO">
 	SELECT
@@ -56,6 +58,45 @@
 	WHERE rm.room_id = #{roomId}
 	  AND rm.member_status = 'ACTIVE'
 </select>
+
+	<!-- <select id="loadMessagesInRoom" resultType="com.chat.contract.domain.ChatMessageViewDTO">
+		    SELECT *
+		    FROM (
+		        SELECT
+		            m.message_id,
+		            m.room_id,
+		            u.public_id AS sender_public_id,
+		            m.message_text,
+		            m.created_at,
+		
+		            (
+		                SELECT COUNT(*)
+		                FROM room_members rm
+		                WHERE rm.room_id = m.room_id
+		                  AND rm.member_status = 'ACTIVE'
+		                  AND rm.user_id != m.sender_id
+		                  AND (
+		                      rm.last_read_message_id IS NULL
+		                      OR rm.last_read_message_id &lt; m.message_id
+		                  )
+		            ) AS unread_count
+		
+		        FROM chat_messages m
+		
+		        JOIN users u
+		          ON u.user_id = m.sender_id
+		
+		        WHERE m.room_id = #{roomId}
+		
+		        <if test="beforeMessageId != null">
+		            AND m.message_id &lt; #{beforeMessageId}
+		        </if>
+		
+		        ORDER BY m.message_id DESC
+		        LIMIT 50
+		    ) t
+		    ORDER BY t.message_id ASC
+		</select> -->
 	
 	<!-- <select id="findLastReadMessageId" resultType="Long">
 		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}

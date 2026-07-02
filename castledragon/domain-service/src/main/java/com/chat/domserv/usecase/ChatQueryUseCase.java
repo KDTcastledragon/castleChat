@@ -5,5 +5,5 @@ import java.util.List;
 import com.chat.contract.domain.ChatMessageViewDTO;
 
 public interface ChatQueryUseCase {
-	List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId);
+	List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit);
 }

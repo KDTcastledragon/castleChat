@@ -35,6 +35,15 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     const pendingReadMessageIdRef = useRef(null);
     const readDebounceTimerRef = useRef(null);
 
+    const MESSAGE_PAGE_SIZE = 50;
+    const LOAD_PREV_THRESHOLD_PX = 80;
+
+    const chatListRef = useRef(null);
+    const isLoadingPrevRef = useRef(false);
+    const hasMorePrevRef = useRef(true);
+    const oldestMessageIdRef = useRef(null);
+    const isPrependingPrevRef = useRef(false);
+
     const formatTime = (isoString) => {
         const date = new Date(isoString);
         return date.toTimeString().split(" ")[0];
@@ -90,40 +99,125 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     // ================ 최신 메세지 기준으로 보기. 스크롤 항상 최하단 ===============================================
     useEffect(() => {
+        // scroll-up으로 과거 메시지를 앞에 붙이는 중이면, 아래로 튕기면 안 됨.
+        if (isPrependingPrevRef.current) {
+            isPrependingPrevRef.current = false;
+            return;
+        }
+
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [prevChattings]);
 
+    // ====== 무한스크롤 + 이전 메시지 불러오기 ====================================================================
+    async function loadOlderMessages() {
+        if (isLoadingPrevRef.current) return;
+        if (!hasMorePrevRef.current) return;
+
+        const beforeMessageId = oldestMessageIdRef.current;
+        if (!beforeMessageId) return;
+
+        const chatListEl = chatListRef.current;
+        const prevScrollHeight = chatListEl?.scrollHeight ?? 0;
+
+        isLoadingPrevRef.current = true;
+        isPrependingPrevRef.current = true;
+
+        try {
+            const res = await axios.get(`/room/loadMessagesInRoom/${roomId}`, {
+                params: {
+                    beforeMessageId,
+                    limit: MESSAGE_PAGE_SIZE
+                }
+            });
+
+            const olderMessages = res.data ?? [];
+
+            if (olderMessages.length === 0) {
+                hasMorePrevRef.current = false;
+                isPrependingPrevRef.current = false;
+                return;
+            }
+
+            setPrevChattings(prev => {
+                const existingIds = new Set(prev.map(msg => msg.messageId));
+                const dedupedOlder = olderMessages.filter(msg => !existingIds.has(msg.messageId));
+                if (dedupedOlder.length === 0) {
+                    hasMorePrevRef.current = false;
+                    isPrependingPrevRef.current = false;
+                    return prev;
+                }
+                const next = [...dedupedOlder, ...prev];
+                oldestMessageIdRef.current = next[0]?.messageId ?? null;
+
+                return next;
+            });
+
+            hasMorePrevRef.current = olderMessages.length === MESSAGE_PAGE_SIZE;
+
+            requestAnimationFrame(() => {
+                const currentEl = chatListRef.current;
+                if (!currentEl) return;
+
+                const newScrollHeight = currentEl.scrollHeight;
+                currentEl.scrollTop = newScrollHeight - prevScrollHeight;
+            });
+
+        } catch (e) {
+            console.error("이전 메시지 로딩 실패", e);
+            isPrependingPrevRef.current = false;
+        } finally {
+            isLoadingPrevRef.current = false;
+        }
+    }// loadOlderMessages
+
+    // ====== 무한 스크롤 핸들링 ======================================================
+    function handleChatScroll() {
+        const chatListEl = chatListRef.current;
+        if (!chatListEl) return;
+
+        if (chatListEl.scrollTop <= LOAD_PREV_THRESHOLD_PX) {
+            loadOlderMessages();
+        }
+    }
+
     // ========== 이전 메시지 불러오기 ==============================================================================================
     useEffect(() => {
-
         if (!roomId || !myPublicId) return; // roomId,userID 가 존재하지 않을 시  mount 차단. "채팅방 준비 완료 전 실행 방지"
         // 렌더링 타이밍상 아직 값이 없을 때 불필요한 API 호출 방지. 사용자 경험/콘솔 에러 정리.
         // 특히 React에서는 useEffect가 컴포넌트 mount 후 실행되기 때문에, 값이 아직 안정적이지 않은 순간이 생길 수 있습니다.
         // 지금 ChatBox는 roomId를 props로 받습니다. 대부분은 값이 들어온 뒤 mount되겠지만, 리팩토링 중이거나 조건부 렌더링이 살짝 바뀌면 undefined 상태로 들어올 수도 있습니다.
         // 그래서 이 guard는 남기는 게 좋아요.
 
+        isLoadingPrevRef.current = false;
+        hasMorePrevRef.current = true;
+        oldestMessageIdRef.current = null;
+        isPrependingPrevRef.current = false;
+
         const initChatRoom = async () => {
 
             try {
                 // 1. '이미 전송처리된' 이전 메시지 조회
-                const loadedMessagesInRoom = await axios.get(`/room/loadMessagesInRoom/${roomId}`); // 가독성과 추후 재사용 가능성 때문에 변수에 저장 사용.  초기 데이터 로딩은 HTTP가 더 적합
+                const loadedMessagesInRoom = await axios.get(`/room/loadMessagesInRoom/${roomId}`, {
+                    params: {
+                        limit: MESSAGE_PAGE_SIZE
+                    }
+                });
 
-                // console.log(`getPrevMsg --> ${JSON.stringify(prevMsgInThisRoom.data, null, 2)}`); // null, 2 가 들여쓰기 해줌.
-                console.log(`${JSON.stringify(loadedMessagesInRoom.data)}`);
+                const messages = loadedMessagesInRoom.data ?? [];
 
-                setPrevChattings(loadedMessagesInRoom.data); // await 못 쓰는 이유? --> setPrevChattings는 Promise를 반환하지 않기 때문. "React야 state 변경 예약해줘"라고 요청만 한다.
+                setPrevChattings(messages);
+
+                hasMorePrevRef.current = messages.length === MESSAGE_PAGE_SIZE;
+                oldestMessageIdRef.current = messages[0]?.messageId ?? null;
 
                 // 2. 마지막 메시지의 id 기준으로 읽음 처리
-                if (loadedMessagesInRoom.data.length) {
-
-                    const lastOtherMsgInRoom = [...loadedMessagesInRoom.data].reverse().find(msg => msg.senderPublicId !== myPublicId);
+                if (messages.length) {
+                    const lastOtherMsgInRoom = [...messages]
+                        .reverse()
+                        .find(msg => msg.senderPublicId !== myPublicId);
 
                     if (lastOtherMsgInRoom !== undefined) {
                         scheduleReadMessage(lastOtherMsgInRoom.messageId);
-                        // emitWsReadMessage(roomId, lastOtherMsgInRoom.messageId); 
-                        // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
-                        // 근데, 이거조차도 db query를 탄다. 대용량과 맞지 않아서. debounce로 변경 적용.
-
                     }
                 }
 
@@ -288,6 +382,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     }, [roomId, myPublicId]); // 내부에서 roomId, myPublicId를 씀. 최소한 이렇게 가는 게 맞아. 이렇게 해야 roomId/myPublicId 준비된 뒤 정상 등록됨.
 
+
     // ================ 메세지 전송 (WebSocket) =========================================================== 
     function sendChatMessage() {
         if (isTypingRef.current) {
@@ -448,7 +543,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     </button>
                 </div>
 
-                <div className='chattingBox'>
+                <div
+                    className='chattingBox'
+                    ref={chatListRef}
+                    onScroll={handleChatScroll}
+                >
                     {/* {prevChattings && prevChattings.length > 0 ?
                         prevChattings.map((d, i) => (
 

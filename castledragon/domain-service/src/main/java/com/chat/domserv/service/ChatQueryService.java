@@ -45,12 +45,16 @@ public class ChatQueryService implements ChatQueryUseCase {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId) {
+	public List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit) {
 		if (roomId == null) {
 			throw new IllegalArgumentException("roomId가 없습니다.");
 		}
 
-		List<ChatMessageViewDTO> chatList = chatMapper.loadMessagesInRoom(roomId);
+		if (limit <= 0 || limit > 100) {
+			limit = 50;
+		}
+
+		List<ChatMessageViewDTO> chatList = chatMapper.loadMessagesInRoom(roomId, beforeMessageId, limit);
 
 		warmUpRoomReadPositions(roomId);
 

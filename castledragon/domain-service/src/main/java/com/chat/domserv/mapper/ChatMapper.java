@@ -14,7 +14,7 @@ public interface ChatMapper {
 
 	List<Long> findActiveRoomMemberIds(Long roomId);
 
-	List<ChatMessageViewDTO> loadMessagesInRoom(@Param("roomId") Long roomId);
+	List<ChatMessageViewDTO> loadMessagesInRoom(@Param("roomId") Long roomId, @Param("beforeMessageId") Long beforeMessageId, @Param("limit") int limit);
 
 	List<RoomMemberReadPositionDTO> findActiveRoomReadPositions(@Param("roomId") Long roomId);
 

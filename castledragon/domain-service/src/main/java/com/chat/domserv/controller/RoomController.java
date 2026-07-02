@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chat.contract.domain.ChatMessageViewDTO;
@@ -109,16 +110,17 @@ public class RoomController {
 	}
 
 	@GetMapping("/loadMessagesInRoom/{roomId}")
-	public ResponseEntity<?> getMessages(@PathVariable("roomId") Long roomId, HttpSession session) { // @PathVariable : URL에 들어있는 값을 변수로 꺼내는 기능.
-		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER"); // 여기서 이미 현재 검색한 사람이 누구인지 나와.
+	public ResponseEntity<?> getMessages(@PathVariable("roomId") Long roomId, @RequestParam(value = "beforeMessageId", required = false) Long beforeMessageId, @RequestParam(value = "limit", defaultValue = "50") int limit, HttpSession session) {
+
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
 
 		if (me == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		log.info("loadMessagesInRoom 호출 해보자. : {}", me.getNickname());
-		List<ChatMessageViewDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId);
-		log.info("loadMessagesInRoom불러옴. : {}", loadedMessagesInRoom);
+		log.info("loadMessagesInRoom 호출: user={}, roomId={}, beforeMessageId={}, limit={}", me.getNickname(), roomId, beforeMessageId, limit);
+
+		List<ChatMessageViewDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId, beforeMessageId, limit);
 
 		return ResponseEntity.ok(loadedMessagesInRoom);
 	}
