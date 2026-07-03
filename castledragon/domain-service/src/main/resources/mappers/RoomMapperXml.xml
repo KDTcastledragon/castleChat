@@ -73,10 +73,6 @@
 		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}
 	</select>
 	
-	<update id="updateLastRead">
-    	UPDATE room_members SET last_read_message_id = #{lastReadMessageId} WHERE room_id = #{roomId} AND user_id = #{userId}
-	</update>
-	
 	<select id="getReadMsgMembers"> <!-- 언제 쓸지는 모르겠당.. -->
 	SELECT u.public_id, u.nickname
 FROM room_members rm
@@ -85,32 +81,6 @@ WHERE rm.room_id = #{roomId}
   AND rm.last_read_message_id >= #{messageId}
   AND rm.user_id != #{senderId}
 	</select>
-	
-	<select id="getUpdatedUnreadCountChatMessages" resultType="com.chat.contract.domain.UpdatedUnreadMessagesDTO">
-    SELECT
-        m.message_id AS messageId,
-        (
-            SELECT COUNT(*)
-            FROM room_members rm
-            WHERE rm.room_id = m.room_id
-              AND rm.member_status = 'ACTIVE'
-              AND rm.user_id != m.sender_id
-              AND (
-                  rm.last_read_message_id IS NULL
-                  OR rm.last_read_message_id &lt; m.message_id
-              )
-        ) AS unreadCount
-    FROM chat_messages m
-    WHERE m.room_id = #{roomId}
-
-    <if test="oldLastReadMsgId != null">
-        AND m.message_id &gt; #{oldLastReadMsgId}
-    </if>
-
-      AND m.message_id &lt;= #{newLastReadMessageId}
-
-    ORDER BY m.message_id ASC
-</select>
 
 <select id="getMyAllChatRooms" resultType="com.chat.contract.domain.ChatRoomListDTO">
     SELECT
@@ -187,18 +157,11 @@ WHERE rm.room_id = #{roomId}
     ORDER BY lastMessageTime DESC, r.room_id DESC
 </select>
 	
-	<select id="findActiveRoomMemberIds" resultType="long">
-	    SELECT user_id
-	    FROM room_members
-	    WHERE room_id = #{roomId}
-	      AND left_at IS NULL
-	</select>
-	
 	<select id="getRoomByRoomId" resultType="com.chat.contract.domain.ChatRoomsDTO">
 	select * from chat_rooms where room_id =#{roomId}
 	</select>
 	
-	<select id="getMyInfoFromRoomMembers" resultType="com.chat.contract.domain.RoomMembersDTO">
+	<select id="getActiveRoomMemberInfoInRoom" resultType="com.chat.contract.domain.RoomMembersDTO">
 	select * from room_members where room_id=#{roomId} and user_id = #{userId} AND member_status = 'ACTIVE'
 	</select>
 	
@@ -218,13 +181,6 @@ WHERE rm.room_id = #{roomId}
     ORDER BY rm.room_member_id ASC
 	</select>
 
-	<select id="lockRoomForUpdate" resultType="Long">
-    SELECT room_id
-    FROM chat_rooms
-    WHERE room_id = #{roomId}
-    FOR UPDATE
-	</select>
-
 	<update id="leftRoom">
 	    UPDATE room_members
 	    SET
@@ -235,11 +191,10 @@ WHERE rm.room_id = #{roomId}
 	      AND member_status = 'ACTIVE'
 	</update>
 	
-	<update id="decreaseActiveMemberCount">
-	    UPDATE chat_rooms
-	    SET active_member_count = GREATEST(active_member_count - 1, 0)
-	    WHERE room_id = #{roomId}
-	</update>
+	<select id="findRoleInRoomByUserId" resultType="java.lang.String">
+		select role from room_members where room_id=#{roomId} and user_id=#{userId} and member_status = 'ACTIVE'
+	</select>
+	
 	
 	<update id="reactivateRoomMember">
 	    UPDATE room_members

@@ -10,5 +10,9 @@ public interface RoomCommandUseCase { // 시스템의 상태를 바꾸는 요청
 
 	EnterRoomResponseDTO createGroupRoom(SessionUserDTO host, String roomName, String roomThumbnail, List<String> selectedFriendPublicIdList);
 
-	void leftRoom(Long roomId, SessionUserDTO me);
+	boolean leftRoom(Long roomId, SessionUserDTO me);
+
+	int inviteGroupRoom(SessionUserDTO me, Long roomId, List<String> inviteMemberPublicIds);
+
+	int kickMemberInRoom(Long roomId, SessionUserDTO kicker, List<String> kickedPublicIds);
 }

@@ -36,7 +36,7 @@ public class RoomQueryService implements RoomQueryUseCase {
 			throw new IllegalArgumentException("존재하지 않는 채팅방입니다.");
 		}
 
-		RoomMembersDTO myInfo = roomMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
+		RoomMembersDTO myInfo = roomMapper.getActiveRoomMemberInfoInRoom(roomId, me.getUserId());
 
 		if (myInfo == null) {
 			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
@@ -48,7 +48,8 @@ public class RoomQueryService implements RoomQueryUseCase {
 			throw new IllegalStateException("채팅방 멤버 정보를 찾을 수 없습니다.");
 		}
 
-		EnterRoomResponseDTO resdto = new EnterRoomResponseDTO(roomId, room.getRoomType(), myInfo.getCustomRoomName(), myInfo.getCustomRoomThumbnail(), (long) memberList.size(), memberList);
+		EnterRoomResponseDTO resdto = new EnterRoomResponseDTO(roomId, room.getRoomType(), myInfo.getCustomRoomName(), myInfo
+				.getCustomRoomThumbnail(), (long) memberList.size(), memberList);
 
 		return resdto;
 	}

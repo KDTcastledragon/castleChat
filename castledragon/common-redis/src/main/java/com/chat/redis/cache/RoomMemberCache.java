@@ -166,6 +166,26 @@ public class RoomMemberCache {
 		return count;
 	}
 
+	// ====== 멤버 추가 ======================================================================================
+	public void addRoomMembers(Long roomId, Set<Long> userIds) {
+		if (userIds == null || userIds.isEmpty()) {
+			return;
+		}
+
+		String key = roomMembersKey(roomId);
+
+		Boolean exists = redisTemplate.hasKey(key);
+
+		if (!Boolean.TRUE.equals(exists)) {
+			return;
+		}
+
+		String[] values = userIds.stream().map(String::valueOf).toArray(String[]::new);
+
+		redisTemplate.opsForSet().add(key, values);
+		redisTemplate.expire(key, ROOM_MEMBERS_TTL);
+	}
+
 	public void removeRoomMember(Long roomId, Long userId) {
 		String key = roomMembersKey(roomId);
 

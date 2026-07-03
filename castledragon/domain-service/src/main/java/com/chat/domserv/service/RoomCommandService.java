@@ -78,22 +78,25 @@ public class RoomCommandService implements RoomCommandUseCase {
 		if (room == null) {
 			log.info("새로운 채팅방(roomId) 생성 시작");
 
-			//			ChatRoomDTO newCreatedRoom = createRoom("DIRECT", "ACTIVE", "S:" + senderInfo.getUserId() + "T:" + friendInfo.getUserId(), senderInfo.getUserId());
 			room = createRoom("DIRECT", "ACTIVE", "S:" + senderInfo.getUserId() + "T:" + friendInfo.getUserId(), senderInfo.getUserId());
 
 			log.info("새로운 채팅방의 newRoomId 생성 완료 : {}", room.getRoomId());
 
-			roomMapper.insertRoomMember(room.getRoomId(), senderInfo.getUserId(), "MEMBER", friendInfo.getNickname()
+			int isInsertedSender = roomMapper.insertRoomMember(room.getRoomId(), senderInfo.getUserId(), "MEMBER", friendInfo.getNickname()
 					+ "님과의 채팅방", friendInfo.getProfileImg(), "ACTIVE");
-			roomMapper.insertRoomMember(room.getRoomId(), friendInfo.getUserId(), "MEMBER", senderInfo.getNickname()
+			int isInsertedFriend = roomMapper.insertRoomMember(room.getRoomId(), friendInfo.getUserId(), "MEMBER", senderInfo.getNickname()
 					+ "님과의 채팅방", senderInfo.getProfileImg(), "ACTIVE");
+
+			if (isInsertedSender < 0 || isInsertedFriend < 0) {
+				throw new IllegalArgumentException("채팅방 생성 실패.");
+			}
 
 			roomMemberCache.initOrReplaceRoomMembers(room.getRoomId(), Set.of(senderInfo.getUserId(), friendInfo.getUserId()));
 
 			log.info("roomId={}  user1 : {}, user2 : {} newRoomCreated", room.getRoomId(), senderInfo.getUserId(), friendInfo.getUserId());
 		} else {
-			roomMapper.reactivateRoomMember(room.getRoomId(), senderInfo.getUserId());
-			roomMapper.reactivateRoomMember(room.getRoomId(), friendInfo.getUserId());
+			int isReactivatedSender = roomMapper.reactivateRoomMember(room.getRoomId(), senderInfo.getUserId());
+			int isReactivatedFriend = roomMapper.reactivateRoomMember(room.getRoomId(), friendInfo.getUserId());
 
 			Long finalRoomId = room.getRoomId();
 			//			roomMemberCache.getOrLoadRoomMembers(room.getRoomId(), () -> chatMapper.findActiveRoomMemberIds(room.getRoomId()));
@@ -106,7 +109,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 
 		// 3. DTO 조립
 		List<RoomMemberResponseDTO> friendProfile = new ArrayList<>();
-		friendProfile.add(new RoomMemberResponseDTO(friendInfo.getPublicId(), friendInfo.getNickname(), friendInfo.getFriendCode(), friendInfo.getProfileImg(), "MEMBER"));
+		friendProfile.add(new RoomMemberResponseDTO(friendInfo.getPublicId(), friendInfo.getNickname(), friendInfo.getFriendCode(), friendInfo
+				.getProfileImg(), "MEMBER"));
 
 		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(room.getRoomId(), room.getRoomType(), friendInfo.getNickname()
 				+ "님과의 채팅방", friendInfo.getProfileImg(), 2L, friendProfile); // 굳이 2를 안 쓸 이유가 없다.
@@ -146,7 +150,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 			customRoomName = host.getNickname() + "님의 단톡방";
 		}
 
-		ChatRoomsDTO createdRoom = createRoom("GROUP", "ACTIVE", "H:" + host.getUserId() + "M:" + (long) (selectedFriendPublicIdList.size() + 1), host.getUserId());
+		ChatRoomsDTO createdRoom = createRoom("GROUP", "ACTIVE", "H:" + host.getUserId() + "M:"
+				+ (long) (selectedFriendPublicIdList.size() + 1), host.getUserId());
 
 		//		List<ChatUserLookupDTO> groupRoomMemberList = new ArrayList<>(); // list는 중복 제거가 좀 약하다. 그래서 map쓰자.
 		Map<Long, ChatUserLookupDTO> roomMemberMap = new LinkedHashMap<>(); // 굳이 HashMap 안쓰고 LinkedHash쓰는 이유는? 디버깅할때 좀 편하려고. 순서가 안정적이라 로그/응답 확인할 때 덜 헷갈림.
@@ -176,42 +181,160 @@ public class RoomCommandService implements RoomCommandUseCase {
 
 			roomMapper.insertRoomMember(createdRoom.getRoomId(), member.getUserId(), role, customRoomName, customRoomThumbnail, "ACTIVE");
 
-			roomMemberList.add(new RoomMemberResponseDTO(member.getPublicId(), member.getNickname(), member.getFriendCode(), member.getProfileImg(), role));
+			roomMemberList.add(new RoomMemberResponseDTO(member.getPublicId(), member.getNickname(), member.getFriendCode(), member
+					.getProfileImg(), role));
 		}
 
 		roomMemberCache.initOrReplaceRoomMembers(createdRoom.getRoomId(), new LinkedHashSet<>(roomMemberMap.keySet()));
 
-		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(createdRoom.getRoomId(), createdRoom.getRoomType(), customRoomName, customRoomThumbnail, (long) roomMemberList.size(), roomMemberList);
+		EnterRoomResponseDTO resRoom = new EnterRoomResponseDTO(createdRoom.getRoomId(), createdRoom
+				.getRoomType(), customRoomName, customRoomThumbnail, (long) roomMemberList.size(), roomMemberList);
 
 		return resRoom;
 
 	}// createGroupRoom
 
+	// ====== 단체 채팅방에 유저 초대 ============================================================================================================================
 	@Override
 	@Transactional
-	public void leftRoom(Long roomId, SessionUserDTO me) {
+	public int inviteGroupRoom(SessionUserDTO inviter, Long roomId, List<String> inviteMemberPublicIds) {
+		ChatRoomsDTO existedRoom = roomMapper.getRoomByRoomId(roomId);
+
+		if (existedRoom == null) {
+			throw new IllegalArgumentException("존재하지 않는 방입니다.");
+		}
+
+		if (!existedRoom.getRoomStatus().equals("ACTIVE")) {
+			throw new IllegalArgumentException("비활성화 된 방입니다.");
+		}
+
+		RoomMembersDTO roomMeberAuth = roomMapper.getActiveRoomMemberInfoInRoom(roomId, inviter.getUserId());
+		if (roomMeberAuth == null) {
+			throw new IllegalArgumentException("현재 채팅방의 멤버가 아닙니다.");
+		}
+
+		String inviterRole = roomMapper.findRoleInRoomByUserId(roomId, inviter.getUserId());
+		if (!"HOST".equals(inviterRole) && !"MANAGER".equals(inviterRole)) {
+			throw new IllegalArgumentException("초대권한이 없습니다.");
+		}
+
+		if (inviteMemberPublicIds == null || inviteMemberPublicIds.isEmpty()) {
+			throw new IllegalArgumentException("초대할 친구가 없습니다.");
+		}
+
+		if (inviteMemberPublicIds.contains(inviter.getPublicId())) {
+			throw new IllegalArgumentException("자기 자신은 초대 대상에 포함할 수 없습니다.");
+		}
+
+		// 2. 초대 대상 bulk 조회
+		List<ChatUserLookupDTO> inviteMemberInfos = userMapper.findUserInfoByPublicIdList(inviteMemberPublicIds);
+
+		// 3. 요청한 publicId 개수와 실제 조회된 유저 수 비교
+		if (inviteMemberInfos == null) {
+			throw new IllegalStateException("초대 대상 조회 실패");
+		} else if (inviteMemberInfos.size() != new HashSet<>(inviteMemberPublicIds).size()) {
+			// 프론트가 보낸 publicId 목록에서 중복은 무시하고, 실제 존재하는 publicId가 전부 DB에서 조회됐는지 확인한다.
+			throw new IllegalArgumentException("존재하지 않는 초대 대상이 포함되어 있습니다.");
+		}
+
+		int invitedCount = 0;
+		Set<Long> invitedUserIds = new HashSet<>();
+		for (ChatUserLookupDTO mbr : inviteMemberInfos) {
+			int inserted = roomMapper
+					.insertRoomMember(roomId, mbr.getUserId(), "MEMBER", existedRoom.getRoomName(), existedRoom.getRoomThumbnail(), "ACTIVE");
+
+			if (inserted != 1) {
+				throw new IllegalStateException("초대 처리 실패: userId=" + mbr.getUserId());
+			}
+
+			invitedUserIds.add(mbr.getUserId());
+
+			invitedCount += inserted;
+		}
+
+		roomMemberCache.addRoomMembers(roomId, invitedUserIds);
+
+		return invitedCount;
+	}
+
+	// ====== 방 나가기 (자발적) =================================================================================================================
+	@Override
+	@Transactional
+	public boolean leftRoom(Long roomId, SessionUserDTO me) {
 		if (roomId == null) {
 			throw new IllegalArgumentException("roomId가 없습니다.");
 		}
 
-		RoomMembersDTO myRoomMember = roomMapper.getMyInfoFromRoomMembers(roomId, me.getUserId());
+		RoomMembersDTO myMemberInfoInRoom = roomMapper.getActiveRoomMemberInfoInRoom(roomId, me.getUserId());
 
-		if (myRoomMember == null) {
+		if (myMemberInfoInRoom == null) {
 			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
 		}
 
-		if ("HOST".equals(myRoomMember.getRole())) {
+		if ("HOST".equals(myMemberInfoInRoom.getRole())) {
 			throw new IllegalStateException("방장은 아직 나갈 수 없습니다.");
 		}
 
-		if ("LEFT".equals(myRoomMember.getMemberStatus())) {
-			return;
+		if ("LEFT".equals(myMemberInfoInRoom.getMemberStatus())) {
+			throw new IllegalArgumentException("이미 나간 멤버입니다.");
 		}
 
-		roomMapper.leftRoom(roomId, me.getUserId());
+		int isLefted = roomMapper.leftRoom(roomId, me.getUserId());
 
-		//		chatMapper.decreaseActiveMemberCount(roomId);
+		if (isLefted < 1) {
+			throw new IllegalArgumentException("방 나가기 실패.");
+		}
 
 		roomMemberCache.removeRoomMember(roomId, me.getUserId());
+
+		return true;
 	}
+
+	// ====== 멤버 강퇴(영구 강퇴 x) ========================================================================================================
+	@Override
+	@Transactional
+	public int kickMemberInRoom(Long roomId, SessionUserDTO kicker, List<String> kickedPublicIds) {
+		ChatRoomsDTO existedRoom = roomMapper.getRoomByRoomId(roomId);
+
+		if (existedRoom == null) {
+			throw new IllegalArgumentException("존재하지 않는 방입니다.");
+		}
+
+		if (!existedRoom.getRoomStatus().equals("ACTIVE")) {
+			throw new IllegalArgumentException("비활성화 된 방입니다.");
+		}
+
+		RoomMembersDTO roomMeberAuth = roomMapper.getActiveRoomMemberInfoInRoom(roomId, kicker.getUserId());
+		if (roomMeberAuth == null) {
+			throw new IllegalArgumentException("현재 채팅방의 멤버가 아닙니다.");
+		}
+
+		RoomMembersDTO mbrInfo = roomMapper.getActiveRoomMemberInfoInRoom(roomId, kicker.getUserId());
+		String inviterRole = roomMapper.findRoleInRoomByUserId(roomId, kicker.getUserId());
+		if (!"HOST".equals(inviterRole) && !"MANAGER".equals(inviterRole)) {
+			throw new IllegalArgumentException("강퇴 권한이 없습니다.");
+		}
+
+		if (kickedPublicIds == null || kickedPublicIds.isEmpty()) {
+			throw new IllegalArgumentException("초대할 친구가 없습니다.");
+		}
+
+		if (kickedPublicIds.contains(kicker.getPublicId())) {
+			throw new IllegalArgumentException("자기 자신은 강퇴할 수 없습니다.");
+		}
+
+		// 2. 초대 대상 bulk 조회
+		List<ChatUserLookupDTO> inviteMemberInfos = userMapper.findUserInfoByPublicIdList(kickedPublicIds);
+
+		// 3. 요청한 publicId 개수와 실제 조회된 유저 수 비교
+		if (inviteMemberInfos == null) {
+			throw new IllegalStateException("초대 대상 조회 실패");
+		} else if (inviteMemberInfos.size() != new HashSet<>(kickedPublicIds).size()) {
+			// 프론트가 보낸 publicId 목록에서 중복은 무시하고, 실제 존재하는 publicId가 전부 DB에서 조회됐는지 확인한다.
+			throw new IllegalArgumentException("존재하지 않는 초대 대상이 포함되어 있습니다.");
+		}
+		return 0;
+
+	}
+
 }

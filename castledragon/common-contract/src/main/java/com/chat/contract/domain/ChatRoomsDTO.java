@@ -16,6 +16,7 @@ public class ChatRoomsDTO {
 	private String roomType;
 	private String roomStatus;
 	private String roomName;
+	private String roomThumbnail;
 	private Long createdBy;
 
 	private LocalDateTime createdAt;
