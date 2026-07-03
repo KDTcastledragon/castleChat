@@ -148,7 +148,7 @@ public class RoomController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		int invitedCount = romCmdUseCase.inviteGroupRoom(me, requestInviteData.getRoomId(), requestInviteData.getInviteMemberPublicIds());
+		int invitedCount = romCmdUseCase.inviteGroupRoom(requestInviteData.getRoomId(), me, requestInviteData.getInviteTargetMemberPublicIds());
 		return ResponseEntity.ok(Map.of("invitedCount", invitedCount));
 	}
 
@@ -169,17 +169,43 @@ public class RoomController {
 		return ResponseEntity.ok().build();
 	}
 
-	@PostMapping("/KickMemberInRoom")
-	public ResponseEntity<?> KickMemberInRoom(@RequestBody KickMemberInRoomRequestDTO requestKickData, HttpSession session) {
+	@PostMapping("/kickMemberInRoom")
+	public ResponseEntity<?> kickMemberInRoom(@RequestBody KickMemberInRoomRequestDTO requestKickData, HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
 
 		if (me == null) {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		int kickedCount = romCmdUseCase.inviteGroupRoom(me, requestKickData.getRoomId(), requestKickData.getKickMemberPublicIds());
+		int kickedCount = romCmdUseCase.kickMemberInRoom(requestKickData.getRoomId(), me, requestKickData.getKickTargetPublicId());
 
-		return ResponseEntity.ok(Map.of("invitedCount", kickedCount));
+		return ResponseEntity.ok(Map.of("kickedCount", kickedCount));
 	}
+	//
+	//	@PostMapping("/banMemberInRoom")
+	//	public ResponseEntity<?> banMemberInRoom(@RequestBody KickMemberInRoomRequestDTO requestBanData, HttpSession session) {
+	//		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+	//
+	//		if (me == null) {
+	//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+	//		}
+	//
+	//		int bannedCount = romCmdUseCase.banMemberInRoom(requestBanData.getRoomId(), me, requestBanData.getKickTargetPublicId());
+	//
+	//		return ResponseEntity.ok(Map.of("bannedCount", bannedCount));
+	//	}
+	//
+	//	@PostMapping("/changeMemberRoleInRoom")
+	//	public ResponseEntity<?> changeMemberRoleInRoom(@RequestBody ChangeMemberRoleInRoomRequestDTO requestChgData, HttpSession session) {
+	//		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+	//
+	//		if (me == null) {
+	//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+	//		}
+	//
+	//		int chgCount = romCmdUseCase.changeMemberRoleInRoom(requestChgData.getRoomId(), me, requestChgData.getTargetPublicId());
+	//
+	//		return ResponseEntity.ok(Map.of("bannedCount", chgCount));
+	//	}
 
 }

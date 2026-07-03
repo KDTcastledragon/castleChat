@@ -174,11 +174,10 @@ public class RoomMemberCache {
 
 		String key = roomMembersKey(roomId);
 
-		Boolean exists = redisTemplate.hasKey(key);
-
-		if (!Boolean.TRUE.equals(exists)) {
-			return;
-		}
+		//		Boolean exists = redisTemplate.hasKey(key);
+		//		if (!Boolean.TRUE.equals(exists)) {
+		//			return;
+		//		}
 
 		String[] values = userIds.stream().map(String::valueOf).toArray(String[]::new);
 

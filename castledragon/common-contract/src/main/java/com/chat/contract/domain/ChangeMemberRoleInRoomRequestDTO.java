@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class KickMemberInRoomRequestDTO {
+public class ChangeMemberRoleInRoomRequestDTO {
 	private Long roomId;
-	private String kickTargetPublicId;
+	private String targetPublicId;
 }

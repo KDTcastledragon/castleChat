@@ -73,15 +73,6 @@
 		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}
 	</select>
 	
-	<select id="getReadMsgMembers"> <!-- 언제 쓸지는 모르겠당.. -->
-	SELECT u.public_id, u.nickname
-FROM room_members rm
-JOIN users u ON u.user_id = rm.user_id
-WHERE rm.room_id = #{roomId}
-  AND rm.last_read_message_id >= #{messageId}
-  AND rm.user_id != #{senderId}
-	</select>
-
 <select id="getMyAllChatRooms" resultType="com.chat.contract.domain.ChatRoomListDTO">
     SELECT
         r.room_id AS roomId,
@@ -183,28 +174,27 @@ WHERE rm.room_id = #{roomId}
 
 	<update id="leftRoom">
 	    UPDATE room_members
-	    SET
-	        member_status = 'LEFT',
-	        left_at = NOW()
-	    WHERE room_id = #{roomId}
-	      AND user_id = #{userId}
-	      AND member_status = 'ACTIVE'
+	    SET member_status = 'LEFT', left_at = NOW()
+	    WHERE room_id = #{roomId} AND user_id = #{userId} AND member_status = 'ACTIVE'
+	</update>
+	
+	<update id="kickMemberInRoom">
+		update room_members set role = 'NONE', member_status = 'KICKED', kicked_at = NOW()
+		where room_id=#{roomId} and user_id =#{kickedUserId} and member_status = 'ACTIVE'
 	</update>
 	
 	<select id="findRoleInRoomByUserId" resultType="java.lang.String">
 		select role from room_members where room_id=#{roomId} and user_id=#{userId} and member_status = 'ACTIVE'
-	</select>
+	</select> <!-- 굳이 필요할까??????????/ 그냥 getActive로 조지면 될듯? -->
 	
 	
 	<update id="reactivateRoomMember">
-	    UPDATE room_members
-	    SET
-	        member_status = 'ACTIVE',
-	        left_at = NULL
-	    WHERE room_id = #{roomId}
-	      AND user_id = #{userId}
+	UPDATE room_members SET member_status = 'ACTIVE', left_at = NULL, rejoined_at = NOW() 
+	WHERE room_id = #{roomId} AND member_status = 'LEFT' AND user_id IN
+		<foreach collection="userIds" item="userId" open="(" separator="," close=")">
+		    #{userId}
+		</foreach>
 	</update>
-
 </mapper>
 
 <!-- <select id="getMyAllChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">

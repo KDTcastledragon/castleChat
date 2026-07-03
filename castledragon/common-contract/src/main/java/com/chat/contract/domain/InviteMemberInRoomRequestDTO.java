@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class InviteMemberInRoomRequestDTO {
 	private Long roomId;
-	private List<String> inviteMemberPublicIds;
+	private List<String> inviteTargetMemberPublicIds;
 }

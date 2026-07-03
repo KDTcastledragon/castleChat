@@ -32,13 +32,13 @@ public interface RoomMapper {
 
 	int leftRoom(@Param("roomId") Long roomId, @Param("userId") Long userId);
 
-	void kickMemberInRoom(@Param("roomId") Long roomId, @Param("kickerUserId") Long kickerUserId, @Param("kickedUserId") Long kickedUserId);
+	int kickMemberInRoom(@Param("roomId") Long roomId, @Param("kickerUserId") Long kickerUserId, @Param("kickedUserId") Long kickedUserId);
 
 	void banMemberInRoom(@Param("roomId") Long roomId, @Param("bannerUserId") Long bannerUserId, @Param("bannedUserId") Long bannedUserId);
 
-	int reactivateRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
-
 	String findRoleInRoomByUserId(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
+	int reactivateRoomMember(Long roomId, List<Long> directMemberPublicIds);
 }
 
 // Mapper는 SQL 소유권 기준으로 RoomMapper, MessageMapper, UserMapper처럼 도메인별로 유지했다.

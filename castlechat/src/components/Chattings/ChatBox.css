@@ -1,8 +1,70 @@
+/* ====[채팅방 전체]============================================= */
+.chatBoxContainer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.chattingRoomSection {
+    position: fixed;
+    width: 700px;
+    background-color: rgb(252, 255, 198);
+    border: 1px solid black;
+    pointer-events: auto;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* ====[상단바]============================================= */
+.chatListTitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    height: 36px;
+    padding: 0 8px;
+    background-color: #000;
+    color: #fff;
+    box-sizing: border-box;
+    cursor: move;
+}
+
+.chatRoomTitleText {
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chatTitleButtons {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.chatTitleButtons button {
+    cursor: pointer;
+}
+
+.roomMenuButton {
+    font-weight: 600;
+}
+
+/* ====[채팅 메시지 영역]============================================= */
 .chattingBox {
+    width: 683px;
+    height: 500px;
+    margin: 0 auto;
+    padding: 10px;
+    background-color: rgb(255, 255, 255);
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding: 10px;
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
@@ -12,14 +74,59 @@
     max-width: 96%;
     display: flex;
     align-items: flex-end;
-    gap: 4px;
+    gap: 6px;
+    margin: 6px 0;
     box-sizing: border-box;
     font-size: 12px;
 }
 
+.chatRow.other {
+    align-self: flex-start;
+    justify-content: flex-start;
+    flex-direction: row;
+    margin-left: 18px;
+}
+
+.chatRow.mine {
+    align-self: flex-end;
+    justify-content: flex-end;
+    flex-direction: row;
+    margin-right: 18px;
+}
+
+.senderProfileImg {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.clickableProfileImg {
+    cursor: pointer;
+}
+
+.clickableProfileImg:hover {
+    filter: brightness(0.92);
+}
+
+.messageContent {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 300px;
+}
+
+.senderNickname {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+
 .messageWrap {
     min-width: 80px;
-    max-width: 220px;
+    max-width: 300px;
     min-height: 20px;
     padding: 8px 12px;
     border-radius: 12px;
@@ -27,18 +134,6 @@
     overflow-wrap: anywhere;
     white-space: pre-wrap;
     box-sizing: border-box;
-}
-
-.mine {
-    align-self: flex-end;
-    flex-direction: row;
-    margin-right: 18px;
-}
-
-.other {
-    align-self: flex-start;
-    flex-direction: row;
-    margin-left: 18px;
 }
 
 .mine .messageWrap {
@@ -51,17 +146,23 @@
     text-align: left;
 }
 
+.messageText {
+    word-break: break-word;
+}
+
 .messageInfo {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     gap: 2px;
     flex-shrink: 0;
+    font-size: 11px;
+    color: #888;
 }
 
 .unreadCount {
     font-size: 12px;
-    color: #f0a000;
+    color: orange;
     font-weight: bold;
     line-height: 1;
 }
@@ -72,40 +173,37 @@
     white-space: nowrap;
 }
 
-
-/* ====[채팅방]============================================= */
-.chatBoxContainer {
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;
+.systemMessage {
+    align-self: center;
+    max-width: 80%;
+    margin: 8px 0;
+    padding: 5px 10px;
+    border-radius: 12px;
+    background-color: #eeeeee;
+    color: #666;
+    font-size: 11px;
+    text-align: center;
 }
 
-.chattingRoomSection {
-    position: fixed;
-    width: 400px;
-    background-color: rgb(252, 255, 198);
-    border: 1px solid black;
-    pointer-events: auto;
+.emptyChatMessage {
+    margin: auto;
+    color: #777;
+    font-size: 13px;
 }
 
-.chattingBox {
-    width: 383px;
-    height: 500px;
-    margin: 0 auto;
-    background-color: rgb(255, 255, 255);
-    overflow-y: scroll;
+/* ====[타이핑 알림]============================================= */
+.typingNotice {
+    min-height: 22px;
+    padding: 4px 10px;
+    background-color: #fff8c7;
+    color: #555;
+    font-size: 12px;
+    box-sizing: border-box;
 }
 
-.chattingBox>div {
-    width: 100px;
-    height: 50px;
-}
-
+/* ====[입력창]============================================= */
 .inputChat {
-    width: 400px;
+    width: 700px;
     height: 100px;
     background-color: antiquewhite;
     display: flex;
@@ -113,33 +211,244 @@
 
 .inputChat>textarea {
     display: inline-block;
-    width: 330px;
-    height: 100%
+    width: 620px;
+    height: 100%;
+    resize: none;
+    box-sizing: border-box;
 }
 
 .inputChat>button {
     display: inline-block;
-    width: 60px;
+    width: 80px;
     height: 100%;
 }
 
-/* ====================== */
-.chatRow {
+/* ====[오른쪽 채팅방 메뉴 패널]============================================= */
+.roomSidePanel {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    bottom: 0;
+    width: 66%;
+    min-width: 420px;
+    background-color: #ffffff;
+    border-left: 1px solid #cfcfcf;
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.16);
+    transform: translateX(100%);
+    transition: transform 220ms ease;
+    z-index: 20;
     display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    margin: 6px 0;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
-.chatRow.other {
-    justify-content: flex-start;
+.roomSidePanel.open {
+    transform: translateX(0);
 }
 
-.chatRow.mine {
-    justify-content: flex-end;
+.roomSidePanelHeader {
+    height: 38px;
+    padding: 0 8px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 13px;
+    box-sizing: border-box;
 }
 
-.senderProfileImg {
+.roomSidePanelHeader button {
+    cursor: pointer;
+}
+
+.roomMemberList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.roomMemberItem {
+    display: grid;
+    grid-template-columns: 34px 1fr 70px 50px;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    box-sizing: border-box;
+}
+
+.roomMemberItem.me {
+    background-color: #fff7bf;
+    border: 1px solid #f0d44f;
+    border-radius: 8px;
+    margin-bottom: 4px;
+}
+
+.roomMemberProfileImg {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.roomMemberInfo {
+    min-width: 0;
+}
+
+.roomMemberNicknameLine {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.roomMemberNickname {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.roomMemberMeBadge {
+    padding: 2px 5px;
+    border-radius: 8px;
+    background-color: #000;
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.roomMemberRole {
+    font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    color: #555;
+}
+
+.role-HOST {
+    color: #d14;
+}
+
+.role-MANAGER {
+    color: #06c;
+}
+
+.role-MEMBER {
+    color: #555;
+}
+
+.kickMemberButton {
+    font-size: 11px;
+    padding: 3px 6px;
+    cursor: pointer;
+}
+
+.kickMemberButtonPlaceholder {
+    width: 44px;
+    height: 1px;
+}
+
+.inviteMemberButton {
+    height: 38px;
+    border: 0;
+    border-top: 1px solid #e5e5e5;
+    background-color: #fee500;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* ====[친구 초대 패널]============================================= */
+.inviteFriendPanel {
+    position: absolute;
+    top: 64px;
+    right: 18px;
+    width: 300px;
+    height: 430px;
+    background-color: #ffffff;
+    border: 1px solid #bdbdbd;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.inviteFriendPanelHeader {
+    height: 38px;
+    padding: 0 10px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.inviteFriendPanelHeader button {
+    cursor: pointer;
+}
+
+.selectedInviteFriendsBox {
+    padding: 8px 10px;
+    border-bottom: 1px solid #eeeeee;
+    box-sizing: border-box;
+}
+
+.selectedInviteFriendsTitle {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.selectedInviteFriendsList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-height: 50px;
+    overflow-y: auto;
+}
+
+.selectedInviteFriendChip {
+    padding: 3px 7px;
+    border-radius: 10px;
+    background-color: #fee500;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.selectedInviteEmpty {
+    font-size: 11px;
+    color: #888;
+}
+
+.inviteFriendList {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    box-sizing: border-box;
+}
+
+.inviteFriendItem {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.inviteFriendItem input {
+    flex-shrink: 0;
+}
+
+.inviteFriendProfileImg {
     width: 28px;
     height: 28px;
     border-radius: 50%;
@@ -147,37 +456,128 @@
     flex-shrink: 0;
 }
 
-.messageContent {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    max-width: 65%;
+.inviteFriendInfo {
+    min-width: 0;
 }
 
-.senderNickname {
+.inviteFriendNickname {
     font-size: 12px;
     font-weight: 600;
-    margin-bottom: 3px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.messageWrap {
-    max-width: 100%;
-}
-
-.messageText {
-    word-break: break-word;
-}
-
-.messageInfo {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    font-size: 11px;
+.inviteFriendCode {
+    font-size: 10px;
     color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.unreadCount {
-    color: orange;
+.inviteFriendLoading,
+.inviteFriendEmpty {
+    padding: 20px 0;
+    text-align: center;
+    font-size: 12px;
+    color: #777;
+}
+
+.inviteFriendSubmitButton {
+    height: 40px;
+    border: 0;
+    border-top: 1px solid #e5e5e5;
+    background-color: #fee500;
     font-weight: bold;
+    cursor: pointer;
+}
+
+.inviteFriendSubmitButton:disabled {
+    background-color: #dddddd;
+    color: #888888;
+    cursor: not-allowed;
+}
+
+/* ====[프로필 팝업]============================================= */
+.profilePopupOverlay {
+    position: absolute;
+    left: 0;
+    top: 36px;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    background-color: rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 110px;
+    box-sizing: border-box;
+}
+
+.profilePopup {
+    position: relative;
+    width: 270px;
+    min-height: 210px;
+    background-color: #ffffff;
+    border: 1px solid #cfcfcf;
+    border-radius: 16px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+    padding: 26px 18px 18px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.profilePopupCloseButton {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.profilePopupImageWrap {
+    width: 82px;
+    height: 82px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #f0f0f0;
+}
+
+.profilePopupImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profilePopupNickname {
+    font-size: 17px;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+
+.profilePopupActions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.profilePopupActionButton {
+    min-width: 86px;
+    height: 34px;
+    border-radius: 17px;
+    border: 1px solid #cfcfcf;
+    background-color: #f7f7f7;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.profilePopupActionButton.direct {
+    background-color: #fee500;
+    border-color: #f0d400;
+}
+
+.profilePopupActionButton.report {
+    background-color: #eeeeee;
 }

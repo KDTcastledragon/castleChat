@@ -12,7 +12,12 @@ public interface RoomCommandUseCase { // 시스템의 상태를 바꾸는 요청
 
 	boolean leftRoom(Long roomId, SessionUserDTO me);
 
-	int inviteGroupRoom(SessionUserDTO me, Long roomId, List<String> inviteMemberPublicIds);
+	int inviteGroupRoom(Long roomId, SessionUserDTO inviter, List<String> inviteTargetMemberPublicIds);
 
-	int kickMemberInRoom(Long roomId, SessionUserDTO kicker, List<String> kickedPublicIds);
+	int kickMemberInRoom(Long roomId, SessionUserDTO kicker, String kickTargetPublicId);
+
+	int banMemberInRoom(Long roomId, SessionUserDTO kicker, String banTargetPublicId);
+
+	int changeMemberRoleInRoom(Long roomId, SessionUserDTO me, String targetPublicId);
+
 }
