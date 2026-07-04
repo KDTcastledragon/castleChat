@@ -219,9 +219,14 @@ public class RoomCommandService implements RoomCommandUseCase {
 	@Override
 	@Transactional
 	public int inviteGroupRoom(Long roomId, SessionUserDTO inviter, List<String> inviteTargetMemberPublicIds) {
-		if (roomId == null || inviteTargetMemberPublicIds == null) {
-			log.info("invite 필수 파라미터 누락. : {} {}", roomId, inviteTargetMemberPublicIds);
+		if (roomId == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
 		}
+
+		if (inviteTargetMemberPublicIds == null || inviteTargetMemberPublicIds.isEmpty()) {
+			throw new IllegalArgumentException("초대할 친구가 없습니다.");
+		}
+
 		ChatRoomsDTO existedRoom = roomMapper.getRoomByRoomId(roomId);
 
 		if (existedRoom == null) {

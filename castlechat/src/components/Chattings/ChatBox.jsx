@@ -29,6 +29,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     const [isInvitingMembers, setIsInvitingMembers] = useState(false);
 
     const [profileTargetMember, setProfileTargetMember] = useState(null);
+    const [messageContextMenu, setMessageContextMenu] = useState(null);
 
     const [locallyRemovedMemberPublicIds, setLocallyRemovedMemberPublicIds] = useState(() => new Set());
     const [locallyAddedRoomMembers, setLocallyAddedRoomMembers] = useState([]);
@@ -89,7 +90,6 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         const isMe = member.publicId === myPublicId;
 
         if (isMe) return false;
-
         if (roomType !== 'GROUP') return false;
 
         if (myRoomRole === 'HOST') {
@@ -247,6 +247,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     }
 
     function handleChatScroll() {
+        setMessageContextMenu(null);
+
         const chatListEl = chatListRef.current;
         if (!chatListEl) return;
 
@@ -267,6 +269,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         setIsInviteFriendPanelOpen(false);
         setSelectedInviteFriends([]);
         setProfileTargetMember(null);
+        setMessageContextMenu(null);
         setLocallyRemovedMemberPublicIds(new Set());
         setLocallyAddedRoomMembers([]);
 
@@ -528,6 +531,10 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             if (!chatRoomSectionRef.current) return;
 
             isChatBoxFocusedRef.current = chatRoomSectionRef.current.contains(e.target);
+
+            if (!e.target.closest('.messageContextMenu')) {
+                setMessageContextMenu(null);
+            }
         };
 
         document.addEventListener('mousedown', handleDocumentMouseDown);
@@ -540,6 +547,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     useEffect(() => {
         const handleEscKeyDown = (e) => {
             if (e.key !== 'Escape') return;
+
+            if (messageContextMenu) {
+                setMessageContextMenu(null);
+                return;
+            }
 
             if (profileTargetMember) {
                 setProfileTargetMember(null);
@@ -566,7 +578,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         return () => {
             window.removeEventListener('keydown', handleEscKeyDown);
         };
-    }, [profileTargetMember, isInviteFriendPanelOpen, isRoomMenuOpen]);
+    }, [messageContextMenu, profileTargetMember, isInviteFriendPanelOpen, isRoomMenuOpen]);
 
     async function leftRoom() {
         try {
@@ -644,11 +656,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         try {
             setIsInvitingMembers(true);
 
-            const inviteMemberPublicIds = selectedInviteFriends.map(friend => friend.publicId);
+            const inviteTargetMemberPublicIds = selectedInviteFriends.map(friend => friend.publicId);
 
             await axios.post('/room/inviteGroupRoom', {
                 roomId,
-                inviteMemberPublicIds
+                inviteTargetMemberPublicIds
             });
 
             setLocallyAddedRoomMembers(prev => {
@@ -706,6 +718,67 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         }
     }
 
+    function openMessageContextMenu(e, message) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!message || message.messageType === 'SYSTEM') return;
+
+        const boxRect = chatRoomSectionRef.current?.getBoundingClientRect();
+
+        if (!boxRect) return;
+
+        const menuWidth = 158;
+        const menuHeight = 180;
+
+        let left = e.clientX - boxRect.left;
+        let top = e.clientY - boxRect.top;
+
+        left = Math.min(left, boxRect.width - menuWidth - 8);
+        top = Math.min(top, boxRect.height - menuHeight - 8);
+
+        left = Math.max(left, 8);
+        top = Math.max(top, 44);
+
+        setMessageContextMenu({
+            message,
+            left,
+            top
+        });
+    }
+
+    function handleMessageMenuAction(action) {
+        const targetMessage = messageContextMenu?.message;
+
+        setMessageContextMenu(null);
+
+        if (!targetMessage) return;
+
+        if (action === 'REPLY') {
+            alert(`답장하기: ${targetMessage.messageText}`);
+            return;
+        }
+
+        if (action === 'DELETE') {
+            alert(`삭제하기: ${targetMessage.messageId}`);
+            return;
+        }
+
+        if (action === 'READERS') {
+            alert(`이 메시지 읽은 사람: ${targetMessage.messageId}`);
+            return;
+        }
+
+        if (action === 'SHARE') {
+            alert(`공유하기: ${targetMessage.messageId}`);
+            return;
+        }
+
+        if (action === 'NOTICE') {
+            alert(`공지: ${targetMessage.messageId}`);
+        }
+    }
+
     return (
         <div className='chatBoxContainer'>
             <div
@@ -722,29 +795,26 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                 }}
             >
                 <div className='chatListTitle' onMouseDown={startDrag}>
+                    <div className="chatTitleLeftControls">
+                        <button
+                            className={`roomMenuButton ${isRoomMenuOpen ? 'active' : ''}`}
+                            title="채팅방 메뉴"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={() => setIsRoomMenuOpen(prev => !prev)}
+                        >
+                            <span className="roomMenuButtonIcon">☰</span>
+                        </button>
+                    </div>
+
                     <span className="chatRoomTitleText">{roomName}</span>
 
-                    <div className="chatTitleButtons">
+                    <div className="chatTitleRightControls">
                         <button
+                            className="chatCloseButton"
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={closeChatAndExitRoom}
                         >
                             닫기
-                        </button>
-
-                        <button
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={leftRoom}
-                        >
-                            방 나가기
-                        </button>
-
-                        <button
-                            className="roomMenuButton"
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => setIsRoomMenuOpen(prev => !prev)}
-                        >
-                            메뉴
                         </button>
                     </div>
                 </div>
@@ -754,8 +824,21 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     onMouseDown={(e) => e.stopPropagation()}
                 >
                     <div className="roomSidePanelHeader">
-                        <span>채팅방 멤버</span>
+                        <span>채팅방 메뉴</span>
                         <button onClick={() => setIsRoomMenuOpen(false)}>닫기</button>
+                    </div>
+
+                    <div className="roomSidePanelDangerZone">
+                        <button
+                            className="leaveRoomInMenuButton"
+                            onClick={leftRoom}
+                        >
+                            방 나가기
+                        </button>
+                    </div>
+
+                    <div className="roomSidePanelSubTitle">
+                        채팅방 멤버
                     </div>
 
                     <div className="roomMemberList">
@@ -921,6 +1004,24 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     </div>
                 )}
 
+                {messageContextMenu && (
+                    <div
+                        className="messageContextMenu"
+                        style={{
+                            left: messageContextMenu.left,
+                            top: messageContextMenu.top
+                        }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onContextMenu={(e) => e.preventDefault()}
+                    >
+                        <button onClick={() => handleMessageMenuAction('REPLY')}>답장하기</button>
+                        <button onClick={() => handleMessageMenuAction('DELETE')}>삭제하기</button>
+                        <button onClick={() => handleMessageMenuAction('READERS')}>이 메시지 읽은 사람</button>
+                        <button onClick={() => handleMessageMenuAction('SHARE')}>공유하기</button>
+                        <button onClick={() => handleMessageMenuAction('NOTICE')}>공지</button>
+                    </div>
+                )}
+
                 <div
                     className='chattingBox'
                     ref={chatListRef}
@@ -946,6 +1047,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                                 <div
                                     key={d.messageId}
                                     className={`chatRow ${isMine ? 'mine' : 'other'}`}
+                                    onContextMenu={(e) => openMessageContextMenu(e, d)}
                                 >
                                     {!isMine && (
                                         <img

@@ -10,7 +10,7 @@
 
 .chattingRoomSection {
     position: fixed;
-    width: 700px;
+    width: 460px;
     background-color: rgb(252, 255, 198);
     border: 1px solid black;
     pointer-events: auto;
@@ -20,10 +20,9 @@
 
 /* ====[상단바]============================================= */
 .chatListTitle {
-    display: flex;
+    display: grid;
+    grid-template-columns: 52px 1fr 64px;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
     width: 100%;
     height: 36px;
     padding: 0 8px;
@@ -33,31 +32,78 @@
     cursor: move;
 }
 
+.chatTitleLeftControls,
+.chatTitleRightControls {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.chatTitleLeftControls {
+    justify-content: flex-start;
+}
+
+.chatTitleRightControls {
+    justify-content: flex-end;
+}
+
 .chatRoomTitleText {
+    min-width: 0;
     font-weight: bold;
+    text-align: center;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
 
-.chatTitleButtons {
-    display: flex;
+.roomMenuButton {
+    width: 32px;
+    height: 28px;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #171717;
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
+    justify-content: center;
+    transition: background-color 160ms ease, border-color 160ms ease, transform 120ms ease;
 }
 
-.chatTitleButtons button {
+.roomMenuButton:hover {
+    background-color: #2b2b2b;
+    border-color: #777;
+}
+
+.roomMenuButton.active {
+    background-color: #fee500;
+    border-color: #fee500;
+    color: #111;
+}
+
+.roomMenuButtonIcon {
+    font-size: 18px;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+.chatCloseButton {
+    min-width: 44px;
+    height: 26px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #f5f5f5;
+    color: #111;
     cursor: pointer;
 }
 
-.roomMenuButton {
-    font-weight: 600;
+.chatCloseButton:hover {
+    background-color: #ffffff;
 }
 
 /* ====[채팅 메시지 영역]============================================= */
 .chattingBox {
-    width: 683px;
+    width: 444px;
     height: 500px;
     margin: 0 auto;
     padding: 10px;
@@ -114,7 +160,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 300px;
+    max-width: 250px;
 }
 
 .senderNickname {
@@ -126,7 +172,7 @@
 
 .messageWrap {
     min-width: 80px;
-    max-width: 300px;
+    max-width: 250px;
     min-height: 20px;
     padding: 8px 12px;
     border-radius: 12px;
@@ -191,6 +237,36 @@
     font-size: 13px;
 }
 
+/* ====[우클릭 메시지 메뉴]============================================= */
+.messageContextMenu {
+    position: absolute;
+    width: 158px;
+    padding: 6px;
+    background-color: #ffffff;
+    border: 1px solid #d6d6d6;
+    border-radius: 10px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+    z-index: 80;
+    box-sizing: border-box;
+}
+
+.messageContextMenu button {
+    width: 100%;
+    height: 30px;
+    border: 0;
+    border-radius: 7px;
+    background-color: transparent;
+    text-align: left;
+    padding: 0 9px;
+    font-size: 12px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.messageContextMenu button:hover {
+    background-color: #f3f3f3;
+}
+
 /* ====[타이핑 알림]============================================= */
 .typingNotice {
     min-height: 22px;
@@ -203,7 +279,7 @@
 
 /* ====[입력창]============================================= */
 .inputChat {
-    width: 700px;
+    width: 460px;
     height: 100px;
     background-color: antiquewhite;
     display: flex;
@@ -211,7 +287,7 @@
 
 .inputChat>textarea {
     display: inline-block;
-    width: 620px;
+    width: 382px;
     height: 100%;
     resize: none;
     box-sizing: border-box;
@@ -219,22 +295,23 @@
 
 .inputChat>button {
     display: inline-block;
-    width: 80px;
+    width: 78px;
     height: 100%;
 }
 
-/* ====[오른쪽 채팅방 메뉴 패널]============================================= */
+/* ====[왼쪽 채팅방 메뉴 패널]============================================= */
 .roomSidePanel {
     position: absolute;
     top: 36px;
-    right: 0;
+    left: 0;
     bottom: 0;
-    width: 66%;
-    min-width: 420px;
+    width: 76%;
+    min-width: 330px;
+    max-width: calc(100% - 24px);
     background-color: #ffffff;
-    border-left: 1px solid #cfcfcf;
-    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.16);
-    transform: translateX(100%);
+    border-right: 1px solid #cfcfcf;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.16);
+    transform: translateX(-100%);
     transition: transform 220ms ease;
     z-index: 20;
     display: flex;
@@ -260,6 +337,36 @@
 
 .roomSidePanelHeader button {
     cursor: pointer;
+}
+
+.roomSidePanelDangerZone {
+    padding: 10px;
+    border-bottom: 1px solid #eeeeee;
+    background-color: #fffdf2;
+    box-sizing: border-box;
+}
+
+.leaveRoomInMenuButton {
+    width: 100%;
+    height: 34px;
+    border: 1px solid #d74a4a;
+    border-radius: 8px;
+    background-color: #fff;
+    color: #c62828;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.leaveRoomInMenuButton:hover {
+    background-color: #ffecec;
+}
+
+.roomSidePanelSubTitle {
+    padding: 10px 12px 4px;
+    color: #555;
+    font-size: 12px;
+    font-weight: bold;
+    box-sizing: border-box;
 }
 
 .roomMemberList {
@@ -366,7 +473,7 @@
 .inviteFriendPanel {
     position: absolute;
     top: 64px;
-    right: 18px;
+    left: 18px;
     width: 300px;
     height: 430px;
     background-color: #ffffff;
