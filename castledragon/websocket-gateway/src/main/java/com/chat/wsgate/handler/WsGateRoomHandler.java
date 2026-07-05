@@ -9,11 +9,11 @@ import com.chat.contract.domain.PayloadRoomNoticeDTO;
 import com.chat.contract.domain.RoomIdRequestDTO;
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
-import com.chat.wsgate.auth.WsAuth;
+import com.chat.wsgate.auth.WsGateAuth;
 import com.chat.wsgate.domain.PayloadEnterRoomDTO;
 import com.chat.wsgate.domain.PayloadExitRoomDTO;
-import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
-import com.chat.wsgate.session.GateWayWsSessionRegistry;
+import com.chat.wsgate.outbound.WsGateOutboundWriter;
+import com.chat.wsgate.session.WsGateSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -22,15 +22,15 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class GatewayWsRoomHandler {
+public class WsGateRoomHandler {
 
 	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
 	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
 	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
 
-	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
-	private final GateWayWsOutboundWriter gwWsOutboundWriter;
-	private final WsAuth wsAuth;
+	private final WsGateSessionRegistry wsGateSessionRegistry;
+	private final WsGateOutboundWriter gwWsOutboundWriter;
+	private final WsGateAuth wsGateAuth;
 	//	private final ChatService chatService;
 	//	private final ChatMetrics chatMetrics;
 
@@ -62,7 +62,7 @@ public class GatewayWsRoomHandler {
 
 	//	====== 채팅방 입장 ===========================================================================================================
 	public void handleEnterRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		Long myUserId = wsGateAuth.getMyUserIdInWsSession(session);
 		PayloadEnterRoomDTO payload = convertPayload(dto, PayloadEnterRoomDTO.class);
 
 		if (payload.getRoomId() == null || myUserId == null) {
@@ -72,7 +72,7 @@ public class GatewayWsRoomHandler {
 		}
 
 		//		wsSessionRegistry.roomSessions.computeIfAbsent(payload.getRoomId(), k -> new ConcurrentHashMap<>()).put(myUserId, session);
-		gateWayWsSessionRegistry.enterRoomSession(payload.getRoomId(), myUserId, session);
+		wsGateSessionRegistry.enterRoomSession(payload.getRoomId(), myUserId, session);
 
 		log.info("{}번 유저 {}번방 입장. wsSess등록.", myUserId, payload.getRoomId());
 		gwWsOutboundWriter.responseOk(session, dto, "ENTER_ROOM_OK", payload);
@@ -81,7 +81,7 @@ public class GatewayWsRoomHandler {
 
 	//	====== 채팅방 닫기 ===========================================================================================================
 	public void handleExitRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		Long myUserId = wsAuth.getMyUserIdInWsSession(session);
+		Long myUserId = wsGateAuth.getMyUserIdInWsSession(session);
 
 		PayloadExitRoomDTO payload = convertPayload(dto, PayloadExitRoomDTO.class);
 
@@ -90,7 +90,7 @@ public class GatewayWsRoomHandler {
 			return;
 		}
 
-		gateWayWsSessionRegistry.exitRoomSession(payload.getRoomId(), myUserId);
+		wsGateSessionRegistry.exitRoomSession(payload.getRoomId(), myUserId);
 
 		log.info("{}번 유저 {}번방 Exit 처리", myUserId, payload.getRoomId());
 		gwWsOutboundWriter.responseOk(session, dto, "EXIT_ROOM_OK", payload);
@@ -98,7 +98,7 @@ public class GatewayWsRoomHandler {
 
 	//	====== 채팅방 나가기 ===========================================================================================================
 	public void handleLeftRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		SessionUserDTO me = wsAuth.requireLoginUser(session);
+		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
 		RoomIdRequestDTO payload = convertPayload(dto, RoomIdRequestDTO.class);
 
 		if (payload.getRoomId() == null) {

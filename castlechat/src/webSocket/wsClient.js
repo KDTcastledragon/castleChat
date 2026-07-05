@@ -12,11 +12,16 @@ const WS_TYPES = {
     CONNECT_USER: "CONNECT_USER",
     ENTER_ROOM: "ENTER_ROOM",
     EXIT_ROOM: "EXIT_ROOM",
-    SEND_MSG: "SEND_MSG",
-    READ_MSG: "READ_MSG",
+    LEFT_ROOM: "LEFT_ROOM",
     TYPING_START: "TYPING_START",
     TYPING_STOP: "TYPING_STOP",
-    LEFT_ROOM: "LEFT_ROOM"
+    SEND_MSG: "SEND_MSG",
+    READ_MSG: "READ_MSG",
+    DELETE_MSG: "DELETE_MSG",
+    REPLY_MSG: "REPLY_MSG",
+    REACT_MSG: "REACT_MSG",
+    SHARE_MSG: "SHARE_MSG"
+
 };
 
 // 왜 appshell에서는 useRef를 쓴거야? 여기서는 단순히 let 변수로써 단순한 구조로 되는데?
@@ -235,6 +240,36 @@ export function emitWsReadMessage(roomId, lastReadMessageId) {
         lastReadMessageId: lastReadMessageId // lastOtherMsgInRoom전체를 보내면, 너무 커지고 책임도 이상해짐. payload가 두꺼워져.
     });
 }
+
+export function emitWsDeleteMessage(roomId, messageId) {
+    return emitWs(WS_TYPES.DELETE_MSG, {
+        roomId: roomId,
+        messageId: messageId
+    })
+}
+
+export function emitWsReplyMessage(roomId, messageId) {
+    return emit(WS_TYPES.REPLY_MSG, {
+        roomId: roomId,
+        messageId: messageId
+    })
+}
+
+export function emitWsReactMessage(roomId, messageId) {
+    return emitWs(WS_TYPES.REACT_MSG, {
+        roomId: roomId,
+        messageId: messageId
+    })
+}
+
+export function emitWsShareMessage(roomId, messageId) {
+    return emitWs(WS_TYPES.SHARE_MSG, {
+        roomId: roomId,
+        messageId: messageId
+    })
+}
+
+
 
 
 // wsClient.js에 “WS close listener”를 하나 만들자. wsClient는 Redux를 직접 몰라야 하니까, AppShell이 listener를 등록해서 dispatch하는 구조가 제일 깔끔해.

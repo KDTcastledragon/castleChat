@@ -16,7 +16,7 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
-import { leftRoomApi } from '../../api/chatApi';
+import { leftRoomApi, loadMessagesInRoomApi } from '../../api/chatApi';
 
 function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
@@ -275,11 +275,13 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
         const initChatRoom = async () => {
             try {
-                const loadedMessagesInRoom = await axios.get(`/room/loadMessagesInRoom/${roomId}`, {
-                    params: {
-                        limit: MESSAGE_PAGE_SIZE
-                    }
-                });
+                // const loadedMessagesInRoom = await axios.get(`/room/loadMessagesInRoom/${roomId}`, {
+                //     params: {
+                //         limit: MESSAGE_PAGE_SIZE
+                //     }
+                // });
+
+                const loadedMessagesInRoom = loadMessagesInRoomApi(roomId, MESSAGE_PAGE_SIZE);
 
                 const messages = loadedMessagesInRoom.data ?? [];
 
@@ -754,6 +756,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
         if (!targetMessage) return;
 
+        if (action === 'REACTION') {
+            alert(`리액션: ${targetMessage.messageId}`);
+            return;
+        }
+
         if (action === 'REPLY') {
             alert(`답장하기: ${targetMessage.messageText}`);
             return;
@@ -997,7 +1004,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                                     className="profilePopupActionButton report"
                                     onClick={() => alert('임시 버튼')}
                                 >
-                                    r
+                                    rand_btn
                                 </button>
                             </div>
                         </div>
@@ -1014,6 +1021,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                         onMouseDown={(e) => e.stopPropagation()}
                         onContextMenu={(e) => e.preventDefault()}
                     >
+                        <button onClick={() => handleMessageMenuAction('REACTION')}>리액션</button>
                         <button onClick={() => handleMessageMenuAction('REPLY')}>답장하기</button>
                         <button onClick={() => handleMessageMenuAction('DELETE')}>삭제하기</button>
                         <button onClick={() => handleMessageMenuAction('READERS')}>이 메시지 읽은 사람</button>

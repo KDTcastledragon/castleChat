@@ -6,23 +6,26 @@ import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
-import com.chat.wsgate.dispatcher.WsGatewayDispatcher;
+import com.chat.wsgate.dispatcher.WsGateDispatcher;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSocket
+@RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer { // WebSocketConfig 이름은 중요하지 않다. 위 2개의 @어노테이션이 중요함.
 
-	private final WsGatewayDispatcher wsGatewayDispatcher;
+	private final WsGateDispatcher wsGateDispatcher;
 
-	public WebSocketConfig(WsGatewayDispatcher wsGatewayDispatcher) {
-		this.wsGatewayDispatcher = wsGatewayDispatcher;
-	}
+	//	public WebSocketConfig(WsGateDispatcher wsGateDispatcher) {
+	//		this.wsGateDispatcher = wsGateDispatcher;
+	//	}
 
 	@Override
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 
 		//		registry.addHandler(wsHandler, "/ws/chat").setAllowedOrigins("*"); // 어떤 Origin에서 온 WebSocket 연결을 허용할 것인가?
-		registry.addHandler(wsGatewayDispatcher, "/ws")
+		registry.addHandler(wsGateDispatcher, "/ws")
 				.addInterceptors(new HttpSessionHandshakeInterceptor())
 				.setAllowedOriginPatterns("http://localhost:*");
 	}

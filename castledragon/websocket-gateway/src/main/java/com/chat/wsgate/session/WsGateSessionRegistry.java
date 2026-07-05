@@ -14,7 +14,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-public class GateWayWsSessionRegistry {
+public class WsGateSessionRegistry {
 	private final Map<WebSocketSession, SessionUserDTO> wsSessionsToConnectedUser = new ConcurrentHashMap<>();
 	private final Map<Long, WebSocketSession> userIdToWsSessions = new ConcurrentHashMap<>(); // userId:ws 1:1대응이라서 단수형으로 naming.
 

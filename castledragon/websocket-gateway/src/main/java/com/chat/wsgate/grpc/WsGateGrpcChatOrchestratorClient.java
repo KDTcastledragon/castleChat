@@ -10,14 +10,14 @@ import com.chat.contract.domain.ReadPositionUpdateResponseDTO;
 import com.chat.contract.grpc.ChatOrcGrpc;
 import com.chat.contract.grpc.CreateChatMessageRequest;
 import com.chat.contract.grpc.ReadChatMessageRequest;
-import com.chat.wsgate.client.ChatOrchestratorClient;
+import com.chat.wsgate.client.WsGateChatOrchestratorClient;
 
 import lombok.extern.log4j.Log4j2;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 
 @Component
 @Log4j2
-public class GrpcChatOrchestratorClient implements ChatOrchestratorClient {
+public class WsGateGrpcChatOrchestratorClient implements WsGateChatOrchestratorClient {
 
 	@GrpcClient("chat-orchestrator")
 	private ChatOrcGrpc.ChatOrcBlockingStub chatOrcStub; // chat-orchestrator gRPC 서버를 호출하기 위한 client 객체.

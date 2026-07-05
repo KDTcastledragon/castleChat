@@ -9,7 +9,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.domain.WebSocketDTO;
-import com.chat.wsgate.session.GateWayWsSessionRegistry;
+import com.chat.wsgate.session.WsGateSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -18,11 +18,11 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class GateWayWsOutboundWriter {
+public class WsGateOutboundWriter {
 
 	private final ObjectMapper objectMapper; // "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" 오류 막기 위해.
 
-	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
+	private final WsGateSessionRegistry wsGateSessionRegistry;
 
 	//	private final ChatMetrics chatMetrics;
 
@@ -57,7 +57,7 @@ public class GateWayWsOutboundWriter {
 
 	//	====== broadcast ===========================================================================================================
 	public void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
-		Map<Long, WebSocketSession> sessions = gateWayWsSessionRegistry.getRoomSessions(roomId);
+		Map<Long, WebSocketSession> sessions = wsGateSessionRegistry.getRoomSessions(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 broadcast 대상 없음", roomId);
@@ -89,7 +89,7 @@ public class GateWayWsOutboundWriter {
 	}
 
 	public void broadcastToRoomExceptUser(Long roomId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
-		Map<Long, WebSocketSession> sessions = gateWayWsSessionRegistry.getRoomSessions(roomId);
+		Map<Long, WebSocketSession> sessions = wsGateSessionRegistry.getRoomSessions(roomId);
 
 		if (sessions == null || sessions.isEmpty()) {
 			log.info("{}번방 typing broadcast 대상 없음", roomId);

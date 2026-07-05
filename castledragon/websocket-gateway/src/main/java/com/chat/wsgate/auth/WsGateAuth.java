@@ -4,10 +4,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.domain.SessionUserDTO;
-import com.chat.wsgate.exception.WsAuthException;
+import com.chat.wsgate.exception.WsGateAuthException;
 
 @Component
-public class WsAuth {
+public class WsGateAuth {
 
 	//	로그인 유저 꺼내기 =======================================================
 	public SessionUserDTO getLoginUser(WebSocketSession session) {
@@ -30,7 +30,7 @@ public class WsAuth {
 		SessionUserDTO me = getLoginUser(session);
 
 		if (me == null) {
-			throw new WsAuthException("로그인이 필요합니다.");
+			throw new WsGateAuthException("로그인이 필요합니다.");
 		}
 
 		return me;

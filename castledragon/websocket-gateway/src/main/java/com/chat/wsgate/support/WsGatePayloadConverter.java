@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class WsPayloadConverter {
+public class WsGatePayloadConverter {
 	private final ObjectMapper objMapper;
 
 	public <T> T convert(WebSocketDTO dto, Class<T> clazz) {

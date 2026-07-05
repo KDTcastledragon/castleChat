@@ -8,11 +8,11 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.chat.contract.domain.SessionUserDTO;
 import com.chat.contract.domain.WebSocketDTO;
-import com.chat.wsgate.handler.GateWayWsChatHandler;
-import com.chat.wsgate.handler.GateWayWsConnectionHandler;
-import com.chat.wsgate.handler.GatewayWsRoomHandler;
-import com.chat.wsgate.outbound.GateWayWsOutboundWriter;
-import com.chat.wsgate.session.GateWayWsSessionRegistry;
+import com.chat.wsgate.handler.WsGateChatHandler;
+import com.chat.wsgate.handler.WsGateConnectionHandler;
+import com.chat.wsgate.handler.WsGateRoomHandler;
+import com.chat.wsgate.outbound.WsGateOutboundWriter;
+import com.chat.wsgate.session.WsGateSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -21,15 +21,15 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class WsGatewayDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
+public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입구.
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
-	private final GateWayWsSessionRegistry gateWayWsSessionRegistry;
-	private final GateWayWsOutboundWriter gwWsOutboundWriter;
+	private final WsGateSessionRegistry wsGateSessionRegistry;
+	private final WsGateOutboundWriter gwWsOutboundWriter;
 
-	private final GatewayWsRoomHandler gwWsRoomHandler;
-	private final GateWayWsConnectionHandler gwWsConnectionHandler;
-	private final GateWayWsChatHandler gwWsChatHandler;
+	private final WsGateRoomHandler gwWsRoomHandler;
+	private final WsGateConnectionHandler gwWsConnectionHandler;
+	private final WsGateChatHandler gwWsChatHandler;
 
 	//	====== 메세지 관리 Dispatcher ===========================================================================================================
 	// TextWebSocketHandler안에 handleTextMessage내장 메소드 존재. 그래서 @Override 붙임. 반드시 약속된 메서드인 handleTextMessage를 입구로 써야 합니다.
@@ -86,8 +86,8 @@ public class WsGatewayDispatcher extends TextWebSocketHandler { // Ws 최상위 
 	// ====== ws 연결 종료 ===========================================================================================================
 	@Override
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-		SessionUserDTO connectedUser = gateWayWsSessionRegistry.removeConnectedUser(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
-		gateWayWsSessionRegistry.removeSessionAllRooms(session);
+		SessionUserDTO connectedUser = wsGateSessionRegistry.removeConnectedUser(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
+		wsGateSessionRegistry.removeSessionAllRooms(session);
 		gwWsOutboundWriter.removeSessionLock(session);
 
 		if (connectedUser != null) {
