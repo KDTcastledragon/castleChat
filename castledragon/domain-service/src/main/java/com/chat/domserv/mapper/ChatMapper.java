@@ -5,19 +5,19 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.cache.RoomMemberReadPositionDTO;
-import com.chat.contract.domain.ChatAttachmentDTO;
-import com.chat.contract.domain.ChatMessageViewDTO;
-import com.chat.contract.domain.UpdatedUnreadMessagesDTO;
+import com.chat.contract.cache.RedisRoomMemberReadPositionDTO;
+import com.chat.contract.domain.chatting.ChatAttachmentDTO;
+import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
+import com.chat.contract.domain.chatting.UpdatedUnreadMessagesDTO;
 
 @Mapper
 public interface ChatMapper {
 
 	List<Long> findActiveRoomMemberIds(Long roomId);
 
-	List<ChatMessageViewDTO> loadMessagesInRoom(@Param("roomId") Long roomId, @Param("beforeMessageId") Long beforeMessageId, @Param("limit") int limit);
+	List<ChatMessageViewResponseDTO> loadMessagesInRoom(@Param("roomId") Long roomId, @Param("beforeMessageId") Long beforeMessageId, @Param("limit") int limit);
 
-	List<RoomMemberReadPositionDTO> findActiveRoomReadPositions(@Param("roomId") Long roomId);
+	List<RedisRoomMemberReadPositionDTO> findActiveRoomReadPositions(@Param("roomId") Long roomId);
 
 	//	===================================================================================================
 	List<UpdatedUnreadMessagesDTO> getUpdatedUnreadCountChatMessages(@Param("roomId") Long roomId, @Param("oldLastReadMsgId") Long oldLastReadMsgId, @Param("newLastReadMessageId") Long newLastReadMessageId);

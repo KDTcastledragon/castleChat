@@ -6,8 +6,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.chat.contract.domain.SessionUserDTO;
-import com.chat.contract.domain.WebSocketDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.chat.wsgate.handler.WsGateChatHandler;
 import com.chat.wsgate.handler.WsGateConnectionHandler;
 import com.chat.wsgate.handler.WsGateRoomHandler;
@@ -47,17 +47,20 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 
 			switch (dto.getWsType()) {
 			case "CONNECT_USER" -> gwWsConnectionHandler.handleConnectUser(session, dto);
+
 			case "ENTER_ROOM" -> gwWsRoomHandler.handleEnterRoom(session, dto);
 			case "ENTER_GROUP_ROOM" -> gwWsRoomHandler.handleEnterRoom(session, dto);
 			case "EXIT_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto);
-			case "LEFT_ROOM" -> gwWsRoomHandler.handleLeftRoom(session, dto); // 구현해야함
-			case "REENTER_ROOM" -> gwWsRoomHandler.handleLeftRoom(session, dto); // 구현해야함
+			case "LEFT_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto); // 구현해야함
+			case "INVITE_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto); // 구현해야함
 			case "TYPING_START" -> gwWsChatHandler.handleTyping(session, dto, "TYPING_START");
 			case "TYPING_STOP" -> gwWsChatHandler.handleTyping(session, dto, "TYPING_STOP");
-			case "SEND_MSG" -> gwWsChatHandler.handleSendMessage(session, dto);
-			case "READ_MSG" -> gwWsChatHandler.handleReadMessage(session, dto);
-			case "DELETE_MSG" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
-			case "APPLY_MSG" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "SEND_MESSAGE" -> gwWsChatHandler.handleSendMessage(session, dto);
+			case "READ_MESSAGE" -> gwWsChatHandler.handleReadMessage(session, dto);
+
+			case "DELETE_MESSAGE" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "REACT_MESSAGE" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "APPLY_ROOM_NOTICE" -> gwWsRoomHandler.handleEnterRoom(session, dto); // 구현해야함
 
 			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
 			default -> {

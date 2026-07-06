@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.contract.domain.WebSocketDTO;
+import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.chat.wsgate.session.WsGateSessionRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

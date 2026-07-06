@@ -13,14 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.contract.domain.ChatMessageViewDTO;
-import com.chat.contract.domain.ChatRoomListDTO;
 import com.chat.contract.domain.EnterGroupRequestDTO;
-import com.chat.contract.domain.EnterRoomResponseDTO;
-import com.chat.contract.domain.InviteMemberInRoomRequestDTO;
-import com.chat.contract.domain.KickMemberInRoomRequestDTO;
-import com.chat.contract.domain.RoomIdRequestDTO;
-import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
+import com.chat.contract.domain.room.ChatRoomListDTO;
+import com.chat.contract.domain.room.EnterRoomResponseDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.domserv.usecase.ChatQueryUseCase;
 import com.chat.domserv.usecase.RoomCommandUseCase;
 import com.chat.domserv.usecase.RoomQueryUseCase;
@@ -122,7 +119,7 @@ public class RoomController {
 
 		log.info("loadMessagesInRoom 호출: user={}, roomId={}, beforeMessageId={}, limit={}", me.getNickname(), roomId, beforeMessageId, limit);
 
-		List<ChatMessageViewDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId, beforeMessageId, limit);
+		List<ChatMessageViewResponseDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId, beforeMessageId, limit);
 
 		return ResponseEntity.ok(loadedMessagesInRoom);
 	}
@@ -139,48 +136,48 @@ public class RoomController {
 
 		return ResponseEntity.ok(roomList);
 	}
-
-	@PostMapping("/inviteGroupRoom")
-	public ResponseEntity<?> inviteRoom(@RequestBody InviteMemberInRoomRequestDTO requestInviteData, HttpSession session) {
-		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (me == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
-		}
-
-		int invitedCount = romCmdUseCase.inviteGroupRoom(requestInviteData.getRoomId(), me, requestInviteData.getInviteTargetMemberPublicIds());
-		return ResponseEntity.ok(Map.of("invitedCount", invitedCount));
-	}
-
-	@PostMapping("/leftRoom")
-	public ResponseEntity<?> leftRoom(@RequestBody RoomIdRequestDTO req, HttpSession session) {
-		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (me == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
-		}
-
-		Boolean isLefted = romCmdUseCase.leftRoom(req.getRoomId(), me);
-
-		if (isLefted == false) {
-			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("실패");
-		}
-
-		return ResponseEntity.ok().build();
-	}
-
-	@PostMapping("/kickMemberInRoom")
-	public ResponseEntity<?> kickMemberInRoom(@RequestBody KickMemberInRoomRequestDTO requestKickData, HttpSession session) {
-		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (me == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
-		}
-
-		int kickedCount = romCmdUseCase.kickMemberInRoom(requestKickData.getRoomId(), me, requestKickData.getKickTargetPublicId());
-
-		return ResponseEntity.ok(Map.of("kickedCount", kickedCount));
-	}
+	//
+	//	@PostMapping("/inviteGroupRoom")
+	//	public ResponseEntity<?> inviteRoom(@RequestBody InviteMemberInRoomRequestDTO requestInviteData, HttpSession session) {
+	//		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+	//
+	//		if (me == null) {
+	//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+	//		}
+	//
+	//		int invitedCount = romCmdUseCase.inviteGroupRoom(requestInviteData.getRoomId(), me, requestInviteData.getInviteTargetMemberPublicIds());
+	//		return ResponseEntity.ok(Map.of("invitedCount", invitedCount));
+	//	}
+	//
+	//	@PostMapping("/leftRoom")
+	//	public ResponseEntity<?> leftRoom(@RequestBody RoomIdRequestDTO req, HttpSession session) {
+	//		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+	//
+	//		if (me == null) {
+	//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+	//		}
+	//
+	//		Boolean isLefted = romCmdUseCase.leftRoom(req.getRoomId(), me);
+	//
+	//		if (isLefted == false) {
+	//			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("실패");
+	//		}
+	//
+	//		return ResponseEntity.ok().build();
+	//	}
+	//
+	//	@PostMapping("/kickMemberInRoom")
+	//	public ResponseEntity<?> kickMemberInRoom(@RequestBody KickMemberInRoomRequestDTO requestKickData, HttpSession session) {
+	//		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+	//
+	//		if (me == null) {
+	//			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+	//		}
+	//
+	//		int kickedCount = romCmdUseCase.kickMemberInRoom(requestKickData.getRoomId(), me, requestKickData.getKickTargetPublicId());
+	//
+	//		return ResponseEntity.ok(Map.of("kickedCount", kickedCount));
+	//	}
 	//
 	//	@PostMapping("/banMemberInRoom")
 	//	public ResponseEntity<?> banMemberInRoom(@RequestBody KickMemberInRoomRequestDTO requestBanData, HttpSession session) {

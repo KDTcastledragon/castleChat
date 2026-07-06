@@ -12,12 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.contract.domain.ChatRoomsDTO;
-import com.chat.contract.domain.ChatUserLookupDTO;
-import com.chat.contract.domain.EnterRoomResponseDTO;
-import com.chat.contract.domain.RoomMemberResponseDTO;
-import com.chat.contract.domain.RoomMembersDTO;
-import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.member.ChatUserLookupDTO;
+import com.chat.contract.domain.member.RoomMemberResponseDTO;
+import com.chat.contract.domain.member.RoomMembersDTO;
+import com.chat.contract.domain.room.ChatRoomsDTO;
+import com.chat.contract.domain.room.EnterRoomResponseDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.mapper.UserMapper;
 import com.chat.domserv.usecase.RoomCommandUseCase;

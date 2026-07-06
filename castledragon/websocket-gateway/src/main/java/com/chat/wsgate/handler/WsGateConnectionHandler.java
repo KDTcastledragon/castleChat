@@ -4,8 +4,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.contract.domain.SessionUserDTO;
-import com.chat.contract.domain.WebSocketDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
 import com.chat.wsgate.outbound.WsGateOutboundWriter;
 import com.chat.wsgate.session.WsGateSessionRegistry;

@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.contract.domain.SessionUserDTO;
-import com.chat.contract.domain.UserProfileResponseDTO;
+import com.chat.contract.domain.member.UserProfileResponseDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.domserv.domain.LoginRequestDTO;
 import com.chat.domserv.domain.UserDTO;
 import com.chat.domserv.usecase.UserCommandUseCase;

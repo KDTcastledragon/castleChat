@@ -5,10 +5,10 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.domain.ChatRoomListDTO;
-import com.chat.contract.domain.ChatRoomsDTO;
-import com.chat.contract.domain.RoomMemberResponseDTO;
-import com.chat.contract.domain.RoomMembersDTO;
+import com.chat.contract.domain.member.RoomMemberResponseDTO;
+import com.chat.contract.domain.member.RoomMembersDTO;
+import com.chat.contract.domain.room.ChatRoomListDTO;
+import com.chat.contract.domain.room.ChatRoomsDTO;
 
 @Mapper
 public interface RoomMapper {

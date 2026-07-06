@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.chat.contract.domain.ChatAttachmentDTO;
-import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.chatting.ChatAttachmentDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.domserv.usecase.ChatCommandUseCase;
 
 import jakarta.servlet.http.HttpSession;

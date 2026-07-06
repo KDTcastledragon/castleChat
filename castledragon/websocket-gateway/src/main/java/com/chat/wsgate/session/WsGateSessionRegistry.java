@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.contract.domain.SessionUserDTO;
+import com.chat.contract.domain.user.SessionUserDTO;
 
 import lombok.extern.log4j.Log4j2;
 

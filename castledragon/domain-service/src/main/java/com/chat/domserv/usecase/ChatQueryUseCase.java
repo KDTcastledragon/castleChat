@@ -2,8 +2,8 @@ package com.chat.domserv.usecase;
 
 import java.util.List;
 
-import com.chat.contract.domain.ChatMessageViewDTO;
+import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
 
 public interface ChatQueryUseCase {
-	List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit);
+	List<ChatMessageViewResponseDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit);
 }

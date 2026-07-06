@@ -1,0 +1,21 @@
+package com.chat.contract.command.chatting;
+
+import java.util.List;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class CreateChatMessageCommand {
+	private Long roomId;
+	private Long senderUserId;
+	private String senderPublicId;
+
+	private String messageType;
+	private String messageText;
+	private Long replyToMessageId;
+	private List<Long> attachmentIds;
+}

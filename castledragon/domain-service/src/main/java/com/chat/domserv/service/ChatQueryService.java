@@ -5,8 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.contract.cache.RoomMemberReadPositionDTO;
-import com.chat.contract.domain.ChatMessageViewDTO;
+import com.chat.contract.cache.RedisRoomMemberReadPositionDTO;
+import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
 import com.chat.domserv.mapper.ChatMapper;
 import com.chat.domserv.usecase.ChatQueryUseCase;
 import com.chat.redis.cache.RoomReadPositionCache;
@@ -23,13 +23,13 @@ public class ChatQueryService implements ChatQueryUseCase {
 	private final RoomReadPositionCache roomReadPositionCache;
 
 	private void warmUpRoomReadPositions(Long roomId) {
-		List<RoomMemberReadPositionDTO> members = chatMapper.findActiveRoomReadPositions(roomId);
+		List<RedisRoomMemberReadPositionDTO> members = chatMapper.findActiveRoomReadPositions(roomId);
 
 		if (members == null || members.isEmpty()) {
 			return;
 		}
 
-		for (RoomMemberReadPositionDTO member : members) {
+		for (RedisRoomMemberReadPositionDTO member : members) {
 			Long dbLastReadMessageId = member.getLastReadMessageId() == null ? 0L : member.getLastReadMessageId();
 			Long visibleAfterMessageId = member.getVisibleAfterMessageId() == null ? 0L : member.getVisibleAfterMessageId();
 
@@ -45,7 +45,7 @@ public class ChatQueryService implements ChatQueryUseCase {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<ChatMessageViewDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit) {
+	public List<ChatMessageViewResponseDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit) {
 		if (roomId == null) {
 			throw new IllegalArgumentException("roomId가 없습니다.");
 		}
@@ -54,7 +54,7 @@ public class ChatQueryService implements ChatQueryUseCase {
 			limit = 50;
 		}
 
-		List<ChatMessageViewDTO> chatList = chatMapper.loadMessagesInRoom(roomId, beforeMessageId, limit);
+		List<ChatMessageViewResponseDTO> chatList = chatMapper.loadMessagesInRoom(roomId, beforeMessageId, limit);
 
 		warmUpRoomReadPositions(roomId);
 

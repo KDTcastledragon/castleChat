@@ -248,27 +248,12 @@ export function emitWsDeleteMessage(roomId, messageId) {
     })
 }
 
-export function emitWsReplyMessage(roomId, messageId) {
-    return emit(WS_TYPES.REPLY_MSG, {
-        roomId: roomId,
-        messageId: messageId
-    })
-}
-
 export function emitWsReactMessage(roomId, messageId) {
     return emitWs(WS_TYPES.REACT_MSG, {
         roomId: roomId,
         messageId: messageId
     })
 }
-
-export function emitWsShareMessage(roomId, messageId) {
-    return emitWs(WS_TYPES.SHARE_MSG, {
-        roomId: roomId,
-        messageId: messageId
-    })
-}
-
 
 
 

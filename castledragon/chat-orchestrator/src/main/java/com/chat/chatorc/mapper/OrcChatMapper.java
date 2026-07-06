@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.domain.ChatMessagesDTO;
+import com.chat.contract.domain.chatting.ChatMessagesDTO;
 
 @Mapper
 public interface OrcChatMapper {

@@ -2,8 +2,8 @@ package com.chat.contract.convert;
 
 import java.time.LocalDateTime;
 
-import com.chat.contract.domain.ChatMessageViewDTO;
-import com.chat.contract.domain.ReadPositionUpdateResponseDTO;
+import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
+import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
 import com.chat.contract.grpc.CreateChatMessageResponse;
 import com.chat.contract.grpc.ReadChatMessageResponse;
 
@@ -14,8 +14,8 @@ public final class GrpcToDtoConverter {
 	}
 	// --> 이 클래스는 new 해서 객체 만들지 마라.
 
-	public static ChatMessageViewDTO convertGrpcToChatMsgViewDto(CreateChatMessageResponse response) {
-		ChatMessageViewDTO convert = new ChatMessageViewDTO(response.getMessageId(), response.getRoomId(), response.getSenderPublicId(), response
+	public static ChatMessageViewResponseDTO convertGrpcToChatMsgViewDto(CreateChatMessageResponse response) {
+		ChatMessageViewResponseDTO convert = new ChatMessageViewResponseDTO(response.getMessageId(), response.getRoomId(), response.getSenderPublicId(), response
 				.getMessageText(), LocalDateTime.parse(response.getCreatedAt()), response.getUnreadCount()); // int32 urc라서 안 맞았음.
 		return convert;
 	}

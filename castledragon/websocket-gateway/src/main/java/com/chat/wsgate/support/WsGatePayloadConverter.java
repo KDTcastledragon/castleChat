@@ -2,7 +2,7 @@ package com.chat.wsgate.support;
 
 import org.springframework.stereotype.Component;
 
-import com.chat.contract.domain.WebSocketDTO;
+import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
