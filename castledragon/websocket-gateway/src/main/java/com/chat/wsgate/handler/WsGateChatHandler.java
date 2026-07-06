@@ -14,7 +14,7 @@ import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
 import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
-import com.chat.wsgate.client.WsGateChannelEngineClient;
+import com.chat.wsgate.client.WsGateChEngineChatClient;
 import com.chat.wsgate.domain.chatting.PayloadDeleteChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReactChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReadChatMessageRequestDTO;
@@ -36,7 +36,7 @@ public class WsGateChatHandler {
 
 	private final WsGatePayloadConverter wsGatePayloadConverter;
 
-	private final WsGateChannelEngineClient wsGateChannelEngineClient;
+	private final WsGateChEngineChatClient wsGateChEngineChatClient;
 
 	// 1.로그인 검증  2.payload 꺼내기  3.data누락 검증  4.커맨드 생성  5.grpc 커맨드 input + grpc output 받기  6.output broadcast 
 
@@ -59,7 +59,7 @@ public class WsGateChatHandler {
 			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getMessageType(), payload.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChannelEngineClient.createChatMessage(createChtMsgCmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.createChatMessage(createChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
@@ -91,7 +91,7 @@ public class WsGateChatHandler {
 			ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getLastReadMessageId());
 
-			ReadPositionUpdateResponseDTO grpcResponse = wsGateChannelEngineClient.readChatMessage(readChtMsgCmd);
+			ReadPositionUpdateResponseDTO grpcResponse = wsGateChEngineChatClient.readChatMessage(readChtMsgCmd);
 
 			Boolean updatedLog4j2 = grpcResponse == null ? null : grpcResponse.getUpdated(); // log 확인용.
 
@@ -146,7 +146,7 @@ public class WsGateChatHandler {
 			DeleteChatMessageCommand deleteChtMsgCmd = new DeleteChatMessageCommand(payload.getRoomId(), payload.getMessageId(), me.getUserId(), me
 					.getPublicId());
 
-			DeleteChatMessageResponseDTO grpcResponse = wsGateChannelEngineClient.deleteChatMessage(deleteChtMsgCmd);
+			DeleteChatMessageResponseDTO grpcResponse = wsGateChEngineChatClient.deleteChatMessage(deleteChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_DELETED", grpcResponse, dto.getRequestId());
 		} catch (Exception e) {
@@ -173,7 +173,7 @@ public class WsGateChatHandler {
 			ReactChatMessageCommand reactChtMsgCmd = new ReactChatMessageCommand(payload.getRoomId(), payload.getMessageId(), me.getUserId(), me
 					.getPublicId(), payload.getReactionType(), payload.getReactionCode(), payload.getAddRequested());
 
-			ReactChatMessageEventResponseDTO grpcResponse = wsGateChannelEngineClient.reactChatMessage(reactChtMsgCmd);
+			ReactChatMessageEventResponseDTO grpcResponse = wsGateChEngineChatClient.reactChatMessage(reactChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_REACTION_UPDATED", grpcResponse, dto.getRequestId());
 		} catch (Exception e) {
@@ -183,5 +183,3 @@ public class WsGateChatHandler {
 	}
 
 }
-
-

@@ -25,6 +25,66 @@
 	  AND member_status = 'ACTIVE'
 	  <!-- GREATEST 이유 : DB에 200 저장되어 있는데, 늦게 도착한 worker가 150으로 낮추면 안 됨. 그래서 DB도 단조 증가만 허용. -->
 	</update>
+	
+	<select id="lockChatMessageForUpdate" resultType="java.lang.Long">
+	SELECT message_id
+	FROM chat_messages
+	WHERE room_id = #{roomId}
+	  AND message_id = #{messageId}
+	FOR UPDATE
+</select>
+
+<select id="findChatMessageStatus" resultType="java.lang.String">
+	SELECT message_status
+	FROM chat_messages
+	WHERE room_id = #{roomId}
+	  AND message_id = #{messageId}
+</select>
+
+<select id="findChatMessageSenderUserId" resultType="java.lang.Long">
+	SELECT sender_id
+	FROM chat_messages
+	WHERE room_id = #{roomId}
+	  AND message_id = #{messageId}
+</select>
+
+<update id="deleteChatMessage">
+	UPDATE chat_messages
+	SET
+		message_status = 'DELETED',
+		deleted_at = NOW(),
+		deleted_by = #{deleterUserId}
+	WHERE room_id = #{roomId}
+	  AND message_id = #{messageId}
+	  AND message_status = 'ACTIVE'
+</update>
+
+<insert id="insertChatMessageReaction">
+	INSERT IGNORE INTO chat_message_reactions (
+		room_id,
+		message_id,
+		reactor_user_id,
+		reaction_type,
+		reaction_code,
+		created_at
+	)
+	VALUES (
+		#{roomId},
+		#{messageId},
+		#{reactorUserId},
+		#{reactionType},
+		#{reactionCode},
+		NOW()
+	)
+</insert>
+
+<delete id="deleteChatMessageReaction">
+	DELETE FROM chat_message_reactions
+	WHERE room_id = #{roomId}
+	  AND message_id = #{messageId}
+	  AND reactor_user_id = #{reactorUserId}
+	  AND reaction_code = #{reactionCode}
+</delete>
   
   
   </mapper>

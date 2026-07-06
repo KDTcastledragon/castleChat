@@ -4,14 +4,32 @@ option java_multiple_files = true;
 option java_package = "com.chat.contract.grpc";
 option java_outer_classname = "ChEngineProto";
 
-service ChEngine {
+service ChEngineChat {
   rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse);
   rpc ReadChatMessage (ReadChatMessageRequest) returns (ReadChatMessageResponse);
 
   rpc DeleteChatMessage (DeleteChatMessageRequest) returns (DeleteChatMessageResponse);
   rpc ReactChatMessage (ReactChatMessageRequest) returns (ReactChatMessageResponse);
+}
+
+service ChEngineRoom {
+  rpc GetOrCreateDirectRoom (GetOrCreateDirectRoomRequest) returns (EnterRoomResponse);
+  rpc CreateGroupRoom (CreateGroupRoomRequest) returns (EnterRoomResponse);
+  rpc EnterRoom (EnterRoomRequest) returns (EnterRoomResponse);
+
+  rpc ExitRoom (ExitRoomRequest) returns (RoomEventResponse);
+  rpc LeftRoom (LeftRoomRequest) returns (RoomEventResponse);
+
+  rpc InviteMember (InviteMemberRequest) returns (RoomMemberEventResponse);
+  rpc KickMember (KickMemberRequest) returns (RoomMemberEventResponse);
+  rpc BanMember (BanMemberRequest) returns (RoomMemberEventResponse);
 
   rpc ApplyRoomNotice (ApplyRoomNoticeRequest) returns (ApplyRoomNoticeResponse);
+}
+
+service ChEngineFriend {
+  rpc AddFriend (AddFriendRequest) returns (FriendEventResponse);
+  rpc RespondFriend (RespondFriendRequest) returns (FriendEventResponse);
 }
 
 message ChatAttachment {
@@ -122,6 +140,123 @@ message ReactChatMessageResponse {
   string reacted_at = 7;
 }
 
+message RoomMemberProfile {
+  string public_id = 1;
+  string nickname = 2;
+  string friend_code = 3;
+  string profile_img = 4;
+  string role = 5;
+}
+
+message RoomNoticeView {
+  int64 room_notice_id = 1;
+  int64 room_id = 2;
+
+  string room_notice_action = 3;
+  string room_notice_type = 4;
+  string room_notice_contents = 5;
+  string room_notice_status = 6;
+
+  string applier_public_id = 7;
+  string last_applied_at = 8;
+}
+
+message EnterRoomResponse {
+  int64 room_id = 1;
+  string room_type = 2;
+  string room_name = 3;
+  string room_thumbnail = 4;
+
+  int64 room_member_count = 5;
+  repeated RoomMemberProfile member_list = 6;
+
+  optional RoomNoticeView active_room_notice = 7;
+}
+
+message GetOrCreateDirectRoomRequest {
+  int64 requester_user_id = 1;
+  string requester_public_id = 2;
+  string friend_public_id = 3;
+}
+
+message CreateGroupRoomRequest {
+  int64 creator_user_id = 1;
+  string creator_public_id = 2;
+
+  string room_name = 3;
+  string room_thumbnail = 4;
+
+  repeated string selected_friend_public_ids = 5;
+}
+
+message EnterRoomRequest {
+  int64 room_id = 1;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
+}
+
+message ExitRoomRequest {
+  int64 room_id = 1;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
+}
+
+message LeftRoomRequest {
+  int64 room_id = 1;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
+}
+
+message InviteMemberRequest {
+  int64 room_id = 1;
+
+  int64 inviter_user_id = 2;
+  string inviter_public_id = 3;
+
+  repeated string invite_member_public_ids = 4;
+}
+
+message KickMemberRequest {
+  int64 room_id = 1;
+
+  int64 kicker_user_id = 2;
+  string kicker_public_id = 3;
+
+  string kick_target_public_id = 4;
+}
+
+message BanMemberRequest {
+  int64 room_id = 1;
+
+  int64 banner_user_id = 2;
+  string banner_public_id = 3;
+
+  string ban_target_public_id = 4;
+}
+
+message RoomEventResponse {
+  int64 room_id = 1;
+
+  string room_event_type = 2;
+  string requester_public_id = 3;
+
+  string event_status = 4;
+  string event_at = 5;
+}
+
+message RoomMemberEventResponse {
+  int64 room_id = 1;
+
+  string room_member_event_type = 2;
+  string requester_public_id = 3;
+
+  repeated string target_public_ids = 4;
+
+  int64 affected_count = 5;
+  string event_status = 6;
+  string event_at = 7;
+}
+
 message ApplyRoomNoticeRequest {
   int64 room_id = 1;
 
@@ -147,4 +282,29 @@ message ApplyRoomNoticeResponse {
 
   string applier_public_id = 7;
   string last_applied_at = 8;
+}
+
+message AddFriendRequest {
+  int64 requester_user_id = 1;
+  string requester_public_id = 2;
+
+  string target_public_id = 3;
+}
+
+message RespondFriendRequest {
+  int64 responder_user_id = 1;
+  string responder_public_id = 2;
+
+  string requester_public_id = 3;
+  string friend_action = 4;
+}
+
+message FriendEventResponse {
+  string friend_event_type = 1;
+
+  string requester_public_id = 2;
+  string target_public_id = 3;
+
+  string friend_status = 4;
+  string event_at = 5;
 }

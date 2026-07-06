@@ -6,19 +6,16 @@ import com.chat.contract.command.chatting.CreateChatMessageCommand;
 import com.chat.contract.command.chatting.DeleteChatMessageCommand;
 import com.chat.contract.command.chatting.ReactChatMessageCommand;
 import com.chat.contract.command.chatting.ReadChatMessageCommand;
-import com.chat.contract.command.room.ApplyRoomNoticeCommand;
 import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
 import com.chat.contract.domain.chatting.DeleteChatMessageResponseDTO;
 import com.chat.contract.domain.chatting.ReactChatMessageEventResponseDTO;
 import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
-import com.chat.contract.domain.room.RoomNoticeViewResponseDTO;
-import com.chat.contract.grpc.ApplyRoomNoticeRequest;
-import com.chat.contract.grpc.ChEngineGrpc;
+import com.chat.contract.grpc.ChEngineChatGrpc;
 import com.chat.contract.grpc.CreateChatMessageRequest;
 import com.chat.contract.grpc.DeleteChatMessageRequest;
 import com.chat.contract.grpc.ReactChatMessageRequest;
 import com.chat.contract.grpc.ReadChatMessageRequest;
-import com.chat.wsgate.client.WsGateChannelEngineClient;
+import com.chat.wsgate.client.WsGateChEngineChatClient;
 import com.chat.wsgate.support.GrpcToDtoConverter;
 
 import lombok.extern.log4j.Log4j2;
@@ -26,10 +23,10 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 
 @Component
 @Log4j2
-public class WsGateChannelEngineClientGrpc implements WsGateChannelEngineClient {
+public class WsGateChEngineChatClientGrpc implements WsGateChEngineChatClient {
 
 	@GrpcClient("channel-engine")
-	private ChEngineGrpc.ChEngineBlockingStub chEngineStub; // channel-engine gRPC 서버를 호출하기 위한 client 객체.
+	private ChEngineChatGrpc.ChEngineChatBlockingStub chEngineStub; // channel-engine gRPC 서버를 호출하기 위한 client 객체.
 	//	ChengineGrpc는 네가 직접 만드는 일반 클래스가 아니야. chengine.proto를 작성하면 Gradle protobuf plugin이 자동 생성함.
 	//	BlockingStub : 요청 보내고 응답 올 때까지 현재 thread가 기다리는 "동기" client.
 
@@ -120,26 +117,4 @@ public class WsGateChannelEngineClientGrpc implements WsGateChannelEngineClient 
 		return gRpcRctMsgEvtResponse;
 	}
 
-	@Override
-	public RoomNoticeViewResponseDTO applyRoomNotice(ApplyRoomNoticeCommand cmd) {
-		ApplyRoomNoticeRequest cmdRequest = ApplyRoomNoticeRequest.newBuilder()
-				.setRoomId(cmd.getRoomId())
-				.setRoomNoticeAction(cmd.getRoomNoticeAction())
-				.setTargetRoomNoticeId(cmd.getTargetRoomNoticeId())
-				.setRoomNoticeType(cmd.getRoomNoticeType())
-				.setSourceMessageId(cmd.getSourceMessageId())
-				.setRoomNoticeContents(cmd.getRoomNoticeContents())
-				.setRequesterUserId(cmd.getRequesterUserId())
-				.setRequesterPublicId(cmd.getRequesterPublicId())
-				.build();
-
-		RoomNoticeViewResponseDTO grpcRoomNoticeResponse = GrpcToDtoConverter
-				.convertGrpcToRoomNoticeViewResDto(chEngineStub.applyRoomNotice(cmdRequest));
-
-		log.info("wsgate-gRPC RoomNotice = rom:{} rnId:{} action:{} status:{} / usr:{}", grpcRoomNoticeResponse.getRoomId(), grpcRoomNoticeResponse
-				.getRoomNoticeId(), grpcRoomNoticeResponse
-						.getRoomNoticeAction(), grpcRoomNoticeResponse.getRoomNoticeStatus(), cmd.getRequesterUserId());
-
-		return grpcRoomNoticeResponse;
-	}
 }
