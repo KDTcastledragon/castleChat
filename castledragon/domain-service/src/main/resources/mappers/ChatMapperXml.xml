@@ -57,6 +57,42 @@
 		WHERE rm.room_id = #{roomId}
 		  AND rm.member_status = 'ACTIVE'
 	</select>
+	
+	<insert id="insertChatAttachment"
+			parameterType="com.chat.contract.domain.ChatAttachmentDTO"
+			useGeneratedKeys="true"
+			keyProperty="attachmentId">
+		INSERT INTO chat_message_attachments (
+			message_id,
+			room_id,
+			uploader_user_id,
+			file_url,
+			original_file_name,
+			content_type,
+			file_size,
+			attachment_kind,
+			attachment_status,
+			width,
+			height,
+			duration_ms,
+			sort_order
+		)
+		VALUES (
+			#{messageId},
+			#{roomId},
+			#{uploaderUserId},
+			#{fileUrl},
+			#{originalFileName},
+			#{contentType},
+			#{fileSize},
+			#{attachmentKind},
+			#{attachmentStatus},
+			#{width},
+			#{height},
+			#{durationMs},
+			#{sortOrder}
+		)
+	</insert>
 
 	<!-- <select id="loadMessagesInRoom" resultType="com.chat.contract.domain.ChatMessageViewDTO">
 		    SELECT *

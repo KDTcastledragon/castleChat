@@ -1021,7 +1021,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                         onMouseDown={(e) => e.stopPropagation()}
                         onContextMenu={(e) => e.preventDefault()}
                     >
-                        <button onClick={() => handleMessageMenuAction('REACTION')}>리액션</button>
+                        <button onClick={() => handleMessageMenuAction('REACT')}>리액션</button>
                         <button onClick={() => handleMessageMenuAction('REPLY')}>답장하기</button>
                         <button onClick={() => handleMessageMenuAction('DELETE')}>삭제하기</button>
                         <button onClick={() => handleMessageMenuAction('READERS')}>이 메시지 읽은 사람</button>
