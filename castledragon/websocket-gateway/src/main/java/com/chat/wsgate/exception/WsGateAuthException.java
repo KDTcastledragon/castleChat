@@ -9,3 +9,4 @@ public class WsGateAuthException extends RuntimeException {
 		super(exceptionMessage);
 	}
 }
+

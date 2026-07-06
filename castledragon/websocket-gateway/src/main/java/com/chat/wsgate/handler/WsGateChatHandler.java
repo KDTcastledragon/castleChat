@@ -14,7 +14,7 @@ import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
 import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
-import com.chat.wsgate.client.WsGateChatOrchestratorClient;
+import com.chat.wsgate.client.WsGateChannelEngineClient;
 import com.chat.wsgate.domain.chatting.PayloadDeleteChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReactChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReadChatMessageRequestDTO;
@@ -36,7 +36,7 @@ public class WsGateChatHandler {
 
 	private final WsGatePayloadConverter wsGatePayloadConverter;
 
-	private final WsGateChatOrchestratorClient wsGateChatOrcClient;
+	private final WsGateChannelEngineClient wsGateChannelEngineClient;
 
 	// 1.로그인 검증  2.payload 꺼내기  3.data누락 검증  4.커맨드 생성  5.grpc 커맨드 input + grpc output 받기  6.output broadcast 
 
@@ -50,14 +50,16 @@ public class WsGateChatHandler {
 			log.warn("SEND_MSG Data 누락 : {} / {}", payload.getRoomId(), payload.getMessageText());
 			wsGateOutboundWriter.responseFail(session, dto, "SEND_MSG_FAIL", "SEND_MSG 필수값 누락");
 			return;
-		}
+		} // null 검사하는 이 행위는 비즈니스 로직이라기보다 transport/request shape 검증. ---> payload가 명령으로 성립하는 최소 형태인가?
+			// handler 검증 = 이 요청을 command로 만들 수 있는가? --> protocol boundary.
+			// “깨진 패킷을 굳이 내부 서비스까지 보내지 않기 위한 입구 필터” 역할을 위해 payload null값 검증.
 
 		try {
 			// Command 생성. 최적화를 위해 me에서 publicId까지 꺼내고 함께 보낸다. orc에서 userId로 publicId를 DB에서 굳이 또 하는 것보다 좋음. session값이라 신뢰 가능.
 			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getMessageType(), payload.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChatOrcClient.createChatMessage(createChtMsgCmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChannelEngineClient.createChatMessage(createChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
@@ -89,7 +91,7 @@ public class WsGateChatHandler {
 			ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getLastReadMessageId());
 
-			ReadPositionUpdateResponseDTO grpcResponse = wsGateChatOrcClient.readChatMessage(readChtMsgCmd);
+			ReadPositionUpdateResponseDTO grpcResponse = wsGateChannelEngineClient.readChatMessage(readChtMsgCmd);
 
 			Boolean updatedLog4j2 = grpcResponse == null ? null : grpcResponse.getUpdated(); // log 확인용.
 
@@ -144,7 +146,7 @@ public class WsGateChatHandler {
 			DeleteChatMessageCommand deleteChtMsgCmd = new DeleteChatMessageCommand(payload.getRoomId(), payload.getMessageId(), me.getUserId(), me
 					.getPublicId());
 
-			DeleteChatMessageResponseDTO grpcResponse = wsGateChatOrcClient.deleteChatMessage(deleteChtMsgCmd);
+			DeleteChatMessageResponseDTO grpcResponse = wsGateChannelEngineClient.deleteChatMessage(deleteChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_DELETED", grpcResponse, dto.getRequestId());
 		} catch (Exception e) {
@@ -171,7 +173,7 @@ public class WsGateChatHandler {
 			ReactChatMessageCommand reactChtMsgCmd = new ReactChatMessageCommand(payload.getRoomId(), payload.getMessageId(), me.getUserId(), me
 					.getPublicId(), payload.getReactionType(), payload.getReactionCode(), payload.getAddRequested());
 
-			ReactChatMessageEventResponseDTO grpcResponse = wsGateChatOrcClient.reactChatMessage(reactChtMsgCmd);
+			ReactChatMessageEventResponseDTO grpcResponse = wsGateChannelEngineClient.reactChatMessage(reactChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_REACTION_UPDATED", grpcResponse, dto.getRequestId());
 		} catch (Exception e) {
@@ -181,3 +183,5 @@ public class WsGateChatHandler {
 	}
 
 }
+
+

@@ -1,0 +1,150 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.chat.contract.grpc";
+option java_outer_classname = "ChEngineProto";
+
+service ChEngine {
+  rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse);
+  rpc ReadChatMessage (ReadChatMessageRequest) returns (ReadChatMessageResponse);
+
+  rpc DeleteChatMessage (DeleteChatMessageRequest) returns (DeleteChatMessageResponse);
+  rpc ReactChatMessage (ReactChatMessageRequest) returns (ReactChatMessageResponse);
+
+  rpc ApplyRoomNotice (ApplyRoomNoticeRequest) returns (ApplyRoomNoticeResponse);
+}
+
+message ChatAttachment {
+  int64 attachment_id = 1;
+  int64 message_id = 2;
+  int64 room_id = 3;
+  int64 uploader_user_id = 4;
+
+  string file_url = 5;
+  string original_file_name = 6;
+  string content_type = 7;
+  int64 file_size = 8;
+
+  string attachment_kind = 9;
+  string attachment_status = 10;
+
+  int32 width = 11;
+  int32 height = 12;
+  int64 duration_ms = 13;
+
+  int32 sort_order = 14;
+}
+
+message CreateChatMessageRequest {
+  int64 room_id = 1;
+  int64 sender_user_id = 2;
+  string sender_public_id = 3;
+
+  string message_type = 4;
+  string message_text = 5;
+
+  optional int64 reply_to_message_id = 6;
+  repeated int64 attachment_ids = 7;
+}
+
+message CreateChatMessageResponse {
+  int64 message_id = 1;
+  int64 room_id = 2;
+  string sender_public_id = 3;
+
+  string message_type = 4;
+  string message_text = 5;
+
+  optional int64 reply_to_message_id = 6;
+
+  string created_at = 7;
+  int64 unread_count = 8;
+
+  repeated ChatAttachment attachments = 9;
+}
+
+message ReadChatMessageRequest {
+  int64 room_id = 1;
+  int64 reader_user_id = 2;
+  string reader_public_id = 3;
+  int64 last_read_message_id = 4;
+}
+
+message ReadChatMessageResponse {
+  int64 room_id = 1;
+  string reader_public_id = 2;
+  int64 old_last_read_message_id = 3;
+  int64 last_read_message_id = 4;
+  bool updated = 5;
+}
+
+message DeleteChatMessageRequest {
+  int64 room_id = 1;
+  int64 message_id = 2;
+
+  int64 deleter_user_id = 3;
+  string deleter_public_id = 4;
+}
+
+message DeleteChatMessageResponse {
+  int64 room_id = 1;
+  int64 message_id = 2;
+
+  string deleter_public_id = 3;
+
+  string message_status = 4;
+  string deleted_at = 5;
+}
+
+message ReactChatMessageRequest {
+  int64 room_id = 1;
+  int64 message_id = 2;
+
+  int64 reactor_user_id = 3;
+  string reactor_public_id = 4;
+
+  string reaction_type = 5;
+  string reaction_code = 6;
+
+  bool add_requested = 7;
+}
+
+message ReactChatMessageResponse {
+  int64 room_id = 1;
+  int64 message_id = 2;
+
+  string reactor_public_id = 3;
+
+  string reaction_type = 4;
+  string reaction_code = 5;
+
+  bool added = 6;
+  string reacted_at = 7;
+}
+
+message ApplyRoomNoticeRequest {
+  int64 room_id = 1;
+
+  string room_notice_action = 2;
+  optional int64 target_room_notice_id = 3;
+
+  string room_notice_type = 4;
+  optional int64 source_message_id = 5;
+  string room_notice_contents = 6;
+
+  int64 requester_user_id = 7;
+  string requester_public_id = 8;
+}
+
+message ApplyRoomNoticeResponse {
+  int64 room_notice_id = 1;
+  int64 room_id = 2;
+
+  string room_notice_action = 3;
+  string room_notice_type = 4;
+  string room_notice_contents = 5;
+  string room_notice_status = 6;
+
+  string applier_public_id = 7;
+  string last_applied_at = 8;
+}

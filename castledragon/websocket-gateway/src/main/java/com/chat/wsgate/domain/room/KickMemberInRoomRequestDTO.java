@@ -11,3 +11,5 @@ public class KickMemberInRoomRequestDTO {
 	private Long roomId;
 	private String kickTargetPublicId;
 }
+
+

@@ -11,3 +11,4 @@ public class PayloadDeleteChatMessageRequestDTO {
 	private Long roomId;
 	private Long messageId;
 }
+

@@ -11,3 +11,4 @@ public class PayloadReadChatMessageRequestDTO {
 	private Long roomId;
 	private Long lastReadMessageId;
 }
+

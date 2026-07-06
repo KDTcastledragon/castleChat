@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  <mapper namespace="com.chat.chengine.mapper.ChengineChatMapper">
+  
+  <insert id="insertChatMessage" parameterType="com.chat.contract.domain.ChatMessagesDTO" useGeneratedKeys="true" keyProperty="messageId">
+	  insert into chat_messages(room_id, sender_id, message_text, created_at)
+	  values(#{roomId},#{senderId},#{messageText},#{createdAt})
+  </insert>
+  
+  <select id="findAllActiveMemberIdsInRoom" resultType="java.lang.Long">
+  select user_id from room_members where room_id = #{roomId} and member_status = 'ACTIVE'
+  </select>
+  
+  <select id="findLastReadMessageId" resultType="java.lang.Long">
+  select last_read_message_id from room_members where room_id=#{roomId} and user_id=#{userId} and member_status = 'ACTIVE'
+  </select>
+  
+  <update id="updateLastReadMessageId">
+	UPDATE room_members
+	SET last_read_message_id = GREATEST(COALESCE(last_read_message_id, 0), #{lastReadMessageId})
+	WHERE room_id = #{roomId}
+	  AND user_id = #{userId}
+	  AND member_status = 'ACTIVE'
+	  <!-- GREATEST 이유 : DB에 200 저장되어 있는데, 늦게 도착한 worker가 150으로 낮추면 안 됨. 그래서 DB도 단조 증가만 허용. -->
+	</update>
+  
+  
+  </mapper>
+
+

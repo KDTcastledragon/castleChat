@@ -17,3 +17,4 @@ public class PayloadApplyRoomNoticeRequestDTO {
 	private Long sourceMessageId;
 	private String roomNoticeContents;
 }
+

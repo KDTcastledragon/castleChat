@@ -13,3 +13,4 @@ public class InviteMemberInRoomRequestDTO {
 	private Long roomId;
 	private List<String> inviteTargetMemberPublicIds;
 }
+

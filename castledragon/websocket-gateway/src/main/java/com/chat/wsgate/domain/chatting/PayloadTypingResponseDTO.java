@@ -10,3 +10,5 @@ public class PayloadTypingResponseDTO {
 	private String publicId;
 	private String nickname;
 }
+
+

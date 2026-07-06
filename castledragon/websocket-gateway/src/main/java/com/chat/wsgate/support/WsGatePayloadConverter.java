@@ -16,3 +16,5 @@ public class WsGatePayloadConverter {
 		return objMapper.convertValue(dto.getPayload(), clazz);
 	}
 }
+
+

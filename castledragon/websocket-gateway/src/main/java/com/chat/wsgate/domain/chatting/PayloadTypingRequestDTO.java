@@ -6,3 +6,5 @@ import lombok.Data;
 public class PayloadTypingRequestDTO {
 	private Long roomId;
 }
+
+

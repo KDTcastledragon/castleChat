@@ -16,3 +16,5 @@ public class PayloadSendChatMessageRequestDTO {
 	private Long replyToMessageId;
 	private List<Long> attachmentIds;
 }
+
+

@@ -8,7 +8,7 @@ import com.chat.contract.domain.room.RoomNoticeViewResponseDTO;
 import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.contract.domain.websocket.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
-import com.chat.wsgate.client.WsGateChatOrchestratorClient;
+import com.chat.wsgate.client.WsGateChannelEngineClient;
 import com.chat.wsgate.domain.room.PayloadApplyRoomNoticeRequestDTO;
 import com.chat.wsgate.domain.room.PayloadEnterRoomRequestDTO;
 import com.chat.wsgate.domain.room.PayloadExitRoomRequestDTO;
@@ -51,7 +51,7 @@ public class WsGateRoomHandler {
 	// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
 
 	private final WsGatePayloadConverter wsGatePayloadConverter;
-	private final WsGateChatOrchestratorClient wsGateChatOrcClient;
+	private final WsGateChannelEngineClient wsGateChannelEngineClient;
 
 	// ======= payload 변환 helper ==================================================
 	private <T> T convertPayload(WebSocketDTO dto, Class<T> clazz) {
@@ -137,7 +137,7 @@ public class WsGateRoomHandler {
 					.getTargetRoomNoticeId(), payload
 							.getRoomNoticeType(), payload.getSourceMessageId(), payload.getRoomNoticeContents(), me.getUserId(), me.getPublicId());
 
-			RoomNoticeViewResponseDTO grpcResponse = wsGateChatOrcClient.applyRoomNotice(applyRomNotiCmd);
+			RoomNoticeViewResponseDTO grpcResponse = wsGateChannelEngineClient.applyRoomNotice(applyRomNotiCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "ROOM_NOTICE_APPLIED", grpcResponse, dto.getRequestId());
 
@@ -149,3 +149,5 @@ public class WsGateRoomHandler {
 	}
 
 }// WsGateRoomHandler 끝.
+
+
