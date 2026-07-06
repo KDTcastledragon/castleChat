@@ -15,6 +15,7 @@ import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
 import com.chat.contract.domain.room.RoomNoticeViewResponseDTO;
 import com.chat.contract.grpc.ChatOrcGrpc;
 import com.chat.contract.grpc.CreateChatMessageRequest;
+import com.chat.contract.grpc.DeleteChatMessageRequest;
 import com.chat.contract.grpc.ReadChatMessageRequest;
 import com.chat.wsgate.client.WsGateChatOrchestratorClient;
 
@@ -79,7 +80,7 @@ public class WsGateChatOrchestratorClientGrpc implements WsGateChatOrchestratorC
 
 	@Override
 	public DeleteChatMessageResponseDTO deleteChatMessage(DeleteChatMessageCommand command) {
-		// TODO Auto-generated method stub
+		DeleteChatMessageRequest commandRequest = DeleteChatMessageRequest.newBuilder().setRoomId(0)
 		return null;
 	}
 
