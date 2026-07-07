@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.contract.domain.member.UserProfileResponseDTO;
 import com.chat.contract.user.domain.FriendDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
+import com.chat.contract.user.domain.UserProfileResponseDTO;
 import com.chat.domserv.usecase.FriendCommandUseCase;
 import com.chat.domserv.usecase.FriendQueryUseCase;
 

@@ -292,16 +292,8 @@ message ApplyRoomNoticeRequest {
 }
 
 message ApplyRoomNoticeResponse {
-  int64 room_notice_id = 1;
-  int64 room_id = 2;
-
-  string room_notice_action = 3;
-  string room_notice_type = 4;
-  string room_notice_contents = 5;
-  string room_notice_status = 6;
-
-  string requester_public_id = 7;
-  string last_applied_at = 8;
+  RoomNoticeView room_notice_view = 1;
+  RoomFeedResponse room_feed = 2;
 }
 
 message AddFriendRequest {
@@ -322,9 +314,12 @@ message RespondFriendRequest {
 message FriendEventResponse {
   string friend_event_type = 1;
 
-  string requester_public_id = 2;
-  string target_public_id = 3;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
 
-  string friend_status = 4;
-  string event_at = 5;
+  int64 target_user_id = 4;
+  string target_public_id = 5;
+
+  string friend_status = 6;
+  string event_at = 7;
 }

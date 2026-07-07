@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.chat.domserv.mapper.ChatMapper">
+<mapper namespace="com.chat.domserv.mapper.DomServChatMapper">
 
 	<select id="loadMessagesInRoom" resultType="com.chat.contract.domain.ChatMessageViewDTO">
 	    SELECT *

@@ -11,7 +11,7 @@ import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 
-public interface WsGateChEngineChatClient {
+public interface WsGateChatClient {
 	ChatMessageViewResponseDTO startDirectChat(StartDirectChatCommand command);
 
 	ChatMessageViewResponseDTO startGroupChat(StartGroupChatCommand command);

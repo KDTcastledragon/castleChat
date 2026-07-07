@@ -175,6 +175,17 @@ public class WsGateOutboundWriter {
 		//		}
 	}
 
+	public void dispatchToUser(Long userId, String type, Object payloadData, String requestId) throws Exception {
+		WebSocketSession targetSession = wsGateSessionRegistry.findSessionByUserId(userId);
+
+		if (targetSession == null || !targetSession.isOpen()) {
+			log.info("dispatchToUser 대상 세션 없음. userId={}, type={}", userId, type);
+			return;
+		}
+
+		WebSocketDTO response = WebSocketDTO.builder().wsType(type).requestId(requestId).payload(payloadData).success(true).build();
+
+		dispatchToSession(targetSession, response);
+	}
+
 }
-
-

@@ -5,12 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.chat.contract.domain.member.RoomMemberResponseDTO;
-import com.chat.contract.domain.member.RoomMembersDTO;
 import com.chat.contract.room.domain.ChatRoomListDTO;
-import com.chat.contract.room.domain.ChatRoomsDTO;
-import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
-import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.RoomQueryUseCase;
 
@@ -29,29 +24,29 @@ public class RoomQueryService implements RoomQueryUseCase {
 		return roomList;
 	}
 
-	@Override
-	public EnterRoomResponseDTO enterExistedRoom(Long roomId, SessionUserDTO me) {
-		ChatRoomsDTO room = roomMapper.getRoomByRoomId(roomId);
-		if (room == null) {
-			throw new IllegalArgumentException("존재하지 않는 채팅방입니다.");
-		}
-
-		RoomMembersDTO myInfo = roomMapper.getActiveRoomMemberInfoInRoom(roomId, me.getUserId());
-
-		if (myInfo == null) {
-			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
-		}
-
-		List<RoomMemberResponseDTO> memberList = roomMapper.getRoomMemberProfilesByRoomId(roomId);
-
-		if (memberList == null || memberList.isEmpty()) {
-			throw new IllegalStateException("채팅방 멤버 정보를 찾을 수 없습니다.");
-		}
-
-		EnterRoomResponseDTO resdto = new EnterRoomResponseDTO(roomId, room.getRoomType(), myInfo.getCustomRoomName(), myInfo
-				.getCustomRoomThumbnail(), (long) memberList.size(), memberList);
-
-		return resdto;
-	}
+	//	@Override
+	//	public EnterRoomResponseDTO enterExistedRoom(Long roomId, SessionUserDTO me) {
+	//		ChatRoomsDTO room = roomMapper.getRoomByRoomId(roomId);
+	//		if (room == null) {
+	//			throw new IllegalArgumentException("존재하지 않는 채팅방입니다.");
+	//		}
+	//
+	//		RoomMembersDTO myInfo = roomMapper.getActiveRoomMemberInfoInRoom(roomId, me.getUserId());
+	//
+	//		if (myInfo == null) {
+	//			throw new IllegalArgumentException("채팅방 멤버가 아닙니다.");
+	//		}
+	//
+	//		List<RoomMemberResponseDTO> memberList = roomMapper.getRoomMemberProfilesByRoomId(roomId);
+	//
+	//		if (memberList == null || memberList.isEmpty()) {
+	//			throw new IllegalStateException("채팅방 멤버 정보를 찾을 수 없습니다.");
+	//		}
+	//
+	//		EnterRoomResponseDTO resdto = new EnterRoomResponseDTO(roomId, room.getRoomType(), myInfo.getCustomRoomName(), myInfo
+	//				.getCustomRoomThumbnail(), null, (long) memberList.size(), memberList, null);
+	//
+	//		return resdto;
+	//	}
 
 }

@@ -14,11 +14,11 @@ import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.RoomIdDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
-import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
-import com.chat.wsgate.client.WsGateChEngineRoomClient;
+import com.chat.wsgate.client.WsGateRoomClient;
 import com.chat.wsgate.domain.room.PayloadApplyRoomNoticeRequestDTO;
 import com.chat.wsgate.domain.room.PayloadBanMemberRequestDTO;
 import com.chat.wsgate.domain.room.PayloadChangeMemberRoleRequestDTO;
@@ -42,7 +42,7 @@ public class WsGateRoomHandler {
 	private final WsGateAuth wsGateAuth;
 
 	private final WsGatePayloadConverter wsGatePayloadConverter;
-	private final WsGateChEngineRoomClient wsGateChEngineRoomClient;
+	private final WsGateRoomClient wsGateRoomClient;
 
 	// ====== 1:1 채팅방 열기 ===========================================================================================================
 	public void handleOpenDirectChat(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -57,7 +57,7 @@ public class WsGateRoomHandler {
 
 		OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(me.getUserId(), me.getPublicId(), payload.getFriendPublicId());
 
-		EnterRoomResponseDTO openDirChtResponse = wsGateChEngineRoomClient.openDirectChatRoom(openDirChtCmd);
+		EnterRoomResponseDTO openDirChtResponse = wsGateRoomClient.openDirectChatRoom(openDirChtCmd);
 
 		wsGateSessionRegistry.enterRoomSession(openDirChtResponse.getRoomId(), me.getUserId(), session);
 
@@ -79,7 +79,7 @@ public class WsGateRoomHandler {
 
 		EnterRoomCommand enterRomCmd = new EnterRoomCommand(payload.getRoomId(), me.getUserId(), me.getPublicId());
 
-		EnterRoomResponseDTO enterRoomResponse = wsGateChEngineRoomClient.enterRoom(enterRomCmd);
+		EnterRoomResponseDTO enterRoomResponse = wsGateRoomClient.enterRoom(enterRomCmd);
 
 		wsGateSessionRegistry.enterRoomSession(enterRoomResponse.getRoomId(), me.getUserId(), session);
 		log.info("{}번 유저 {}번방 입장. wsSess등록.", me.getUserId(), payload.getRoomId());
@@ -118,7 +118,7 @@ public class WsGateRoomHandler {
 
 		LeftRoomCommand leftRomCmd = new LeftRoomCommand(payload.getRoomId(), me.getUserId(), me.getPublicId());
 
-		RoomFeedResponseDTO response = wsGateChEngineRoomClient.leftRoom(leftRomCmd);
+		RoomFeedResponseDTO response = wsGateRoomClient.leftRoom(leftRomCmd);
 
 		wsGateSessionRegistry.exitRoomSession(payload.getRoomId(), me.getUserId());
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "LEFT_ROOM", response, dto.getRequestId());
@@ -140,7 +140,7 @@ public class WsGateRoomHandler {
 		InviteMemberCommand ivtMbrCmd = new InviteMemberCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 				.getInviteTargetMemberPublicIds());
 
-		RoomFeedResponseDTO response = wsGateChEngineRoomClient.inviteMember(ivtMbrCmd);
+		RoomFeedResponseDTO response = wsGateRoomClient.inviteMember(ivtMbrCmd);
 
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_MEMBER_INVITED", response, dto.getRequestId());
 	}
@@ -159,7 +159,7 @@ public class WsGateRoomHandler {
 		KickMemberCommand kickMbrCmd = new KickMemberCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 				.getKickTargetPublicId());
 
-		RoomFeedResponseDTO response = wsGateChEngineRoomClient.kickMember(kickMbrCmd);
+		RoomFeedResponseDTO response = wsGateRoomClient.kickMember(kickMbrCmd);
 
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_MEMBER_KICKED", response, dto.getRequestId());
 	}
@@ -177,7 +177,7 @@ public class WsGateRoomHandler {
 
 		BanMemberCommand banMbrCmd = new BanMemberCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload.getBanTargetPublicId());
 
-		RoomFeedResponseDTO response = wsGateChEngineRoomClient.banMember(banMbrCmd);
+		RoomFeedResponseDTO response = wsGateRoomClient.banMember(banMbrCmd);
 
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_MEMBER_BANNED", response, dto.getRequestId());
 	}
@@ -196,7 +196,7 @@ public class WsGateRoomHandler {
 		ChangeMemberRoleCommand chgMbrRolCmd = new ChangeMemberRoleCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 				.getTargetPublicId(), payload.getTargetRole());
 
-		RoomFeedResponseDTO response = wsGateChEngineRoomClient.changeMemberRole(chgMbrRolCmd);
+		RoomFeedResponseDTO response = wsGateRoomClient.changeMemberRole(chgMbrRolCmd);
 
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_MEMBER_ROLE_CHANGED", response, dto.getRequestId());
 	}
@@ -220,9 +220,10 @@ public class WsGateRoomHandler {
 					.getTargetRoomNoticeId(), payload
 							.getRoomNoticeType(), payload.getSourceMessageId(), payload.getRoomNoticeContents(), me.getUserId(), me.getPublicId());
 
-			RoomNoticeViewResponseDTO grpcResponse = wsGateChEngineRoomClient.applyRoomNotice(applyRomNotiCmd);
+			RoomNoticeApplyResponseDTO grpcResponse = wsGateRoomClient.applyRoomNotice(applyRomNotiCmd);
 
-			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "ROOM_NOTICE_APPLIED", grpcResponse, dto.getRequestId());
+			wsGateOutboundWriter
+					.broadcastToRoom(grpcResponse.getRoomNoticeView().getRoomId(), "ROOM_NOTICE_APPLIED", grpcResponse, dto.getRequestId());
 
 		} catch (Exception e) {
 			log.error("ROOM_NOTICE_APPLIED 예외처리발생: {}", e);

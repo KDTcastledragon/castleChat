@@ -14,8 +14,14 @@ public class ChatMessagesDTO {
 
 	private Long roomId;
 	private Long senderId;
+	private String messageType;
 
 	private String messageText;
 
+	private Long replyToMessageId;
+
+	private String messageStatus;
+
 	private LocalDateTime createdAt;
+	private LocalDateTime deletedAt;
 }

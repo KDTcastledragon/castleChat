@@ -4,12 +4,17 @@ import com.chat.contract.chatting.command.CreateChatMessageCommand;
 import com.chat.contract.chatting.command.DeleteChatMessageCommand;
 import com.chat.contract.chatting.command.ReactChatMessageCommand;
 import com.chat.contract.chatting.command.ReadChatMessageCommand;
+import com.chat.contract.chatting.command.StartDirectChatCommand;
+import com.chat.contract.chatting.command.StartGroupChatCommand;
 import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 
 public interface ChatCommandUseCase {
+	ChatMessageViewResponseDTO startDirectChat(StartDirectChatCommand command);
+
+	ChatMessageViewResponseDTO startGroupChat(StartGroupChatCommand command);
 
 	ChatMessageViewResponseDTO createChatMessage(CreateChatMessageCommand command);
 

@@ -21,5 +21,5 @@ public class EnterRoomResponseDTO {
 
 	private List<RoomMemberResponseDTO> memberList;
 
-	private RoomNoticeViewResponseDTO roomNotice;
+	private RoomNoticeViewDTO roomNotice;
 }

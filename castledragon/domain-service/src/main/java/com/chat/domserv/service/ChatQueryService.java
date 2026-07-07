@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.redis.RedisRoomMemberReadPositionDTO;
-import com.chat.domserv.mapper.ChatMapper;
+import com.chat.domserv.mapper.DomServChatMapper;
 import com.chat.domserv.usecase.ChatQueryUseCase;
 import com.chat.redis.cache.RoomReadPositionCache;
 
@@ -18,12 +18,12 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequiredArgsConstructor
 public class ChatQueryService implements ChatQueryUseCase {
-	private final ChatMapper chatMapper;
+	private final DomServChatMapper domServChatMapper;
 
 	private final RoomReadPositionCache roomReadPositionCache;
 
 	private void warmUpRoomReadPositions(Long roomId) {
-		List<RedisRoomMemberReadPositionDTO> members = chatMapper.findActiveRoomReadPositions(roomId);
+		List<RedisRoomMemberReadPositionDTO> members = domServChatMapper.findActiveRoomReadPositions(roomId);
 
 		if (members == null || members.isEmpty()) {
 			return;
@@ -54,7 +54,7 @@ public class ChatQueryService implements ChatQueryUseCase {
 			limit = 50;
 		}
 
-		List<ChatMessageViewResponseDTO> chatList = chatMapper.loadMessagesInRoom(roomId, beforeMessageId, limit);
+		List<ChatMessageViewResponseDTO> chatList = domServChatMapper.loadMessagesInRoom(roomId, beforeMessageId, limit);
 
 		warmUpRoomReadPositions(roomId);
 

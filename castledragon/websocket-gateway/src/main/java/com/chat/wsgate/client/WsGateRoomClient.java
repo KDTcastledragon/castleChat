@@ -10,9 +10,9 @@ import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
-import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 
-public interface WsGateChEngineRoomClient {
+public interface WsGateRoomClient {
 	EnterRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand command);
 
 	EnterRoomResponseDTO enterRoom(EnterRoomCommand command);
@@ -27,6 +27,6 @@ public interface WsGateChEngineRoomClient {
 
 	RoomFeedResponseDTO changeMemberRole(ChangeMemberRoleCommand command);
 
-	RoomNoticeViewResponseDTO applyRoomNotice(ApplyRoomNoticeCommand command);
+	RoomNoticeApplyResponseDTO applyRoomNotice(ApplyRoomNoticeCommand command);
 
 }

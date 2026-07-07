@@ -22,7 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.chat.contract.chatting.domain.ChatAttachmentDTO;
 import com.chat.contract.room.domain.RoomMembersDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
-import com.chat.domserv.mapper.ChatMapper;
+import com.chat.domserv.mapper.DomServChatMapper;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.ChatCommandUseCase;
 
@@ -36,7 +36,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 	private static final long MAX_TOTAL_UPLOAD_BYTES = 300L * 1024 * 1024;
 	private static final int MAX_FILE_COUNT = 20;
 
-	private final ChatMapper chatMapper;
+	private final DomServChatMapper domServChatMapper;
 	private final RoomMapper roomMapper;
 
 	@Value("${chat.attachment.upload-dir:uploads/chat}")
@@ -153,7 +153,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 			dto.setDurationMs(null);
 			dto.setSortOrder(sortOrder);
 
-			int inserted = chatMapper.insertChatAttachment(dto);
+			int inserted = domServChatMapper.insertChatAttachment(dto);
 
 			if (inserted != 1 || dto.getAttachmentId() == null) {
 				Files.deleteIfExists(targetPath);

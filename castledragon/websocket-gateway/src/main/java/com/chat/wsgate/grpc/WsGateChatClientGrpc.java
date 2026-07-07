@@ -19,7 +19,7 @@ import com.chat.contract.grpc.ReactChatMessageRequest;
 import com.chat.contract.grpc.ReadChatMessageRequest;
 import com.chat.contract.grpc.StartDirectChatRequest;
 import com.chat.contract.grpc.StartGroupChatRequest;
-import com.chat.wsgate.client.WsGateChEngineChatClient;
+import com.chat.wsgate.client.WsGateChatClient;
 import com.chat.wsgate.support.GrpcToDtoConverter;
 
 import lombok.extern.log4j.Log4j2;
@@ -27,7 +27,7 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 
 @Component
 @Log4j2
-public class WsGateChEngineChatClientGrpc implements WsGateChEngineChatClient {
+public class WsGateChatClientGrpc implements WsGateChatClient {
 
 	@GrpcClient("channel-engine")
 	private ChEngineChatGrpc.ChEngineChatBlockingStub chEngineStub; // channel-engine gRPC 서버를 호출하기 위한 client 객체.

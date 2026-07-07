@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RoomNoticeViewResponseDTO {
+public class RoomNoticeViewDTO {
 	private Long roomNoticeId;
 	private Long roomId;
 

@@ -18,7 +18,7 @@ import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
-import com.chat.wsgate.client.WsGateChEngineChatClient;
+import com.chat.wsgate.client.WsGateChatClient;
 import com.chat.wsgate.domain.chatting.PayloadDeleteChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReactChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReadChatMessageRequestDTO;
@@ -41,7 +41,7 @@ public class WsGateChatHandler {
 	private final WsGateAuth wsGateAuth;
 	private final WsGateOutboundWriter wsGateOutboundWriter;
 	private final WsGatePayloadConverter wsGatePayloadConverter;
-	private final WsGateChEngineChatClient wsGateChEngineChatClient;
+	private final WsGateChatClient wsGateChatClient;
 	private final WsGateSessionRegistry wsGateSessionRegistry;
 
 	private boolean isEmptyMessage(String messageText, List<Long> attachmentIds) {
@@ -102,7 +102,7 @@ public class WsGateChatHandler {
 					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startDirectChat(startDirChtCmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.startDirectChat(startDirChtCmd);
 
 			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
@@ -135,7 +135,7 @@ public class WsGateChatHandler {
 					.getInviteMemberPublicIds(), me.getUserId(), me.getPublicId(), defaultMessageType(payload.getMessageType()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startGroupChat(startGrpChtCmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.startGroupChat(startGrpChtCmd);
 
 			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
@@ -170,7 +170,7 @@ public class WsGateChatHandler {
 					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.createChatMessage(createChtMsgCmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.createChatMessage(createChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
@@ -202,7 +202,7 @@ public class WsGateChatHandler {
 			ReadChatMessageCommand readChtMsgCmd = new ReadChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
 					.getLastReadMessageId());
 
-			ReadPositionUpdateResponseDTO grpcResponse = wsGateChEngineChatClient.readChatMessage(readChtMsgCmd);
+			ReadPositionUpdateResponseDTO grpcResponse = wsGateChatClient.readChatMessage(readChtMsgCmd);
 
 			Boolean updatedLog4j2 = grpcResponse == null ? null : grpcResponse.getUpdated(); // log 확인용.
 
@@ -238,7 +238,7 @@ public class WsGateChatHandler {
 			DeleteChatMessageCommand deleteChtMsgCmd = new DeleteChatMessageCommand(payload.getRoomId(), payload.getMessageId(), me.getUserId(), me
 					.getPublicId());
 
-			DeleteChatMessageResponseDTO grpcResponse = wsGateChEngineChatClient.deleteChatMessage(deleteChtMsgCmd);
+			DeleteChatMessageResponseDTO grpcResponse = wsGateChatClient.deleteChatMessage(deleteChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_DELETED", grpcResponse, dto.getRequestId());
 		} catch (Exception e) {
@@ -265,7 +265,7 @@ public class WsGateChatHandler {
 			ReactChatMessageCommand reactChtMsgCmd = new ReactChatMessageCommand(payload.getRoomId(), payload.getMessageId(), me.getUserId(), me
 					.getPublicId(), payload.getReactionType(), payload.getReactionCode(), payload.getAddRequested());
 
-			ReactChatMessageEventResponseDTO grpcResponse = wsGateChEngineChatClient.reactChatMessage(reactChtMsgCmd);
+			ReactChatMessageEventResponseDTO grpcResponse = wsGateChatClient.reactChatMessage(reactChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_REACTION_UPDATED", grpcResponse, dto.getRequestId());
 		} catch (Exception e) {

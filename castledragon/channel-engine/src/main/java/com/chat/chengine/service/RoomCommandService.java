@@ -1,12 +1,25 @@
 package com.chat.chengine.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.chengine.mapper.ChEngineRoomMapper;
+import com.chat.chengine.mapper.RoomMapper;
 import com.chat.chengine.usecase.RoomCommandUseCase;
 import com.chat.contract.room.command.ApplyRoomNoticeCommand;
-import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
+import com.chat.contract.room.command.BanMemberCommand;
+import com.chat.contract.room.command.ChangeMemberRoleCommand;
+import com.chat.contract.room.command.EnterRoomCommand;
+import com.chat.contract.room.command.InviteMemberCommand;
+import com.chat.contract.room.command.KickMemberCommand;
+import com.chat.contract.room.command.LeftRoomCommand;
+import com.chat.contract.room.command.OpenDirectChatRoomCommand;
+import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -29,11 +42,11 @@ public class RoomCommandService implements RoomCommandUseCase {
 	private static final String INACTIVE = "INACTIVE";
 	private static final String DELETED = "DELETED";
 
-	private final ChEngineRoomMapper roomMapper;
+	private final RoomMapper roomMapper;
 
 	@Override
 	@Transactional
-	public RoomNoticeViewResponseDTO applyRoomNotice(ApplyRoomNoticeCommand cmd) {
+	public RoomNoticeApplyResponseDTO applyRoomNotice(ApplyRoomNoticeCommand cmd) {
 		validateBase(cmd);
 
 		Long lockedRoomId = roomMapper.lockRoomForUpdate(cmd.getRoomId());
@@ -42,7 +55,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalArgumentException("존재하지 않는 방입니다.");
 		}
 
-		return switch (cmd.getRoomNoticeAction()) {
+		RoomNoticeViewDTO roomNoticeView = switch (cmd.getRoomNoticeAction()) {
 		case CREATE -> createRoomNotice(cmd);
 		case UPDATE -> updateRoomNotice(cmd);
 		case INACTIVATE -> inactivateRoomNotice(cmd);
@@ -50,9 +63,13 @@ public class RoomCommandService implements RoomCommandUseCase {
 		case DELETE -> deleteRoomNotice(cmd);
 		default -> throw new IllegalArgumentException("지원하지 않는 공지 action입니다.");
 		};
+
+		RoomFeedResponseDTO roomFeed = createNoticeRoomFeed(cmd);
+
+		return new RoomNoticeApplyResponseDTO(roomNoticeView, roomFeed);
 	}
 
-	private RoomNoticeViewResponseDTO createRoomNotice(ApplyRoomNoticeCommand cmd) {
+	private RoomNoticeViewDTO createRoomNotice(ApplyRoomNoticeCommand cmd) {
 		validateCreate(cmd);
 
 		Long activeNoticeId = roomMapper.findActiveRoomNoticeId(cmd.getRoomId());
@@ -71,7 +88,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 		return roomMapper.findLatestRoomNoticeView(cmd.getRoomId());
 	}
 
-	private RoomNoticeViewResponseDTO updateRoomNotice(ApplyRoomNoticeCommand cmd) {
+	private RoomNoticeViewDTO updateRoomNotice(ApplyRoomNoticeCommand cmd) {
 		validateTargetNotice(cmd);
 		validateContent(cmd.getRoomNoticeContents());
 		validateNoticeTypeIfPresent(cmd);
@@ -91,7 +108,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 		return roomMapper.findRoomNoticeViewById(cmd.getRoomId(), cmd.getTargetRoomNoticeId());
 	}
 
-	private RoomNoticeViewResponseDTO inactivateRoomNotice(ApplyRoomNoticeCommand cmd) {
+	private RoomNoticeViewDTO inactivateRoomNotice(ApplyRoomNoticeCommand cmd) {
 		validateTargetNotice(cmd);
 
 		String status = findAndValidateOwner(cmd);
@@ -109,7 +126,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 		return roomMapper.findRoomNoticeViewById(cmd.getRoomId(), cmd.getTargetRoomNoticeId());
 	}
 
-	private RoomNoticeViewResponseDTO reactivateRoomNotice(ApplyRoomNoticeCommand cmd) {
+	private RoomNoticeViewDTO reactivateRoomNotice(ApplyRoomNoticeCommand cmd) {
 		validateTargetNotice(cmd);
 
 		String status = findAndValidateOwner(cmd);
@@ -134,7 +151,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 		return roomMapper.findRoomNoticeViewById(cmd.getRoomId(), cmd.getTargetRoomNoticeId());
 	}
 
-	private RoomNoticeViewResponseDTO deleteRoomNotice(ApplyRoomNoticeCommand cmd) {
+	private RoomNoticeViewDTO deleteRoomNotice(ApplyRoomNoticeCommand cmd) {
 		validateTargetNotice(cmd);
 
 		String status = findAndValidateOwner(cmd);
@@ -234,7 +251,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 	}
 
 	private void validateNoticeOwner(Long roomId, Long roomNoticeId, Long requesterUserId) {
-		Long creatorUserId = roomMapper.findRoomNoticeCreatorUserId(roomId, roomNoticeId);
+		Long creatorUserId = roomMapper.findRoomNoticeRequesterUserId(roomId, roomNoticeId);
 
 		if (creatorUserId == null) {
 			throw new IllegalArgumentException("공지 작성자 정보를 찾을 수 없습니다.");
@@ -247,5 +264,219 @@ public class RoomCommandService implements RoomCommandUseCase {
 
 	private boolean hasText(String value) {
 		return value != null && !value.isBlank();
+	}
+
+	// ========================================================================================================================================
+	// ========================================================================================================================================
+
+	@Override
+	@Transactional(readOnly = true)
+	public EnterRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand cmd) {
+		if (cmd.getRequesterUserId() == null) {
+			throw new IllegalArgumentException("requesterUserId가 없습니다.");
+		}
+
+		if (!hasText(cmd.getRequesterPublicId())) {
+			throw new IllegalArgumentException("requesterPublicId가 없습니다.");
+		}
+
+		if (!hasText(cmd.getFriendPublicId())) {
+			throw new IllegalArgumentException("friendPublicId가 없습니다.");
+		}
+
+		EnterRoomResponseDTO roomInfo = roomMapper.findDirectRoomForEnter(cmd.getRequesterUserId(), cmd.getFriendPublicId());
+
+		if (roomInfo == null) {
+			throw new IllegalArgumentException("1:1 채팅방이 없습니다. 첫 메시지 전송으로 방을 생성해야 합니다.");
+		}
+
+		roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(roomInfo.getRoomId()));
+		roomInfo.setRoomNotice(roomMapper.findActiveRoomNoticeView(roomInfo.getRoomId()));
+
+		return roomInfo;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public EnterRoomResponseDTO enterRoom(EnterRoomCommand cmd) {
+		if (cmd.getRoomId() == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
+		}
+
+		if (cmd.getRequesterUserId() == null) {
+			throw new IllegalArgumentException("requesterUserId가 없습니다.");
+		}
+
+		EnterRoomResponseDTO roomInfo = roomMapper.findRoomForEnter(cmd.getRoomId(), cmd.getRequesterUserId());
+
+		if (roomInfo == null) {
+			throw new IllegalArgumentException("입장 가능한 방이 아닙니다.");
+		}
+
+		roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(cmd.getRoomId()));
+		roomInfo.setRoomNotice(roomMapper.findActiveRoomNoticeView(cmd.getRoomId()));
+
+		return roomInfo;
+	}
+
+	@Override
+	@Transactional
+	public RoomFeedResponseDTO leftRoom(LeftRoomCommand cmd) {
+		validateRoomRequester(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getRequesterPublicId());
+
+		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
+
+		int updated = roomMapper.leftRoom(cmd.getRoomId(), cmd.getRequesterUserId());
+
+		if (updated != 1) {
+			throw new IllegalStateException("방 나가기 실패");
+		}
+
+		return createRoomFeed(cmd.getRoomId(), "LEFT", cmd.getRequesterPublicId(), requesterNickname, List.of(), List.of(), requesterNickname
+				+ "님이 방을 나갔습니다.");
+	}
+
+	@Override
+	@Transactional
+	public RoomFeedResponseDTO inviteMember(InviteMemberCommand cmd) {
+		validateRoomRequester(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getRequesterPublicId());
+
+		if (cmd.getInviteTargetMemberPublicIds() == null || cmd.getInviteTargetMemberPublicIds().isEmpty()) {
+			throw new IllegalArgumentException("초대 대상이 없습니다.");
+		}
+
+		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
+
+		int inserted = roomMapper.inviteMembers(cmd.getRoomId(), cmd.getInviteTargetMemberPublicIds());
+
+		if (inserted < 1) {
+			throw new IllegalStateException("초대 처리 실패");
+		}
+
+		List<String> targetNicknames = roomMapper.findNicknamesByPublicIds(cmd.getInviteTargetMemberPublicIds());
+
+		return createRoomFeed(cmd.getRoomId(), "INVITE", cmd.getRequesterPublicId(), requesterNickname, cmd
+				.getInviteTargetMemberPublicIds(), targetNicknames, requesterNickname + "님이 " + String.join(", ", targetNicknames) + "님을 초대했습니다.");
+	}
+
+	@Override
+	@Transactional
+	public RoomFeedResponseDTO kickMember(KickMemberCommand cmd) {
+		validateRoomRequester(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getRequesterPublicId());
+
+		if (!hasText(cmd.getKickTargetPublicId())) {
+			throw new IllegalArgumentException("강퇴 대상이 없습니다.");
+		}
+
+		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
+		String targetNickname = roomMapper.findNicknameByPublicId(cmd.getKickTargetPublicId());
+
+		int updated = roomMapper.kickMember(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getKickTargetPublicId());
+
+		if (updated != 1) {
+			throw new IllegalStateException("강퇴 실패");
+		}
+
+		return createRoomFeed(cmd.getRoomId(), "KICK", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getKickTargetPublicId()), List
+				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 강퇴했습니다.");
+	}
+
+	@Override
+	@Transactional
+	public RoomFeedResponseDTO banMember(BanMemberCommand cmd) {
+		validateRoomRequester(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getRequesterPublicId());
+
+		if (!hasText(cmd.getBanTargetPublicId())) {
+			throw new IllegalArgumentException("영구강퇴 대상이 없습니다.");
+		}
+
+		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
+		String targetNickname = roomMapper.findNicknameByPublicId(cmd.getBanTargetPublicId());
+
+		int updated = roomMapper.banMember(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getBanTargetPublicId());
+
+		if (updated != 1) {
+			throw new IllegalStateException("영구강퇴 실패");
+		}
+
+		return createRoomFeed(cmd.getRoomId(), "BAN", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getBanTargetPublicId()), List
+				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 영구강퇴했습니다.");
+	}
+
+	@Override
+	@Transactional
+	public RoomFeedResponseDTO changeMemberRole(ChangeMemberRoleCommand cmd) {
+		validateRoomRequester(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getRequesterPublicId());
+
+		if (!hasText(cmd.getTargetPublicId())) {
+			throw new IllegalArgumentException("권한 변경 대상이 없습니다.");
+		}
+
+		if (!hasText(cmd.getTargetRole())) {
+			throw new IllegalArgumentException("변경할 role이 없습니다.");
+		}
+
+		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
+		String targetNickname = roomMapper.findNicknameByPublicId(cmd.getTargetPublicId());
+
+		int updated = roomMapper.changeMemberRole(cmd.getRoomId(), cmd.getRequesterUserId(), cmd.getTargetPublicId(), cmd.getTargetRole());
+
+		if (updated != 1) {
+			throw new IllegalStateException("권한 변경 실패");
+		}
+
+		return createRoomFeed(cmd.getRoomId(), "ROLE_CHANGED", cmd.getRequesterPublicId(), requesterNickname, List
+				.of(cmd.getTargetPublicId()), List
+						.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님의 권한을 " + cmd.getTargetRole() + "로 변경했습니다.");
+	}
+
+	// ========================================================================================================================================
+	// ========================================================================================================================================
+	private void validateRoomRequester(Long roomId, Long requesterUserId, String requesterPublicId) {
+		if (roomId == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
+		}
+
+		if (requesterUserId == null) {
+			throw new IllegalArgumentException("requesterUserId가 없습니다.");
+		}
+
+		if (!hasText(requesterPublicId)) {
+			throw new IllegalArgumentException("requesterPublicId가 없습니다.");
+		}
+	}
+
+	private RoomFeedResponseDTO createNoticeRoomFeed(ApplyRoomNoticeCommand cmd) {
+		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
+
+		return createRoomFeed(cmd.getRoomId(), toNoticeFeedType(cmd.getRoomNoticeAction()), cmd.getRequesterPublicId(), requesterNickname, List
+				.of(), List.of(), createNoticeFeedText(requesterNickname, cmd.getRoomNoticeAction()));
+	}
+
+	private String toNoticeFeedType(String roomNoticeAction) {
+		return switch (roomNoticeAction) {
+		case CREATE -> "ROOM_NOTICE_CREATED";
+		case UPDATE -> "ROOM_NOTICE_UPDATED";
+		case INACTIVATE -> "ROOM_NOTICE_INACTIVATED";
+		case REACTIVATE -> "ROOM_NOTICE_REACTIVATED";
+		case DELETE -> "ROOM_NOTICE_DELETED";
+		default -> throw new IllegalArgumentException("지원하지 않는 공지 action입니다.");
+		};
+	}
+
+	private String createNoticeFeedText(String requesterNickname, String roomNoticeAction) {
+		return switch (roomNoticeAction) {
+		case CREATE -> requesterNickname + "님이 공지를 등록했습니다.";
+		case UPDATE -> requesterNickname + "님이 공지를 수정했습니다.";
+		case INACTIVATE -> requesterNickname + "님이 공지를 내렸습니다.";
+		case REACTIVATE -> requesterNickname + "님이 공지를 다시 등록했습니다.";
+		case DELETE -> requesterNickname + "님이 공지를 삭제했습니다.";
+		default -> throw new IllegalArgumentException("지원하지 않는 공지 action입니다.");
+		};
+	}
+
+	private RoomFeedResponseDTO createRoomFeed(Long roomId, String feedType, String requesterPublicId, String requesterNickname, List<String> targetPublicIds, List<String> targetNicknames, String feedText) {
+		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, feedText, LocalDateTime
+				.now());
 	}
 }

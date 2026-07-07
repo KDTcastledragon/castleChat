@@ -8,10 +8,12 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.friend.domain.res.FriendEventResponseDTO;
 import com.chat.contract.grpc.ApplyRoomNoticeResponse;
 import com.chat.contract.grpc.CreateChatMessageResponse;
 import com.chat.contract.grpc.DeleteChatMessageResponse;
 import com.chat.contract.grpc.EnterRoomResponse;
+import com.chat.contract.grpc.FriendEventResponse;
 import com.chat.contract.grpc.ReactChatMessageResponse;
 import com.chat.contract.grpc.ReadChatMessageResponse;
 import com.chat.contract.grpc.RoomFeedResponse;
@@ -20,7 +22,8 @@ import com.chat.contract.grpc.RoomNoticeView;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
-import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
 
 public final class GrpcToDtoConverter {
 	private GrpcToDtoConverter() {
@@ -88,24 +91,6 @@ public final class GrpcToDtoConverter {
 		return reactionEvent;
 	}
 
-	public static RoomNoticeViewResponseDTO convertGrpcToRoomNoticeViewResDto(ApplyRoomNoticeResponse response) {
-		RoomNoticeViewResponseDTO roomNoticeView = new RoomNoticeViewResponseDTO();
-
-		roomNoticeView.setRoomNoticeId(response.getRoomNoticeId());
-		roomNoticeView.setRoomId(response.getRoomId());
-		roomNoticeView.setRoomNoticeAction(response.getRoomNoticeAction());
-		roomNoticeView.setRoomNoticeType(response.getRoomNoticeType());
-		roomNoticeView.setRoomNoticeContents(response.getRoomNoticeContents());
-		roomNoticeView.setRoomNoticeStatus(response.getRoomNoticeStatus());
-		roomNoticeView.setRequesterPublicId(response.getRequesterPublicId());
-
-		if (response.getLastAppliedAt() != null && !response.getLastAppliedAt().isBlank()) {
-			roomNoticeView.setLastAppliedAt(LocalDateTime.parse(response.getLastAppliedAt()));
-		}
-
-		return roomNoticeView;
-	}
-
 	public static EnterRoomResponseDTO convertGrpcToEnterRoomResDto(EnterRoomResponse response) {
 		EnterRoomResponseDTO enterRoom = new EnterRoomResponseDTO();
 
@@ -138,8 +123,8 @@ public final class GrpcToDtoConverter {
 		return enterRoom;
 	}
 
-	private static RoomNoticeViewResponseDTO convertGrpcToRoomNoticeViewDto(RoomNoticeView response) {
-		RoomNoticeViewResponseDTO roomNoticeView = new RoomNoticeViewResponseDTO();
+	private static RoomNoticeViewDTO convertGrpcToRoomNoticeViewDto(RoomNoticeView response) {
+		RoomNoticeViewDTO roomNoticeView = new RoomNoticeViewDTO();
 
 		roomNoticeView.setRoomNoticeId(response.getRoomNoticeId());
 		roomNoticeView.setRoomId(response.getRoomId());
@@ -172,5 +157,31 @@ public final class GrpcToDtoConverter {
 		}
 
 		return roomFeed;
+	}
+
+	public static RoomNoticeApplyResponseDTO convertGrpcToRoomNoticeApplyResDto(ApplyRoomNoticeResponse response) {
+		RoomNoticeApplyResponseDTO roomNoticeApply = new RoomNoticeApplyResponseDTO();
+
+		roomNoticeApply.setRoomNoticeView(convertGrpcToRoomNoticeViewDto(response.getRoomNoticeView()));
+		roomNoticeApply.setRoomFeedResponse(convertGrpcToRoomFeedResDto(response.getRoomFeed()));
+
+		return roomNoticeApply;
+	}
+
+	public static FriendEventResponseDTO convertGrpcToFriendEventResDto(FriendEventResponse response) {
+		FriendEventResponseDTO friendEvent = new FriendEventResponseDTO();
+
+		friendEvent.setFriendEventType(response.getFriendEventType());
+		friendEvent.setRequesterUserId(response.getRequesterUserId());
+		friendEvent.setRequesterPublicId(response.getRequesterPublicId());
+		friendEvent.setTargetUserId(response.getTargetUserId());
+		friendEvent.setTargetPublicId(response.getTargetPublicId());
+		friendEvent.setFriendStatus(response.getFriendStatus());
+
+		if (response.getEventAt() != null && !response.getEventAt().isBlank()) {
+			friendEvent.setEventAt(LocalDateTime.parse(response.getEventAt()));
+		}
+
+		return friendEvent;
 	}
 }

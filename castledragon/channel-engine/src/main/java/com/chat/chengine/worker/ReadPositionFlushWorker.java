@@ -6,7 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.chengine.mapper.ChEngineChatMapper;
+import com.chat.chengine.mapper.ChatMapper;
 import com.chat.redis.cache.RoomReadPositionCache;
 
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
 public class ReadPositionFlushWorker {
 
 	private final RoomReadPositionCache roomReadPositionCache;
-	private final ChEngineChatMapper chatMapper;
+	private final ChatMapper chatMapper;
 
 	//	@Scheduled(fixedDelay = 5000)
 	@Scheduled(fixedDelayString = "${chat.read-position.flush-delay-ms:3000}")

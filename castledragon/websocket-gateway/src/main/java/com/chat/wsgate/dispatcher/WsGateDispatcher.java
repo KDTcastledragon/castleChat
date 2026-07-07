@@ -10,6 +10,7 @@ import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.handler.WsGateChatHandler;
 import com.chat.wsgate.handler.WsGateConnectionHandler;
+import com.chat.wsgate.handler.WsGateFriendHandler;
 import com.chat.wsgate.handler.WsGateRoomHandler;
 import com.chat.wsgate.outbound.WsGateOutboundWriter;
 import com.chat.wsgate.session.WsGateSessionRegistry;
@@ -30,6 +31,7 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 	private final WsGateRoomHandler wsGateRoomHandler;
 	private final WsGateConnectionHandler wsGateConnectionHandler;
 	private final WsGateChatHandler wsGateChatHandler;
+	private final WsGateFriendHandler wsGateFriendHandler;
 
 	//	====== 메세지 관리 Dispatcher ===========================================================================================================
 	// TextWebSocketHandler안에 handleTextMessage내장 메소드 존재. 그래서 @Override 붙임. 반드시 약속된 메서드인 handleTextMessage를 입구로 써야 합니다.
@@ -47,6 +49,9 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 
 			switch (dto.getWsType()) {
 			case "CONNECT_USER" -> wsGateConnectionHandler.handleConnectUser(session, dto);
+
+			case "ADD_FRIEND" -> wsGateFriendHandler.handleAddFriend(session, dto);
+			case "RESPOND_FRIEND" -> wsGateFriendHandler.handleRespondFriend(session, dto);
 
 			case "OPEN_DIRECT_CHAT" -> wsGateRoomHandler.handleOpenDirectChat(session, dto);
 			case "START_DIRECT_CHAT" -> wsGateChatHandler.handleStartDirectChat(session, dto);

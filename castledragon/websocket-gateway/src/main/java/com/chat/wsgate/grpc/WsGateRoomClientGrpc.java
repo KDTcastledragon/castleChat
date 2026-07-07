@@ -21,8 +21,8 @@ import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
-import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
-import com.chat.wsgate.client.WsGateChEngineRoomClient;
+import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
+import com.chat.wsgate.client.WsGateRoomClient;
 import com.chat.wsgate.support.GrpcToDtoConverter;
 
 import lombok.extern.log4j.Log4j2;
@@ -30,7 +30,7 @@ import net.devh.boot.grpc.client.inject.GrpcClient;
 
 @Component
 @Log4j2
-public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
+public class WsGateRoomClientGrpc implements WsGateRoomClient {
 
 	@GrpcClient("channel-engine")
 	private ChEngineRoomGrpc.ChEngineRoomBlockingStub chEngineRoomStub; // channel-engine gRPC 서버를 호출하기 위한 client 객체.
@@ -60,13 +60,13 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 	@Override
 	public EnterRoomResponseDTO enterRoom(EnterRoomCommand cmd) {
-		EnterRoomRequest request = EnterRoomRequest.newBuilder()
+		EnterRoomRequest cmdRequest = EnterRoomRequest.newBuilder()
 				.setRoomId(cmd.getRoomId())
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
 				.build();
 
-		EnterRoomResponseDTO response = GrpcToDtoConverter.convertGrpcToEnterRoomResDto(chEngineRoomStub.enterRoom(request));
+		EnterRoomResponseDTO response = GrpcToDtoConverter.convertGrpcToEnterRoomResDto(chEngineRoomStub.enterRoom(cmdRequest));
 
 		log.info("wsgate-gRPC EnterRoom = rom:{} / usr:{}", response.getRoomId(), cmd.getRequesterUserId());
 
@@ -75,13 +75,13 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 	@Override
 	public RoomFeedResponseDTO leftRoom(LeftRoomCommand cmd) {
-		LeftRoomRequest request = LeftRoomRequest.newBuilder()
+		LeftRoomRequest cmdRequest = LeftRoomRequest.newBuilder()
 				.setRoomId(cmd.getRoomId())
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
 				.build();
 
-		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.leftRoom(request));
+		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.leftRoom(cmdRequest));
 
 		log.info("wsgate-gRPC LeftRoom = rom:{} feed:{} / usr:{}", response.getRoomId(), response.getFeedType(), cmd.getRequesterUserId());
 
@@ -90,14 +90,14 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 	@Override
 	public RoomFeedResponseDTO inviteMember(InviteMemberCommand cmd) {
-		InviteMemberRequest request = InviteMemberRequest.newBuilder()
+		InviteMemberRequest cmdRequest = InviteMemberRequest.newBuilder()
 				.setRoomId(cmd.getRoomId())
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
 				.addAllInviteMemberPublicIds(cmd.getInviteTargetMemberPublicIds())
 				.build();
 
-		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.inviteMember(request));
+		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.inviteMember(cmdRequest));
 
 		log.info("wsgate-gRPC InviteMember = rom:{} feed:{} / usr:{}", response.getRoomId(), response.getFeedType(), cmd.getRequesterUserId());
 
@@ -106,14 +106,14 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 	@Override
 	public RoomFeedResponseDTO kickMember(KickMemberCommand cmd) {
-		KickMemberRequest request = KickMemberRequest.newBuilder()
+		KickMemberRequest cmdRequest = KickMemberRequest.newBuilder()
 				.setRoomId(cmd.getRoomId())
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
 				.setKickTargetPublicId(cmd.getKickTargetPublicId())
 				.build();
 
-		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.kickMember(request));
+		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.kickMember(cmdRequest));
 
 		log.info("wsgate-gRPC KickMember = rom:{} feed:{} / usr:{}", response.getRoomId(), response.getFeedType(), cmd.getRequesterUserId());
 
@@ -122,14 +122,14 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 	@Override
 	public RoomFeedResponseDTO banMember(BanMemberCommand cmd) {
-		BanMemberRequest request = BanMemberRequest.newBuilder()
+		BanMemberRequest cmdRequest = BanMemberRequest.newBuilder()
 				.setRoomId(cmd.getRoomId())
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
 				.setBanTargetPublicId(cmd.getBanTargetPublicId())
 				.build();
 
-		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.banMember(request));
+		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.banMember(cmdRequest));
 
 		log.info("wsgate-gRPC BanMember = rom:{} feed:{} / usr:{}", response.getRoomId(), response.getFeedType(), cmd.getRequesterUserId());
 
@@ -138,7 +138,7 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 	@Override
 	public RoomFeedResponseDTO changeMemberRole(ChangeMemberRoleCommand cmd) {
-		ChangeMemberRoleRequest request = ChangeMemberRoleRequest.newBuilder()
+		ChangeMemberRoleRequest cmdRequest = ChangeMemberRoleRequest.newBuilder()
 				.setRoomId(cmd.getRoomId())
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
@@ -146,7 +146,7 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 				.setTargetRole(cmd.getTargetRole())
 				.build();
 
-		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.changeMemberRole(request));
+		RoomFeedResponseDTO response = GrpcToDtoConverter.convertGrpcToRoomFeedResDto(chEngineRoomStub.changeMemberRole(cmdRequest));
 
 		log.info("wsgate-gRPC ChangeMemberRole = rom:{} feed:{} / usr:{}", response.getRoomId(), response.getFeedType(), cmd.getRequesterUserId());
 
@@ -154,7 +154,7 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 	}
 
 	@Override
-	public RoomNoticeViewResponseDTO applyRoomNotice(ApplyRoomNoticeCommand cmd) {
+	public RoomNoticeApplyResponseDTO applyRoomNotice(ApplyRoomNoticeCommand cmd) {
 		//		ApplyRoomNoticeRequest cmdRequest = ApplyRoomNoticeRequest.newBuilder()
 		//				.setRoomId(cmd.getRoomId())
 		//				.setRoomNoticeAction(cmd.getRoomNoticeAction())
@@ -184,13 +184,13 @@ public class WsGateChEngineRoomClientGrpc implements WsGateChEngineRoomClient {
 
 		ApplyRoomNoticeRequest cmdRequest = cmdRequestBuilder.build();
 
-		RoomNoticeViewResponseDTO grpcRoomNoticeResponse = GrpcToDtoConverter
-				.convertGrpcToRoomNoticeViewResDto(chEngineRoomStub.applyRoomNotice(cmdRequest));
+		RoomNoticeApplyResponseDTO grpcRoomNoticeApplyResponse = GrpcToDtoConverter
+				.convertGrpcToRoomNoticeApplyResDto(chEngineRoomStub.applyRoomNotice(cmdRequest));
 
-		log.info("wsgate-gRPC RoomNotice = rom:{} rnId:{} action:{} status:{} / usr:{}", grpcRoomNoticeResponse.getRoomId(), grpcRoomNoticeResponse
-				.getRoomNoticeId(), grpcRoomNoticeResponse
-						.getRoomNoticeAction(), grpcRoomNoticeResponse.getRoomNoticeStatus(), cmd.getRequesterUserId());
+		log.info("wsgate-gRPC RoomNotice = rId:{} rnId:{} act:{} stat:{} / usr:{}", grpcRoomNoticeApplyResponse.getRoomNoticeView()
+				.getRoomId(), grpcRoomNoticeApplyResponse.getRoomNoticeView().getRoomNoticeId(), grpcRoomNoticeApplyResponse.getRoomNoticeView()
+						.getRoomNoticeAction(), grpcRoomNoticeApplyResponse.getRoomNoticeView().getRoomNoticeStatus(), cmd.getRequesterUserId());
 
-		return grpcRoomNoticeResponse;
+		return grpcRoomNoticeApplyResponse;
 	}
 }
