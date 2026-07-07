@@ -1,12 +1,18 @@
 package com.chat.wsgate.handler;
 
+import java.time.LocalDateTime;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
+import com.chat.contract.friend.command.FindOnlineFriendTargetsCommand;
+import com.chat.contract.friend.domain.res.OnlineFriendTargetsResponseDTO;
+import com.chat.contract.notification.domain.UserOnlineNotificationDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
+import com.chat.wsgate.client.WsGateChEngineFriendClient;
 import com.chat.wsgate.outbound.WsGateOutboundWriter;
 import com.chat.wsgate.session.WsGateSessionRegistry;
 
@@ -21,6 +27,7 @@ public class WsGateConnectionHandler {
 	private final WsGateSessionRegistry wsGateSessionRegistry;
 
 	private final WsGateOutboundWriter wsGateOutboundWriter;
+	private final WsGateChEngineFriendClient wsGateChEngineFriendClient;
 
 	//	====== 유저 접속 ============================================================================================================
 	public void handleConnectUser(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -42,8 +49,33 @@ public class WsGateConnectionHandler {
 
 		log.info("{}-({})님이 접속하셨습니다.", loginUser.getNickname(), loginUser.getUserId());
 		wsGateOutboundWriter.responseOk(session, dto, "CONNECT_USER_OK", loginUser);
+		pushOnlineNotification(loginUser, dto.getRequestId());
 
 	}// handleConnectUser
+
+	private void pushOnlineNotification(SessionUserDTO loginUser, String requestId) {
+		try {
+			FindOnlineFriendTargetsCommand command = new FindOnlineFriendTargetsCommand(loginUser.getUserId(), loginUser.getPublicId());
+			OnlineFriendTargetsResponseDTO targets = wsGateChEngineFriendClient.findOnlineFriendTargets(command);
+
+			if (targets.getTargetUserIds() == null || targets.getTargetUserIds().isEmpty()) {
+				return;
+			}
+
+			UserOnlineNotificationDTO notification = new UserOnlineNotificationDTO(
+					loginUser.getUserId(),
+					loginUser.getPublicId(),
+					loginUser.getNickname(),
+					loginUser.getProfileImg(),
+					loginUser.getNickname() + "님이 접속하셨습니다.",
+					LocalDateTime.now()
+			);
+
+			wsGateOutboundWriter.pushToMultipleUsers(targets.getTargetUserIds(), "FRIEND_ONLINE_NOTIFICATION", notification, requestId);
+		} catch (Exception e) {
+			log.error("친구 접속 알림 전송 실패. userId={}", loginUser.getUserId(), e);
+		}
+	}
 
 	// ====== 로그아웃 (연결 강제 종료) ===========================================================================================================
 	public void closeUserWebSocketConnection(Long userId) {

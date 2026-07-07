@@ -38,6 +38,8 @@ public interface RoomMapper {
 	String findRoleInRoomByUserId(@Param("roomId") Long roomId, @Param("userId") Long userId);
 
 	int reactivateRoomMember(Long roomId, List<Long> directMemberPublicIds);
+
+	int updateMyRoomSettings(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("customRoomName") String customRoomName, @Param("customRoomThumbnail") String customRoomThumbnail, @Param("customRoomBackground") String customRoomBackground, @Param("messageNotificationEnabled") Boolean messageNotificationEnabled);
 }
 
 // Mapper는 SQL 소유권 기준으로 RoomMapper, MessageMapper, UserMapper처럼 도메인별로 유지했다.

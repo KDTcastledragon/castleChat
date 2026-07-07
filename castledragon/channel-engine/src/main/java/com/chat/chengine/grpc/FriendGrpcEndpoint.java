@@ -3,11 +3,15 @@ package com.chat.chengine.grpc;
 import com.chat.chengine.support.DtoToGrpcConverter;
 import com.chat.chengine.usecase.FriendCommandUseCase;
 import com.chat.contract.friend.command.AddFriendCommand;
+import com.chat.contract.friend.command.FindOnlineFriendTargetsCommand;
 import com.chat.contract.friend.command.RespondFriendCommand;
 import com.chat.contract.friend.domain.res.FriendEventResponseDTO;
+import com.chat.contract.friend.domain.res.OnlineFriendTargetsResponseDTO;
 import com.chat.contract.grpc.AddFriendRequest;
 import com.chat.contract.grpc.ChEngineFriendGrpc;
+import com.chat.contract.grpc.FindOnlineFriendTargetsRequest;
 import com.chat.contract.grpc.FriendEventResponse;
+import com.chat.contract.grpc.OnlineFriendTargetsResponse;
 import com.chat.contract.grpc.RespondFriendRequest;
 
 import io.grpc.stub.StreamObserver;
@@ -42,6 +46,18 @@ public class FriendGrpcEndpoint extends ChEngineFriendGrpc.ChEngineFriendImplBas
 		FriendEventResponseDTO result = friendCommandUseCase.respondFriend(command);
 
 		FriendEventResponse response = DtoToGrpcConverter.convertFriendEventResDtoToGrpc(result);
+
+		responseObserver.onNext(response);
+		responseObserver.onCompleted();
+	}
+
+	@Override
+	public void findOnlineFriendTargets(FindOnlineFriendTargetsRequest request, StreamObserver<OnlineFriendTargetsResponse> responseObserver) {
+		FindOnlineFriendTargetsCommand command = new FindOnlineFriendTargetsCommand(request.getUserId(), request.getPublicId());
+
+		OnlineFriendTargetsResponseDTO result = friendCommandUseCase.findOnlineFriendTargets(command);
+
+		OnlineFriendTargetsResponse response = DtoToGrpcConverter.convertOnlineFriendTargetsResDtoToGrpc(result);
 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();

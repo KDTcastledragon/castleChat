@@ -5,7 +5,7 @@
 
 <mapper namespace="com.chat.domserv.mapper.DomServChatMapper">
 
-	<select id="loadMessagesInRoom" resultType="com.chat.contract.domain.ChatMessageViewDTO">
+	<select id="loadMessagesInRoom" resultType="com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO">
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -45,7 +45,7 @@
 	</select>
 	
 	
-	<select id="findActiveRoomReadPositions" resultType="com.chat.contract.cache.RoomMemberReadPositionDTO">
+	<select id="findActiveRoomReadPositions" resultType="com.chat.contract.redis.RedisRoomMemberReadPositionDTO">
 		SELECT
 			rm.user_id AS userId,
 			u.public_id AS publicId,
@@ -59,7 +59,7 @@
 	</select>
 	
 	<insert id="insertChatAttachment"
-			parameterType="com.chat.contract.domain.ChatAttachmentDTO"
+			parameterType="com.chat.contract.chatting.domain.ChatAttachmentDTO"
 			useGeneratedKeys="true"
 			keyProperty="attachmentId">
 		INSERT INTO chat_message_attachments (

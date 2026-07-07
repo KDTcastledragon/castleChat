@@ -14,9 +14,11 @@ public class FriendEventResponseDTO {
 
 	private Long requesterUserId;
 	private String requesterPublicId;
+	private String requesterNickname;
 
 	private Long targetUserId;
 	private String targetPublicId;
+	private String targetNickname;
 
 	private String friendStatus;
 	private LocalDateTime eventAt;

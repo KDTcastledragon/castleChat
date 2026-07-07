@@ -1,6 +1,7 @@
 package com.chat.chengine.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -9,8 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.chat.chengine.mapper.FriendMapper;
 import com.chat.chengine.usecase.FriendCommandUseCase;
 import com.chat.contract.friend.command.AddFriendCommand;
+import com.chat.contract.friend.command.FindOnlineFriendTargetsCommand;
 import com.chat.contract.friend.command.RespondFriendCommand;
 import com.chat.contract.friend.domain.res.FriendEventResponseDTO;
+import com.chat.contract.friend.domain.res.OnlineFriendTargetsResponseDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -70,8 +73,11 @@ public class FriendCommandService implements FriendCommandUseCase {
 			throw e;
 		}
 
-		return new FriendEventResponseDTO("FRIEND_REQUESTED", cmd.getRequesterUserId(), cmd.getRequesterPublicId(), targetUserId, cmd
-				.getTargetPublicId(), PENDING, LocalDateTime.now());
+		String requesterNickname = friendMapper.findNicknameByUserId(cmd.getRequesterUserId());
+		String targetNickname = friendMapper.findNicknameByUserId(targetUserId);
+
+		return new FriendEventResponseDTO("FRIEND_REQUESTED", cmd.getRequesterUserId(), cmd.getRequesterPublicId(), requesterNickname, targetUserId, cmd
+				.getTargetPublicId(), targetNickname, PENDING, LocalDateTime.now());
 	}
 
 	@Override
@@ -121,8 +127,27 @@ public class FriendCommandService implements FriendCommandUseCase {
 
 		String eventType = ACCEPTED.equals(nextStatus) ? "FRIEND_ACCEPTED" : "FRIEND_REJECTED";
 
-		return new FriendEventResponseDTO(eventType, requesterUserId, cmd.getRequesterPublicId(), cmd.getResponderUserId(), cmd
-				.getResponderPublicId(), nextStatus, LocalDateTime.now());
+		String requesterNickname = friendMapper.findNicknameByUserId(requesterUserId);
+		String responderNickname = friendMapper.findNicknameByUserId(cmd.getResponderUserId());
+
+		return new FriendEventResponseDTO(eventType, requesterUserId, cmd.getRequesterPublicId(), requesterNickname, cmd.getResponderUserId(), cmd
+				.getResponderPublicId(), responderNickname, nextStatus, LocalDateTime.now());
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public OnlineFriendTargetsResponseDTO findOnlineFriendTargets(FindOnlineFriendTargetsCommand cmd) {
+		if (cmd == null) {
+			throw new IllegalArgumentException("온라인 알림 대상 조회 요청이 없습니다.");
+		}
+
+		if (cmd.getUserId() == null) {
+			throw new IllegalArgumentException("userId가 없습니다.");
+		}
+
+		List<Long> targetUserIds = friendMapper.findAcceptedFriendUserIds(cmd.getUserId());
+
+		return new OnlineFriendTargetsResponseDTO(cmd.getUserId(), targetUserIds == null ? List.of() : targetUserIds);
 	}
 
 	private boolean hasText(String value) {

@@ -5,7 +5,7 @@
 
 <mapper namespace="com.chat.domserv.mapper.RoomMapper">
 
-	<select id="findDirectRoom" resultType="com.chat.contract.domain.ChatRoomsDTO">
+	<select id="findDirectRoom" resultType="com.chat.contract.room.domain.ChatRoomsDTO">
 	    SELECT cr.*
 	    FROM chat_rooms cr
 	    JOIN room_members rm
@@ -22,7 +22,7 @@
 	       ) = 2
 	</select>
 
-	<insert id="createRoom" parameterType="com.chat.contract.domain.ChatRoomsDTO" useGeneratedKeys="true" keyProperty="roomId">
+	<insert id="createRoom" parameterType="com.chat.contract.room.domain.ChatRoomsDTO" useGeneratedKeys="true" keyProperty="roomId">
 	INSERT INTO chat_rooms(room_type, room_name, room_status, created_by) VALUES (#{roomType}, #{roomName} , #{roomStatus} ,#{createdBy})
 	</insert>
 
@@ -30,7 +30,7 @@
 	INSERT INTO room_members(room_id, user_id , role , custom_room_name,custom_room_thumbnail,member_status) VALUES (#{roomId}, #{userId}, #{role} , #{customRoomName},#{customRoomThumbnail},#{memberStatus})
 	</insert>
 	
-	<select id="loadMessagesInRoom" resultType="com.chat.contract.domain.ChatMessageViewDTO">
+	<select id="loadMessagesInRoom" resultType="com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO">
 	    SELECT *
 	    FROM (
 	        SELECT
@@ -73,7 +73,7 @@
 		select last_read_message_id from room_members where room_id = #{roomId} and user_id = #{userId}
 	</select>
 	
-<select id="getMyAllChatRooms" resultType="com.chat.contract.domain.ChatRoomListDTO">
+<select id="getMyAllChatRooms" resultType="com.chat.contract.room.domain.ChatRoomListDTO">
     SELECT
         r.room_id AS roomId,
         r.room_type AS roomType,
@@ -120,7 +120,7 @@
             WHERE cm.room_id = r.room_id
             ORDER BY cm.message_id DESC
             LIMIT 1
-        ) AS lastMessageTime
+        ) AS lastMessageAt
 
     FROM room_members me
 
@@ -145,19 +145,19 @@
         me.user_id,
         me.last_read_message_id
 
-    ORDER BY lastMessageTime DESC, r.room_id DESC
+    ORDER BY lastMessageAt DESC, r.room_id DESC
 </select>
 	
-	<select id="getRoomByRoomId" resultType="com.chat.contract.domain.ChatRoomsDTO">
+	<select id="getRoomByRoomId" resultType="com.chat.contract.room.domain.ChatRoomsDTO">
 	select * from chat_rooms where room_id =#{roomId}
 	</select>
 	
-	<select id="getActiveRoomMemberInfoInRoom" resultType="com.chat.contract.domain.RoomMembersDTO">
+	<select id="getActiveRoomMemberInfoInRoom" resultType="com.chat.contract.room.domain.RoomMembersDTO">
 	select * from room_members where room_id=#{roomId} and user_id = #{userId} AND member_status = 'ACTIVE'
 	</select>
 	
 	<select id="getRoomMemberProfilesByRoomId"
-        resultType="com.chat.contract.domain.RoomMemberResponseDTO">
+        resultType="com.chat.contract.room.domain.res.RoomMemberResponseDTO">
     SELECT
         u.public_id AS publicId,
         u.nickname AS nickname,
@@ -194,6 +194,18 @@
 		<foreach collection="userIds" item="userId" open="(" separator="," close=")">
 		    #{userId}
 		</foreach>
+	</update>
+
+	<update id="updateMyRoomSettings">
+		UPDATE room_members
+		SET
+			custom_room_name = #{customRoomName},
+			custom_room_thumbnail = #{customRoomThumbnail},
+			custom_room_back_ground = #{customRoomBackground},
+			message_notification_enabled = #{messageNotificationEnabled}
+		WHERE room_id = #{roomId}
+		  AND user_id = #{userId}
+		  AND member_status = 'ACTIVE'
 	</update>
 </mapper>
 

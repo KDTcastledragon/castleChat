@@ -1,9 +1,11 @@
 package com.chat.chengine.support;
 
 import com.chat.contract.friend.domain.res.FriendEventResponseDTO;
+import com.chat.contract.friend.domain.res.OnlineFriendTargetsResponseDTO;
 import com.chat.contract.grpc.ApplyRoomNoticeResponse;
 import com.chat.contract.grpc.EnterRoomResponse;
 import com.chat.contract.grpc.FriendEventResponse;
+import com.chat.contract.grpc.OnlineFriendTargetsResponse;
 import com.chat.contract.grpc.RoomFeedResponse;
 import com.chat.contract.grpc.RoomMemberProfile;
 import com.chat.contract.grpc.RoomNoticeView;
@@ -24,6 +26,7 @@ public final class DtoToGrpcConverter {
 				.setRoomName(dto.getCustomRoomName())
 				.setRoomThumbnail(dto.getCustomRoomThumbnail() == null ? "" : dto.getCustomRoomThumbnail())
 				.setRoomBackground(dto.getCustomRoomBackground() == null ? "" : dto.getCustomRoomBackground())
+				.setMessageNotificationEnabled(Boolean.TRUE.equals(dto.getMessageNotificationEnabled()))
 				.setRoomMemberCount(dto.getRoomMemberCount());
 
 		if (dto.getMemberList() != null) {
@@ -92,10 +95,23 @@ public final class DtoToGrpcConverter {
 				.setFriendEventType(dto.getFriendEventType())
 				.setRequesterUserId(dto.getRequesterUserId())
 				.setRequesterPublicId(dto.getRequesterPublicId())
+				.setRequesterNickname(dto.getRequesterNickname() == null ? "" : dto.getRequesterNickname())
 				.setTargetUserId(dto.getTargetUserId())
 				.setTargetPublicId(dto.getTargetPublicId())
+				.setTargetNickname(dto.getTargetNickname() == null ? "" : dto.getTargetNickname())
 				.setFriendStatus(dto.getFriendStatus())
 				.setEventAt(dto.getEventAt() == null ? "" : dto.getEventAt().toString())
 				.build();
+	}
+
+	public static OnlineFriendTargetsResponse convertOnlineFriendTargetsResDtoToGrpc(OnlineFriendTargetsResponseDTO dto) {
+		OnlineFriendTargetsResponse.Builder builder = OnlineFriendTargetsResponse.newBuilder()
+				.setUserId(dto.getUserId());
+
+		if (dto.getTargetUserIds() != null && !dto.getTargetUserIds().isEmpty()) {
+			builder.addAllTargetUserIds(dto.getTargetUserIds());
+		}
+
+		return builder.build();
 	}
 }

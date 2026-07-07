@@ -5,6 +5,7 @@ let ws = null; // wsRef.current대체.  “전역 변수”처럼 보이지만, 
 let isConnected = false; // isWsConnectedRef 대체.
 let isManualDisconnect = false;
 const roomHandlers = {}; // 방별 이벤트 처리 함수 보관소야.
+const globalHandlers = new Set();
 
 
 // ====== 2. constants =========================================================================================================
@@ -15,12 +16,16 @@ const WS_TYPES = {
     LEFT_ROOM: "LEFT_ROOM",
     TYPING_START: "TYPING_START",
     TYPING_STOP: "TYPING_STOP",
-    SEND_MSG: "SEND_MSG",
-    READ_MSG: "READ_MSG",
-    DELETE_MSG: "DELETE_MSG",
-    REPLY_MSG: "REPLY_MSG",
-    REACT_MSG: "REACT_MSG",
-    SHARE_MSG: "SHARE_MSG"
+    SEND_MSG: "SEND_MESSAGE",
+    READ_MSG: "READ_MESSAGE",
+    DELETE_MSG: "DELETE_MESSAGE",
+    REACT_MSG: "REACT_MESSAGE",
+    SHARE_MSG: "SHARE_MESSAGE",
+    ADD_FRIEND: "ADD_FRIEND",
+    RESPOND_FRIEND: "RESPOND_FRIEND",
+    INVITE_MEMBER: "INVITE_MEMBER",
+    KICK_MEMBER: "KICK_MEMBER",
+    BAN_MEMBER: "BAN_MEMBER"
 
 };
 
@@ -97,6 +102,8 @@ export function connectWs() {
         const wsEvt = JSON.parse(evt.data); // evt.data는 서버가 보낸 JSON 문자열이야.
         console.log('ws 수신', wsEvt);
 
+        globalHandlers.forEach(handler => handler(wsEvt));
+
         switch (wsEvt.wsType) {
             case 'CONNECT_USER_OK':
                 console.log('CONNECT_USER_OK');
@@ -110,7 +117,15 @@ export function connectWs() {
             case 'TYPING_STOP':
             case 'MSG_CREATED':
             case 'MSG_READ':
-            // case 'MSG_DELETED':
+            case 'MSG_DELETED':
+            case 'REACT_EVENTED':
+            case 'MSG_REACTION_UPDATED':
+            case 'ROOM_MEMBER_INVITED':
+            case 'ROOM_MEMBER_KICKED':
+            case 'ROOM_MEMBER_BANNED':
+            case 'ROOM_MEMBER_ROLE_CHANGED':
+            case 'LEFT_ROOM':
+            case 'ROOM_NOTICE_APPLIED':
             case 'ROOM_NOTICE': {
                 const roomId = wsEvt.payload?.roomId;
 
@@ -200,6 +215,14 @@ export function unregisterRoomHandler(roomId) {
     delete roomHandlers[roomId];
 }
 
+export function registerGlobalWsHandler(handler) {
+    globalHandlers.add(handler);
+
+    return () => {
+        globalHandlers.delete(handler);
+    };
+}
+
 export function emitWsConnectUser() {
     return emitWs(WS_TYPES.CONNECT_USER);
 }
@@ -219,6 +242,27 @@ export function emitWsLeftRoom(roomId) {
     return emitWs(WS_TYPES.LEFT_ROOM, { roomId: roomId });
 }
 
+export function emitWsInviteMember(roomId, inviteTargetMemberPublicIds) {
+    return emitWs(WS_TYPES.INVITE_MEMBER, {
+        roomId,
+        inviteTargetMemberPublicIds
+    });
+}
+
+export function emitWsKickMember(roomId, kickTargetPublicId) {
+    return emitWs(WS_TYPES.KICK_MEMBER, {
+        roomId,
+        kickTargetPublicId
+    });
+}
+
+export function emitWsBanMember(roomId, banTargetPublicId) {
+    return emitWs(WS_TYPES.BAN_MEMBER, {
+        roomId,
+        banTargetPublicId
+    });
+}
+
 export function emitWsTypingStart(roomId) {
     return emitWs(WS_TYPES.TYPING_START, { roomId: roomId });
 }
@@ -227,10 +271,13 @@ export function emitWsTypingStop(roomId) {
     return emitWs(WS_TYPES.TYPING_STOP, { roomId: roomId });
 }
 
-export function emitWsSendMessage(roomId, messageText) {
+export function emitWsSendMessage(roomId, messageText, options = {}) {
     return emitWs(WS_TYPES.SEND_MSG, {
         roomId: roomId,
-        messageText: messageText
+        messageText: messageText,
+        messageType: options.messageType,
+        replyToMessageId: options.replyToMessageId,
+        attachmentIds: options.attachmentIds
     });
 }
 
@@ -248,11 +295,27 @@ export function emitWsDeleteMessage(roomId, messageId) {
     })
 }
 
-export function emitWsReactMessage(roomId, messageId) {
+export function emitWsReactMessage(roomId, messageId, reactionCode, addRequested = true, reactionType = 'EMOTICON') {
     return emitWs(WS_TYPES.REACT_MSG, {
         roomId: roomId,
-        messageId: messageId
+        messageId: messageId,
+        reactionType: reactionType,
+        reactionCode: reactionCode,
+        addRequested: addRequested
     })
+}
+
+export function emitWsAddFriend(targetPublicId) {
+    return emitWs(WS_TYPES.ADD_FRIEND, {
+        targetPublicId: targetPublicId
+    });
+}
+
+export function emitWsRespondFriend(requesterPublicId, friendAction) {
+    return emitWs(WS_TYPES.RESPOND_FRIEND, {
+        requesterPublicId: requesterPublicId,
+        friendAction: friendAction
+    });
 }
 
 

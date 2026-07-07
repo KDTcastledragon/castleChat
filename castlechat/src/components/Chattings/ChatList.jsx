@@ -1,14 +1,82 @@
 import './ChatList.css';
-// import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMe } from '../../hooks/useAuthUser';
 import { useChatRoomActions, useGetMyAllRooms } from '../../hooks/useChatRoom';
+import { registerGlobalWsHandler } from '../../webSocket/wsClient';
 
 function ChatList() {
     // const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const { data: myAllRooms = [], isLoading, isError } = useGetMyAllRooms(!!me);
+    const [visibleRooms, setVisibleRooms] = useState([]);
 
     const { enterExistingRoom } = useChatRoomActions();
+
+    useEffect(() => {
+        setVisibleRooms(myAllRooms);
+    }, [myAllRooms]);
+
+    useEffect(() => {
+        if (!me) return;
+
+        return registerGlobalWsHandler((wsEvt) => {
+            if (wsEvt.wsType !== 'CHAT_MESSAGE_NOTIFICATION' && wsEvt.wsType !== 'MSG_CREATED') {
+                return;
+            }
+
+            const payload = wsEvt.payload;
+            if (!payload?.roomId) return;
+
+            setVisibleRooms(prevRooms => {
+                const nextRooms = prevRooms.map(room => {
+                    if (Number(room.roomId) !== Number(payload.roomId)) {
+                        return room;
+                    }
+
+                    const isMyMessage = payload.senderPublicId === me.publicId;
+                    const previewText = payload.previewText ?? payload.messageText ?? room.lastMessage ?? '';
+                    const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? room.lastMessageAt;
+                    const unreadCount = Number(room.unreadMessageCount ?? room.unreadCount ?? 0);
+                    const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_MESSAGE_NOTIFICATION' && !isMyMessage;
+
+                    return {
+                        ...room,
+                        lastMessage: previewText,
+                        lastMessageAt,
+                        unreadMessageCount: shouldIncreaseUnread ? unreadCount + 1 : unreadCount,
+                        unreadCount: shouldIncreaseUnread ? unreadCount + 1 : unreadCount
+                    };
+                });
+
+                return nextRooms.sort((a, b) => {
+                    const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+                    const bTime = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+                    return bTime - aTime;
+                });
+            });
+        });
+    }, [me]);
+
+    function formatRoomTime(value) {
+        if (!value) return '';
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+
+        return date.toTimeString().slice(0, 5);
+    }
+
+    function handleEnterRoom(roomId) {
+        setVisibleRooms(prevRooms =>
+            prevRooms.map(room =>
+                Number(room.roomId) === Number(roomId)
+                    ? { ...room, unreadMessageCount: 0, unreadCount: 0 }
+                    : room
+            )
+        );
+
+        enterExistingRoom(roomId);
+    }
 
     if (isCheckingLogin || isLoading) {
         return <div className='ChatListContainer'>채팅방 목록 불러오는 중...</div>;
@@ -28,18 +96,36 @@ function ChatList() {
         <div className='ChatListContainer'>
             <div className='chatList'>
                 <div className='chatListTitle'><span>채팅방 목록</span></div>
-                {myAllRooms.map((r) => (
+                {visibleRooms.map((r) => {
+                    const unreadCount = Number(r.unreadMessageCount ?? r.unreadCount ?? 0);
+
+                    return (
                     <div className='chatListBox' key={r.roomId}>
-                        <span>{r.roomId}-</span>
-                        <span>{r.roomType}</span>
-                        <span>/</span>&nbsp;
-                        <span>{r.customRoomName}</span>&nbsp;&nbsp;&nbsp;
-                        <span>{r.roomType === 'DIRECT' ? null : '/'}</span>&nbsp;&nbsp;
-                        <span>{r.roomType === 'DIRECT' ? null : `${r.activeMemberCount}명`}</span>
-                        &nbsp;&nbsp;&nbsp;&nbsp;
-                        <button onClick={() => enterExistingRoom(r.roomId)}>채팅</button>
+                        <div className="chatListMainInfo">
+                            <div className="chatListRoomNameLine">
+                                <span className="chatListRoomName">{r.customRoomName}</span>
+                                {r.roomType !== 'DIRECT' && (
+                                    <span className="chatListMemberCount">{r.activeMemberCount}명</span>
+                                )}
+                            </div>
+
+                            <div className="chatListLastMessage">
+                                {r.lastMessage || '아직 메시지가 없습니다.'}
+                            </div>
+                        </div>
+
+                        <div className="chatListSubInfo">
+                            <div className="chatListLastTime">{formatRoomTime(r.lastMessageAt)}</div>
+
+                            {unreadCount > 0 && (
+                                <div className="chatListUnreadBadge">{unreadCount > 999 ? '999+' : unreadCount}</div>
+                            )}
+                        </div>
+
+                        <button onClick={() => handleEnterRoom(r.roomId)}>채팅</button>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );

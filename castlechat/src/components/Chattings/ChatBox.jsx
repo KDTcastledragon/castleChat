@@ -3,9 +3,14 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import {
+    emitWsDeleteMessage,
     emitWsExitRoom,
+    emitWsBanMember,
+    emitWsInviteMember,
+    emitWsKickMember,
     emitWsLeftRoom,
     emitWsReadMessage,
+    emitWsReactMessage,
     emitWsSendMessage,
     emitWsTypingStart,
     emitWsTypingStop,
@@ -16,9 +21,10 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
-import { leftRoomApi, loadMessagesInRoomApi } from '../../api/chatApi';
+import { loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
+import { updateMyRoomSettingsApi } from '../../api/roomApi';
 
-function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
+function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
@@ -30,6 +36,17 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     const [profileTargetMember, setProfileTargetMember] = useState(null);
     const [messageContextMenu, setMessageContextMenu] = useState(null);
+    const [replyTargetMessage, setReplyTargetMessage] = useState(null);
+    const [reactionTargetMessage, setReactionTargetMessage] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [uploadProgress, setUploadProgress] = useState(null);
+    const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+    const [myReactionMap, setMyReactionMap] = useState({});
+    const [localRoomName, setLocalRoomName] = useState(roomName ?? '');
+    const [roomThumbnailUrl, setRoomThumbnailUrl] = useState(roomThumbnail ?? '');
+    const [roomBackgroundUrl, setRoomBackgroundUrl] = useState(customRoomBackground ?? '');
+    const [isMessageNotificationEnabled, setIsMessageNotificationEnabled] = useState(messageNotificationEnabled ?? true);
+    const [isSavingRoomSettings, setIsSavingRoomSettings] = useState(false);
 
     const [locallyRemovedMemberPublicIds, setLocallyRemovedMemberPublicIds] = useState(() => new Set());
     const [locallyAddedRoomMembers, setLocallyAddedRoomMembers] = useState([]);
@@ -76,6 +93,16 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     const myRoomRole = myRoomMemberInfo?.role;
 
+    const messageByIdMap = useMemo(() => {
+        const map = new Map();
+
+        prevChattings.forEach(message => {
+            map.set(Number(message.messageId), message);
+        });
+
+        return map;
+    }, [prevChattings]);
+
     const inviteCandidateFriends = useMemo(() => {
         const currentRoomMemberPublicIds = new Set(
             visibleRoomMembers.map(member => member.publicId)
@@ -103,10 +130,23 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         return false;
     }
 
+    function canBanMember(member) {
+        if (!canKickMember(member)) return false;
+
+        if (myRoomRole === 'HOST') {
+            return member.role !== 'HOST';
+        }
+
+        return myRoomRole === 'MANAGER' && member.role === 'MEMBER';
+    }
+
     const chatRoomSectionRef = useRef(null);
     const isChatBoxFocusedRef = useRef(false);
 
     const chatEndRef = useRef(null);
+    const fileInputRef = useRef(null);
+    const roomThumbnailInputRef = useRef(null);
+    const roomBackgroundInputRef = useRef(null);
 
     const isTypingRef = useRef(false);
     const typingTimerRef = useRef(null);
@@ -117,6 +157,12 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
     const MESSAGE_PAGE_SIZE = 50;
     const LOAD_PREV_THRESHOLD_PX = 80;
+    const MAX_UPLOAD_SIZE = 320 * 1024 * 1024;
+    const REACTION_OPTIONS = [
+        { label: '좋아요', code: 'like' },
+        { label: '싫어요', code: 'dislike' },
+        { label: '슬퍼요', code: 'sad' }
+    ];
 
     const chatListRef = useRef(null);
     const isLoadingPrevRef = useRef(false);
@@ -132,10 +178,170 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         startY: 0
     });
 
+    useEffect(() => {
+        setLocalRoomName(roomName ?? '');
+    }, [roomName]);
+
+    useEffect(() => {
+        setRoomThumbnailUrl(roomThumbnail ?? '');
+    }, [roomThumbnail]);
+
+    useEffect(() => {
+        setRoomBackgroundUrl(customRoomBackground ?? '');
+    }, [customRoomBackground]);
+
+    useEffect(() => {
+        setIsMessageNotificationEnabled(messageNotificationEnabled ?? true);
+    }, [messageNotificationEnabled]);
+
     const formatTime = (isoString) => {
         const date = new Date(isoString);
         return date.toTimeString().split(" ")[0];
     };
+
+    function formatFileSize(size) {
+        if (size >= 1024 * 1024) {
+            return `${(size / 1024 / 1024).toFixed(1)}MB`;
+        }
+
+        if (size >= 1024) {
+            return `${(size / 1024).toFixed(1)}KB`;
+        }
+
+        return `${size}B`;
+    }
+
+    function getSelectedFilesTotalSize(files = selectedFiles) {
+        return files.reduce((sum, file) => sum + file.size, 0);
+    }
+
+    function isEmptyMessage(messageText, files = selectedFiles) {
+        return messageText.trim().length === 0 && files.length === 0;
+    }
+
+    function resolveMessageTypeByFiles(files) {
+        if (!files || files.length === 0) return 'TEXT';
+
+        const firstFile = files[0];
+        const contentType = firstFile.type ?? '';
+
+        if (contentType.startsWith('image/')) return 'IMAGE';
+        if (contentType.startsWith('video/')) return 'VIDEO';
+        if (contentType.startsWith('audio/')) return 'AUDIO';
+
+        return 'FILE';
+    }
+
+    function addSelectedFiles(fileList) {
+        const incomingFiles = Array.from(fileList ?? []);
+        if (incomingFiles.length === 0) return;
+
+        setSelectedFiles(prev => {
+            const nextFiles = [...prev, ...incomingFiles];
+            const nextTotalSize = getSelectedFilesTotalSize(nextFiles);
+
+            if (nextTotalSize > MAX_UPLOAD_SIZE) {
+                alert(`첨부파일은 한 번에 최대 320MB까지만 올릴 수 있습니다. 현재: ${formatFileSize(nextTotalSize)}`);
+                return prev;
+            }
+
+            return nextFiles;
+        });
+    }
+
+    function removeSelectedFile(index) {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    }
+
+    function handleFileInputChange(e) {
+        addSelectedFiles(e.target.files);
+        e.target.value = '';
+    }
+
+    function handleChatDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        addSelectedFiles(e.dataTransfer.files);
+    }
+
+    function handleChatDragOver(e) {
+        e.preventDefault();
+    }
+
+    function handlePasteFiles(e) {
+        const pastedFiles = Array.from(e.clipboardData?.files ?? []);
+
+        if (pastedFiles.length === 0) return;
+
+        addSelectedFiles(pastedFiles);
+    }
+
+    async function uploadRoomSettingImage(e, target) {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+
+        if (!file) return;
+
+        if (file.size > MAX_UPLOAD_SIZE) {
+            alert('320MB 이하 파일만 올릴 수 있습니다.');
+            return;
+        }
+
+        try {
+            const uploaded = await sendFileApi(roomId, [file]);
+            const fileUrl = uploaded?.[0]?.fileUrl;
+
+            if (!fileUrl) {
+                alert('파일 URL을 받을 수 없습니다.');
+                return;
+            }
+
+            if (target === 'THUMBNAIL') {
+                setRoomThumbnailUrl(fileUrl);
+            }
+
+            if (target === 'BACKGROUND') {
+                setRoomBackgroundUrl(fileUrl);
+            }
+        } catch (err) {
+            console.error('방 설정 이미지 업로드 실패', err);
+            alert(err.response?.data ?? '이미지 업로드 실패');
+        }
+    }
+
+    async function saveRoomSettings(nextNotificationEnabled = isMessageNotificationEnabled) {
+        try {
+            setIsSavingRoomSettings(true);
+
+            await updateMyRoomSettingsApi({
+                roomId,
+                customRoomName: localRoomName,
+                customRoomThumbnail: roomThumbnailUrl,
+                customRoomBackground: roomBackgroundUrl,
+                messageNotificationEnabled: nextNotificationEnabled
+            });
+
+            queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+        } catch (err) {
+            console.error('방 설정 저장 실패', err);
+            alert(err.response?.data ?? '방 설정 저장 실패');
+        } finally {
+            setIsSavingRoomSettings(false);
+        }
+    }
+
+    async function toggleMessageNotification() {
+        const nextEnabled = !isMessageNotificationEnabled;
+        setIsMessageNotificationEnabled(nextEnabled);
+        await saveRoomSettings(nextEnabled);
+    }
+
+    function buildUploadProgressText() {
+        if (!uploadProgress) return '';
+
+        return `${formatFileSize(uploadProgress.loaded)} / ${formatFileSize(uploadProgress.total)}`;
+    }
 
     const startDrag = (e) => {
         onFocus();
@@ -270,8 +476,14 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         setSelectedInviteFriends([]);
         setProfileTargetMember(null);
         setMessageContextMenu(null);
+        setReplyTargetMessage(null);
+        setReactionTargetMessage(null);
+        setSelectedFiles([]);
+        setUploadProgress(null);
+        setIsUploadingFiles(false);
         setLocallyRemovedMemberPublicIds(new Set());
         setLocallyAddedRoomMembers([]);
+        setMyReactionMap({});
 
         const initChatRoom = async () => {
             try {
@@ -281,9 +493,7 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                 //     }
                 // });
 
-                const loadedMessagesInRoom = loadMessagesInRoomApi(roomId, MESSAGE_PAGE_SIZE);
-
-                const messages = loadedMessagesInRoom.data ?? [];
+                const messages = await loadMessagesInRoomApi(roomId, MESSAGE_PAGE_SIZE);
 
                 setPrevChattings(messages);
 
@@ -370,6 +580,114 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                 readerReadPositionsRef.current[readerPublicId] = Math.max(knownLastReadMsgId, toLastReadMsgId);
             }
 
+            if (wsResponse.wsType === "MSG_DELETED") {
+                const deletedMessage = wsResponse.payload;
+
+                setPrevChattings(prev =>
+                    prev.map(msg => {
+                        if (Number(msg.messageId) !== Number(deletedMessage.messageId)) {
+                            return msg;
+                        }
+
+                        return {
+                            ...msg,
+                            messageStatus: deletedMessage.messageStatus ?? 'DELETED',
+                            messageText: '삭제된 메시지입니다.',
+                            deletedAt: deletedMessage.deletedAt
+                        };
+                    })
+                );
+            }
+
+            if (wsResponse.wsType === "REACT_EVENTED" || wsResponse.wsType === "MSG_REACTION_UPDATED") {
+                const reaction = wsResponse.payload;
+
+                if (reaction.requesterPublicId === myPublicId) {
+                    const reactionKey = `${reaction.messageId}:${reaction.reactionCode}`;
+
+                    setMyReactionMap(prev => ({
+                        ...prev,
+                        [reactionKey]: reaction.added
+                    }));
+                }
+
+                setPrevChattings(prev =>
+                    prev.map(msg => {
+                        if (Number(msg.messageId) !== Number(reaction.messageId)) {
+                            return msg;
+                        }
+
+                        const currentReactions = Array.isArray(msg.reactions) ? msg.reactions : [];
+                        const foundReaction = currentReactions.find(item => item.reactionCode === reaction.reactionCode);
+
+                        let nextReactions;
+
+                        if (reaction.added) {
+                            if (foundReaction) {
+                                nextReactions = currentReactions.map(item =>
+                                    item.reactionCode === reaction.reactionCode
+                                        ? { ...item, count: Number(item.count ?? 0) + 1 }
+                                        : item
+                                );
+                            } else {
+                                nextReactions = [
+                                    ...currentReactions,
+                                    {
+                                        reactionType: reaction.reactionType,
+                                        reactionCode: reaction.reactionCode,
+                                        count: 1
+                                    }
+                                ];
+                            }
+                        } else {
+                            nextReactions = currentReactions
+                                .map(item =>
+                                    item.reactionCode === reaction.reactionCode
+                                        ? { ...item, count: Math.max(Number(item.count ?? 0) - 1, 0) }
+                                        : item
+                                )
+                                .filter(item => Number(item.count ?? 0) > 0);
+                        }
+
+                        return {
+                            ...msg,
+                            reactions: nextReactions
+                        };
+                    })
+                );
+            }
+
+            if (
+                wsResponse.wsType === "ROOM_MEMBER_INVITED" ||
+                wsResponse.wsType === "ROOM_MEMBER_KICKED" ||
+                wsResponse.wsType === "ROOM_MEMBER_BANNED" ||
+                wsResponse.wsType === "ROOM_MEMBER_ROLE_CHANGED" ||
+                wsResponse.wsType === "LEFT_ROOM"
+            ) {
+                const feed = wsResponse.payload;
+
+                if (feed?.feedText) {
+                    setPrevChattings(prev => [
+                        ...prev,
+                        {
+                            messageId: `feed-${Date.now()}-${Math.random()}`,
+                            messageType: 'SYSTEM',
+                            messageText: feed.feedText
+                        }
+                    ]);
+                }
+
+                if (wsResponse.wsType === "ROOM_MEMBER_KICKED" || wsResponse.wsType === "ROOM_MEMBER_BANNED" || wsResponse.wsType === "LEFT_ROOM") {
+                    const targets = feed?.targetPublicIds ?? [];
+
+                    setLocallyRemovedMemberPublicIds(prev => {
+                        const next = new Set(prev);
+                        targets.forEach(publicId => next.add(publicId));
+                        return next;
+                    });
+                }
+            }
+
             if (wsResponse.wsType === "TYPING_START") {
                 const typingInfo = wsResponse.payload;
 
@@ -398,17 +716,18 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                 );
             }
 
-            if (wsResponse.wsType === "ROOM_NOTICE") {
+            if (wsResponse.wsType === "ROOM_NOTICE" || wsResponse.wsType === "ROOM_NOTICE_APPLIED") {
                 const notice = wsResponse.payload;
+                const feed = notice.roomFeed ?? notice;
 
                 setPrevChattings(prev => [
                     ...prev,
                     {
                         messageId: `notice-${crypto.randomUUID()}`,
-                        roomId: notice.roomId,
-                        messageText: notice.message,
+                        roomId: feed.roomId,
+                        messageText: feed.feedText ?? notice.message,
                         messageType: 'SYSTEM',
-                        createdAt: notice.createdAt
+                        createdAt: feed.feedAt ?? notice.createdAt
                     }
                 ]);
             }
@@ -420,7 +739,13 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         };
     }, [roomId, myPublicId]);
 
-    function sendChatMessage() {
+    async function sendChatMessage() {
+        if (isUploadingFiles) return;
+
+        if (isEmptyMessage(chatMessage)) {
+            return;
+        }
+
         if (isTypingRef.current) {
             isTypingRef.current = false;
             emitWsTypingStop(roomId);
@@ -431,14 +756,54 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
             typingTimerRef.current = null;
         }
 
-        const isEmitted = emitWsSendMessage(roomId, chatMessage);
+        let uploadedAttachments = [];
+        const messageType = resolveMessageTypeByFiles(selectedFiles);
 
-        if (!isEmitted) {
-            console.log(`!isEmitted`);
-            return;
+        try {
+            if (selectedFiles.length > 0) {
+                setIsUploadingFiles(true);
+                setUploadProgress({
+                    loaded: 0,
+                    total: getSelectedFilesTotalSize(),
+                    percent: 0
+                });
+
+                uploadedAttachments = await sendFileApi(roomId, selectedFiles, (progressEvent) => {
+                    const loaded = progressEvent.loaded ?? 0;
+                    const total = progressEvent.total ?? getSelectedFilesTotalSize();
+                    const percent = total > 0 ? Math.round((loaded / total) * 100) : 0;
+
+                    setUploadProgress({
+                        loaded,
+                        total,
+                        percent
+                    });
+                });
+            }
+
+            const attachmentIds = uploadedAttachments.map(attachment => attachment.attachmentId);
+
+            const isEmitted = emitWsSendMessage(roomId, chatMessage, {
+                messageType,
+                replyToMessageId: replyTargetMessage?.messageId,
+                attachmentIds
+            });
+
+            if (!isEmitted) {
+                console.log(`!isEmitted`);
+                return;
+            }
+
+            setChatMessage('');
+            setSelectedFiles([]);
+            setReplyTargetMessage(null);
+            setUploadProgress(null);
+        } catch (e) {
+            console.error('파일/메시지 전송 실패', e);
+            alert(e.response?.data ?? '메시지 전송 실패');
+        } finally {
+            setIsUploadingFiles(false);
         }
-
-        setChatMessage('');
     }
 
     const handleChatMessageChange = (e) => {
@@ -534,8 +899,9 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
             isChatBoxFocusedRef.current = chatRoomSectionRef.current.contains(e.target);
 
-            if (!e.target.closest('.messageContextMenu')) {
+            if (!e.target.closest('.messageContextMenu') && !e.target.closest('.reactionPicker')) {
                 setMessageContextMenu(null);
+                setReactionTargetMessage(null);
             }
         };
 
@@ -552,6 +918,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
             if (messageContextMenu) {
                 setMessageContextMenu(null);
+                return;
+            }
+
+            if (reactionTargetMessage) {
+                setReactionTargetMessage(null);
                 return;
             }
 
@@ -580,13 +951,11 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         return () => {
             window.removeEventListener('keydown', handleEscKeyDown);
         };
-    }, [messageContextMenu, profileTargetMember, isInviteFriendPanelOpen, isRoomMenuOpen]);
+    }, [messageContextMenu, reactionTargetMessage, profileTargetMember, isInviteFriendPanelOpen, isRoomMenuOpen]);
 
     async function leftRoom() {
         try {
             flushPendingReadMessage();
-
-            await leftRoomApi(roomId);
 
             emitWsLeftRoom(roomId);
             exitChatRoom();
@@ -601,17 +970,19 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
     async function kickMember(member) {
         if (!member) return;
 
-        const confirmed = window.confirm(`${member.nickname}님을 강퇴하시겠습니까?`);
+        const confirmed = window.confirm(`${member.nickname}님을 추방하시겠습니까?`);
 
         if (!confirmed) {
             return;
         }
 
         try {
-            await axios.post('/room/kickMemberInRoom', {
-                roomId,
-                kickTargetPublicId: member.publicId
-            });
+            const emitted = emitWsKickMember(roomId, member.publicId);
+
+            if (!emitted) {
+                alert('WebSocket 연결 안 됨');
+                return;
+            }
 
             setLocallyRemovedMemberPublicIds(prev => {
                 const next = new Set(prev);
@@ -621,6 +992,34 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         } catch (e) {
             console.error('강퇴 실패', e);
             alert(e.response?.data ?? '강퇴 실패');
+        }
+    }
+
+    async function banMember(member) {
+        if (!member) return;
+
+        const firstConfirmed = window.confirm(`${member.nickname}님을 영구강퇴하시겠습니까?`);
+        if (!firstConfirmed) return;
+
+        const secondConfirmed = window.confirm('영구강퇴는 재초대가 제한될 수 있습니다. 정말 진행할까요?');
+        if (!secondConfirmed) return;
+
+        try {
+            const emitted = emitWsBanMember(roomId, member.publicId);
+
+            if (!emitted) {
+                alert('WebSocket 연결 안 됨');
+                return;
+            }
+
+            setLocallyRemovedMemberPublicIds(prev => {
+                const next = new Set(prev);
+                next.add(member.publicId);
+                return next;
+            });
+        } catch (e) {
+            console.error('영구강퇴 실패', e);
+            alert(e.response?.data ?? '영구강퇴 실패');
         }
     }
 
@@ -660,10 +1059,12 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
             const inviteTargetMemberPublicIds = selectedInviteFriends.map(friend => friend.publicId);
 
-            await axios.post('/room/inviteGroupRoom', {
-                roomId,
-                inviteTargetMemberPublicIds
-            });
+            const emitted = emitWsInviteMember(roomId, inviteTargetMemberPublicIds);
+
+            if (!emitted) {
+                alert('WebSocket 연결 안 됨');
+                return;
+            }
 
             setLocallyAddedRoomMembers(prev => {
                 const map = new Map();
@@ -756,18 +1157,23 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
 
         if (!targetMessage) return;
 
-        if (action === 'REACTION') {
-            alert(`리액션: ${targetMessage.messageId}`);
+        if (action === 'REACT') {
+            setReactionTargetMessage(targetMessage);
             return;
         }
 
         if (action === 'REPLY') {
-            alert(`답장하기: ${targetMessage.messageText}`);
+            setReplyTargetMessage(targetMessage);
             return;
         }
 
         if (action === 'DELETE') {
-            alert(`삭제하기: ${targetMessage.messageId}`);
+            const confirmed = window.confirm('이 메시지를 삭제하시겠습니까?');
+
+            if (confirmed) {
+                emitWsDeleteMessage(roomId, targetMessage.messageId);
+            }
+
             return;
         }
 
@@ -786,6 +1192,16 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
         }
     }
 
+    function applyReaction(reactionCode) {
+        if (!reactionTargetMessage) return;
+
+        const reactionKey = `${reactionTargetMessage.messageId}:${reactionCode}`;
+        const addRequested = !myReactionMap[reactionKey];
+
+        emitWsReactMessage(roomId, reactionTargetMessage.messageId, reactionCode, addRequested);
+        setReactionTargetMessage(null);
+    }
+
     return (
         <div className='chatBoxContainer'>
             <div
@@ -800,6 +1216,8 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     isChatBoxFocusedRef.current = true;
                     onFocus();
                 }}
+                onDrop={handleChatDrop}
+                onDragOver={handleChatDragOver}
             >
                 <div className='chatListTitle' onMouseDown={startDrag}>
                     <div className="chatTitleLeftControls">
@@ -813,9 +1231,18 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                         </button>
                     </div>
 
-                    <span className="chatRoomTitleText">{roomName}</span>
+                    <span className="chatRoomTitleText">{localRoomName}</span>
 
                     <div className="chatTitleRightControls">
+                        <button
+                            className={`notificationBellButton ${isMessageNotificationEnabled ? 'on' : 'off'}`}
+                            title={isMessageNotificationEnabled ? '메시지 알림 켜짐' : '메시지 알림 꺼짐'}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={toggleMessageNotification}
+                        >
+                            {isMessageNotificationEnabled ? '🔔' : '🔕'}
+                        </button>
+
                         <button
                             className="chatCloseButton"
                             onMouseDown={(e) => e.stopPropagation()}
@@ -841,6 +1268,55 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                             onClick={leftRoom}
                         >
                             방 나가기
+                        </button>
+                    </div>
+
+                    <div className="roomSettingsBox">
+                        <div className="roomSidePanelSubTitle">방 설정</div>
+
+                        <label className="roomSettingLabel">
+                            방 이름
+                            <input
+                                value={localRoomName}
+                                onChange={(e) => setLocalRoomName(e.target.value)}
+                                placeholder="방 이름"
+                            />
+                        </label>
+
+                        <div className="roomImageSettingRow">
+                            <button onClick={() => roomThumbnailInputRef.current?.click()}>
+                                썸네일 사진
+                            </button>
+                            <span>{roomThumbnailUrl ? '선택됨' : '기본 이미지'}</span>
+                            <input
+                                ref={roomThumbnailInputRef}
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={(e) => uploadRoomSettingImage(e, 'THUMBNAIL')}
+                            />
+                        </div>
+
+                        <div className="roomImageSettingRow">
+                            <button onClick={() => roomBackgroundInputRef.current?.click()}>
+                                배경 사진
+                            </button>
+                            <span>{roomBackgroundUrl ? '선택됨' : '기본 배경'}</span>
+                            <input
+                                ref={roomBackgroundInputRef}
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={(e) => uploadRoomSettingImage(e, 'BACKGROUND')}
+                            />
+                        </div>
+
+                        <button
+                            className="saveRoomSettingsButton"
+                            onClick={() => saveRoomSettings()}
+                            disabled={isSavingRoomSettings}
+                        >
+                            방 설정 저장
                         </button>
                     </div>
 
@@ -875,12 +1351,26 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                                     </div>
 
                                     {canKickMember(member) ? (
-                                        <button
-                                            className="kickMemberButton"
-                                            onClick={() => kickMember(member)}
-                                        >
-                                            강퇴
-                                        </button>
+                                        <div className="memberDangerActions">
+                                            <button
+                                                className="kickMemberButton"
+                                                onClick={() => kickMember(member)}
+                                            >
+                                                추방
+                                            </button>
+
+                                            {canBanMember(member) && (
+                                                <details className="banMemberDetails">
+                                                    <summary>더보기</summary>
+                                                    <button
+                                                        className="banMemberButton"
+                                                        onClick={() => banMember(member)}
+                                                    >
+                                                        영구강퇴
+                                                    </button>
+                                                </details>
+                                            )}
+                                        </div>
                                     ) : (
                                         <div className="kickMemberButtonPlaceholder" />
                                     )}
@@ -1030,10 +1520,35 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     </div>
                 )}
 
+                {reactionTargetMessage && (
+                    <div
+                        className="reactionPicker"
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        <div className="reactionPickerTitle">리액션</div>
+
+                        <div className="reactionPickerButtons">
+                            {REACTION_OPTIONS.map(reaction => (
+                                <button
+                                    key={reaction.code}
+                                    onClick={() => applyReaction(reaction.code)}
+                                >
+                                    {reaction.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div
                     className='chattingBox'
                     ref={chatListRef}
                     onScroll={handleChatScroll}
+                    style={roomBackgroundUrl ? {
+                        backgroundImage: `linear-gradient(rgba(255,255,255,0.72), rgba(255,255,255,0.72)), url(${roomBackgroundUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center'
+                    } : undefined}
                 >
                     {prevChattings && prevChattings.length > 0 ?
                         prevChattings.map((d) => {
@@ -1050,6 +1565,12 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                             const senderProfileImg = sender?.profileImg ?? '/images/mococo_question.png';
 
                             const isMine = d.senderPublicId === myPublicId;
+                            const isDeletedMessage = d.messageStatus === 'DELETED';
+                            const replyMessage = d.replyToMessageId
+                                ? messageByIdMap.get(Number(d.replyToMessageId))
+                                : null;
+                            const attachments = Array.isArray(d.attachments) ? d.attachments : [];
+                            const reactions = Array.isArray(d.reactions) ? d.reactions : [];
 
                             return (
                                 <div
@@ -1078,9 +1599,64 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                                             <div className="senderNickname">{senderNickname}</div>
                                         )}
 
-                                        <div className='messageWrap'>
-                                            <div className="messageText">{d.messageText}</div>
+                                        <div className={`messageWrap ${isDeletedMessage ? 'deleted' : ''}`}>
+                                            {replyMessage && !isDeletedMessage && (
+                                                <div className="replyPreviewInMessage">
+                                                    <div className="replyPreviewSender">
+                                                        {memberMap[replyMessage.senderPublicId]?.nickname ?? '답장'}
+                                                    </div>
+                                                    <div className="replyPreviewText">
+                                                        {replyMessage.messageText || '첨부 메시지'}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {attachments.length > 0 && !isDeletedMessage && (
+                                                <div className="attachmentPreviewList">
+                                                    {attachments.map(attachment => (
+                                                        <div className="attachmentPreviewItem" key={attachment.attachmentId}>
+                                                            {attachment.attachmentKind === 'IMAGE' ? (
+                                                                <img
+                                                                    className="attachmentImagePreview"
+                                                                    src={attachment.fileUrl}
+                                                                    alt={attachment.originalFileName}
+                                                                />
+                                                            ) : attachment.attachmentKind === 'VIDEO' ? (
+                                                                <video
+                                                                    className="attachmentVideoPreview"
+                                                                    src={attachment.fileUrl}
+                                                                    controls
+                                                                />
+                                                            ) : (
+                                                                <a
+                                                                    className="attachmentFilePreview"
+                                                                    href={attachment.fileUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                >
+                                                                    {attachment.originalFileName}
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+
+                                            <div className="messageText">
+                                                {isDeletedMessage ? '삭제된 메시지입니다.' : d.messageText}
+                                            </div>
                                         </div>
+
+                                        {reactions.length > 0 && (
+                                            <div className="messageReactionList">
+                                                {reactions.map(reaction => (
+                                                    <span className="messageReactionBadge" key={reaction.reactionCode}>
+                                                        {REACTION_OPTIONS.find(item => item.code === reaction.reactionCode)?.label ?? reaction.reactionCode}
+                                                        {Number(reaction.count ?? 0) > 1 ? ` ${reaction.count}` : ''}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
 
                                     {!isMine && (
@@ -1105,10 +1681,80 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                     </div>
                 )}
 
+                {(replyTargetMessage || selectedFiles.length > 0 || uploadProgress) && (
+                    <div className="composerMetaPanel">
+                        {replyTargetMessage && (
+                            <div className="replyComposerBar">
+                                <div className="replyComposerTextBox">
+                                    <div className="replyComposerTitle">
+                                        {memberMap[replyTargetMessage.senderPublicId]?.nickname ?? '상대'}에게 답장
+                                    </div>
+                                    <div className="replyComposerText">
+                                        {replyTargetMessage.messageText || '첨부 메시지'}
+                                    </div>
+                                </div>
+
+                                <button
+                                    className="replyComposerCloseButton"
+                                    onClick={() => setReplyTargetMessage(null)}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        )}
+
+                        {selectedFiles.length > 0 && (
+                            <div className="selectedFileList">
+                                {selectedFiles.map((file, index) => (
+                                    <div className="selectedFileItem" key={`${file.name}-${index}`}>
+                                        <span className="selectedFileName">{file.name}</span>
+                                        <span className="selectedFileSize">{formatFileSize(file.size)}</span>
+                                        <button onClick={() => removeSelectedFile(index)}>삭제</button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {uploadProgress && (
+                            <div className="uploadProgressBox">
+                                <div
+                                    className="uploadProgressCircle"
+                                    style={{
+                                        background: `conic-gradient(#fee500 ${uploadProgress.percent * 3.6}deg, #e9e9e9 0deg)`
+                                    }}
+                                >
+                                    <span>{uploadProgress.percent}%</span>
+                                </div>
+
+                                <div className="uploadProgressText">
+                                    {buildUploadProgressText()}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 <div className='inputChat'>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        hidden
+                        onChange={handleFileInputChange}
+                    />
+
+                    <button
+                        className="attachFileButton"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingFiles}
+                    >
+                        +
+                    </button>
+
                     <textarea
                         value={chatMessage}
                         onChange={handleChatMessageChange}
+                        onPaste={handlePasteFiles}
                         placeholder='여기에 메세지 입력...'
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
@@ -1117,7 +1763,9 @@ function ChatBox({ roomId, roomType, roomName, memberList, x, y, zIndex, exitCha
                             }
                         }}
                     />
-                    <button onClick={sendChatMessage}>전송</button>
+                    <button onClick={sendChatMessage} disabled={isUploadingFiles}>
+                        {isUploadingFiles ? '전송 중' : '전송'}
+                    </button>
                 </div>
             </div>
         </div>

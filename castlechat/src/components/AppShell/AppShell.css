@@ -1,0 +1,35 @@
+.globalToastBox {
+    position: fixed;
+    right: 20px;
+    top: 118px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.globalToastItem {
+    min-width: 240px;
+    max-width: 360px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(17, 17, 17, 0.92);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    animation: toastSlideIn 160ms ease-out;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

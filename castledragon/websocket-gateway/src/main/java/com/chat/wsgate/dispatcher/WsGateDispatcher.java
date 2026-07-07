@@ -59,22 +59,22 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 
 			case "ENTER_ROOM" -> wsGateRoomHandler.handleEnterRoom(session, dto);
 			case "EXIT_ROOM" -> wsGateRoomHandler.handleExitRoom(session, dto);
-			case "LEFT_ROOM" -> wsGateRoomHandler.handleExitRoom(session, dto); // 구현해야함
+			case "LEFT_ROOM" -> wsGateRoomHandler.handleLeftRoom(session, dto);
 
 			case "TYPING_START" -> wsGateChatHandler.handleTyping(session, dto, "TYPING_START");
 			case "TYPING_STOP" -> wsGateChatHandler.handleTyping(session, dto, "TYPING_STOP");
 
 			case "SEND_MESSAGE" -> wsGateChatHandler.handleSendMessage(session, dto);
 			case "READ_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto);
-			case "DELETE_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto); // 구현해야함
-			case "REACT_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "DELETE_MESSAGE" -> wsGateChatHandler.handleDeleteMessage(session, dto);
+			case "REACT_MESSAGE" -> wsGateChatHandler.handleReactMessage(session, dto);
 
 			case "INVITE_MEMBER" -> wsGateRoomHandler.handleInviteMember(session, dto);
 			case "KICK_MEMBER" -> wsGateRoomHandler.handleKickMember(session, dto);
 			case "BAN_MEMBER" -> wsGateRoomHandler.handleBanMember(session, dto);
 			case "CHANGE_MEMBER_ROLE" -> wsGateRoomHandler.handleChangeMemberRole(session, dto);
 
-			case "APPLY_ROOM_NOTICE" -> wsGateRoomHandler.handleEnterRoom(session, dto); // 구현해야함
+			case "APPLY_ROOM_NOTICE" -> wsGateRoomHandler.handleApplyRoomNotice(session, dto);
 
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());

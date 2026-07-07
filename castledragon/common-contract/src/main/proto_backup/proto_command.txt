@@ -16,7 +16,10 @@ cd D:\castleDragonProjects\castleChat\castledragon; .\gradlew.bat :common-contra
 
 
 
-cd D:\castleDragonProjects\castleChat\castledragon; 
+cd D:\castleDragonProjects\castleChat\castledragon
+
+
+
 
 .\gradlew.bat :common-contract:clean :common-contract:generateProto :common-contract:compileJava 
 

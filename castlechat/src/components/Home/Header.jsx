@@ -23,8 +23,8 @@ function Header() {
                     <div className='loginedUserProfileBox'>
                         <div className='loginedUserProfileImg'>
                             <img className="headerProfileImg"
-                                src="/images/mococo_question.png"
-                                alt="-_-" />
+                                src={me.profileImg || "/images/mococo_question.png"}
+                                alt={me.nickname} />
                         </div>
                         <div className='loginedUserNickname'><span>{me.nickname}</span></div>
                         <div className='loginedUserFriendCode'><span>{me.friendCode}</span></div>
@@ -33,11 +33,12 @@ function Header() {
                         </div>
                     </div>
 
-                    <div className='headerButtonSection'>
-                        <button onClick={() => nav('/')}>친구목록</button>
-                        <button onClick={() => nav('/chatList')}>채팅</button>
-                        <button onClick={() => nav('/settings')}>설정</button>
-                    </div>
+            <div className='headerButtonSection'>
+                <button onClick={() => nav('/')}>친구목록</button>
+                <button onClick={() => nav('/chatList')}>채팅</button>
+                <button onClick={() => nav('/settings')}>설정</button>
+                <button onClick={() => nav('/myPage')}>내정보</button>
+            </div>
 
                 </div>
                 :

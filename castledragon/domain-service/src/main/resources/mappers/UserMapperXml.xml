@@ -18,7 +18,7 @@
   	select * from users where public_id = #{id};
   	</select>
   	
-  	<select id="searchUsers" resultType="com.chat.contract.domain.UserProfileResponseDTO" >
+	<select id="searchUsers" resultType="com.chat.contract.user.domain.UserProfileResponseDTO" >
 	  	SELECT public_id, nickname, friend_code, profile_img
 		FROM users
 		WHERE status = 'ACTIVE'
@@ -35,12 +35,12 @@
 	select user_id from users where public_id =#{publicId} and status ='ACTIVE'
 	</select>
 	
-	<select id="findUserInfoByPublicId" resultType="com.chat.contract.domain.ChatUserLookupDTO">
+	<select id="findUserInfoByPublicId" resultType="com.chat.contract.room.domain.ChatUserLookupDTO">
 	select user_id,public_id, nickname, friend_code, profile_img from users where public_id=#{publicId}
 	</select>
 	
 	<select id="findUserInfoByPublicIdList"
-        resultType="com.chat.contract.domain.ChatUserLookupDTO">
+        resultType="com.chat.contract.room.domain.ChatUserLookupDTO">
     SELECT
         user_id AS userId,
         public_id AS publicId,
@@ -58,6 +58,21 @@
      <update id="changePassword">
     	update user set password = #{encodedNewPassword} where id = #{id}
     </update>
+
+	<update id="updatePasswordByUserId">
+		UPDATE users
+		SET password = #{encodedNewPassword}
+		WHERE user_id = #{userId}
+	</update>
+
+	<update id="updateMyProfile">
+		UPDATE users
+		SET
+			nickname = #{nickname},
+			profile_img = #{profileImg}
+		WHERE user_id = #{userId}
+		  AND status = 'ACTIVE'
+	</update>
     
     <delete id="withdrawMember">
     	delete from user where id = #{id}

@@ -4,16 +4,20 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.chat.contract.chatting.domain.ChatAttachmentDTO;
 import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 import com.chat.contract.friend.domain.res.FriendEventResponseDTO;
+import com.chat.contract.friend.domain.res.OnlineFriendTargetsResponseDTO;
 import com.chat.contract.grpc.ApplyRoomNoticeResponse;
+import com.chat.contract.grpc.ChatAttachment;
 import com.chat.contract.grpc.CreateChatMessageResponse;
 import com.chat.contract.grpc.DeleteChatMessageResponse;
 import com.chat.contract.grpc.EnterRoomResponse;
 import com.chat.contract.grpc.FriendEventResponse;
+import com.chat.contract.grpc.OnlineFriendTargetsResponse;
 import com.chat.contract.grpc.ReactChatMessageResponse;
 import com.chat.contract.grpc.ReadChatMessageResponse;
 import com.chat.contract.grpc.RoomFeedResponse;
@@ -37,14 +41,42 @@ public final class GrpcToDtoConverter {
 		chatMsgView.setSenderPublicId(response.getSenderPublicId());
 		chatMsgView.setMessageType(response.getMessageType());
 		chatMsgView.setMessageText(response.getMessageText());
-		chatMsgView.setReplyToMessageId(response.getReplyToMessageId());
+		if (response.hasReplyToMessageId()) {
+			chatMsgView.setReplyToMessageId(response.getReplyToMessageId());
+		}
 		chatMsgView.setCreatedAt(LocalDateTime.parse(response.getCreatedAt()));
 		chatMsgView.setUnreadCount(response.getUnreadCount());
-
-		// attachments 변환은 ChatAttachmentDTO 필드명 맞춰서 추가 필요
-		// 지금 당장 compile 우선이면 빈 리스트/후속 구현으로 둬도 됨.
+		chatMsgView.setNotificationTargetUserIds(response.getNotificationTargetUserIdsList());
+		chatMsgView.setAttachments(convertGrpcToChatAttachmentDtoList(response.getAttachmentsList()));
 
 		return chatMsgView;
+	}
+
+	private static List<ChatAttachmentDTO> convertGrpcToChatAttachmentDtoList(List<ChatAttachment> responseAttachments) {
+		List<ChatAttachmentDTO> attachments = new ArrayList<>();
+
+		for (ChatAttachment response : responseAttachments) {
+			ChatAttachmentDTO attachment = new ChatAttachmentDTO();
+
+			attachment.setAttachmentId(response.getAttachmentId());
+			attachment.setMessageId(response.getMessageId() == 0L ? null : response.getMessageId());
+			attachment.setRoomId(response.getRoomId());
+			attachment.setUploaderUserId(response.getUploaderUserId());
+			attachment.setFileUrl(response.getFileUrl());
+			attachment.setOriginalFileName(response.getOriginalFileName());
+			attachment.setContentType(response.getContentType());
+			attachment.setFileSize(response.getFileSize());
+			attachment.setAttachmentKind(response.getAttachmentKind());
+			attachment.setAttachmentStatus(response.getAttachmentStatus());
+			attachment.setWidth(response.getWidth() == 0 ? null : response.getWidth());
+			attachment.setHeight(response.getHeight() == 0 ? null : response.getHeight());
+			attachment.setDurationMs(response.getDurationMs() == 0L ? null : response.getDurationMs());
+			attachment.setSortOrder(response.getSortOrder());
+
+			attachments.add(attachment);
+		}
+
+		return attachments;
 	}
 
 	public static ReadPositionUpdateResponseDTO convertGrpcToReadPosUpdateResDto(ReadChatMessageResponse response) {
@@ -99,6 +131,7 @@ public final class GrpcToDtoConverter {
 		enterRoom.setCustomRoomName(response.getRoomName());
 		enterRoom.setCustomRoomThumbnail(response.getRoomThumbnail());
 		enterRoom.setCustomRoomBackground(response.getRoomBackground());
+		enterRoom.setMessageNotificationEnabled(response.getMessageNotificationEnabled());
 		enterRoom.setRoomMemberCount(response.getRoomMemberCount());
 
 		List<RoomMemberResponseDTO> members = new ArrayList<>();
@@ -174,8 +207,10 @@ public final class GrpcToDtoConverter {
 		friendEvent.setFriendEventType(response.getFriendEventType());
 		friendEvent.setRequesterUserId(response.getRequesterUserId());
 		friendEvent.setRequesterPublicId(response.getRequesterPublicId());
+		friendEvent.setRequesterNickname(response.getRequesterNickname());
 		friendEvent.setTargetUserId(response.getTargetUserId());
 		friendEvent.setTargetPublicId(response.getTargetPublicId());
+		friendEvent.setTargetNickname(response.getTargetNickname());
 		friendEvent.setFriendStatus(response.getFriendStatus());
 
 		if (response.getEventAt() != null && !response.getEventAt().isBlank()) {
@@ -183,5 +218,14 @@ public final class GrpcToDtoConverter {
 		}
 
 		return friendEvent;
+	}
+
+	public static OnlineFriendTargetsResponseDTO convertGrpcToOnlineFriendTargetsResDto(OnlineFriendTargetsResponse response) {
+		OnlineFriendTargetsResponseDTO onlineTargets = new OnlineFriendTargetsResponseDTO();
+
+		onlineTargets.setUserId(response.getUserId());
+		onlineTargets.setTargetUserIds(response.getTargetUserIdsList());
+
+		return onlineTargets;
 	}
 }

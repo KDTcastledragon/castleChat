@@ -14,6 +14,16 @@ export const meApi = async () => {
     return res.data;
 };
 
+export const updateMyProfileApi = async (data) => {
+    const res = await axios.post('/user/updateMyProfile', data);
+    return res.data;
+};
+
+export const changeMyPasswordApi = async (data) => {
+    const res = await axios.post('/user/changeMyPassword', data);
+    return res.data;
+};
+
 export const allUsersApi = async () => {
     const res = await axios.get('/user/allUsers');
     return res.data;

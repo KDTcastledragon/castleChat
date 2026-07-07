@@ -20,6 +20,7 @@ export function useAddFriend() {
         onSuccess: () => {
             // queryClient.invalidateQueries({ queryKey: ['friends'] });
             queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
+            queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
         },
     });
 }
@@ -44,6 +45,7 @@ export function useRespondFriendRequest() {
             queryClient.invalidateQueries({ queryKey: ['friends'] });
             queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
             queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
+            queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
         },
     });
 }

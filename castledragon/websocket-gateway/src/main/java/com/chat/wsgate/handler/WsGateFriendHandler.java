@@ -44,7 +44,7 @@ public class WsGateFriendHandler {
 			FriendEventResponseDTO response = wsGateFriendClient.addFriend(addFriCmd);
 
 			wsGateOutboundWriter.responseOk(session, dto, "ADD_FRIEND_OK", response);
-			wsGateOutboundWriter.dispatchToUser(response.getTargetUserId(), "FRIEND_REQUEST_RECEIVED", response, dto.getRequestId());
+			wsGateOutboundWriter.pushToSingleUser(response.getTargetUserId(), "FRIEND_REQUEST_RECEIVED", response, dto.getRequestId());
 
 		} catch (Exception e) {
 			log.error("ADD_FRIEND 예외", e);
@@ -70,7 +70,7 @@ public class WsGateFriendHandler {
 			FriendEventResponseDTO response = wsGateFriendClient.respondFriend(rspFriCmd);
 
 			wsGateOutboundWriter.responseOk(session, dto, "RESPOND_FRIEND_OK", response);
-			wsGateOutboundWriter.dispatchToUser(response.getRequesterUserId(), "FRIEND_REQUEST_RESPONDED", response, dto.getRequestId());
+			wsGateOutboundWriter.pushToSingleUser(response.getRequesterUserId(), "FRIEND_REQUEST_RESPONDED", response, dto.getRequestId());
 
 		} catch (Exception e) {
 			log.error("RESPOND_FRIEND 예외", e);

@@ -7,11 +7,13 @@ import com.chat.contract.chatting.command.ReactChatMessageCommand;
 import com.chat.contract.chatting.command.ReadChatMessageCommand;
 import com.chat.contract.chatting.command.StartDirectChatCommand;
 import com.chat.contract.chatting.command.StartGroupChatCommand;
+import com.chat.contract.chatting.domain.ChatAttachmentDTO;
 import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 import com.chat.contract.grpc.ChEngineChatGrpc;
+import com.chat.contract.grpc.ChatAttachment;
 import com.chat.contract.grpc.CreateChatMessageRequest;
 import com.chat.contract.grpc.CreateChatMessageResponse;
 import com.chat.contract.grpc.DeleteChatMessageRequest;
@@ -47,6 +49,33 @@ public class ChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplBase {
 
 		if (cmdResult.getReplyToMessageId() != null) {
 			responseBuilder.setReplyToMessageId(cmdResult.getReplyToMessageId());
+		}
+
+		if (cmdResult.getAttachments() != null && !cmdResult.getAttachments().isEmpty()) {
+			for (ChatAttachmentDTO attachment : cmdResult.getAttachments()) {
+				ChatAttachment grpcAttachment = ChatAttachment.newBuilder()
+						.setAttachmentId(attachment.getAttachmentId())
+						.setMessageId(attachment.getMessageId() == null ? 0L : attachment.getMessageId())
+						.setRoomId(attachment.getRoomId())
+						.setUploaderUserId(attachment.getUploaderUserId())
+						.setFileUrl(attachment.getFileUrl())
+						.setOriginalFileName(attachment.getOriginalFileName())
+						.setContentType(attachment.getContentType())
+						.setFileSize(attachment.getFileSize())
+						.setAttachmentKind(attachment.getAttachmentKind())
+						.setAttachmentStatus(attachment.getAttachmentStatus())
+						.setWidth(attachment.getWidth() == null ? 0 : attachment.getWidth())
+						.setHeight(attachment.getHeight() == null ? 0 : attachment.getHeight())
+						.setDurationMs(attachment.getDurationMs() == null ? 0L : attachment.getDurationMs())
+						.setSortOrder(attachment.getSortOrder() == null ? 0 : attachment.getSortOrder())
+						.build();
+
+				responseBuilder.addAttachments(grpcAttachment);
+			}
+		}
+
+		if (cmdResult.getNotificationTargetUserIds() != null && !cmdResult.getNotificationTargetUserIds().isEmpty()) {
+			responseBuilder.addAllNotificationTargetUserIds(cmdResult.getNotificationTargetUserIds());
 		}
 
 		return responseBuilder.build();

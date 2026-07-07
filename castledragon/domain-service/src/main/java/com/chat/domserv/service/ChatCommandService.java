@@ -33,7 +33,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequiredArgsConstructor
 public class ChatCommandService implements ChatCommandUseCase {
-	private static final long MAX_TOTAL_UPLOAD_BYTES = 300L * 1024 * 1024;
+	private static final long MAX_TOTAL_UPLOAD_BYTES = 320L * 1024 * 1024;
 	private static final int MAX_FILE_COUNT = 20;
 
 	private final DomServChatMapper domServChatMapper;
@@ -73,7 +73,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 		long totalSize = files.stream().mapToLong(MultipartFile::getSize).sum();
 
 		if (totalSize > MAX_TOTAL_UPLOAD_BYTES) {
-			throw new IllegalArgumentException("업로드 용량은 최대 300MB까지 가능합니다.");
+			throw new IllegalArgumentException("업로드 용량은 최대 320MB까지 가능합니다.");
 		}
 
 		List<ChatAttachmentDTO> uploadedAttachments = new ArrayList<>();

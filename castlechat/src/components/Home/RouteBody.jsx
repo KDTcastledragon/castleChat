@@ -7,6 +7,7 @@ import ChatBox from "../Chattings/ChatBox";
 import ChatList from "../Chattings/ChatList";
 import Settings from "../settings/Settings";
 import AdminPage from "../Admin/AdminPage";
+import MyPage from "../MyPage/MyPage";
 
 function RouteBody({ me, isCheckingLogin, wsRef, isWsConnectedRef, roomHandlersRef }) {
 
@@ -20,6 +21,7 @@ function RouteBody({ me, isCheckingLogin, wsRef, isWsConnectedRef, roomHandlersR
             <Route path="/ChatBox" element={<ChatBox />} />
             <Route path="/chatList" element={<ChatList />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/myPage" element={<MyPage />} />
             <Route path="/admin" element={<AdminPage />} />
 
             {/* <Route path="/" element={<Home />} /> */}

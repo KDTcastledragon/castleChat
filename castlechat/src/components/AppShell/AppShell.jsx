@@ -1,13 +1,16 @@
 
-import { useEffect } from "react";
+import './AppShell.css';
+
+import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
+import { useQueryClient } from '@tanstack/react-query';
 
 import Header from "../Home/Header"
 import RouteBody from "../Home/RouteBody"
 
 import { useMe } from "../../hooks/useAuthUser";
 import { closeChatWindow, moveChatWindow, focusChatWindow, clearChatWindows } from '../../store/chatWindowsSlice';
-import { connectWs, disconnectWs, registerWsCloseListener } from "../../webSocket/wsClient";
+import { connectWs, disconnectWs, registerGlobalWsHandler, registerWsCloseListener } from "../../webSocket/wsClient";
 
 import ChatBox from '../Chattings/ChatBox';
 
@@ -20,6 +23,8 @@ import ChatBox from '../Chattings/ChatBox';
 
 function AppShell() {
     const { data: me, isLoading: isCheckingLogin } = useMe();
+    const [toastList, setToastList] = useState([]);
+    const queryClient = useQueryClient();
 
     const dispatch = useDispatch();
     const chatWindows = useSelector(state => state.chatWindows.windows);
@@ -45,6 +50,51 @@ function AppShell() {
         return unregister;
     }, [dispatch]);
 
+    useEffect(() => {
+        if (!me) return;
+
+        return registerGlobalWsHandler((wsEvt) => {
+            const payload = wsEvt.payload ?? {};
+            let text = '';
+
+            if (wsEvt.wsType === 'FRIEND_REQUEST_RECEIVED') {
+                queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
+                queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
+                text = `${payload.requesterNickname ?? payload.requesterPublicId ?? '상대'}님에게 친구 요청이 왔습니다.`;
+            }
+
+            if (wsEvt.wsType === 'FRIEND_REQUEST_RESPONDED') {
+                queryClient.invalidateQueries({ queryKey: ['friends'] });
+                queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
+                queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
+                text = payload.friendStatus === 'ACCEPTED'
+                    ? `${payload.targetNickname ?? payload.targetPublicId ?? '상대'}님이 친구 요청을 수락했습니다.`
+                    : `${payload.targetNickname ?? payload.targetPublicId ?? '상대'}님이 친구 요청을 거절했습니다.`;
+            }
+
+            if (wsEvt.wsType === 'FRIEND_ONLINE_NOTIFICATION') {
+                text = payload.notificationText ?? `${payload.nickname ?? '친구'}님이 접속했습니다.`;
+            }
+
+            if (wsEvt.wsType === 'CHAT_MESSAGE_NOTIFICATION') {
+                text = `${payload.senderNickname ?? '상대'}: ${payload.previewText ?? ''}`;
+            }
+
+            if (wsEvt.wsType === 'ADD_FRIEND_FAIL' || wsEvt.wsType === 'RESPOND_FRIEND_FAIL') {
+                text = payload?.errorMessage ?? '친구 처리 실패';
+            }
+
+            if (!text) return;
+
+            const toastId = crypto.randomUUID();
+            setToastList(prev => [...prev, { toastId, text }]);
+
+            setTimeout(() => {
+                setToastList(prev => prev.filter(toast => toast.toastId !== toastId));
+            }, 3000);
+        });
+    }, [me, queryClient]);
+
     return (
         <>
             <Header />
@@ -58,6 +108,9 @@ function AppShell() {
                     roomId={win.roomId}
                     roomType={win.roomType}
                     roomName={win.roomName}
+                    roomThumbnail={win.roomThumbnail}
+                    customRoomBackground={win.customRoomBackground}
+                    messageNotificationEnabled={win.messageNotificationEnabled}
                     memberList={win.memberList}
 
                     x={win.x}
@@ -69,6 +122,14 @@ function AppShell() {
                     onFocus={() => dispatch(focusChatWindow(win.roomId))}
                 />
             ))}
+
+            <div className="globalToastBox">
+                {toastList.map(toast => (
+                    <div className="globalToastItem" key={toast.toastId}>
+                        {toast.text}
+                    </div>
+                ))}
+            </div>
         </>
 
     );

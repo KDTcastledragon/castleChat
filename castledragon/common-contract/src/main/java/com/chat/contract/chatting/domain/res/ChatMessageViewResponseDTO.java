@@ -28,6 +28,8 @@ public class ChatMessageViewResponseDTO {
 	private Long unreadCount;
 
 	private List<ChatAttachmentDTO> attachments;
+
+	private List<Long> notificationTargetUserIds;
 }
 
 //unreadCount 

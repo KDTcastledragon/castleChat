@@ -24,6 +24,10 @@ public interface UserMapper {
 
 	int changePassword(String id, String encodedNewPassword);
 
+	int updatePasswordByUserId(@Param("userId") Long userId, @Param("encodedNewPassword") String encodedNewPassword);
+
+	int updateMyProfile(@Param("userId") Long userId, @Param("nickname") String nickname, @Param("profileImg") String profileImg);
+
 	int withdrawMember(String id);
 
 	List<UserDTO> allUsers();

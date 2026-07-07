@@ -8,30 +8,39 @@
 
 .chatList {
     margin-left: 10px;
-    width: 500px;
+    width: 700px;
     height: 600px;
     background-color: rgb(255, 255, 255);
     border: 1px solid black;
+    overflow-y: auto;
 }
 
 .chatListBox,
 .chatListTitle {
     margin-left: 10px;
-    width: 500px;
-    height: 40px;
+    width: 680px;
     background-color: rgb(235, 255, 155);
     border: 1px solid black;
     display: flex;
     align-items: center;
-    justify-content: center;
+    box-sizing: border-box;
 }
 
 .chatListTitle {
+    justify-content: center;
     background-color: black;
     color: white;
     font-size: 24px;
     height: 50px;
     margin-bottom: 10px;
+}
+
+.chatListBox {
+    min-height: 68px;
+    padding: 8px 10px;
+    gap: 10px;
+    justify-content: space-between;
+    cursor: default;
 }
 
 .chatListBox span {
@@ -41,5 +50,73 @@
 
 .chatListBox button {
     width: 100px;
-    height: 80%;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.chatListMainInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.chatListRoomNameLine {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.chatListRoomName {
+    max-width: 360px;
+    font-size: 15px;
+    font-weight: bold;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chatListMemberCount {
+    color: #777;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.chatListLastMessage {
+    margin-top: 5px;
+    max-width: 440px;
+    color: #555;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.chatListSubInfo {
+    width: 56px;
+    min-height: 42px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.chatListLastTime {
+    color: #777;
+    font-size: 11px;
+}
+
+.chatListUnreadBadge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background-color: #ff4d4f;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
 }

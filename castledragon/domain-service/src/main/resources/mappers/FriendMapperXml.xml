@@ -10,7 +10,7 @@
 		VALUES (#{myUserId},#{targetUserId},'PENDING')
 	</insert>
 	
-	<select id="getFriendList" resultType="com.chat.contract.domain.UserProfileResponseDTO">
+	<select id="getFriendList" resultType="com.chat.contract.user.domain.UserProfileResponseDTO">
 		SELECT 
 	    u.public_id,
 	    u.nickname,
@@ -28,7 +28,7 @@
 	  AND u.status = 'ACTIVE'
 	</select>
 	
-	<select id="getReceivedFriendRequests" resultType="com.chat.contract.domain.UserProfileResponseDTO">
+	<select id="getReceivedFriendRequests" resultType="com.chat.contract.user.domain.UserProfileResponseDTO">
 		SELECT
 	    u.public_id,
 	    u.nickname,

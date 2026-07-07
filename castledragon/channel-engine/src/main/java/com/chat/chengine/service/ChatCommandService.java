@@ -16,6 +16,7 @@ import com.chat.contract.chatting.command.ReactChatMessageCommand;
 import com.chat.contract.chatting.command.ReadChatMessageCommand;
 import com.chat.contract.chatting.command.StartDirectChatCommand;
 import com.chat.contract.chatting.command.StartGroupChatCommand;
+import com.chat.contract.chatting.domain.ChatAttachmentDTO;
 import com.chat.contract.chatting.domain.ChatMessagesDTO;
 import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
@@ -221,10 +222,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalArgumentException("No RoomId");
 		}
 
-		if (cmd.getMessageText() == null) {
-			log.error("id:{} 채팅의 msg없음 : {}", cmd.getSenderUserId(), cmd.getMessageText());
-			throw new IllegalArgumentException("no msg");
-		}
+		validateSendBody(cmd.getMessageType(), cmd.getMessageText(), cmd.getAttachmentIds());
 
 		// 채팅방 내 모든 멤버 불러오기. 현재 sender가 실제 이 채팅방의 멤버인지 검증하기 위함.
 		Set<Long> allActiveMemberIdsInRoom = roomMemberCache
@@ -257,12 +255,16 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalStateException("insert Msg Failed");
 		}
 
+		List<ChatAttachmentDTO> attachments = List.of();
+
 		if (cmd.getAttachmentIds() != null && !cmd.getAttachmentIds().isEmpty()) {
 			int attached = chatMapper.updateChatMessageAttachments(msg.getMessageId(), msg.getRoomId(), cmd.getAttachmentIds());
 
 			if (attached != cmd.getAttachmentIds().size()) {
 				throw new IllegalStateException("첨부파일 메시지 연결 실패");
 			}
+
+			attachments = chatMapper.findChatMessageAttachments(msg.getMessageId());
 		}
 
 		// ====== sender의 lastReadMsg In Room도 적용시켜준다. 단, readMsg 흐름과 다르게 독립적으로 조용히. ==============================================================
@@ -272,6 +274,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 				.oldLastReadMessageId(), rslt.newLastReadMessageId());
 
 		Long unreadCount = Math.max(allActiveMemberIdsInRoom.size() - 1L, 0L); // 메시지 읽지 않은 멤버 수. (sender 제외)
+		List<Long> notificationTargetUserIds = chatMapper.findChatMessageNotificationTargetUserIds(cmd.getRoomId(), cmd.getSenderUserId());
 
 		ChatMessageViewResponseDTO response = new ChatMessageViewResponseDTO();
 		response.setMessageId(msg.getMessageId());
@@ -280,9 +283,10 @@ public class ChatCommandService implements ChatCommandUseCase {
 		response.setMessageType(msg.getMessageType());
 		response.setMessageText(msg.getMessageText());
 		response.setReplyToMessageId(msg.getReplyToMessageId());
-		response.setAttachments(List.of());
+		response.setAttachments(attachments == null ? List.of() : attachments);
 		response.setCreatedAt(msg.getCreatedAt());
 		response.setUnreadCount(unreadCount);
+		response.setNotificationTargetUserIds(notificationTargetUserIds == null ? List.of() : notificationTargetUserIds);
 
 		return response;
 	}

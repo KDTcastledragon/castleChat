@@ -1,9 +1,12 @@
 import axios from "axios";
+import { emitWsAddFriend, emitWsRespondFriend } from "../webSocket/wsClient";
 
 export const addFriendApi = async (targetPublicId) => {
-    await axios.post('/friend/addFriend', {
-        publicId: targetPublicId
-    });
+    const emitted = emitWsAddFriend(targetPublicId);
+
+    if (!emitted) {
+        throw new Error('WebSocket 연결 안 됨');
+    }
 };
 
 export const getFriendListApi = async () => {
@@ -17,8 +20,9 @@ export const getReceivedFriendRequestsApi = async () => {
 };
 
 export const respondFriendRequestApi = async ({ publicId, action }) => {
-    await axios.post('/friend/respondFriendRequest', {
-        publicId,
-        action
-    });
+    const emitted = emitWsRespondFriend(publicId, action);
+
+    if (!emitted) {
+        throw new Error('WebSocket 연결 안 됨');
+    }
 };

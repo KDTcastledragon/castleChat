@@ -21,7 +21,7 @@
 /* ====[상단바]============================================= */
 .chatListTitle {
     display: grid;
-    grid-template-columns: 52px 1fr 64px;
+    grid-template-columns: 52px 1fr 98px;
     align-items: center;
     width: 100%;
     height: 36px;
@@ -45,6 +45,7 @@
 
 .chatTitleRightControls {
     justify-content: flex-end;
+    gap: 6px;
 }
 
 .chatRoomTitleText {
@@ -196,6 +197,98 @@
     word-break: break-word;
 }
 
+.notificationBellButton {
+    width: 30px;
+    height: 26px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background: #1d1d1d;
+    cursor: pointer;
+}
+
+.notificationBellButton.on {
+    background: #fee500;
+}
+
+.notificationBellButton.off {
+    background: #555;
+    opacity: 0.85;
+}
+
+.messageWrap.deleted {
+    background-color: #eeeeee;
+    color: #888;
+    font-style: italic;
+}
+
+.replyPreviewInMessage {
+    margin-bottom: 6px;
+    padding: 5px 7px;
+    border-left: 3px solid #8d8d8d;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.5);
+    box-sizing: border-box;
+}
+
+.replyPreviewSender {
+    margin-bottom: 2px;
+    color: #246bca;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.replyPreviewText {
+    color: #666;
+    font-size: 11px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.attachmentPreviewList {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.attachmentImagePreview,
+.attachmentVideoPreview {
+    max-width: 220px;
+    max-height: 170px;
+    border-radius: 10px;
+    object-fit: cover;
+    display: block;
+}
+
+.attachmentFilePreview {
+    display: block;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    color: #333;
+    font-size: 12px;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.messageReactionList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.messageReactionBadge {
+    padding: 2px 6px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    border: 1px solid #eeeeee;
+    color: #444;
+    font-size: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
 .messageInfo {
     display: flex;
     flex-direction: column;
@@ -267,6 +360,45 @@
     background-color: #f3f3f3;
 }
 
+.reactionPicker {
+    position: absolute;
+    left: 14px;
+    bottom: 128px;
+    width: 210px;
+    padding: 8px;
+    border: 1px solid #d6d6d6;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+    z-index: 82;
+    box-sizing: border-box;
+}
+
+.reactionPickerTitle {
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.reactionPickerButtons {
+    display: flex;
+    gap: 5px;
+}
+
+.reactionPickerButtons button {
+    flex: 1;
+    height: 30px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #fafafa;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.reactionPickerButtons button:hover {
+    background-color: #fff6b5;
+}
+
 /* ====[타이핑 알림]============================================= */
 .typingNotice {
     min-height: 22px;
@@ -278,6 +410,123 @@
 }
 
 /* ====[입력창]============================================= */
+.composerMetaPanel {
+    width: 460px;
+    background-color: #fffdf6;
+    border-top: 1px solid #e0e0e0;
+    box-sizing: border-box;
+}
+
+.replyComposerBar {
+    min-height: 56px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e4e4e4;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.replyComposerTextBox {
+    min-width: 0;
+    padding-left: 8px;
+    border-left: 3px solid #9a9a9a;
+}
+
+.replyComposerTitle {
+    color: #246bca;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.replyComposerText {
+    max-width: 370px;
+    color: #333;
+    font-size: 13px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.replyComposerCloseButton {
+    border: 0;
+    background-color: transparent;
+    color: #777;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.selectedFileList {
+    padding: 6px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.selectedFileItem {
+    display: grid;
+    grid-template-columns: 1fr 70px 42px;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+}
+
+.selectedFileName {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.selectedFileSize {
+    color: #777;
+    text-align: right;
+}
+
+.selectedFileItem button {
+    height: 22px;
+    border: 1px solid #d0d0d0;
+    border-radius: 5px;
+    background-color: #ffffff;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.uploadProgressBox {
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.uploadProgressCircle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.uploadProgressCircle span {
+    width: 31px;
+    height: 31px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.uploadProgressText {
+    font-size: 12px;
+    color: #555;
+}
+
 .inputChat {
     width: 460px;
     height: 100px;
@@ -285,15 +534,30 @@
     display: flex;
 }
 
+.attachFileButton {
+    width: 42px;
+    height: 100%;
+    border: 0;
+    border-right: 1px solid #d0d0d0;
+    background-color: #fff9d8;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+.attachFileButton:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+}
+
 .inputChat>textarea {
     display: inline-block;
-    width: 382px;
+    width: 340px;
     height: 100%;
     resize: none;
     box-sizing: border-box;
 }
 
-.inputChat>button {
+.inputChat>button:not(.attachFileButton) {
     display: inline-block;
     width: 78px;
     height: 100%;
@@ -378,7 +642,7 @@
 
 .roomMemberItem {
     display: grid;
-    grid-template-columns: 34px 1fr 70px 50px;
+    grid-template-columns: 34px 1fr 70px 76px;
     align-items: center;
     gap: 8px;
     min-height: 44px;
@@ -453,6 +717,101 @@
     font-size: 11px;
     padding: 3px 6px;
     cursor: pointer;
+}
+
+.roomSettingsBox {
+    padding: 8px 10px 12px;
+    border-bottom: 1px solid #eeeeee;
+    background: #fafafa;
+    box-sizing: border-box;
+}
+
+.roomSettingLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+    color: #555;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.roomSettingLabel input {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.roomImageSettingRow {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    font-size: 11px;
+    color: #777;
+}
+
+.roomImageSettingRow button,
+.saveRoomSettingsButton {
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: #111;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.saveRoomSettingsButton {
+    width: 100%;
+    background: #fee500;
+    color: #111;
+}
+
+.saveRoomSettingsButton:disabled {
+    background: #dddddd;
+    color: #888;
+    cursor: not-allowed;
+}
+
+.memberDangerActions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.banMemberDetails {
+    position: relative;
+    font-size: 10px;
+}
+
+.banMemberDetails summary {
+    cursor: pointer;
+    color: #777;
+    list-style: none;
+}
+
+.banMemberDetails summary::-webkit-details-marker {
+    display: none;
+}
+
+.banMemberButton {
+    position: absolute;
+    right: 0;
+    top: 18px;
+    width: 72px;
+    padding: 4px 5px;
+    border: 1px solid #d32f2f;
+    border-radius: 6px;
+    background-color: #fff3f3;
+    color: #c62828;
+    font-size: 10px;
+    cursor: pointer;
+    z-index: 5;
 }
 
 .kickMemberButtonPlaceholder {

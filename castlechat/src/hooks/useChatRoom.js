@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { openChatWindow } from '../store/chatWindowsSlice';
 import { emitWs } from '../webSocket/wsClient';
-import { getOrCreateDirectRoomApi, createGroupRoomApi, enterExistedRoomApi, getMyAllRoomsApi } from '../api/chatApi';
+import { getOrCreateDirectRoomApi, createGroupRoomApi, enterExistedRoomApi, getMyAllRoomsApi } from '../api/roomApi';
 
 export function useChatRoomActions() {
     const dispatch = useDispatch();
@@ -18,6 +18,8 @@ export function useChatRoomActions() {
             roomType: roomInfo.roomType,
             roomName: roomInfo.customRoomName,
             roomThumbnail: roomInfo.customRoomThumbnail,
+            customRoomBackground: roomInfo.customRoomBackground,
+            messageNotificationEnabled: roomInfo.messageNotificationEnabled,
             roomMemberCount: roomInfo.roomMemberCount,
             memberList: roomInfo.memberList,
             lastReadMessageId: roomInfo.lastReadMessageId

@@ -1,11 +1,14 @@
 package com.chat.domserv.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.room.domain.ChatRoomListDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
+import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.ChatQueryUseCase;
-import com.chat.domserv.usecase.RoomCommandUseCase;
 import com.chat.domserv.usecase.RoomQueryUseCase;
 import com.chat.domserv.usecase.UserQueryUseCase;
 
@@ -27,10 +30,11 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @Log4j2
 public class RoomController {
-	RoomCommandUseCase romCmdUseCase;
+	//	RoomCommandUseCase romCmdUseCase;
 	RoomQueryUseCase romQryUseCase;
 	UserQueryUseCase usrQryUseCase;
 	ChatQueryUseCase ChtQryUseCase;
+	RoomMapper roomMapper;
 
 	@GetMapping("/loadMessagesInRoom/{roomId}")
 	public ResponseEntity<?> getMessages(@PathVariable("roomId") Long roomId, @RequestParam(value = "beforeMessageId", required = false) Long beforeMessageId, @RequestParam(value = "limit", defaultValue = "50") int limit, HttpSession session) {
@@ -59,6 +63,41 @@ public class RoomController {
 		List<ChatRoomListDTO> roomList = romQryUseCase.getMyAllChatRooms(me.getUserId());
 
 		return ResponseEntity.ok(roomList);
+	}
+
+	@PostMapping("/updateMyRoomSettings")
+	public ResponseEntity<?> updateMyRoomSettings(@RequestBody Map<String, Object> data, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		Long roomId = data.get("roomId") == null ? null : Long.valueOf(data.get("roomId").toString());
+		String customRoomName = data.get("customRoomName") == null ? "" : data.get("customRoomName").toString().trim();
+		String customRoomThumbnail = data.get("customRoomThumbnail") == null ? null : data.get("customRoomThumbnail").toString();
+		String customRoomBackground = data.get("customRoomBackground") == null ? null : data.get("customRoomBackground").toString();
+		Boolean messageNotificationEnabled = data.get("messageNotificationEnabled") == null ? Boolean.TRUE
+				: Boolean.valueOf(data.get("messageNotificationEnabled").toString());
+
+		if (roomId == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("roomId 없음");
+		}
+
+		if (customRoomName.isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("방 이름 없음");
+		}
+
+		int updated = roomMapper.updateMyRoomSettings(roomId, me
+				.getUserId(), customRoomName, customRoomThumbnail, customRoomBackground, messageNotificationEnabled);
+
+		if (updated != 1) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("방 설정 저장 실패");
+		}
+
+		return ResponseEntity.ok(Map.of("roomId", roomId, "customRoomName", customRoomName, "customRoomThumbnail", customRoomThumbnail == null ? ""
+				: customRoomThumbnail, "customRoomBackground", customRoomBackground == null ? ""
+						: customRoomBackground, "messageNotificationEnabled", messageNotificationEnabled));
 	}
 
 	//

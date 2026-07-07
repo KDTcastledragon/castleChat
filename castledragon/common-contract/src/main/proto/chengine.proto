@@ -32,6 +32,7 @@ service ChEngineRoom {
 service ChEngineFriend {
   rpc AddFriend (AddFriendRequest) returns (FriendEventResponse);
   rpc RespondFriend (RespondFriendRequest) returns (FriendEventResponse);
+  rpc FindOnlineFriendTargets (FindOnlineFriendTargetsRequest) returns (OnlineFriendTargetsResponse);
 }
 
 
@@ -118,6 +119,7 @@ message CreateChatMessageResponse {
   int64 unread_count = 8;
 
   repeated ChatAttachment attachments = 9;
+  repeated int64 notification_target_user_ids = 10;
 }
 
 message ReadChatMessageRequest {
@@ -212,6 +214,7 @@ message EnterRoomResponse {
   optional RoomNoticeView active_room_notice = 7;
 
   string room_background = 8;
+  bool message_notification_enabled = 9;
 }
 
 message EnterRoomRequest {
@@ -316,10 +319,22 @@ message FriendEventResponse {
 
   int64 requester_user_id = 2;
   string requester_public_id = 3;
+  string requester_nickname = 4;
 
-  int64 target_user_id = 4;
-  string target_public_id = 5;
+  int64 target_user_id = 5;
+  string target_public_id = 6;
+  string target_nickname = 7;
 
-  string friend_status = 6;
-  string event_at = 7;
+  string friend_status = 8;
+  string event_at = 9;
+}
+
+message FindOnlineFriendTargetsRequest {
+  int64 user_id = 1;
+  string public_id = 2;
+}
+
+message OnlineFriendTargetsResponse {
+  int64 user_id = 1;
+  repeated int64 target_user_ids = 2;
 }

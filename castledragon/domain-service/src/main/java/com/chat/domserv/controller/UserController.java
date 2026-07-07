@@ -17,6 +17,7 @@ import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.user.domain.UserProfileResponseDTO;
 import com.chat.domserv.domain.LoginRequestDTO;
 import com.chat.domserv.domain.UserDTO;
+import com.chat.domserv.mapper.UserMapper;
 import com.chat.domserv.usecase.UserCommandUseCase;
 import com.chat.domserv.usecase.UserQueryUseCase;
 
@@ -32,6 +33,7 @@ public class UserController {
 	PasswordEncoder pwEncoder; // 추후 Service로 이동.
 	UserCommandUseCase usrCmdUseCase;
 	UserQueryUseCase usrQryUseCase;
+	UserMapper userMapper;
 
 	// ======[ 회원가입 ]===================================================================================================
 	@PostMapping("/join")
@@ -145,6 +147,64 @@ public class UserController {
 
 		return ResponseEntity.ok(isMeTrue);
 	}// isMe
+
+	@PostMapping("/updateMyProfile")
+	public ResponseEntity<?> updateMyProfile(@RequestBody Map<String, String> data, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		String nickname = data.get("nickname");
+		String profileImg = data.get("profileImg");
+
+		if (nickname == null || nickname.trim().isEmpty()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("닉네임 필요");
+		}
+
+		int updated = userMapper.updateMyProfile(me.getUserId(), nickname.trim(), profileImg);
+
+		if (updated != 1) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("프로필 변경 실패");
+		}
+
+		SessionUserDTO updatedSessionUser = new SessionUserDTO(me.getUserId(), me.getPublicId(), nickname.trim(), me.getFriendCode(), profileImg);
+		session.setAttribute("LOGIN_USER", updatedSessionUser);
+
+		return ResponseEntity.ok(new UserProfileResponseDTO(me.getPublicId(), nickname.trim(), me.getFriendCode(), profileImg));
+	}
+
+	@PostMapping("/changeMyPassword")
+	public ResponseEntity<?> changeMyPassword(@RequestBody Map<String, String> pwData, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		String prevPw = pwData.get("prevPw");
+		String newPw = pwData.get("newPw");
+
+		if (prevPw == null || newPw == null || prevPw.isBlank() || newPw.isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("비밀번호 필요");
+		}
+
+		UserDTO dto = usrQryUseCase.getUser(me.getPublicId());
+
+		if (dto == null || !pwEncoder.matches(prevPw, dto.getPassword())) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("no match pw");
+		}
+
+		String encodedNewPassword = pwEncoder.encode(newPw);
+		int updated = userMapper.updatePasswordByUserId(me.getUserId(), encodedNewPassword);
+
+		if (updated != 1) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("비밀번호 변경 실패");
+		}
+
+		return ResponseEntity.ok().build();
+	}
 
 	// ======[ 검색어로 유저 검색 (친구 추가를 위한 선기능) ]===================================================================================================
 	@GetMapping("/searchUsers")

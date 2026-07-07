@@ -1,5 +1,7 @@
 package com.chat.wsgate.handler;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -15,6 +17,7 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.notification.domain.ChatMessageNotificationDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
@@ -59,6 +62,55 @@ public class WsGateChatHandler {
 		return messageType;
 	}
 
+	private String defaultMessageType(String messageType, List<Long> attachmentIds) {
+		if (messageType != null && !messageType.isBlank()) {
+			return messageType;
+		}
+
+		if (attachmentIds != null && !attachmentIds.isEmpty()) {
+			return "FILE";
+		}
+
+		return "TEXT";
+	}
+
+	private String notificationPreviewText(ChatMessageViewResponseDTO message) {
+		String messageType = defaultMessageType(message.getMessageType());
+
+		return switch (messageType) {
+		case "IMAGE" -> "사진";
+		case "VIDEO" -> "영상";
+		case "AUDIO" -> "음성";
+		case "FILE" -> "파일";
+		default -> message.getMessageText() == null ? "" : message.getMessageText();
+		};
+	}
+
+	private void pushChatMessageNotification(SessionUserDTO sender, ChatMessageViewResponseDTO message, String requestId) throws Exception {
+		if (message.getNotificationTargetUserIds() == null || message.getNotificationTargetUserIds().isEmpty()) {
+			return;
+		}
+
+		List<Long> targetUserIds = new ArrayList<>(message.getNotificationTargetUserIds());
+		targetUserIds.removeAll(wsGateSessionRegistry.getViewingUserIds(message.getRoomId()));
+
+		if (targetUserIds.isEmpty()) {
+			return;
+		}
+
+		ChatMessageNotificationDTO notification = new ChatMessageNotificationDTO();
+		notification.setRoomId(message.getRoomId());
+		notification.setMessageId(message.getMessageId());
+		notification.setSenderPublicId(sender.getPublicId());
+		notification.setSenderNickname(sender.getNickname());
+		notification.setSenderProfileImg(sender.getProfileImg());
+		notification.setMessageType(defaultMessageType(message.getMessageType()));
+		notification.setPreviewText(notificationPreviewText(message));
+		notification.setNotifiedAt(LocalDateTime.now());
+
+		wsGateOutboundWriter.pushToMultipleUsers(targetUserIds, "CHAT_MESSAGE_NOTIFICATION", notification, requestId);
+	}
+
 	//	====== 채팅 입력 이벤트 start/stop =========================================================================================================
 	//*** 이 메소드만 예외적으로 channel-engine을 거치지 않고, 그대로 response 한다. business logic이 없기 때문. [ 책임분리 < UX ] 
 	public void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
@@ -99,13 +151,14 @@ public class WsGateChatHandler {
 
 		try {
 			StartDirectChatCommand startDirChtCmd = new StartDirectChatCommand(payload.getTargetPublicId(), me.getUserId(), me
-					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
+					.getPublicId(), defaultMessageType(payload.getMessageType(), payload.getAttachmentIds()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
 			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.startDirectChat(startDirChtCmd);
 
 			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
+			pushChatMessageNotification(me, grpcResponse, dto.getRequestId());
 			log.info("{}번유저 -> {}번방 start갠톡 : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 
 		} catch (Exception e) {
@@ -132,13 +185,15 @@ public class WsGateChatHandler {
 
 		try {
 			StartGroupChatCommand startGrpChtCmd = new StartGroupChatCommand(payload.getRoomName(), payload.getRoomThumbnail(), payload
-					.getInviteMemberPublicIds(), me.getUserId(), me.getPublicId(), defaultMessageType(payload.getMessageType()), payload
+					.getInviteMemberPublicIds(), me.getUserId(), me.getPublicId(), defaultMessageType(payload.getMessageType(), payload
+							.getAttachmentIds()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
 			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.startGroupChat(startGrpChtCmd);
 
 			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
+			pushChatMessageNotification(me, grpcResponse, dto.getRequestId());
 			log.info("{}번유저 -> {}번방 start단톡 : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 		} catch (Exception e) {
 			log.error("START_GROUP_ROOM_WITH_MSG 예외", e);
@@ -167,12 +222,13 @@ public class WsGateChatHandler {
 		try {
 			// Command 생성. 최적화를 위해 me에서 publicId까지 꺼내고 함께 보낸다. orc에서 userId로 publicId를 DB에서 굳이 또 하는 것보다 좋음. session값이라 신뢰 가능.
 			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me
-					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
+					.getPublicId(), defaultMessageType(payload.getMessageType(), payload.getAttachmentIds()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
 			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.createChatMessage(createChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
+			pushChatMessageNotification(me, grpcResponse, dto.getRequestId());
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 
 		} catch (Exception e) {

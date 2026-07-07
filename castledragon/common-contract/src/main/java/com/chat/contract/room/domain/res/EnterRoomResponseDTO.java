@@ -16,6 +16,7 @@ public class EnterRoomResponseDTO {
 	private String customRoomName;
 	private String customRoomThumbnail;
 	private String customRoomBackground;
+	private Boolean messageNotificationEnabled;
 
 	private Long roomMemberCount;
 

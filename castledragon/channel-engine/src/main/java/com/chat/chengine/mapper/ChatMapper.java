@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.chat.contract.chatting.command.ReactChatMessageCommand;
+import com.chat.contract.chatting.domain.ChatAttachmentDTO;
 import com.chat.contract.chatting.domain.ChatMessagesDTO;
 import com.chat.contract.room.domain.ChatRoomsDTO;
 import com.chat.contract.room.domain.ChatUserLookupDTO;
@@ -45,5 +46,9 @@ public interface ChatMapper {
 	List<ChatUserLookupDTO> findUserInfoByPublicIdList(@Param("publicIds") List<String> publicIds);
 
 	int updateChatMessageAttachments(@Param("messageId") Long messageId, @Param("roomId") Long roomId, @Param("attachmentIds") List<Long> attachmentIds);
+
+	List<ChatAttachmentDTO> findChatMessageAttachments(@Param("messageId") Long messageId);
+
+	List<Long> findChatMessageNotificationTargetUserIds(@Param("roomId") Long roomId, @Param("senderUserId") Long senderUserId);
 
 }
