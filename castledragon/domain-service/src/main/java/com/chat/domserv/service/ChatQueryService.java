@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
+import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.redis.RedisRoomMemberReadPositionDTO;
 import com.chat.domserv.mapper.ChatMapper;
 import com.chat.domserv.usecase.ChatQueryUseCase;

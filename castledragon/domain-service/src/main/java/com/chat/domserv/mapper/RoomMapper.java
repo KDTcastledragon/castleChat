@@ -5,17 +5,16 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.domain.member.RoomMemberResponseDTO;
-import com.chat.contract.domain.member.RoomMembersDTO;
-import com.chat.contract.domain.room.ChatRoomListDTO;
-import com.chat.contract.domain.room.ChatRoomsDTO;
+import com.chat.contract.room.domain.ChatRoomListDTO;
+import com.chat.contract.room.domain.ChatRoomsDTO;
+import com.chat.contract.room.domain.RoomMembersDTO;
+import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
 
 @Mapper
 public interface RoomMapper {
 
 	Long findRoomId(@Param("user1") Long user1, @Param("user2") Long user2);
 
-	//	void createRoom(@Param("roomType") String roomType, @Param("roomStatus") String roomStatus); //roomId를 받을 parameter가 없다.
 	int createRoom(ChatRoomsDTO dto); //DTO내부 getter를 통해 접근 가능해서, 이렇게만 적어도 된다.
 
 	int insertRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("role") String role, @Param("customRoomName") String customRoomName, @Param("customRoomThumbnail") String customRoomThumbnail, @Param("memberStatus") String memberStatus);

@@ -6,8 +6,8 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.chat.contract.domain.user.SessionUserDTO;
-import com.chat.contract.domain.websocket.WebSocketDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
+import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.handler.WsGateChatHandler;
 import com.chat.wsgate.handler.WsGateConnectionHandler;
 import com.chat.wsgate.handler.WsGateRoomHandler;
@@ -48,17 +48,13 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 			switch (dto.getWsType()) {
 			case "CONNECT_USER" -> wsGateConnectionHandler.handleConnectUser(session, dto);
 
-			case "START_DIRECT_ROOM_WITH_MESSAGE" -> wsGateRoomHandler.handleStartDirectRoomWithMessage(session, dto);
-			case "START_GROUP_ROOM_WITH_MESSAGE" -> wsGateRoomHandler.handleStartGroupRoomWithMessage(session, dto);
+			case "OPEN_DIRECT_CHAT" -> wsGateRoomHandler.handleOpenDirectChat(session, dto);
+			case "START_DIRECT_CHAT" -> wsGateChatHandler.handleStartDirectChat(session, dto);
+			case "START_GROUP_CHAT" -> wsGateChatHandler.handleStartGroupChat(session, dto);
 
 			case "ENTER_ROOM" -> wsGateRoomHandler.handleEnterRoom(session, dto);
 			case "EXIT_ROOM" -> wsGateRoomHandler.handleExitRoom(session, dto);
 			case "LEFT_ROOM" -> wsGateRoomHandler.handleExitRoom(session, dto); // 구현해야함
-
-			case "INVITE_MEMBER" -> wsGateRoomHandler.handleInviteMember(session, dto);
-			case "KICK_MEMBER" -> wsGateRoomHandler.handleKickMember(session, dto);
-			case "BAN_MEMBER" -> wsGateRoomHandler.handleBanMember(session, dto);
-			case "CHANGE_MEMBER_ROLE" -> wsGateRoomHandler.handleChangeMemberRole(session, dto);
 
 			case "TYPING_START" -> wsGateChatHandler.handleTyping(session, dto, "TYPING_START");
 			case "TYPING_STOP" -> wsGateChatHandler.handleTyping(session, dto, "TYPING_STOP");
@@ -67,6 +63,12 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 			case "READ_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto);
 			case "DELETE_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto); // 구현해야함
 			case "REACT_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto); // 구현해야함
+
+			case "INVITE_MEMBER" -> wsGateRoomHandler.handleInviteMember(session, dto);
+			case "KICK_MEMBER" -> wsGateRoomHandler.handleKickMember(session, dto);
+			case "BAN_MEMBER" -> wsGateRoomHandler.handleBanMember(session, dto);
+			case "CHANGE_MEMBER_ROLE" -> wsGateRoomHandler.handleChangeMemberRole(session, dto);
+
 			case "APPLY_ROOM_NOTICE" -> wsGateRoomHandler.handleEnterRoom(session, dto); // 구현해야함
 
 			default -> {

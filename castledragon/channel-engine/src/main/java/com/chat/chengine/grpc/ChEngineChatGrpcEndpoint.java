@@ -1,14 +1,14 @@
 package com.chat.chengine.grpc;
 
-import com.chat.chengine.usecase.ChEngineChatCommandUseCase;
-import com.chat.contract.command.chatting.CreateChatMessageCommand;
-import com.chat.contract.command.chatting.DeleteChatMessageCommand;
-import com.chat.contract.command.chatting.ReactChatMessageCommand;
-import com.chat.contract.command.chatting.ReadChatMessageCommand;
-import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
-import com.chat.contract.domain.chatting.DeleteChatMessageResponseDTO;
-import com.chat.contract.domain.chatting.ReactChatMessageEventResponseDTO;
-import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
+import com.chat.chengine.usecase.ChatCommandUseCase;
+import com.chat.contract.chatting.command.CreateChatMessageCommand;
+import com.chat.contract.chatting.command.DeleteChatMessageCommand;
+import com.chat.contract.chatting.command.ReactChatMessageCommand;
+import com.chat.contract.chatting.command.ReadChatMessageCommand;
+import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
+import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
+import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
+import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 import com.chat.contract.grpc.ChEngineChatGrpc;
 import com.chat.contract.grpc.CreateChatMessageRequest;
 import com.chat.contract.grpc.CreateChatMessageResponse;
@@ -29,7 +29,7 @@ import net.devh.boot.grpc.server.service.GrpcService;
 @Log4j2
 public class ChEngineChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplBase {
 
-	private final ChEngineChatCommandUseCase chEngineChatCommandUseCase;
+	private final ChatCommandUseCase chatCommandUseCase;
 
 	@Override
 	public void createChatMessage(CreateChatMessageRequest request, StreamObserver<CreateChatMessageResponse> responseObserver) {
@@ -37,7 +37,7 @@ public class ChEngineChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplB
 				.getSenderPublicId(), request.getMessageType(), request
 						.getMessageText(), request.hasReplyToMessageId() ? request.getReplyToMessageId() : null, request.getAttachmentIdsList());
 
-		ChatMessageViewResponseDTO cmdResult = chEngineChatCommandUseCase.createChatMessage(requestedCommand);
+		ChatMessageViewResponseDTO cmdResult = chatCommandUseCase.createChatMessage(requestedCommand);
 
 		CreateChatMessageResponse.Builder responseBuilder = CreateChatMessageResponse.newBuilder()
 				.setMessageId(cmdResult.getMessageId())
@@ -63,7 +63,7 @@ public class ChEngineChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplB
 
 		log.info("gRPC EndPoint readCmd : {}", requestCommand);
 
-		ReadPositionUpdateResponseDTO cmdResult = chEngineChatCommandUseCase.readChatMessage(requestCommand);
+		ReadPositionUpdateResponseDTO cmdResult = chatCommandUseCase.readChatMessage(requestCommand);
 
 		ReadChatMessageResponse response = ReadChatMessageResponse.newBuilder()
 				.setRoomId(cmdResult.getRoomId())
@@ -82,14 +82,14 @@ public class ChEngineChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplB
 	@Override
 	public void deleteChatMessage(DeleteChatMessageRequest request, StreamObserver<DeleteChatMessageResponse> responseObserver) {
 		DeleteChatMessageCommand command = new DeleteChatMessageCommand(request.getRoomId(), request.getMessageId(), request
-				.getDeleterUserId(), request.getDeleterPublicId());
+				.getRequesterUserId(), request.getRequesterPublicId());
 
-		DeleteChatMessageResponseDTO cmdResult = chEngineChatCommandUseCase.deleteChatMessage(command);
+		DeleteChatMessageResponseDTO cmdResult = chatCommandUseCase.deleteChatMessage(command);
 
 		DeleteChatMessageResponse response = DeleteChatMessageResponse.newBuilder()
 				.setRoomId(cmdResult.getRoomId())
 				.setMessageId(cmdResult.getMessageId())
-				.setDeleterPublicId(cmdResult.getDeleterPublicId())
+				.setRequesterPublicId(cmdResult.getRequesterPublicId())
 				.setMessageStatus(cmdResult.getMessageStatus())
 				.setDeletedAt(cmdResult.getDeletedAt().toString())
 				.build();
@@ -101,15 +101,15 @@ public class ChEngineChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplB
 	@Override
 	public void reactChatMessage(ReactChatMessageRequest request, StreamObserver<ReactChatMessageResponse> responseObserver) {
 		ReactChatMessageCommand command = new ReactChatMessageCommand(request.getRoomId(), request.getMessageId(), request
-				.getReactorUserId(), request
-						.getReactorPublicId(), request.getReactionType(), request.getReactionCode(), request.getAddRequested());
+				.getRequesterUserId(), request
+						.getRequesterPublicId(), request.getReactionType(), request.getReactionCode(), request.getAddRequested());
 
-		ReactChatMessageEventResponseDTO cmdResult = chEngineChatCommandUseCase.reactChatMessage(command);
+		ReactChatMessageEventResponseDTO cmdResult = chatCommandUseCase.reactChatMessage(command);
 
 		ReactChatMessageResponse response = ReactChatMessageResponse.newBuilder()
 				.setRoomId(cmdResult.getRoomId())
 				.setMessageId(cmdResult.getMessageId())
-				.setReactorPublicId(cmdResult.getReactorPublicId())
+				.setRequesterPublicId(cmdResult.getRequesterPublicId())
 				.setReactionType(cmdResult.getReactionType())
 				.setReactionCode(cmdResult.getReactionCode())
 				.setAdded(cmdResult.getAdded())

@@ -148,7 +148,7 @@
 			rn.room_notice_type AS room_notice_type,
 			rn.room_notice_contents AS room_notice_contents,
 			rn.room_notice_status AS room_notice_status,
-			u.public_id AS applier_public_id,
+			u.public_id AS requester_public_id,
 			CASE rn.room_notice_action
 				WHEN 'CREATE' THEN rn.created_at
 				WHEN 'UPDATE' THEN rn.updated_at
@@ -172,7 +172,7 @@
 			rn.room_notice_type AS room_notice_type,
 			rn.room_notice_contents AS room_notice_contents,
 			rn.room_notice_status AS room_notice_status,
-			u.public_id AS applier_public_id,
+			u.public_id AS requester_public_id,
 			CASE rn.room_notice_action
 				WHEN 'CREATE' THEN rn.created_at
 				WHEN 'UPDATE' THEN rn.updated_at

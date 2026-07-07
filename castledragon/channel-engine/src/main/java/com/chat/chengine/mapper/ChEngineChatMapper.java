@@ -5,8 +5,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.command.chatting.ReactChatMessageCommand;
-import com.chat.contract.domain.chatting.ChatMessagesDTO;
+import com.chat.contract.chatting.command.ReactChatMessageCommand;
+import com.chat.contract.chatting.domain.ChatMessagesDTO;
 
 @Mapper
 public interface ChEngineChatMapper {
@@ -24,9 +24,9 @@ public interface ChEngineChatMapper {
 
 	Long findChatMessageSenderUserId(@Param("roomId") Long roomId, @Param("messageId") Long messageId);
 
-	int deleteChatMessage(@Param("roomId") Long roomId, @Param("messageId") Long messageId, @Param("deleterUserId") Long deleterUserId);
+	int deleteChatMessage(@Param("roomId") Long roomId, @Param("messageId") Long messageId, @Param("requesterUserId") Long requesterUserId);
 
 	int insertChatMessageReaction(ReactChatMessageCommand cmd);
 
-	int deleteChatMessageReaction(@Param("roomId") Long roomId, @Param("messageId") Long messageId, @Param("reactorUserId") Long reactorUserId, @Param("reactionCode") String reactionCode);
+	int deleteChatMessageReaction(@Param("roomId") Long roomId, @Param("messageId") Long messageId, @Param("requesterUserId") Long requesterUserId, @Param("reactionCode") String reactionCode);
 }

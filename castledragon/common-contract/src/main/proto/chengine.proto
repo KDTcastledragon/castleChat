@@ -5,24 +5,26 @@ option java_package = "com.chat.contract.grpc";
 option java_outer_classname = "ChEngineProto";
 
 service ChEngineChat {
+  rpc StartDirectChat (StartDirectChatRequest) returns (CreateChatMessageResponse);
+  rpc StartGroupChat (StartGroupChatRequest) returns (CreateChatMessageResponse);
+
   rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse);
   rpc ReadChatMessage (ReadChatMessageRequest) returns (ReadChatMessageResponse);
-
   rpc DeleteChatMessage (DeleteChatMessageRequest) returns (DeleteChatMessageResponse);
+  
   rpc ReactChatMessage (ReactChatMessageRequest) returns (ReactChatMessageResponse);
 }
 
 service ChEngineRoom {
-  rpc GetOrCreateDirectRoom (GetOrCreateDirectRoomRequest) returns (EnterRoomResponse);
-  rpc CreateGroupRoom (CreateGroupRoomRequest) returns (EnterRoomResponse);
+  rpc OpenDirectChatRoom (OpenDirectChatRoomRequest) returns (EnterRoomResponse);
+  
   rpc EnterRoom (EnterRoomRequest) returns (EnterRoomResponse);
-
-  rpc ExitRoom (ExitRoomRequest) returns (RoomEventResponse);
-  rpc LeftRoom (LeftRoomRequest) returns (RoomEventResponse);
-
-  rpc InviteMember (InviteMemberRequest) returns (RoomMemberEventResponse);
-  rpc KickMember (KickMemberRequest) returns (RoomMemberEventResponse);
-  rpc BanMember (BanMemberRequest) returns (RoomMemberEventResponse);
+  rpc LeftRoom (LeftRoomRequest) returns (RoomFeedResponse);
+  
+  rpc InviteMember (InviteMemberRequest) returns (RoomFeedResponse);
+  rpc KickMember (KickMemberRequest) returns (RoomFeedResponse);
+  rpc BanMember (BanMemberRequest) returns (RoomFeedResponse);
+  rpc ChangeMemberRole (ChangeMemberRoleRequest) returns (RoomFeedResponse);
 
   rpc ApplyRoomNotice (ApplyRoomNoticeRequest) returns (ApplyRoomNoticeResponse);
 }
@@ -31,6 +33,7 @@ service ChEngineFriend {
   rpc AddFriend (AddFriendRequest) returns (FriendEventResponse);
   rpc RespondFriend (RespondFriendRequest) returns (FriendEventResponse);
 }
+
 
 message ChatAttachment {
   int64 attachment_id = 1;
@@ -51,6 +54,42 @@ message ChatAttachment {
   int64 duration_ms = 13;
 
   int32 sort_order = 14;
+}
+
+message OpenDirectChatRoomRequest {
+  int64 requester_user_id = 1;
+  string requester_public_id = 2;
+
+  string friend_public_id = 3;
+}
+
+message StartDirectChatRequest {
+  string target_public_id = 1;
+
+  int64 sender_user_id = 2;
+  string sender_public_id = 3;
+
+  string message_type = 4;
+  string message_text = 5;
+
+  optional int64 reply_to_message_id = 6;
+  repeated int64 attachment_ids = 7;
+}
+
+message StartGroupChatRequest {
+  string room_name = 1;
+  string room_thumbnail = 2;
+
+  repeated string invite_member_public_ids = 4;
+
+  int64 sender_user_id = 5;
+  string sender_public_id = 6;
+
+  string message_type = 7;
+  string message_text = 8;
+
+  optional int64 reply_to_message_id = 9;
+  repeated int64 attachment_ids = 10;
 }
 
 message CreateChatMessageRequest {
@@ -100,15 +139,15 @@ message DeleteChatMessageRequest {
   int64 room_id = 1;
   int64 message_id = 2;
 
-  int64 deleter_user_id = 3;
-  string deleter_public_id = 4;
+  int64 requester_user_id = 3;
+  string requester_public_id = 4;
 }
 
 message DeleteChatMessageResponse {
   int64 room_id = 1;
   int64 message_id = 2;
 
-  string deleter_public_id = 3;
+  string requester_public_id = 3;
 
   string message_status = 4;
   string deleted_at = 5;
@@ -118,8 +157,8 @@ message ReactChatMessageRequest {
   int64 room_id = 1;
   int64 message_id = 2;
 
-  int64 reactor_user_id = 3;
-  string reactor_public_id = 4;
+  int64 requester_user_id = 3;
+  string requester_public_id = 4;
 
   string reaction_type = 5;
   string reaction_code = 6;
@@ -131,7 +170,7 @@ message ReactChatMessageResponse {
   int64 room_id = 1;
   int64 message_id = 2;
 
-  string reactor_public_id = 3;
+  string requester_public_id = 3;
 
   string reaction_type = 4;
   string reaction_code = 5;
@@ -157,7 +196,7 @@ message RoomNoticeView {
   string room_notice_contents = 5;
   string room_notice_status = 6;
 
-  string applier_public_id = 7;
+  string requester_public_id = 7;
   string last_applied_at = 8;
 }
 
@@ -171,31 +210,11 @@ message EnterRoomResponse {
   repeated RoomMemberProfile member_list = 6;
 
   optional RoomNoticeView active_room_notice = 7;
-}
 
-message GetOrCreateDirectRoomRequest {
-  int64 requester_user_id = 1;
-  string requester_public_id = 2;
-  string friend_public_id = 3;
-}
-
-message CreateGroupRoomRequest {
-  int64 creator_user_id = 1;
-  string creator_public_id = 2;
-
-  string room_name = 3;
-  string room_thumbnail = 4;
-
-  repeated string selected_friend_public_ids = 5;
+  string room_background = 8;
 }
 
 message EnterRoomRequest {
-  int64 room_id = 1;
-  int64 requester_user_id = 2;
-  string requester_public_id = 3;
-}
-
-message ExitRoomRequest {
   int64 room_id = 1;
   int64 requester_user_id = 2;
   string requester_public_id = 3;
@@ -210,8 +229,8 @@ message LeftRoomRequest {
 message InviteMemberRequest {
   int64 room_id = 1;
 
-  int64 inviter_user_id = 2;
-  string inviter_public_id = 3;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
 
   repeated string invite_member_public_ids = 4;
 }
@@ -219,8 +238,8 @@ message InviteMemberRequest {
 message KickMemberRequest {
   int64 room_id = 1;
 
-  int64 kicker_user_id = 2;
-  string kicker_public_id = 3;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
 
   string kick_target_public_id = 4;
 }
@@ -228,33 +247,34 @@ message KickMemberRequest {
 message BanMemberRequest {
   int64 room_id = 1;
 
-  int64 banner_user_id = 2;
-  string banner_public_id = 3;
+  int64 requester_user_id = 2;
+  string requester_public_id = 3;
 
   string ban_target_public_id = 4;
 }
-
-message RoomEventResponse {
+message ChangeMemberRoleRequest {
   int64 room_id = 1;
 
-  string room_event_type = 2;
+  int64 requester_user_id = 2;
   string requester_public_id = 3;
 
-  string event_status = 4;
-  string event_at = 5;
+  string target_public_id = 4;
+  string target_role = 5;
 }
 
-message RoomMemberEventResponse {
+message RoomFeedResponse {
   int64 room_id = 1;
 
-  string room_member_event_type = 2;
+  string feed_type = 2;
+
   string requester_public_id = 3;
+  string requester_nickname = 4;
 
-  repeated string target_public_ids = 4;
+  repeated string target_public_ids = 5;
+  repeated string target_nicknames = 6;
 
-  int64 affected_count = 5;
-  string event_status = 6;
-  string event_at = 7;
+  string feed_text = 7;
+  string feed_at = 8;
 }
 
 message ApplyRoomNoticeRequest {
@@ -280,7 +300,7 @@ message ApplyRoomNoticeResponse {
   string room_notice_contents = 5;
   string room_notice_status = 6;
 
-  string applier_public_id = 7;
+  string requester_public_id = 7;
   string last_applied_at = 8;
 }
 

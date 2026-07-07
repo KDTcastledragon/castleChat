@@ -7,10 +7,10 @@ import org.springframework.stereotype.Service;
 
 import com.chat.contract.domain.member.RoomMemberResponseDTO;
 import com.chat.contract.domain.member.RoomMembersDTO;
-import com.chat.contract.domain.room.ChatRoomListDTO;
-import com.chat.contract.domain.room.ChatRoomsDTO;
-import com.chat.contract.domain.room.EnterRoomResponseDTO;
-import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.room.domain.ChatRoomListDTO;
+import com.chat.contract.room.domain.ChatRoomsDTO;
+import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.RoomQueryUseCase;
 

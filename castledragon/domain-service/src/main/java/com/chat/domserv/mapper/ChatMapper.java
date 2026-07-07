@@ -5,9 +5,9 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.domain.chatting.ChatAttachmentDTO;
-import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
-import com.chat.contract.domain.chatting.UpdatedUnreadMessagesDTO;
+import com.chat.contract.chatting.domain.ChatAttachmentDTO;
+import com.chat.contract.chatting.domain.UpdatedUnreadMessagesDTO;
+import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.redis.RedisRoomMemberReadPositionDTO;
 
 @Mapper

@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.contract.domain.member.UserProfileResponseDTO;
-import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
+import com.chat.contract.user.domain.UserProfileResponseDTO;
 import com.chat.domserv.domain.LoginRequestDTO;
 import com.chat.domserv.domain.UserDTO;
 import com.chat.domserv.usecase.UserCommandUseCase;
@@ -99,11 +99,13 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("존재하지 않는 사용자.");
 		}
 
-		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+		SessionUserDTO sessionUser = new SessionUserDTO(user.getUserId(), user.getPublicId(), user.getNickname(), user.getFriendCode(), user
+				.getProfileImg());
 
 		session.setAttribute("LOGIN_USER", sessionUser);
 
-		UserProfileResponseDTO loginResponse = new UserProfileResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user.getProfileImg());
+		UserProfileResponseDTO loginResponse = new UserProfileResponseDTO(user.getPublicId(), user.getNickname(), user.getFriendCode(), user
+				.getProfileImg());
 
 		return ResponseEntity.ok(loginResponse);
 	}// login
@@ -138,7 +140,8 @@ public class UserController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
 		}
 
-		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser.getFriendCode(), loginUser.getProfileImg()); // friCode = null
+		UserProfileResponseDTO isMeTrue = new UserProfileResponseDTO(loginUser.getPublicId(), loginUser.getNickname(), loginUser
+				.getFriendCode(), loginUser.getProfileImg()); // friCode = null
 
 		return ResponseEntity.ok(isMeTrue);
 	}// isMe

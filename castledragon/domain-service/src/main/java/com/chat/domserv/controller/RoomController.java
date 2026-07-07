@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
-import com.chat.contract.domain.room.ChatRoomListDTO;
-import com.chat.contract.domain.room.EnterGroupRequestDTO;
-import com.chat.contract.domain.room.EnterRoomResponseDTO;
-import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
+import com.chat.contract.room.domain.ChatRoomListDTO;
+import com.chat.contract.room.domain.EnterGroupRequestDTO;
+import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.domserv.usecase.ChatQueryUseCase;
 import com.chat.domserv.usecase.RoomCommandUseCase;
 import com.chat.domserv.usecase.RoomQueryUseCase;

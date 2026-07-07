@@ -2,9 +2,9 @@
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-  <mapper namespace="com.chat.chengine.mapper.ChengineChatMapper">
+  <mapper namespace="com.chat.chengine.mapper.ChEngineChatMapper">
   
-  <insert id="insertChatMessage" parameterType="com.chat.contract.domain.ChatMessagesDTO" useGeneratedKeys="true" keyProperty="messageId">
+  <insert id="insertChatMessage" parameterType="com.chat.contract.chatting.domain.ChatMessagesDTO" useGeneratedKeys="true" keyProperty="messageId">
 	  insert into chat_messages(room_id, sender_id, message_text, created_at)
 	  values(#{roomId},#{senderId},#{messageText},#{createdAt})
   </insert>
@@ -53,7 +53,7 @@
 	SET
 		message_status = 'DELETED',
 		deleted_at = NOW(),
-		deleted_by = #{deleterUserId}
+		deleted_by = #{requesterUserId}
 	WHERE room_id = #{roomId}
 	  AND message_id = #{messageId}
 	  AND message_status = 'ACTIVE'
@@ -63,7 +63,7 @@
 	INSERT IGNORE INTO chat_message_reactions (
 		room_id,
 		message_id,
-		reactor_user_id,
+		requester_user_id,
 		reaction_type,
 		reaction_code,
 		created_at
@@ -71,7 +71,7 @@
 	VALUES (
 		#{roomId},
 		#{messageId},
-		#{reactorUserId},
+		#{requesterUserId},
 		#{reactionType},
 		#{reactionCode},
 		NOW()
@@ -82,7 +82,7 @@
 	DELETE FROM chat_message_reactions
 	WHERE room_id = #{roomId}
 	  AND message_id = #{messageId}
-	  AND reactor_user_id = #{reactorUserId}
+	  AND requester_user_id = #{requesterUserId}
 	  AND reaction_code = #{reactionCode}
 </delete>
   

@@ -2,9 +2,9 @@ package com.chat.domserv.usecase;
 
 import java.util.List;
 
-import com.chat.contract.domain.room.ChatRoomListDTO;
-import com.chat.contract.domain.room.EnterRoomResponseDTO;
-import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.room.domain.ChatRoomListDTO;
+import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
 
 public interface RoomQueryUseCase {
 	List<ChatRoomListDTO> getMyAllChatRooms(Long userId);

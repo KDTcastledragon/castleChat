@@ -5,8 +5,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.domain.member.ChatUserLookupDTO;
-import com.chat.contract.domain.member.UserProfileResponseDTO;
+import com.chat.contract.room.domain.ChatUserLookupDTO;
+import com.chat.contract.user.domain.UserProfileResponseDTO;
 import com.chat.domserv.domain.UserDTO;
 
 @Mapper

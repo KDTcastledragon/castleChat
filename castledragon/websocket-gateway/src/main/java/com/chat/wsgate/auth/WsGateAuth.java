@@ -3,7 +3,7 @@ package com.chat.wsgate.auth;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.wsgate.exception.WsGateAuthException;
 
 @Component

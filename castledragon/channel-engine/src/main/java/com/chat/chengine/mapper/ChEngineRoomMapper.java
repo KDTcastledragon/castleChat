@@ -3,8 +3,8 @@ package com.chat.chengine.mapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.chat.contract.command.room.ApplyRoomNoticeCommand;
-import com.chat.contract.domain.room.RoomNoticeViewResponseDTO;
+import com.chat.contract.room.command.ApplyRoomNoticeCommand;
+import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
 
 @Mapper
 public interface ChEngineRoomMapper {

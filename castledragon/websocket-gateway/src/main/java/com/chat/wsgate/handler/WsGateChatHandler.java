@@ -5,29 +5,30 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.chat.contract.command.chatting.CreateChatMessageCommand;
-import com.chat.contract.command.chatting.DeleteChatMessageCommand;
-import com.chat.contract.command.chatting.ReactChatMessageCommand;
-import com.chat.contract.command.chatting.ReadChatMessageCommand;
-import com.chat.contract.command.chatting.StartDirectRoomWithMessageCommand;
-import com.chat.contract.command.chatting.StartGroupRoomWithMessageCommand;
-import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
-import com.chat.contract.domain.chatting.DeleteChatMessageResponseDTO;
-import com.chat.contract.domain.chatting.ReactChatMessageEventResponseDTO;
-import com.chat.contract.domain.chatting.ReadPositionUpdateResponseDTO;
-import com.chat.contract.domain.user.SessionUserDTO;
-import com.chat.contract.domain.websocket.WebSocketDTO;
+import com.chat.contract.chatting.command.CreateChatMessageCommand;
+import com.chat.contract.chatting.command.DeleteChatMessageCommand;
+import com.chat.contract.chatting.command.ReactChatMessageCommand;
+import com.chat.contract.chatting.command.ReadChatMessageCommand;
+import com.chat.contract.chatting.command.StartDirectChatCommand;
+import com.chat.contract.chatting.command.StartGroupChatCommand;
+import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
+import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
+import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
+import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
+import com.chat.contract.websocket.domain.WebSocketDTO;
 import com.chat.wsgate.auth.WsGateAuth;
 import com.chat.wsgate.client.WsGateChEngineChatClient;
 import com.chat.wsgate.domain.chatting.PayloadDeleteChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReactChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReadChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadSendChatMessageRequestDTO;
-import com.chat.wsgate.domain.chatting.PayloadStartDirectRoomWithMessageRequestDTO;
-import com.chat.wsgate.domain.chatting.PayloadStartGroupRoomWithMessageRequestDTO;
+import com.chat.wsgate.domain.chatting.PayloadStartDirectChatRequestDTO;
+import com.chat.wsgate.domain.chatting.PayloadStartGroupChatRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadTypingRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadTypingResponseDTO;
 import com.chat.wsgate.outbound.WsGateOutboundWriter;
+import com.chat.wsgate.session.WsGateSessionRegistry;
 import com.chat.wsgate.support.WsGatePayloadConverter;
 
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class WsGateChatHandler {
 	private final WsGateOutboundWriter wsGateOutboundWriter;
 	private final WsGatePayloadConverter wsGatePayloadConverter;
 	private final WsGateChEngineChatClient wsGateChEngineChatClient;
+	private final WsGateSessionRegistry wsGateSessionRegistry;
 
 	private boolean isEmptyMessage(String messageText, List<Long> attachmentIds) {
 		boolean noText = messageText == null || messageText.isBlank();
@@ -57,14 +59,33 @@ public class WsGateChatHandler {
 		return messageType;
 	}
 
+	//	====== 채팅 입력 이벤트 start/stop =========================================================================================================
+	//*** 이 메소드만 예외적으로 channel-engine을 거치지 않고, 그대로 response 한다. business logic이 없기 때문. [ 책임분리 < UX ] 
+	public void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
+		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
+
+		PayloadTypingRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadTypingRequestDTO.class);
+
+		if (payload.getRoomId() == null) {
+			log.warn("타이핑 데이터 중 roomId null");
+			wsGateOutboundWriter.responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
+			return;
+		}
+
+		PayloadTypingResponseDTO responsePayload = new PayloadTypingResponseDTO(payload.getRoomId(), me.getPublicId(), me.getNickname());
+
+		//		log.info("{} in room={}", eventType, responsePayload.getRoomId());
+
+		wsGateOutboundWriter.broadcastToRoomExceptUser(payload.getRoomId(), eventType, responsePayload, dto.getRequestId(), me.getUserId());
+	}
+
 	// 1.로그인 검증  2.payload 꺼내기  3.data누락 검증  4.커맨드 생성  5.grpc 커맨드 input + grpc output 받기  6.output broadcast 
 
 	//	====== 1:1 채팅방 메세지 전송 후 방 생성 ======================================================================================================
-	public void handleStartDirectRoomWithMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+	public void handleStartDirectChat(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
 
-		PayloadStartDirectRoomWithMessageRequestDTO payload = wsGatePayloadConverter
-				.convert(dto, PayloadStartDirectRoomWithMessageRequestDTO.class);
+		PayloadStartDirectChatRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadStartDirectChatRequestDTO.class);
 
 		if (payload.getTargetPublicId() == null || payload.getTargetPublicId().isBlank()) {
 			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "targetPublicId 누락");
@@ -77,13 +98,15 @@ public class WsGateChatHandler {
 		}
 
 		try {
-			StartDirectRoomWithMessageCommand cmd = new StartDirectRoomWithMessageCommand(payload.getTargetPublicId(), me.getUserId(), me
+			StartDirectChatCommand startDirChtCmd = new StartDirectChatCommand(payload.getTargetPublicId(), me.getUserId(), me
 					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startDirectRoomWithMessage(cmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startDirectChat(startDirChtCmd);
 
+			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
+			log.info("{}번유저 -> {}번방 start갠톡 : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 
 		} catch (Exception e) {
 			log.error("START_DIRECT_ROOM_WITH_MSG 예외", e);
@@ -92,10 +115,10 @@ public class WsGateChatHandler {
 	}
 
 	//	====== 단톡방 메세지 전송 후 방 생성 ======================================================================================================
-	public void handleStartGroupRoomWithMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+	public void handleStartGroupChat(WebSocketSession session, WebSocketDTO dto) throws Exception {
 		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
 
-		PayloadStartGroupRoomWithMessageRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadStartGroupRoomWithMessageRequestDTO.class);
+		PayloadStartGroupChatRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadStartGroupChatRequestDTO.class);
 
 		if (payload.getInviteMemberPublicIds() == null || payload.getInviteMemberPublicIds().isEmpty()) {
 			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "초대 멤버 없음");
@@ -108,14 +131,15 @@ public class WsGateChatHandler {
 		}
 
 		try {
-			StartGroupRoomWithMessageCommand cmd = new StartGroupRoomWithMessageCommand(payload.getRoomName(), payload.getRoomThumbnail(), payload
+			StartGroupChatCommand startGrpChtCmd = new StartGroupChatCommand(payload.getRoomName(), payload.getRoomThumbnail(), payload
 					.getInviteMemberPublicIds(), me.getUserId(), me.getPublicId(), defaultMessageType(payload.getMessageType()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startGroupRoomWithMessage(cmd);
+			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startGroupChat(startGrpChtCmd);
 
+			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
-
+			log.info("{}번유저 -> {}번방 start단톡 : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 		} catch (Exception e) {
 			log.error("START_GROUP_ROOM_WITH_MSG 예외", e);
 			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "그룹방 첫 메시지 전송 실패");
@@ -196,25 +220,6 @@ public class WsGateChatHandler {
 			wsGateOutboundWriter.responseFail(session, dto, "READ_MSG_FAIL", "READ_MSG 예외처리발생");
 		}
 
-	}
-
-	//	====== 채팅 입력 이벤트 start/stop ===========================================================================================================
-	public void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
-		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
-
-		PayloadTypingRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadTypingRequestDTO.class);
-
-		if (payload.getRoomId() == null) {
-			log.warn("타이핑 데이터 중 roomId null");
-			wsGateOutboundWriter.responseFail(session, dto, eventType + "_FAIL", "TYPING 필수값 누락");
-			return;
-		}
-
-		PayloadTypingResponseDTO responsePayload = new PayloadTypingResponseDTO(payload.getRoomId(), me.getPublicId(), me.getNickname());
-
-		//		log.info("{} in room={}", eventType, responsePayload.getRoomId());
-
-		wsGateOutboundWriter.broadcastToRoomExceptUser(payload.getRoomId(), eventType, responsePayload, dto.getRequestId(), me.getUserId());
 	}
 
 	// ====== 메시지 삭제 ====================================================================================================================

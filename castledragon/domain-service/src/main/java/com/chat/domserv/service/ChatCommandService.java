@@ -19,9 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.chat.contract.domain.chatting.ChatAttachmentDTO;
-import com.chat.contract.domain.member.RoomMembersDTO;
-import com.chat.contract.domain.user.SessionUserDTO;
+import com.chat.contract.chatting.domain.ChatAttachmentDTO;
+import com.chat.contract.room.domain.RoomMembersDTO;
+import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.domserv.mapper.ChatMapper;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.ChatCommandUseCase;

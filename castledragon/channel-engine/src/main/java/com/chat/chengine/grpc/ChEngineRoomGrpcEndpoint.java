@@ -1,11 +1,15 @@
 package com.chat.chengine.grpc;
 
-import com.chat.chengine.usecase.ChEngineRoomCommandUseCase;
-import com.chat.contract.command.room.ApplyRoomNoticeCommand;
-import com.chat.contract.domain.room.RoomNoticeViewResponseDTO;
+import com.chat.chengine.usecase.RoomCommandUseCase;
 import com.chat.contract.grpc.ApplyRoomNoticeRequest;
 import com.chat.contract.grpc.ApplyRoomNoticeResponse;
 import com.chat.contract.grpc.ChEngineRoomGrpc;
+import com.chat.contract.grpc.EnterRoomResponse;
+import com.chat.contract.grpc.OpenDirectChatRoomRequest;
+import com.chat.contract.room.command.ApplyRoomNoticeCommand;
+import com.chat.contract.room.command.OpenDirectChatRoomCommand;
+import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeViewResponseDTO;
 
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +21,20 @@ import net.devh.boot.grpc.server.service.GrpcService;
 @Log4j2
 public class ChEngineRoomGrpcEndpoint extends ChEngineRoomGrpc.ChEngineRoomImplBase {
 
-	private final ChEngineRoomCommandUseCase chEngineRoomCommandUseCase;
+	private final RoomCommandUseCase roomCommandUseCase;
+
+	@Override
+	public void openDirectChatRoom(OpenDirectChatRoomRequest request, StreamObserver<EnterRoomResponse> responseObserver) {
+		OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(request.getRequesterUserId(), request
+				.getRequesterPublicId(), request.getFriendPublicId());
+
+		EnterRoomResponseDTO response = roomCommandUseCase.openDirectChatRoom(openDirChtCmd);
+
+		EnterRoomResponse grpcResponse = DtoToGrpcConverter.convertEnterRoomResDtoToGrpc(response);
+
+		responseObserver.onNext(grpcResponse);
+		responseObserver.onCompleted();
+	}
 
 	@Override
 	public void applyRoomNotice(ApplyRoomNoticeRequest request, StreamObserver<ApplyRoomNoticeResponse> responseObserver) {
@@ -26,7 +43,7 @@ public class ChEngineRoomGrpcEndpoint extends ChEngineRoomGrpc.ChEngineRoomImplB
 						.getRoomNoticeType(), request.hasSourceMessageId() ? request.getSourceMessageId()
 								: null, request.getRoomNoticeContents(), request.getRequesterUserId(), request.getRequesterPublicId());
 
-		RoomNoticeViewResponseDTO result = chEngineRoomCommandUseCase.applyRoomNotice(command);
+		RoomNoticeViewResponseDTO result = roomCommandUseCase.applyRoomNotice(command);
 
 		ApplyRoomNoticeResponse response = ApplyRoomNoticeResponse.newBuilder()
 				.setRoomNoticeId(result.getRoomNoticeId())
@@ -35,7 +52,7 @@ public class ChEngineRoomGrpcEndpoint extends ChEngineRoomGrpc.ChEngineRoomImplB
 				.setRoomNoticeType(result.getRoomNoticeType())
 				.setRoomNoticeContents(result.getRoomNoticeContents())
 				.setRoomNoticeStatus(result.getRoomNoticeStatus())
-				.setApplierPublicId(result.getApplierPublicId())
+				.setRequesterPublicId(result.getRequesterPublicId())
 				.setLastAppliedAt(result.getLastAppliedAt().toString())
 				.build();
 
