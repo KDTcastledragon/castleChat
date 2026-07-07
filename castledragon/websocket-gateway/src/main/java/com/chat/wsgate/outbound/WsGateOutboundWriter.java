@@ -1,5 +1,6 @@
 package com.chat.wsgate.outbound;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,6 +56,36 @@ public class WsGateOutboundWriter {
 		}
 	}
 
+	private WebSocketDTO createSuccessEvent(String type, Object payloadData, String requestId) {
+		WebSocketDTO event = new WebSocketDTO();
+
+		event.setRequestId(requestId);
+		event.setWsType(type);
+		event.setIsSuccess(true);
+		event.setPayload(objectMapper.valueToTree(payloadData));
+
+		return event;
+	}
+
+	private WebSocketDTO createFailEvent(String type, String errorMessage, String requestId) {
+		WebSocketDTO event = new WebSocketDTO();
+
+		event.setRequestId(requestId);
+		event.setWsType(type);
+		event.setIsSuccess(false);
+		event.setWsMessage(errorMessage);
+
+		return event;
+	}
+
+	private String serialize(WebSocketDTO event) throws Exception {
+		return objectMapper.writeValueAsString(event);
+	}
+
+	private void dispatchSerializedToSession(WebSocketSession session, String payload) throws Exception {
+		sendSafely(session, payload);
+	}
+
 	//	====== broadcast ===========================================================================================================
 	public void broadcastToRoom(Long roomId, String type, Object payloadData, String requestId) throws Exception {
 		Map<Long, WebSocketSession> sessions = wsGateSessionRegistry.getRoomSessions(roomId);
@@ -66,22 +97,11 @@ public class WsGateOutboundWriter {
 
 		sessions.values().removeIf(socketSession -> !socketSession.isOpen());
 
-		WebSocketDTO event = new WebSocketDTO();
-		event.setRequestId(requestId);
-		event.setWsType(type);
-		event.setIsSuccess(true);
-		event.setPayload(objectMapper.valueToTree(payloadData));
-
-		String payload = objectMapper.writeValueAsString(event);
+		String payload = serialize(createSuccessEvent(type, payloadData, requestId));
 
 		for (WebSocketSession sess : sessions.values()) {
 			try {
-
-				sendSafely(sess, payload);
-
-				//	if (sess.isOpen()) {
-				//		sess.sendMessage(new TextMessage(payload));
-				//	}
+				dispatchSerializedToSession(sess, payload);
 			} catch (Exception e) {
 				log.error("broadcast 실패", e);
 			}
@@ -98,13 +118,7 @@ public class WsGateOutboundWriter {
 
 		sessions.values().removeIf(socketSession -> !socketSession.isOpen());
 
-		WebSocketDTO event = new WebSocketDTO();
-		event.setRequestId(requestId);
-		event.setWsType(type);
-		event.setIsSuccess(true);
-		event.setPayload(objectMapper.valueToTree(payloadData));
-
-		String payload = objectMapper.writeValueAsString(event);
+		String payload = serialize(createSuccessEvent(type, payloadData, requestId));
 
 		for (Map.Entry<Long, WebSocketSession> entry : sessions.entrySet()) {
 			Long userId = entry.getKey();
@@ -115,19 +129,8 @@ public class WsGateOutboundWriter {
 			}
 
 			try {
-				sendSafely(sess, payload);
+				dispatchSerializedToSession(sess, payload);
 
-				// ======< legacy ver1 : singleProcess & lock 적용 >================================
-				//	synchronized (getSessionSendLock(sess)) {
-				//		if (sess.isOpen()) {
-				//			sess.sendMessage(new TextMessage(payload));
-				//		}
-				//	}
-
-				// ======< legacy ver0 : singleProcess >===========================================
-				//	if (s.isOpen()) {
-				//		s.sendMessage(new TextMessage(payload));
-				//	}
 			} catch (Exception e) {
 				log.error("typing broadcast 실패", e);
 			}
@@ -136,56 +139,64 @@ public class WsGateOutboundWriter {
 
 	//	====== Success 응답 보내기 ===========================================================================================================
 	public void responseOk(WebSocketSession session, WebSocketDTO request, String wsType, Object payload) throws Exception {
-		WebSocketDTO response = new WebSocketDTO();
-
-		response.setRequestId(request.getRequestId());
-		response.setWsType(wsType);
-		response.setIsSuccess(true);
-		response.setPayload(objectMapper.valueToTree(payload));
-
-		dispatchToSession(session, response);
+		dispatchToSession(session, createSuccessEvent(wsType, payload, request.getRequestId()));
 	}
 
 	//	====== Fail 응답 보내기 ===========================================================================================================
 	public void responseFail(WebSocketSession session, WebSocketDTO request, String wsType, String errorMessage) throws Exception {
-		WebSocketDTO response = new WebSocketDTO();
-
-		response.setRequestId(request.getRequestId());
-		response.setWsType(wsType);
-		response.setIsSuccess(false);
-		response.setWsMessage(errorMessage);
-
-		dispatchToSession(session, response);
+		dispatchToSession(session, createFailEvent(wsType, errorMessage, request.getRequestId()));
 	}
 
 	//	====== 응답 Session에 보내기 ===========================================================================================================
 	public void dispatchToSession(WebSocketSession session, WebSocketDTO dto) throws Exception {
-		String payload = objectMapper.writeValueAsString(dto);
-		sendSafely(session, payload);
-
-		//		if (!session.isOpen()) {
-		//			log.info("responseToSession is Not Open");
-		//			return;
-		//		}
-		//
-		//		String payload = objectMapper.writeValueAsString(dto);
-		//
-		//		synchronized (getSessionSendLock(session)) {
-		//			session.sendMessage(new TextMessage(payload));
-		//		}
+		dispatchSerializedToSession(session, serialize(dto));
 	}
 
-	public void dispatchToUser(Long userId, String type, Object payloadData, String requestId) throws Exception {
+	public void pushToSingleUser(Long userId, String type, Object payloadData, String requestId) throws Exception {
 		WebSocketSession targetSession = wsGateSessionRegistry.findSessionByUserId(userId);
 
 		if (targetSession == null || !targetSession.isOpen()) {
-			log.info("dispatchToUser 대상 세션 없음. userId={}, type={}", userId, type);
+			log.info("pushToSingleUser 대상 세션 없음. userId={}, type={}", userId, type);
 			return;
 		}
 
-		WebSocketDTO response = WebSocketDTO.builder().wsType(type).requestId(requestId).payload(payloadData).success(true).build();
+		dispatchToSession(targetSession, createSuccessEvent(type, payloadData, requestId));
+	}
 
-		dispatchToSession(targetSession, response);
+	public void pushToMultipleUsers(Collection<Long> userIds, String type, Object payloadData, String requestId) throws Exception {
+		if (userIds == null || userIds.isEmpty()) {
+			log.info("pushToMultipleUsers 대상 없음. type={}", type);
+			return;
+		}
+
+		String payload = serialize(createSuccessEvent(type, payloadData, requestId));
+
+		for (Long userId : userIds) {
+			if (userId == null) {
+				continue;
+			}
+
+			WebSocketSession targetSession = wsGateSessionRegistry.findSessionByUserId(userId);
+
+			if (targetSession == null || !targetSession.isOpen()) {
+				log.info("pushToMultipleUsers 대상 세션 없음. userId={}, type={}", userId, type);
+				continue;
+			}
+
+			try {
+				dispatchSerializedToSession(targetSession, payload);
+			} catch (Exception e) {
+				log.error("pushToMultipleUsers 실패. userId={}, type={}", userId, type, e);
+			}
+		}
+	}
+
+	public void pushToSingleUserExcept(Long userId, String type, Object payloadData, String requestId, Long excludedUserId) throws Exception {
+		if (Objects.equals(userId, excludedUserId)) {
+			return;
+		}
+
+		pushToSingleUser(userId, type, payloadData, requestId);
 	}
 
 }

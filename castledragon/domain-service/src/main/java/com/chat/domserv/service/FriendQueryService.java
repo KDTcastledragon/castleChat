@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.chat.contract.domain.member.UserProfileResponseDTO;
+import com.chat.contract.user.domain.UserProfileResponseDTO;
 import com.chat.domserv.mapper.FriendMapper;
 import com.chat.domserv.usecase.FriendQueryUseCase;
 

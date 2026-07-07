@@ -54,7 +54,7 @@ public class UserController {
 
 			boolean isJoined = usrCmdUseCase.join(loginId, password, nickname);
 
-			log.info("뭐가문제냐구웅웅웅 : {}", isJoined);
+			log.info("isJoined : {}", isJoined);
 
 			if (isJoined == true) {
 				return ResponseEntity.ok().build();
