@@ -9,8 +9,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PayloadSendChatMessageRequestDTO {
-	private Long roomId;
+public class PayloadStartGroupRoomWithMessageRequestDTO {
+	private String roomName;
+	private String roomThumbnail;
+
+	private List<String> inviteMemberPublicIds;
 
 	private String messageType;
 	private String messageText;

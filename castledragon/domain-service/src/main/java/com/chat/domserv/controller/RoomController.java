@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat.contract.domain.EnterGroupRequestDTO;
 import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
 import com.chat.contract.domain.room.ChatRoomListDTO;
+import com.chat.contract.domain.room.EnterGroupRequestDTO;
 import com.chat.contract.domain.room.EnterRoomResponseDTO;
 import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.domserv.usecase.ChatQueryUseCase;
@@ -37,15 +37,15 @@ public class RoomController {
 	UserQueryUseCase usrQryUseCase;
 	ChatQueryUseCase ChtQryUseCase;
 
-	private SessionUserDTO getLoginUser(HttpSession session) {
-		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
-
-		if (me == null) {
-			throw new IllegalStateException("로그인 필요");
-		}
-
-		return me;
-	}
+	//	private SessionUserDTO getLoginUser(HttpSession session) {
+	//		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+	//
+	//		if (me == null) {
+	//			throw new IllegalStateException("로그인 필요");
+	//		}
+	//
+	//		return me;
+	//	}
 
 	@PostMapping("/getOrCreateDirectRoom") // 무조건 “방(room)”을 먼저 만든다
 	public ResponseEntity<?> getOrCreateDirectRoom(@RequestBody Map<String, Object> data, HttpSession session) {

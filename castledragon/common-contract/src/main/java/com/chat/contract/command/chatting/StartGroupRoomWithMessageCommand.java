@@ -1,4 +1,4 @@
-package com.chat.wsgate.domain.chatting;
+package com.chat.contract.command.chatting;
 
 import java.util.List;
 
@@ -9,13 +9,18 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PayloadSendChatMessageRequestDTO {
-	private Long roomId;
+public class StartGroupRoomWithMessageCommand {
+	private String roomName;
+	private String roomThumbnail;
+
+	private List<String> inviteMemberPublicIds;
+
+	private Long senderUserId;
+	private String senderPublicId;
 
 	private String messageType;
 	private String messageText;
 
 	private Long replyToMessageId;
-
 	private List<Long> attachmentIds;
 }

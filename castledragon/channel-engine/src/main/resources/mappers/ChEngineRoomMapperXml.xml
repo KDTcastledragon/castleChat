@@ -5,6 +5,27 @@
 
 <mapper namespace="com.chat.chengine.mapper.ChEngineRoomMapper">
 
+<insert id="insertRoomMember">
+	INSERT INTO room_members (
+		room_id,
+		user_id,
+		role,
+		custom_room_name,
+		custom_room_thumbnail,
+		custom_room_back_ground,
+		member_status
+	)
+	VALUES (
+		#{roomId},
+		#{userId},
+		#{role},
+		#{customRoomName},
+		#{customRoomThumbnail},
+		#{customRoomBackground},
+		#{memberStatus}
+	)
+</insert>
+
 	<select id="lockRoomForUpdate" resultType="java.lang.Long">
 		SELECT room_id
 		FROM chat_rooms

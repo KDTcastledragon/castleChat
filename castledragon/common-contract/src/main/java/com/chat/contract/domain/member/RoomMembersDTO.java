@@ -6,9 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
-@AllArgsConstructor
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class RoomMembersDTO {
 	private Long roomMemberId;
 
@@ -19,13 +19,17 @@ public class RoomMembersDTO {
 
 	private String customRoomName;
 	private String customRoomThumbnail;
+	private String customRoomBackground;
+
 	private String memberStatus;
+
+	private Long lastReadMessageId;
+	private Long visibleAfterMessageId;
 
 	private LocalDateTime joinedAt;
 	private LocalDateTime leftAt;
 	private LocalDateTime kickedAt;
 	private LocalDateTime bannedAt;
-
-	private Long lastReadMessageId;
-
+	private LocalDateTime invitedAt;
+	private LocalDateTime rejoinedAt;
 }

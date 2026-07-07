@@ -25,11 +25,11 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final WsGateSessionRegistry wsGateSessionRegistry;
-	private final WsGateOutboundWriter gwWsOutboundWriter;
+	private final WsGateOutboundWriter wsGateOutboundWriter;
 
-	private final WsGateRoomHandler gwWsRoomHandler;
-	private final WsGateConnectionHandler gwWsConnectionHandler;
-	private final WsGateChatHandler gwWsChatHandler;
+	private final WsGateRoomHandler wsGateRoomHandler;
+	private final WsGateConnectionHandler wsGateConnectionHandler;
+	private final WsGateChatHandler wsGateChatHandler;
 
 	//	====== 메세지 관리 Dispatcher ===========================================================================================================
 	// TextWebSocketHandler안에 handleTextMessage내장 메소드 존재. 그래서 @Override 붙임. 반드시 약속된 메서드인 handleTextMessage를 입구로 써야 합니다.
@@ -46,27 +46,33 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 			}
 
 			switch (dto.getWsType()) {
-			case "CONNECT_USER" -> gwWsConnectionHandler.handleConnectUser(session, dto);
+			case "CONNECT_USER" -> wsGateConnectionHandler.handleConnectUser(session, dto);
 
-			case "ENTER_ROOM" -> gwWsRoomHandler.handleEnterRoom(session, dto);
-			case "ENTER_GROUP_ROOM" -> gwWsRoomHandler.handleEnterRoom(session, dto);
-			case "EXIT_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto);
-			case "LEFT_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto); // 구현해야함
-			case "INVITE_ROOM" -> gwWsRoomHandler.handleExitRoom(session, dto); // 구현해야함
-			case "TYPING_START" -> gwWsChatHandler.handleTyping(session, dto, "TYPING_START");
-			case "TYPING_STOP" -> gwWsChatHandler.handleTyping(session, dto, "TYPING_STOP");
-			case "SEND_MESSAGE" -> gwWsChatHandler.handleSendMessage(session, dto);
-			case "READ_MESSAGE" -> gwWsChatHandler.handleReadMessage(session, dto);
+			case "START_DIRECT_ROOM_WITH_MESSAGE" -> wsGateRoomHandler.handleStartDirectRoomWithMessage(session, dto);
+			case "START_GROUP_ROOM_WITH_MESSAGE" -> wsGateRoomHandler.handleStartGroupRoomWithMessage(session, dto);
 
-			case "DELETE_MESSAGE" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
-			case "REACT_MESSAGE" -> gwWsChatHandler.handleReadMessage(session, dto); // 구현해야함
-			case "APPLY_ROOM_NOTICE" -> gwWsRoomHandler.handleEnterRoom(session, dto); // 구현해야함
+			case "ENTER_ROOM" -> wsGateRoomHandler.handleEnterRoom(session, dto);
+			case "EXIT_ROOM" -> wsGateRoomHandler.handleExitRoom(session, dto);
+			case "LEFT_ROOM" -> wsGateRoomHandler.handleExitRoom(session, dto); // 구현해야함
 
-			//		case "LEAVE_ROOM" -> handleLeaveRoom(session, dto);
+			case "INVITE_MEMBER" -> wsGateRoomHandler.handleInviteMember(session, dto);
+			case "KICK_MEMBER" -> wsGateRoomHandler.handleKickMember(session, dto);
+			case "BAN_MEMBER" -> wsGateRoomHandler.handleBanMember(session, dto);
+			case "CHANGE_MEMBER_ROLE" -> wsGateRoomHandler.handleChangeMemberRole(session, dto);
+
+			case "TYPING_START" -> wsGateChatHandler.handleTyping(session, dto, "TYPING_START");
+			case "TYPING_STOP" -> wsGateChatHandler.handleTyping(session, dto, "TYPING_STOP");
+
+			case "SEND_MESSAGE" -> wsGateChatHandler.handleSendMessage(session, dto);
+			case "READ_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto);
+			case "DELETE_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "REACT_MESSAGE" -> wsGateChatHandler.handleReadMessage(session, dto); // 구현해야함
+			case "APPLY_ROOM_NOTICE" -> wsGateRoomHandler.handleEnterRoom(session, dto); // 구현해야함
+
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
-				gwWsOutboundWriter.responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
-			}// default
+				wsGateOutboundWriter.responseFail(session, dto, "UNKNOWN_TYPE", "알 수 없는 WS TYPE");
+			}
 
 			}// switch-case
 
@@ -74,7 +80,7 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 			log.error("WebSocket 메시지 처리 실패: {}", message.getPayload(), e);
 
 			if (dto != null && session.isOpen()) {
-				gwWsOutboundWriter.responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
+				wsGateOutboundWriter.responseFail(session, dto, "WS_MESSAGE_FAIL", "WebSocket 메시지 처리 실패");
 			}
 		}// try-catch : 이렇게 하면 잘못된 payload가 와도 서버가 FAIL을 보내고, WebSocket 연결 자체는 최대한 유지할 수 있어.
 	} // handleTextMessage 끝.
@@ -91,7 +97,7 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 	public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
 		SessionUserDTO connectedUser = wsGateSessionRegistry.removeConnectedUser(session); // remove : key에 해당하는 entry를 삭제하면서, 해당 entry의 value를 반환한다.
 		wsGateSessionRegistry.removeSessionAllRooms(session);
-		gwWsOutboundWriter.removeSessionLock(session);
+		wsGateOutboundWriter.removeSessionLock(session);
 
 		if (connectedUser != null) {
 			log.info("{}-({})님이 종료하였습니다.", connectedUser.getNickname(), connectedUser.getUserId());
@@ -103,5 +109,3 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 	} // afterConnectionClosed 끝.
 
 } // ChatHandler 끝.
-
-

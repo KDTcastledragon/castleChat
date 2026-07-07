@@ -1,4 +1,4 @@
-package com.chat.contract.domain;
+package com.chat.contract.domain.room;
 
 import java.util.List;
 

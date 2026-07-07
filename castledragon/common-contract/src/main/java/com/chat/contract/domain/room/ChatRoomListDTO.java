@@ -20,8 +20,9 @@ public class ChatRoomListDTO {
 	private Long unreadCount;
 
 	private String lastMessage;
+	private LocalDateTime lastMessageAt;
 
-	private LocalDateTime lastMessageTime;
+	private Long unreadMessageCount;
 }
 
 //ChatRoomListDTO 쓰는 곳

@@ -1,5 +1,7 @@
 package com.chat.wsgate.handler;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -7,6 +9,8 @@ import com.chat.contract.command.chatting.CreateChatMessageCommand;
 import com.chat.contract.command.chatting.DeleteChatMessageCommand;
 import com.chat.contract.command.chatting.ReactChatMessageCommand;
 import com.chat.contract.command.chatting.ReadChatMessageCommand;
+import com.chat.contract.command.chatting.StartDirectRoomWithMessageCommand;
+import com.chat.contract.command.chatting.StartGroupRoomWithMessageCommand;
 import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
 import com.chat.contract.domain.chatting.DeleteChatMessageResponseDTO;
 import com.chat.contract.domain.chatting.ReactChatMessageEventResponseDTO;
@@ -19,6 +23,8 @@ import com.chat.wsgate.domain.chatting.PayloadDeleteChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReactChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadReadChatMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadSendChatMessageRequestDTO;
+import com.chat.wsgate.domain.chatting.PayloadStartDirectRoomWithMessageRequestDTO;
+import com.chat.wsgate.domain.chatting.PayloadStartGroupRoomWithMessageRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadTypingRequestDTO;
 import com.chat.wsgate.domain.chatting.PayloadTypingResponseDTO;
 import com.chat.wsgate.outbound.WsGateOutboundWriter;
@@ -33,12 +39,88 @@ import lombok.extern.log4j.Log4j2;
 public class WsGateChatHandler {
 	private final WsGateAuth wsGateAuth;
 	private final WsGateOutboundWriter wsGateOutboundWriter;
-
 	private final WsGatePayloadConverter wsGatePayloadConverter;
-
 	private final WsGateChEngineChatClient wsGateChEngineChatClient;
 
+	private boolean isEmptyMessage(String messageText, List<Long> attachmentIds) {
+		boolean noText = messageText == null || messageText.isBlank();
+		boolean noAttachment = attachmentIds == null || attachmentIds.isEmpty();
+
+		return noText && noAttachment;
+	}
+
+	private String defaultMessageType(String messageType) {
+		if (messageType == null || messageType.isBlank()) {
+			return "TEXT";
+		}
+
+		return messageType;
+	}
+
 	// 1.로그인 검증  2.payload 꺼내기  3.data누락 검증  4.커맨드 생성  5.grpc 커맨드 input + grpc output 받기  6.output broadcast 
+
+	//	====== 1:1 채팅방 메세지 전송 후 방 생성 ======================================================================================================
+	public void handleStartDirectRoomWithMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
+
+		PayloadStartDirectRoomWithMessageRequestDTO payload = wsGatePayloadConverter
+				.convert(dto, PayloadStartDirectRoomWithMessageRequestDTO.class);
+
+		if (payload.getTargetPublicId() == null || payload.getTargetPublicId().isBlank()) {
+			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "targetPublicId 누락");
+			return;
+		}
+
+		if (isEmptyMessage(payload.getMessageText(), payload.getAttachmentIds())) {
+			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "메시지 내용 없음");
+			return;
+		}
+
+		try {
+			StartDirectRoomWithMessageCommand cmd = new StartDirectRoomWithMessageCommand(payload.getTargetPublicId(), me.getUserId(), me
+					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
+							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
+
+			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startDirectRoomWithMessage(cmd);
+
+			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
+
+		} catch (Exception e) {
+			log.error("START_DIRECT_ROOM_WITH_MSG 예외", e);
+			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "1:1 첫 메시지 전송 실패");
+		}
+	}
+
+	//	====== 단톡방 메세지 전송 후 방 생성 ======================================================================================================
+	public void handleStartGroupRoomWithMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
+
+		PayloadStartGroupRoomWithMessageRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadStartGroupRoomWithMessageRequestDTO.class);
+
+		if (payload.getInviteMemberPublicIds() == null || payload.getInviteMemberPublicIds().isEmpty()) {
+			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "초대 멤버 없음");
+			return;
+		}
+
+		if (isEmptyMessage(payload.getMessageText(), payload.getAttachmentIds())) {
+			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "메시지 내용 없음");
+			return;
+		}
+
+		try {
+			StartGroupRoomWithMessageCommand cmd = new StartGroupRoomWithMessageCommand(payload.getRoomName(), payload.getRoomThumbnail(), payload
+					.getInviteMemberPublicIds(), me.getUserId(), me.getPublicId(), defaultMessageType(payload.getMessageType()), payload
+							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
+
+			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.startGroupRoomWithMessage(cmd);
+
+			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
+
+		} catch (Exception e) {
+			log.error("START_GROUP_ROOM_WITH_MSG 예외", e);
+			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "그룹방 첫 메시지 전송 실패");
+		}
+	}
 
 	//	====== 메세지 전송 ===========================================================================================================
 	public void handleSendMessage(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -46,18 +128,23 @@ public class WsGateChatHandler {
 
 		PayloadSendChatMessageRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadSendChatMessageRequestDTO.class);
 
-		if (payload.getRoomId() == null || payload.getMessageText() == null) {
-			log.warn("SEND_MSG Data 누락 : {} / {}", payload.getRoomId(), payload.getMessageText());
-			wsGateOutboundWriter.responseFail(session, dto, "SEND_MSG_FAIL", "SEND_MSG 필수값 누락");
+		if (payload.getRoomId() == null) {
+			wsGateOutboundWriter.responseFail(session, dto, "SEND_MSG_FAIL", "roomId 누락");
 			return;
-		} // null 검사하는 이 행위는 비즈니스 로직이라기보다 transport/request shape 검증. ---> payload가 명령으로 성립하는 최소 형태인가?
+		}
+
+		if (isEmptyMessage(payload.getMessageText(), payload.getAttachmentIds())) {
+			wsGateOutboundWriter.responseFail(session, dto, "SEND_MSG_FAIL", "메시지 내용 없음");
+			return;
+		}// null 검사하는 이 행위는 비즈니스 로직이라기보다 transport/request shape 검증. ---> payload가 명령으로 성립하는 최소 형태인가?
 			// handler 검증 = 이 요청을 command로 만들 수 있는가? --> protocol boundary.
 			// “깨진 패킷을 굳이 내부 서비스까지 보내지 않기 위한 입구 필터” 역할을 위해 payload null값 검증.
 
 		try {
 			// Command 생성. 최적화를 위해 me에서 publicId까지 꺼내고 함께 보낸다. orc에서 userId로 publicId를 DB에서 굳이 또 하는 것보다 좋음. session값이라 신뢰 가능.
-			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me.getPublicId(), payload
-					.getMessageType(), payload.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
+			CreateChatMessageCommand createChtMsgCmd = new CreateChatMessageCommand(payload.getRoomId(), me.getUserId(), me
+					.getPublicId(), defaultMessageType(payload.getMessageType()), payload
+							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
 			ChatMessageViewResponseDTO grpcResponse = wsGateChEngineChatClient.createChatMessage(createChtMsgCmd);
 
@@ -65,8 +152,8 @@ public class WsGateChatHandler {
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 
 		} catch (Exception e) {
-			log.error("SEND_MSG 예외처리발생", e);
-			wsGateOutboundWriter.responseFail(session, dto, "MSG_SEND_FAIL", "SEND_MSG 예외처리발생");
+			log.error("MSG_CREATED 예외처리발생", e);
+			wsGateOutboundWriter.responseFail(session, dto, "MSG_CREATED_FAIL", "MSG_CREATED 예외처리발생");
 			return;
 		}
 	}

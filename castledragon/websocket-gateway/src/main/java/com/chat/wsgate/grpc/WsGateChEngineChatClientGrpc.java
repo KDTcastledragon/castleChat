@@ -6,6 +6,8 @@ import com.chat.contract.command.chatting.CreateChatMessageCommand;
 import com.chat.contract.command.chatting.DeleteChatMessageCommand;
 import com.chat.contract.command.chatting.ReactChatMessageCommand;
 import com.chat.contract.command.chatting.ReadChatMessageCommand;
+import com.chat.contract.command.chatting.StartDirectRoomWithMessageCommand;
+import com.chat.contract.command.chatting.StartGroupRoomWithMessageCommand;
 import com.chat.contract.domain.chatting.ChatMessageViewResponseDTO;
 import com.chat.contract.domain.chatting.DeleteChatMessageResponseDTO;
 import com.chat.contract.domain.chatting.ReactChatMessageEventResponseDTO;
@@ -115,6 +117,18 @@ public class WsGateChEngineChatClientGrpc implements WsGateChEngineChatClient {
 						.getReactionType(), gRpcRctMsgEvtResponse.getReactionCode(), gRpcRctMsgEvtResponse.getAdded(), cmd.getReactorUserId());
 
 		return gRpcRctMsgEvtResponse;
+	}
+
+	@Override
+	public ChatMessageViewResponseDTO startDirectRoomWithMessage(StartDirectRoomWithMessageCommand cmd) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ChatMessageViewResponseDTO startGroupRoomWithMessage(StartGroupRoomWithMessageCommand cmd) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

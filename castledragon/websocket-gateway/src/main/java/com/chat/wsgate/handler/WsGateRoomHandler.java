@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
 import com.chat.contract.command.room.ApplyRoomNoticeCommand;
+import com.chat.contract.domain.RoomIdRequestDTO;
 import com.chat.contract.domain.room.RoomNoticeViewResponseDTO;
 import com.chat.contract.domain.user.SessionUserDTO;
 import com.chat.contract.domain.websocket.WebSocketDTO;
@@ -25,33 +26,16 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class WsGateRoomHandler {
 
-	private final ObjectMapper objectMapper = new ObjectMapper(); //JackSon 라이브러리 객체. 역할 : JSON 문자열 ↔ Java 객체 변환 === ChatHandler 내부에서 계속 재사용하는 JSON 변환기
-	//	private : 이 클래스 안에서만 쓰겠다.  /  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
-	//	roomSessions.put(...) 또는 roomSessions.remove(...) 얘네는 가능. 하지만, roomSessions = new ConcurrentHashMap<>(); 얘는 불가능.
+	private final ObjectMapper objectMapper = new ObjectMapper(); //: JSON 문자열 ↔ Java 객체 변환
+	//  final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다.
 
 	private final WsGateSessionRegistry wsGateSessionRegistry;
 	private final WsGateOutboundWriter wsGateOutboundWriter;
 	private final WsGateAuth wsGateAuth;
-	//	private final ChatService chatService;
-	//	private final ChatMetrics chatMetrics;
-
-	// 생성자 주입
-	//	public WsChatEventHandler(WsSessionRegistry wsSessionRegistry, WsOutboundWriter wsOutboundWriter, WsAuth wsAuth, ChatService chatService,
-	//			ChatMetrics chatMetrics) {
-	//		this.wsSessionRegistry = wsSessionRegistry;
-	//		this.wsOutboundWriter = wsOutboundWriter;
-	//		this.wsAuth = wsAuth;
-	//		this.chatService = chatService;
-	//		this.chatMetrics = chatMetrics;
-	//	}
-
-	// chatService를 생성자로 받습니다.
-	// Spring이 ChatHandler를 만들 때, 이미 Bean으로 등록된 ChatService를 찾아서 넣어줍니다. 이걸 생성자 주입이라고 합니다.
-	// 왜 직접 new ChatServiceImpl() 안 하냐??? Spring이 관리하는 Bean을 써야 하기 때문입니다. 트랜잭션 , AOP , 의존성 관리 , 테스트 , 싱글톤 관리 등을 쓸 수 있기 때문에.
-	// 그래서,  private final ChatService chatService = new ChatServiceImpl(); <--- 이런식으로 직접 생성하지 않는다.
 
 	private final WsGatePayloadConverter wsGatePayloadConverter;
 	private final WsGateChEngineRoomClient wsGateChEngineRoomClient;
+	//	private final WsGateConvertPayload convertPayload;
 
 	// ======= payload 변환 helper ==================================================
 	private <T> T convertPayload(WebSocketDTO dto, Class<T> clazz) {
@@ -100,23 +84,23 @@ public class WsGateRoomHandler {
 		wsGateOutboundWriter.responseOk(session, dto, "EXIT_ROOM_OK", payload);
 	}//exitRoom 끝.
 
-	//	//	====== 채팅방 나가기 ===========================================================================================================
-	//	public void handleLeftRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
-	//		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
-	//		RoomIdRequestDTO payload = convertPayload(dto, RoomIdRequestDTO.class);
-	//
-	//		if (payload.getRoomId() == null) {
-	//			gwWsOutboundWriter.responseFail(session, dto, "LEFT_ROOM_FAIL", "roomId 없음");
-	//			return;
-	//		}
-	//
-	//		//		wsSessionRegistry.exitRoomSession(payload.getRoomId(), me.getUserId()); Left 추가 필요함.
-	//
-	//		PayloadRoomNoticeApplyRequestDTO notice = new PayloadRoomNoticeApplyRequestDTO(payload.getRoomId(), "MEMBER_LEFT", me.getNickname()
-	//				+ "님이 나갔습니다.", LocalDateTime.now());
-	//
-	//		gwWsOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_NOTICE", notice, dto.getRequestId());
-	//	}
+	//	====== 채팅방 나가기 ===========================================================================================================
+	public void handleLeftRoom(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		SessionUserDTO me = wsGateAuth.requireLoginUser(session);
+		RoomIdRequestDTO payload = convertPayload(dto, RoomIdRequestDTO.class);
+
+		if (payload.getRoomId() == null) {
+			wsGateOutboundWriter.responseFail(session, dto, "LEFT_ROOM_FAIL", "roomId 없음");
+			return;
+		}
+
+		//		wsSessionRegistry.exitRoomSession(payload.getRoomId(), me.getUserId()); Left 추가 필요함.
+
+		//		PayloadLeftRoomRequestDTO notice = new PayloadLeftRoomRequestDTO(payload.getRoomId(), "MEMBER_LEFT", me.getNickname()
+		//				+ "님이 나갔습니다.", LocalDateTime.now());
+
+		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_NOTICE", payload, dto.getRequestId());
+	}
 
 	//	====== 방 공지사항 등록/수정/내림/재등록/삭제 ===========================================================================================================
 	public void handleApplyRoomNotice(WebSocketSession session, WebSocketDTO dto) throws Exception {
@@ -149,5 +133,3 @@ public class WsGateRoomHandler {
 	}
 
 }// WsGateRoomHandler 끝.
-
-
