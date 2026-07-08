@@ -1,0 +1,280 @@
+{
+  "batchIndex": 3,
+  "totalBatches": 16,
+  "files": [
+    {
+      "path": "castlechat/src/App.js",
+      "language": "javascript",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/App.test.js",
+      "language": "javascript",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/chatApi.js",
+      "language": "javascript",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/friendApi.js",
+      "language": "javascript",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/roomApi.js",
+      "language": "javascript",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/userApi.js",
+      "language": "javascript",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Admin/AdminPage.jsx",
+      "language": "javascript",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/AppShell/AppShell.jsx",
+      "language": "javascript",
+      "sizeLines": 166,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Chattings/ChatBox.jsx",
+      "language": "javascript",
+      "sizeLines": 1855,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Chattings/ChatList.jsx",
+      "language": "javascript",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/Friends.jsx",
+      "language": "javascript",
+      "sizeLines": 366,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/Header.jsx",
+      "language": "javascript",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/RouteBody.jsx",
+      "language": "javascript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Join/JoinPage.jsx",
+      "language": "javascript",
+      "sizeLines": 332,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/LogIn/LoginPage.jsx",
+      "language": "javascript",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/MyPage/MyPage.jsx",
+      "language": "javascript",
+      "sizeLines": 211,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useAuthUser.js",
+      "language": "javascript",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useChatRoom.js",
+      "language": "javascript",
+      "sizeLines": 120,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useDebounce.js",
+      "language": "javascript",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useFriend.js",
+      "language": "javascript",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useSearchUsers.js",
+      "language": "javascript",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useUsers.js",
+      "language": "javascript",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/index.js",
+      "language": "javascript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/reportWebVitals.js",
+      "language": "javascript",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/store/chatWindowsSlice.js",
+      "language": "javascript",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/store/store.js",
+      "language": "javascript",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/webSocket/wsClient.js",
+      "language": "javascript",
+      "sizeLines": 500,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "castlechat/src/App.js": [
+      "castlechat/src/App.css",
+      "castlechat/src/components/AppShell/AppShell.jsx"
+    ],
+    "castlechat/src/App.test.js": [
+      "castlechat/src/App.js"
+    ],
+    "castlechat/src/api/chatApi.js": [],
+    "castlechat/src/api/friendApi.js": [
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/api/roomApi.js": [],
+    "castlechat/src/api/userApi.js": [],
+    "castlechat/src/components/Admin/AdminPage.jsx": [
+      "castlechat/src/components/Admin/AdminPage.css"
+    ],
+    "castlechat/src/components/AppShell/AppShell.jsx": [
+      "castlechat/src/components/AppShell/AppShell.css",
+      "castlechat/src/components/Chattings/ChatBox.jsx",
+      "castlechat/src/components/Home/Header.jsx",
+      "castlechat/src/components/Home/RouteBody.jsx",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useFriend.js",
+      "castlechat/src/store/chatWindowsSlice.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Chattings/ChatBox.jsx": [
+      "castlechat/src/api/chatApi.js",
+      "castlechat/src/api/roomApi.js",
+      "castlechat/src/components/Chattings/ChatBox.css",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useChatRoom.js",
+      "castlechat/src/hooks/useFriend.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Chattings/ChatList.jsx": [
+      "castlechat/src/components/Chattings/ChatList.css",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useChatRoom.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Home/Friends.jsx": [
+      "castlechat/src/api/chatApi.js",
+      "castlechat/src/components/Home/Friends.css",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useChatRoom.js",
+      "castlechat/src/hooks/useDebounce.js",
+      "castlechat/src/hooks/useFriend.js",
+      "castlechat/src/hooks/useSearchUsers.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Home/Header.jsx": [
+      "castlechat/src/components/Home/Header.css",
+      "castlechat/src/hooks/useAuthUser.js"
+    ],
+    "castlechat/src/components/Home/RouteBody.jsx": [
+      "castlechat/src/components/Admin/AdminPage.jsx",
+      "castlechat/src/components/Chattings/ChatBox.jsx",
+      "castlechat/src/components/Chattings/ChatList.jsx",
+      "castlechat/src/components/Home/Friends.jsx",
+      "castlechat/src/components/Join/JoinPage.jsx",
+      "castlechat/src/components/LogIn/LoginPage.jsx",
+      "castlechat/src/components/MyPage/MyPage.jsx"
+    ],
+    "castlechat/src/components/Join/JoinPage.jsx": [
+      "castlechat/src/components/Join/JoinPage.css"
+    ],
+    "castlechat/src/components/LogIn/LoginPage.jsx": [
+      "castlechat/src/components/LogIn/LoginPage.css",
+      "castlechat/src/hooks/useAuthUser.js"
+    ],
+    "castlechat/src/components/MyPage/MyPage.jsx": [
+      "castlechat/src/api/chatApi.js",
+      "castlechat/src/api/userApi.js",
+      "castlechat/src/components/MyPage/MyPage.css",
+      "castlechat/src/hooks/useAuthUser.js"
+    ],
+    "castlechat/src/hooks/useAuthUser.js": [
+      "castlechat/src/api/userApi.js",
+      "castlechat/src/store/chatWindowsSlice.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/hooks/useChatRoom.js": [
+      "castlechat/src/api/roomApi.js",
+      "castlechat/src/store/chatWindowsSlice.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/hooks/useDebounce.js": [],
+    "castlechat/src/hooks/useFriend.js": [
+      "castlechat/src/api/friendApi.js"
+    ],
+    "castlechat/src/hooks/useSearchUsers.js": [
+      "castlechat/src/api/userApi.js"
+    ],
+    "castlechat/src/hooks/useUsers.js": [
+      "castlechat/src/api/userApi.js"
+    ],
+    "castlechat/src/index.js": [
+      "castlechat/src/App.js",
+      "castlechat/src/index.css",
+      "castlechat/src/reportWebVitals.js",
+      "castlechat/src/store/store.js"
+    ],
+    "castlechat/src/reportWebVitals.js": [],
+    "castlechat/src/store/chatWindowsSlice.js": [],
+    "castlechat/src/store/store.js": [
+      "castlechat/src/store/chatWindowsSlice.js"
+    ],
+    "castlechat/src/webSocket/wsClient.js": []
+  },
+  "neighborMap": {}
+}

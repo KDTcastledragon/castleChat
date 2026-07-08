@@ -127,9 +127,13 @@ function AppShell() {
 
             {chatWindows.map((win) => (
                 <ChatBox
-                    key={win.roomId}
+                    key={win.chatWindowKey}
 
+                    chatWindowKey={win.chatWindowKey}
                     roomId={win.roomId}
+                    isDraft={win.isDraft}
+                    draftKey={win.draftKey}
+                    targetPublicId={win.targetPublicId}
                     roomType={win.roomType}
                     roomName={win.roomName}
                     roomThumbnail={win.roomThumbnail}
@@ -141,9 +145,9 @@ function AppShell() {
                     y={win.y}
                     zIndex={win.zIndex}
 
-                    exitChatRoom={() => dispatch(closeChatWindow(win.roomId))}
-                    onMove={(x, y) => dispatch(moveChatWindow({ roomId: win.roomId, x, y }))}
-                    onFocus={() => dispatch(focusChatWindow(win.roomId))}
+                    exitChatRoom={() => dispatch(closeChatWindow(win.chatWindowKey))}
+                    onMove={(x, y) => dispatch(moveChatWindow({ chatWindowKey: win.chatWindowKey, x, y }))}
+                    onFocus={() => dispatch(focusChatWindow(win.chatWindowKey))}
                 />
             ))}
 

@@ -1,0 +1,786 @@
+{
+  "scriptCompleted": true,
+  "stats": {
+    "filesScanned": 240,
+    "filesWithImports": 80,
+    "totalEdges": 456
+  },
+  "importMap": {
+    ".understand-anything/.understandignore": [],
+    "castlechat/jsconfig.json": [],
+    "castlechat/noticeForMe.txt": [],
+    "castlechat/package.json": [],
+    "castlechat/public/index.html": [],
+    "castlechat/public/manifest.json": [],
+    "castlechat/public/robots.txt": [],
+    "castlechat/README.md": [],
+    "castlechat/src/api/chatApi.js": [],
+    "castlechat/src/api/friendApi.js": [
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/api/roomApi.js": [],
+    "castlechat/src/api/userApi.js": [],
+    "castlechat/src/App.css": [],
+    "castlechat/src/App.js": [
+      "castlechat/src/App.css",
+      "castlechat/src/components/AppShell/AppShell.jsx"
+    ],
+    "castlechat/src/App.test.js": [
+      "castlechat/src/App.js"
+    ],
+    "castlechat/src/components/Admin/AdminPage.css": [],
+    "castlechat/src/components/Admin/AdminPage.jsx": [
+      "castlechat/src/components/Admin/AdminPage.css"
+    ],
+    "castlechat/src/components/AppShell/AppShell.css": [],
+    "castlechat/src/components/AppShell/AppShell.jsx": [
+      "castlechat/src/components/AppShell/AppShell.css",
+      "castlechat/src/components/Chattings/ChatBox.jsx",
+      "castlechat/src/components/Home/Header.jsx",
+      "castlechat/src/components/Home/RouteBody.jsx",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useFriend.js",
+      "castlechat/src/store/chatWindowsSlice.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Chattings/ChatBox.css": [],
+    "castlechat/src/components/Chattings/ChatBox.jsx": [
+      "castlechat/src/api/chatApi.js",
+      "castlechat/src/api/roomApi.js",
+      "castlechat/src/components/Chattings/ChatBox.css",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useChatRoom.js",
+      "castlechat/src/hooks/useFriend.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Chattings/ChatList.css": [],
+    "castlechat/src/components/Chattings/ChatList.jsx": [
+      "castlechat/src/components/Chattings/ChatList.css",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useChatRoom.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Home/Friends.css": [],
+    "castlechat/src/components/Home/Friends.jsx": [
+      "castlechat/src/api/chatApi.js",
+      "castlechat/src/components/Home/Friends.css",
+      "castlechat/src/hooks/useAuthUser.js",
+      "castlechat/src/hooks/useChatRoom.js",
+      "castlechat/src/hooks/useDebounce.js",
+      "castlechat/src/hooks/useFriend.js",
+      "castlechat/src/hooks/useSearchUsers.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/components/Home/Header.css": [],
+    "castlechat/src/components/Home/Header.jsx": [
+      "castlechat/src/components/Home/Header.css",
+      "castlechat/src/hooks/useAuthUser.js"
+    ],
+    "castlechat/src/components/Home/Home.css": [],
+    "castlechat/src/components/Home/Home.jsx": [],
+    "castlechat/src/components/Home/RouteBody.jsx": [
+      "castlechat/src/components/Admin/AdminPage.jsx",
+      "castlechat/src/components/Chattings/ChatBox.jsx",
+      "castlechat/src/components/Chattings/ChatList.jsx",
+      "castlechat/src/components/Home/Friends.jsx",
+      "castlechat/src/components/Join/JoinPage.jsx",
+      "castlechat/src/components/LogIn/LoginPage.jsx",
+      "castlechat/src/components/MyPage/MyPage.jsx"
+    ],
+    "castlechat/src/components/Join/JoinPage.css": [],
+    "castlechat/src/components/Join/JoinPage.jsx": [
+      "castlechat/src/components/Join/JoinPage.css"
+    ],
+    "castlechat/src/components/LogIn/LoginPage.css": [],
+    "castlechat/src/components/LogIn/LoginPage.jsx": [
+      "castlechat/src/components/LogIn/LoginPage.css",
+      "castlechat/src/hooks/useAuthUser.js"
+    ],
+    "castlechat/src/components/MyPage/MyPage.css": [],
+    "castlechat/src/components/MyPage/MyPage.jsx": [
+      "castlechat/src/api/chatApi.js",
+      "castlechat/src/api/userApi.js",
+      "castlechat/src/components/MyPage/MyPage.css",
+      "castlechat/src/hooks/useAuthUser.js"
+    ],
+    "castlechat/src/components/Settings/Settings.css": [],
+    "castlechat/src/components/Settings/Settings.jsx": [
+      "castlechat/src/components/Settings/Settings.css"
+    ],
+    "castlechat/src/hooks/useAuthErrorInterceptor.js": [],
+    "castlechat/src/hooks/useAuthUser.js": [
+      "castlechat/src/api/userApi.js",
+      "castlechat/src/store/chatWindowsSlice.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/hooks/useChatRoom.js": [
+      "castlechat/src/api/roomApi.js",
+      "castlechat/src/store/chatWindowsSlice.js",
+      "castlechat/src/webSocket/wsClient.js"
+    ],
+    "castlechat/src/hooks/useDebounce.js": [],
+    "castlechat/src/hooks/useFriend.js": [
+      "castlechat/src/api/friendApi.js"
+    ],
+    "castlechat/src/hooks/useSearchUsers.js": [
+      "castlechat/src/api/userApi.js"
+    ],
+    "castlechat/src/hooks/useUsers.js": [
+      "castlechat/src/api/userApi.js"
+    ],
+    "castlechat/src/index.css": [],
+    "castlechat/src/index.js": [
+      "castlechat/src/App.js",
+      "castlechat/src/index.css",
+      "castlechat/src/reportWebVitals.js",
+      "castlechat/src/store/store.js"
+    ],
+    "castlechat/src/reportWebVitals.js": [],
+    "castlechat/src/setupTests.js": [],
+    "castlechat/src/store/chatWindowsSlice.js": [],
+    "castlechat/src/store/store.js": [
+      "castlechat/src/store/chatWindowsSlice.js"
+    ],
+    "castlechat/src/webSocket/wsClient.js": [],
+    "castledragon/.gitattributes": [],
+    "castledragon/a_proto_command.txt": [],
+    "castledragon/build.gradle": [],
+    "castledragon/channel-engine/build.gradle": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/ChannelEngineApplication.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadDeleteMessageDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadReadChatMessageRequestDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadReadChatMessageResponseDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadSendChatMessageRequestDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadSendChatMessageResponseDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/UpdatedUnreadMessagesDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/WebSocketDTO.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/ChatGrpcEndpoint.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/ChatCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/FriendGrpcEndpoint.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/FriendCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/RoomGrpcEndpoint.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/ChatMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatMessagesDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/FriendMapper.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/service/ChatCommandService.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/ChatMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/ChatCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatMessagesDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/ReadPositionUpdateResult.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomMemberCache.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomReadPositionCache.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/service/FriendCommandService.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/FriendMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/FriendCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/service/RoomCommandService.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/ChatMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomMemberCache.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/ChatCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/ChatQueryUseCase.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/FriendCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCreateCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomFeedCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomNoticeCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomQueryUseCase.java": [],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/worker/ReadPositionFlushWorker.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/ChatMapper.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomReadPositionCache.java"
+    ],
+    "castledragon/channel-engine/src/main/resources/application.properties": [],
+    "castledragon/channel-engine/src/main/resources/mappers/ChatMapperXml.xml": [],
+    "castledragon/channel-engine/src/main/resources/mappers/FriendMapperXml.xml": [],
+    "castledragon/channel-engine/src/main/resources/mappers/RoomMapperXml.xml": [],
+    "castledragon/common-contract/build.gradle": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatMessagesDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java"
+    ],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java"
+    ],
+    "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/ChatMessageNotificationDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/UserOnlineNotificationDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/redis/RedisRoomMemberReadPositionDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomListDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java"
+    ],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/EnterGroupRequestDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomMembersDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/FriendDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java": [],
+    "castledragon/common-contract/src/main/proto_backup/chat_orc_v0.txt": [],
+    "castledragon/common-contract/src/main/proto_backup/chat_orc_v1.txt": [],
+    "castledragon/common-contract/src/main/proto_backup/chat_orc_v2.txt": [],
+    "castledragon/common-contract/src/main/proto_backup/chengine_v3.txt": [],
+    "castledragon/common-contract/src/main/proto_backup/proto_command.txt": [],
+    "castledragon/common-contract/src/main/proto/chengine.proto": [],
+    "castledragon/common-redis/build.gradle": [],
+    "castledragon/common-redis/src/main/java/com/chat/redis/backup/RoomReadPosBackup.java": [
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/ReadPositionUpdateResult.java"
+    ],
+    "castledragon/common-redis/src/main/java/com/chat/redis/cache/ReadPositionUpdateResult.java": [],
+    "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomMemberCache.java": [],
+    "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomReadPositionCache.java": [],
+    "castledragon/domain-service/build.gradle": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/________legacy/ChatController_legacy.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/________legacy/ChatServiceImpl_legacy.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/config/AttachmentResourceConfig.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/config/PasswordConfig.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/controller/ChatController.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatCommandUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/controller/FriendController.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/FriendQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/controller/RoomController.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomListDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/RoomMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatQueryUseCase.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/RoomQueryUseCase.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/controller/UserController.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/LoginRequestDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/UserMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserCommandUseCase.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/domain/LoginRequestDTO.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/DomainServiceApplication.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/exception/DomServExceptionHandler.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/DomServChatMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/redis/RedisRoomMemberReadPositionDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/FriendMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/RoomMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomListDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomMembersDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/UserMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/monitoring/ChatMetrics.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/ChatCommandService.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomMembersDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/DomServChatMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/RoomMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatCommandUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/ChatQueryService.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/redis/RedisRoomMemberReadPositionDTO.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomReadPositionCache.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/DomServChatMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/FriendQueryService.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/FriendMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/FriendQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/RoomCommandService.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/RoomQueryService.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomListDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/RoomMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/RoomQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/UserCommandService.java": [
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/UserMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserCommandUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/service/UserQueryService.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/UserMapper.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserQueryUseCase.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatQueryUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/FriendQueryUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/RoomCommandUseCase.java": [],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/RoomQueryUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomListDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserCommandUseCase.java": [
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java"
+    ],
+    "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserQueryUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java"
+    ],
+    "castledragon/domain-service/src/main/resources/application.properties": [],
+    "castledragon/domain-service/src/main/resources/mappers/ChatMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mappers/FriendMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mappers/RoomMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mappers/UserMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mybatis-config.xml": [],
+    "castledragon/gradle/wrapper/gradle-wrapper.jar": [],
+    "castledragon/gradle/wrapper/gradle-wrapper.properties": [],
+    "castledragon/gradlew": [],
+    "castledragon/gradlew.bat": [],
+    "castledragon/protocol_version_schema_stroage/chat-orc/clientSendChatMsgRequestPro_ver1.java": [],
+    "castledragon/settings.gradle": [],
+    "castledragon/websocket-gateway/build.gradle": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateAuthException.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChatClient.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java": [
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadDeleteChatMessageRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadReactChatMessageRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadReadChatMessageRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadSendChatMessageRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadStartDirectChatRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadStartGroupChatRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadTypingRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadTypingResponseDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadApplyRoomNoticeRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadBanMemberRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadChangeMemberRoleRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadEnterRoomRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadExitRoomRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadInviteMemberRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadKickMemberRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadLeftRoomRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadOpenDirectChatRoomRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadRoomIdDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateAuthException.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateExceptionHandler.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChatClientGrpc.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChatClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateRoomClientGrpc.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/ChatMessageNotificationDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChatClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadDeleteChatMessageRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadReactChatMessageRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadReadChatMessageRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadSendChatMessageRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadStartDirectChatRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadStartGroupChatRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadTypingRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadTypingResponseDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/UserOnlineNotificationDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadApplyRoomNoticeRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadBanMemberRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadChangeMemberRoleRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadExitRoomRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadInviteMemberRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadKickMemberRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadOpenDirectChatRoomRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/WebSocketGatewayApplication.java": [],
+    "castledragon/websocket-gateway/src/main/resources/application.properties": [],
+    "monitoring/docker-compose.yml": [],
+    "monitoring/grafana/dashboards/castledragon-overview.json": [],
+    "monitoring/grafana/dashboards/castledragon-websocket.json": [],
+    "monitoring/grafana/provisioning/dashboards/dashboards.yml": [],
+    "monitoring/grafana/provisioning/datasources/prometheus.yml": [],
+    "monitoring/prometheus/prometheus.yml": [],
+    "README.md": []
+  }
+}

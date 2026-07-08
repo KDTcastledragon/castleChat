@@ -1,0 +1,1477 @@
+{
+  "scriptCompleted": true,
+  "files": [
+    {
+      "path": ".understand-anything/.understandignore",
+      "language": "unknown",
+      "sizeLines": 42,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/jsconfig.json",
+      "language": "json",
+      "sizeLines": 9,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castlechat/noticeForMe.txt",
+      "language": "txt",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castlechat/package.json",
+      "language": "json",
+      "sizeLines": 45,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castlechat/public/index.html",
+      "language": "html",
+      "sizeLines": 41,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/public/manifest.json",
+      "language": "json",
+      "sizeLines": 8,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castlechat/public/robots.txt",
+      "language": "txt",
+      "sizeLines": 3,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castlechat/README.md",
+      "language": "markdown",
+      "sizeLines": 70,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castlechat/src/api/chatApi.js",
+      "language": "javascript",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/friendApi.js",
+      "language": "javascript",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/roomApi.js",
+      "language": "javascript",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/api/userApi.js",
+      "language": "javascript",
+      "sizeLines": 75,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/App.css",
+      "language": "css",
+      "sizeLines": 2,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/App.js",
+      "language": "javascript",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/App.test.js",
+      "language": "javascript",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Admin/AdminPage.css",
+      "language": "css",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Admin/AdminPage.jsx",
+      "language": "javascript",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/AppShell/AppShell.css",
+      "language": "css",
+      "sizeLines": 35,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/AppShell/AppShell.jsx",
+      "language": "javascript",
+      "sizeLines": 166,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Chattings/ChatBox.css",
+      "language": "css",
+      "sizeLines": 1049,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Chattings/ChatBox.jsx",
+      "language": "javascript",
+      "sizeLines": 1855,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Chattings/ChatList.css",
+      "language": "css",
+      "sizeLines": 122,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Chattings/ChatList.jsx",
+      "language": "javascript",
+      "sizeLines": 134,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/Friends.css",
+      "language": "css",
+      "sizeLines": 269,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Home/Friends.jsx",
+      "language": "javascript",
+      "sizeLines": 366,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/Header.css",
+      "language": "css",
+      "sizeLines": 70,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Home/Header.jsx",
+      "language": "javascript",
+      "sizeLines": 76,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/Home.css",
+      "language": "css",
+      "sizeLines": 208,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Home/Home.jsx",
+      "language": "javascript",
+      "sizeLines": 147,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Home/RouteBody.jsx",
+      "language": "javascript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Join/JoinPage.css",
+      "language": "css",
+      "sizeLines": 196,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Join/JoinPage.jsx",
+      "language": "javascript",
+      "sizeLines": 332,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/LogIn/LoginPage.css",
+      "language": "css",
+      "sizeLines": 129,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/LogIn/LoginPage.jsx",
+      "language": "javascript",
+      "sizeLines": 124,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/MyPage/MyPage.css",
+      "language": "css",
+      "sizeLines": 169,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/MyPage/MyPage.jsx",
+      "language": "javascript",
+      "sizeLines": 211,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/components/Settings/Settings.css",
+      "language": "css",
+      "sizeLines": 0,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Settings/Settings.jsx",
+      "language": "javascript",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useAuthErrorInterceptor.js",
+      "language": "javascript",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useAuthUser.js",
+      "language": "javascript",
+      "sizeLines": 57,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useChatRoom.js",
+      "language": "javascript",
+      "sizeLines": 120,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useDebounce.js",
+      "language": "javascript",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useFriend.js",
+      "language": "javascript",
+      "sizeLines": 129,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useSearchUsers.js",
+      "language": "javascript",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/hooks/useUsers.js",
+      "language": "javascript",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/index.css",
+      "language": "css",
+      "sizeLines": 12,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/index.js",
+      "language": "javascript",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/reportWebVitals.js",
+      "language": "javascript",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/setupTests.js",
+      "language": "javascript",
+      "sizeLines": 5,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/store/chatWindowsSlice.js",
+      "language": "javascript",
+      "sizeLines": 101,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/store/store.js",
+      "language": "javascript",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castlechat/src/webSocket/wsClient.js",
+      "language": "javascript",
+      "sizeLines": 500,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/.gitattributes",
+      "language": "unknown",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/a_proto_command.txt",
+      "language": "txt",
+      "sizeLines": 36,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castledragon/build.gradle",
+      "language": "gradle",
+      "sizeLines": 58,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/build.gradle",
+      "language": "gradle",
+      "sizeLines": 33,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/ChannelEngineApplication.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadDeleteMessageDTO.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadReadChatMessageRequestDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadReadChatMessageResponseDTO.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadSendChatMessageRequestDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/PayloadSendChatMessageResponseDTO.java",
+      "language": "java",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/UpdatedUnreadMessagesDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/dto/WebSocketDTO.java",
+      "language": "java",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/ChatGrpcEndpoint.java",
+      "language": "java",
+      "sizeLines": 199,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/FriendGrpcEndpoint.java",
+      "language": "java",
+      "sizeLines": 65,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/RoomGrpcEndpoint.java",
+      "language": "java",
+      "sizeLines": 156,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/ChatMapper.java",
+      "language": "java",
+      "sizeLines": 54,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/FriendMapper.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java",
+      "language": "java",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/service/ChatCommandService.java",
+      "language": "java",
+      "sizeLines": 498,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/service/FriendCommandService.java",
+      "language": "java",
+      "sizeLines": 156,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/service/RoomCommandService.java",
+      "language": "java",
+      "sizeLines": 554,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java",
+      "language": "java",
+      "sizeLines": 148,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/ChatCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/ChatQueryUseCase.java",
+      "language": "java",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/FriendCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCreateCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomFeedCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomNoticeCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomQueryUseCase.java",
+      "language": "java",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/worker/ReadPositionFlushWorker.java",
+      "language": "java",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/resources/application.properties",
+      "language": "properties",
+      "sizeLines": 62,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/resources/mappers/ChatMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 268,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/resources/mappers/FriendMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 57,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/resources/mappers/RoomMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 388,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/common-contract/build.gradle",
+      "language": "gradle",
+      "sizeLines": 52,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/CreateChatMessageCommand.java",
+      "language": "java",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/DeleteChatMessageCommand.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReactChatMessageCommand.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/ReadChatMessageCommand.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartDirectChatCommand.java",
+      "language": "java",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/command/StartGroupChatCommand.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "language": "java",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatMessagesDTO.java",
+      "language": "java",
+      "sizeLines": 27,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "language": "java",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "language": "java",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "language": "java",
+      "sizeLines": 25,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/ChatMessageNotificationDTO.java",
+      "language": "java",
+      "sizeLines": 24,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/UserOnlineNotificationDTO.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/redis/RedisRoomMemberReadPositionDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "language": "java",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "language": "java",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomListDTO.java",
+      "language": "java",
+      "sizeLines": 30,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java",
+      "language": "java",
+      "sizeLines": 29,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java",
+      "language": "java",
+      "sizeLines": 37,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/EnterGroupRequestDTO.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java",
+      "language": "java",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "language": "java",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomMembersDTO.java",
+      "language": "java",
+      "sizeLines": 34,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/FriendDTO.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "language": "java",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/UserProfileResponseDTO.java",
+      "language": "java",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/proto_backup/chat_orc_v0.txt",
+      "language": "txt",
+      "sizeLines": 40,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/proto_backup/chat_orc_v1.txt",
+      "language": "txt",
+      "sizeLines": 46,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/proto_backup/chat_orc_v2.txt",
+      "language": "txt",
+      "sizeLines": 149,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/proto_backup/chengine_v3.txt",
+      "language": "txt",
+      "sizeLines": 150,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/proto_backup/proto_command.txt",
+      "language": "txt",
+      "sizeLines": 34,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/proto/chengine.proto",
+      "language": "protobuf",
+      "sizeLines": 357,
+      "fileCategory": "data"
+    },
+    {
+      "path": "castledragon/common-redis/build.gradle",
+      "language": "gradle",
+      "sizeLines": 18,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/common-redis/src/main/java/com/chat/redis/backup/RoomReadPosBackup.java",
+      "language": "java",
+      "sizeLines": 116,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-redis/src/main/java/com/chat/redis/cache/ReadPositionUpdateResult.java",
+      "language": "java",
+      "sizeLines": 3,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomMemberCache.java",
+      "language": "java",
+      "sizeLines": 199,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomReadPositionCache.java",
+      "language": "java",
+      "sizeLines": 194,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/build.gradle",
+      "language": "gradle",
+      "sizeLines": 36,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/________legacy/ChatController_legacy.java",
+      "language": "java",
+      "sizeLines": 173,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/________legacy/ChatServiceImpl_legacy.java",
+      "language": "java",
+      "sizeLines": 114,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/config/AttachmentResourceConfig.java",
+      "language": "java",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/config/PasswordConfig.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/controller/ChatController.java",
+      "language": "java",
+      "sizeLines": 59,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/controller/FriendController.java",
+      "language": "java",
+      "sizeLines": 110,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/controller/RoomController.java",
+      "language": "java",
+      "sizeLines": 234,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/controller/UserController.java",
+      "language": "java",
+      "sizeLines": 267,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/domain/LoginRequestDTO.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/domain/UserDTO.java",
+      "language": "java",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/DomainServiceApplication.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/exception/DomServExceptionHandler.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/DomServChatMapper.java",
+      "language": "java",
+      "sizeLines": 22,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/FriendMapper.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/RoomMapper.java",
+      "language": "java",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/mapper/UserMapper.java",
+      "language": "java",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/monitoring/ChatMetrics.java",
+      "language": "java",
+      "sizeLines": 43,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/ChatCommandService.java",
+      "language": "java",
+      "sizeLines": 244,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/ChatQueryService.java",
+      "language": "java",
+      "sizeLines": 71,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/FriendQueryService.java",
+      "language": "java",
+      "sizeLines": 35,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/RoomCommandService.java",
+      "language": "java",
+      "sizeLines": 397,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/RoomQueryService.java",
+      "language": "java",
+      "sizeLines": 52,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/UserCommandService.java",
+      "language": "java",
+      "sizeLines": 91,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/service/UserQueryService.java",
+      "language": "java",
+      "sizeLines": 56,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/ChatQueryUseCase.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/FriendQueryUseCase.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/RoomCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/RoomQueryUseCase.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/java/com/chat/domserv/usecase/UserQueryUseCase.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/application.properties",
+      "language": "properties",
+      "sizeLines": 82,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/ChatMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 394,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/FriendMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 42,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/RoomMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 400,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/UserMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 104,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mybatis-config.xml",
+      "language": "xml",
+      "sizeLines": 0,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/gradle/wrapper/gradle-wrapper.jar",
+      "language": "jar",
+      "sizeLines": 157,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/gradle/wrapper/gradle-wrapper.properties",
+      "language": "properties",
+      "sizeLines": 7,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/gradlew",
+      "language": "unknown",
+      "sizeLines": 251,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/gradlew.bat",
+      "language": "batch",
+      "sizeLines": 94,
+      "fileCategory": "script"
+    },
+    {
+      "path": "castledragon/protocol_version_schema_stroage/chat-orc/clientSendChatMsgRequestPro_ver1.java",
+      "language": "java",
+      "sizeLines": 7,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/settings.gradle",
+      "language": "gradle",
+      "sizeLines": 10,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/websocket-gateway/build.gradle",
+      "language": "gradle",
+      "sizeLines": 31,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "language": "java",
+      "sizeLines": 41,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChatClient.java",
+      "language": "java",
+      "sizeLines": 28,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java",
+      "language": "java",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java",
+      "language": "java",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java",
+      "language": "java",
+      "sizeLines": 53,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "language": "java",
+      "sizeLines": 118,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadDeleteChatMessageRequestDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadReactChatMessageRequestDTO.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadReadChatMessageRequestDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadSendChatMessageRequestDTO.java",
+      "language": "java",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadStartDirectChatRequestDTO.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadStartGroupChatRequestDTO.java",
+      "language": "java",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadTypingRequestDTO.java",
+      "language": "java",
+      "sizeLines": 10,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/chatting/PayloadTypingResponseDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadApplyRoomNoticeRequestDTO.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadBanMemberRequestDTO.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadChangeMemberRoleRequestDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadEnterRoomRequestDTO.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadExitRoomRequestDTO.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadInviteMemberRequestDTO.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadKickMemberRequestDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadLeftRoomRequestDTO.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadOpenDirectChatRoomRequestDTO.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadRoomIdDTO.java",
+      "language": "java",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateAuthException.java",
+      "language": "java",
+      "sizeLines": 12,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateExceptionHandler.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChatClientGrpc.java",
+      "language": "java",
+      "sizeLines": 186,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java",
+      "language": "java",
+      "sizeLines": 36,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "language": "java",
+      "sizeLines": 55,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateRoomClientGrpc.java",
+      "language": "java",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java",
+      "language": "java",
+      "sizeLines": 338,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "language": "java",
+      "sizeLines": 103,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "language": "java",
+      "sizeLines": 79,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java",
+      "language": "java",
+      "sizeLines": 261,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "language": "java",
+      "sizeLines": 202,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "language": "java",
+      "sizeLines": 141,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java",
+      "language": "java",
+      "sizeLines": 272,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/WebSocketGatewayApplication.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/resources/application.properties",
+      "language": "properties",
+      "sizeLines": 46,
+      "fileCategory": "config"
+    },
+    {
+      "path": "monitoring/docker-compose.yml",
+      "language": "yaml",
+      "sizeLines": 59,
+      "fileCategory": "infra"
+    },
+    {
+      "path": "monitoring/grafana/dashboards/castledragon-overview.json",
+      "language": "json",
+      "sizeLines": 164,
+      "fileCategory": "config"
+    },
+    {
+      "path": "monitoring/grafana/dashboards/castledragon-websocket.json",
+      "language": "json",
+      "sizeLines": 336,
+      "fileCategory": "config"
+    },
+    {
+      "path": "monitoring/grafana/provisioning/dashboards/dashboards.yml",
+      "language": "yaml",
+      "sizeLines": 12,
+      "fileCategory": "config"
+    },
+    {
+      "path": "monitoring/grafana/provisioning/datasources/prometheus.yml",
+      "language": "yaml",
+      "sizeLines": 9,
+      "fileCategory": "config"
+    },
+    {
+      "path": "monitoring/prometheus/prometheus.yml",
+      "language": "yaml",
+      "sizeLines": 14,
+      "fileCategory": "config"
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "sizeLines": 2,
+      "fileCategory": "docs"
+    }
+  ],
+  "totalFiles": 240,
+  "filteredByIgnore": 0,
+  "estimatedComplexity": "large",
+  "stats": {
+    "filesScanned": 240,
+    "byCategory": {
+      "code": 186,
+      "config": 27,
+      "docs": 10,
+      "markup": 14,
+      "data": 1,
+      "script": 1,
+      "infra": 1
+    },
+    "byLanguage": {
+      "unknown": 3,
+      "json": 5,
+      "txt": 8,
+      "html": 1,
+      "markdown": 2,
+      "javascript": 31,
+      "css": 13,
+      "gradle": 7,
+      "java": 151,
+      "properties": 4,
+      "xml": 8,
+      "protobuf": 1,
+      "jar": 1,
+      "batch": 1,
+      "yaml": 4
+    }
+  }
+}

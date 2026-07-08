@@ -13,6 +13,7 @@ import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.RoomIdDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
@@ -59,11 +60,14 @@ public class WsGateRoomHandler {
 		try {
 			OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(me.getUserId(), me.getPublicId(), payload.getFriendPublicId());
 
-			EnterRoomResponseDTO openDirChtResponse = wsGateRoomClient.openDirectChatRoom(openDirChtCmd);
+			OpenDirectChatRoomResponseDTO openDirChtResponse = wsGateRoomClient.openDirectChatRoom(openDirChtCmd);
 
-			wsGateSessionRegistry.enterRoomSession(openDirChtResponse.getRoomId(), me.getUserId(), session);
+			if (Boolean.TRUE.equals(openDirChtResponse.getRoomExists()) && openDirChtResponse.getEnterRoomInfo() != null) {
+				wsGateSessionRegistry.enterRoomSession(openDirChtResponse.getEnterRoomInfo().getRoomId(), me.getUserId(), session);
+			}
 
-			log.info("{}번 유저 direct room open. roomId={}", me.getUserId(), openDirChtResponse.getRoomId());
+			log.info("{}번 유저 direct room open. exists:{} roomId:{}", me.getUserId(), openDirChtResponse.getRoomExists(), openDirChtResponse
+					.getEnterRoomInfo() == null ? null : openDirChtResponse.getEnterRoomInfo().getRoomId());
 
 			wsGateOutboundWriter.responseOk(session, dto, "OPEN_DIRECT_CHAT_OK", openDirChtResponse);
 		} catch (Exception e) {

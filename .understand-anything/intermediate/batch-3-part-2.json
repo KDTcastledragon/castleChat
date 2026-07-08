@@ -1,0 +1,388 @@
+{
+  "nodes": [
+    {
+      "id": "file:castlechat/src/components/Home/Header.jsx",
+      "type": "file",
+      "name": "Header.jsx",
+      "filePath": "castlechat/src/components/Home/Header.jsx",
+      "summary": "Top navigation header with links to home/friends/mypage and a logout action, showing the current user.",
+      "tags": ["navigation", "layout"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castlechat/src/components/Home/RouteBody.jsx",
+      "type": "file",
+      "name": "RouteBody.jsx",
+      "filePath": "castlechat/src/components/Home/RouteBody.jsx",
+      "summary": "React Router route table mapping URL paths to the Admin, ChatBox, ChatList, Friends, Join, Login, and MyPage page components.",
+      "tags": ["routing", "react-router"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castlechat/src/components/Join/JoinPage.jsx",
+      "type": "file",
+      "name": "JoinPage.jsx",
+      "filePath": "castlechat/src/components/Join/JoinPage.jsx",
+      "summary": "User registration page with live validation of login id availability, password strength, and nickname format before submitting the join request.",
+      "tags": ["authentication", "form-validation", "registration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:castlechat/src/components/LogIn/LoginPage.jsx",
+      "type": "file",
+      "name": "LoginPage.jsx",
+      "filePath": "castlechat/src/components/LogIn/LoginPage.jsx",
+      "summary": "Login form page using the useLogin React Query mutation hook, with a link to the registration page.",
+      "tags": ["authentication", "form", "react-query"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castlechat/src/components/MyPage/MyPage.jsx",
+      "type": "file",
+      "name": "MyPage.jsx",
+      "filePath": "castlechat/src/components/MyPage/MyPage.jsx",
+      "summary": "User profile settings page for editing nickname, uploading a profile image, and changing the account password.",
+      "tags": ["profile", "settings", "file-upload", "react-query"],
+      "complexity": "complex"
+    },
+    {
+      "id": "file:castlechat/src/hooks/useAuthUser.js",
+      "type": "file",
+      "name": "useAuthUser.js",
+      "filePath": "castlechat/src/hooks/useAuthUser.js",
+      "summary": "React Query hooks for login, logout, and fetching the current authenticated user (me), integrating Redux dispatch and WebSocket disconnect on logout.",
+      "tags": ["hook", "authentication", "react-query", "redux-integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castlechat/src/hooks/useChatRoom.js",
+      "type": "file",
+      "name": "useChatRoom.js",
+      "filePath": "castlechat/src/hooks/useChatRoom.js",
+      "summary": "Hook exposing chat-room actions (open room, start direct/group chat, enter existing room) that dispatch to Redux, navigate, and emit WebSocket events; plus a query hook to list all rooms.",
+      "tags": ["hook", "websocket-integration", "redux-integration", "react-query"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castlechat/src/hooks/useDebounce.js",
+      "type": "file",
+      "name": "useDebounce.js",
+      "filePath": "castlechat/src/hooks/useDebounce.js",
+      "summary": "Generic debounce hook that delays propagation of a rapidly-changing value, used for the friend search input.",
+      "tags": ["hook", "utility", "debounce"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castlechat/src/hooks/useFriend.js",
+      "type": "file",
+      "name": "useFriend.js",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "summary": "React Query hooks and cache-update helpers for friend requests and friend list, keeping the query cache in sync with real-time WebSocket friend events.",
+      "tags": ["hook", "react-query", "cache-management", "social"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castlechat/src/hooks/useSearchUsers.js",
+      "type": "file",
+      "name": "useSearchUsers.js",
+      "filePath": "castlechat/src/hooks/useSearchUsers.js",
+      "summary": "React Query hook wrapping searchUsersApi, only enabled when the search word is non-empty.",
+      "tags": ["hook", "react-query", "search"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castlechat/src/hooks/useUsers.js",
+      "type": "file",
+      "name": "useUsers.js",
+      "filePath": "castlechat/src/hooks/useUsers.js",
+      "summary": "React Query hook wrapping allUsersApi to fetch the full list of users.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/components/Home/Header.jsx:Header",
+      "type": "function",
+      "name": "Header",
+      "filePath": "castlechat/src/components/Home/Header.jsx",
+      "lineRange": [6, 74],
+      "summary": "Renders the top navigation bar, showing the current user and providing navigation and logout actions.",
+      "tags": ["navigation", "layout"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castlechat/src/components/Home/RouteBody.jsx:RouteBody",
+      "type": "function",
+      "name": "RouteBody",
+      "filePath": "castlechat/src/components/Home/RouteBody.jsx",
+      "lineRange": [12, 30],
+      "summary": "Defines the application's client-side route table mapping paths to page components.",
+      "tags": ["routing"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/components/Join/JoinPage.jsx:JoinPage",
+      "type": "function",
+      "name": "JoinPage",
+      "filePath": "castlechat/src/components/Join/JoinPage.jsx",
+      "lineRange": [10, 331],
+      "summary": "Renders and controls the registration form, validating login id, password, and nickname, then submits the join request.",
+      "tags": ["authentication", "form-validation", "registration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castlechat/src/components/LogIn/LoginPage.jsx:LoginPage",
+      "type": "function",
+      "name": "LoginPage",
+      "filePath": "castlechat/src/components/LogIn/LoginPage.jsx",
+      "lineRange": [11, 90],
+      "summary": "Renders the login form and triggers the useLogin mutation on submit, navigating to the home page on success.",
+      "tags": ["authentication", "form"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castlechat/src/components/MyPage/MyPage.jsx:MyPage",
+      "type": "function",
+      "name": "MyPage",
+      "filePath": "castlechat/src/components/MyPage/MyPage.jsx",
+      "lineRange": [9, 209],
+      "summary": "Renders the profile settings UI and drives the update-profile, upload-image, and change-password mutations.",
+      "tags": ["profile", "settings", "file-upload"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useAuthUser.js:useLogin",
+      "type": "function",
+      "name": "useLogin",
+      "filePath": "castlechat/src/hooks/useAuthUser.js",
+      "lineRange": [9, 18],
+      "summary": "React Query mutation hook that logs the user in and seeds the 'me' query cache with the returned user.",
+      "tags": ["hook", "authentication", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useAuthUser.js:useLogout",
+      "type": "function",
+      "name": "useLogout",
+      "filePath": "castlechat/src/hooks/useAuthUser.js",
+      "lineRange": [21, 43],
+      "summary": "React Query mutation hook that disconnects the WebSocket, calls logoutApi, clears chat windows in Redux, clears the query cache, and navigates to the login page.",
+      "tags": ["hook", "authentication", "websocket-integration", "redux-integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useAuthUser.js:useMe",
+      "type": "function",
+      "name": "useMe",
+      "filePath": "castlechat/src/hooks/useAuthUser.js",
+      "lineRange": [52, 58],
+      "summary": "React Query hook fetching the currently authenticated user's profile.",
+      "tags": ["hook", "authentication", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useChatRoom.js:useChatRoomActions",
+      "type": "function",
+      "name": "useChatRoomActions",
+      "filePath": "castlechat/src/hooks/useChatRoom.js",
+      "lineRange": [8, 111],
+      "summary": "Provides action creators for opening a room window, starting direct/group chats, and entering an existing room, dispatching to Redux and emitting the corresponding WebSocket requests.",
+      "tags": ["hook", "websocket-integration", "redux-integration"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useChatRoom.js:useGetMyAllRooms",
+      "type": "function",
+      "name": "useGetMyAllRooms",
+      "filePath": "castlechat/src/hooks/useChatRoom.js",
+      "lineRange": [113, 120],
+      "summary": "React Query hook that fetches all of the current user's chat rooms.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useDebounce.js:useDebounce",
+      "type": "function",
+      "name": "useDebounce",
+      "filePath": "castlechat/src/hooks/useDebounce.js",
+      "lineRange": [3, 17],
+      "summary": "Returns a debounced copy of the given value that updates only after the delay has elapsed without further changes.",
+      "tags": ["hook", "utility", "debounce"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:addReceivedFriendRequestToCache",
+      "type": "function",
+      "name": "addReceivedFriendRequestToCache",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [4, 26],
+      "summary": "Inserts or updates an incoming friend request in the React Query cache for received friend requests, used when a real-time WebSocket event arrives.",
+      "tags": ["cache-management", "react-query", "websocket-integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:removeReceivedFriendRequestFromCache",
+      "type": "function",
+      "name": "removeReceivedFriendRequestFromCache",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [28, 39],
+      "summary": "Removes a friend request entry from the received-friend-requests query cache.",
+      "tags": ["cache-management", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:addAcceptedFriendToCache",
+      "type": "function",
+      "name": "addAcceptedFriendToCache",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [41, 80],
+      "summary": "Adds a newly accepted friend into the friend-list query cache, keeping it in sync with a real-time friend-accepted WebSocket event.",
+      "tags": ["cache-management", "react-query", "websocket-integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:useFriendList",
+      "type": "function",
+      "name": "useFriendList",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [83, 90],
+      "summary": "React Query hook fetching the current user's friend list.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:useAddFriend",
+      "type": "function",
+      "name": "useAddFriend",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [93, 104],
+      "summary": "React Query mutation hook to send a friend request and invalidate related friend queries on success.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:useReceivedFriendRequests",
+      "type": "function",
+      "name": "useReceivedFriendRequests",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [107, 114],
+      "summary": "React Query hook fetching friend requests received by the current user.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useFriend.js:useRespondFriendRequest",
+      "type": "function",
+      "name": "useRespondFriendRequest",
+      "filePath": "castlechat/src/hooks/useFriend.js",
+      "lineRange": [117, 129],
+      "summary": "React Query mutation hook to accept or reject a friend request and invalidate friend-related queries.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useSearchUsers.js:useSearchUsers",
+      "type": "function",
+      "name": "useSearchUsers",
+      "filePath": "castlechat/src/hooks/useSearchUsers.js",
+      "lineRange": [4, 11],
+      "summary": "React Query hook that searches users by search word, enabled only when the word is non-blank.",
+      "tags": ["hook", "react-query", "search"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castlechat/src/hooks/useUsers.js:useUsers",
+      "type": "function",
+      "name": "useUsers",
+      "filePath": "castlechat/src/hooks/useUsers.js",
+      "lineRange": [4, 10],
+      "summary": "React Query hook fetching the full list of users, gated by an enabled flag.",
+      "tags": ["hook", "react-query"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    { "source": "file:castlechat/src/components/Home/Header.jsx", "target": "file:castlechat/src/components/Home/Header.css", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/Header.jsx", "target": "file:castlechat/src/hooks/useAuthUser.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/Admin/AdminPage.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/Chattings/ChatBox.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/Chattings/ChatList.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/Home/Friends.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/Join/JoinPage.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/LogIn/LoginPage.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "file:castlechat/src/components/MyPage/MyPage.jsx", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/Join/JoinPage.jsx", "target": "file:castlechat/src/components/Join/JoinPage.css", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/LogIn/LoginPage.jsx", "target": "file:castlechat/src/components/LogIn/LoginPage.css", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/LogIn/LoginPage.jsx", "target": "file:castlechat/src/hooks/useAuthUser.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/MyPage/MyPage.jsx", "target": "file:castlechat/src/api/chatApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/MyPage/MyPage.jsx", "target": "file:castlechat/src/api/userApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/MyPage/MyPage.jsx", "target": "file:castlechat/src/components/MyPage/MyPage.css", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/components/MyPage/MyPage.jsx", "target": "file:castlechat/src/hooks/useAuthUser.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "file:castlechat/src/api/userApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "file:castlechat/src/store/chatWindowsSlice.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "file:castlechat/src/webSocket/wsClient.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "file:castlechat/src/api/roomApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "file:castlechat/src/store/chatWindowsSlice.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "file:castlechat/src/webSocket/wsClient.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "file:castlechat/src/api/friendApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useSearchUsers.js", "target": "file:castlechat/src/api/userApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+    { "source": "file:castlechat/src/hooks/useUsers.js", "target": "file:castlechat/src/api/userApi.js", "type": "imports", "direction": "forward", "weight": 0.7 },
+
+    { "source": "file:castlechat/src/components/Home/Header.jsx", "target": "function:castlechat/src/components/Home/Header.jsx:Header", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/components/Home/RouteBody.jsx", "target": "function:castlechat/src/components/Home/RouteBody.jsx:RouteBody", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/components/Join/JoinPage.jsx", "target": "function:castlechat/src/components/Join/JoinPage.jsx:JoinPage", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/components/LogIn/LoginPage.jsx", "target": "function:castlechat/src/components/LogIn/LoginPage.jsx:LoginPage", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/components/MyPage/MyPage.jsx", "target": "function:castlechat/src/components/MyPage/MyPage.jsx:MyPage", "type": "contains", "direction": "forward", "weight": 1.0 },
+
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "function:castlechat/src/hooks/useAuthUser.js:useLogin", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "function:castlechat/src/hooks/useAuthUser.js:useLogout", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "function:castlechat/src/hooks/useAuthUser.js:useMe", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "function:castlechat/src/hooks/useAuthUser.js:useLogin", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "function:castlechat/src/hooks/useAuthUser.js:useLogout", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useAuthUser.js", "target": "function:castlechat/src/hooks/useAuthUser.js:useMe", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "function:castlechat/src/hooks/useChatRoom.js:useChatRoomActions", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "function:castlechat/src/hooks/useChatRoom.js:useGetMyAllRooms", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "function:castlechat/src/hooks/useChatRoom.js:useChatRoomActions", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useChatRoom.js", "target": "function:castlechat/src/hooks/useChatRoom.js:useGetMyAllRooms", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castlechat/src/hooks/useDebounce.js", "target": "function:castlechat/src/hooks/useDebounce.js:useDebounce", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useDebounce.js", "target": "function:castlechat/src/hooks/useDebounce.js:useDebounce", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:addReceivedFriendRequestToCache", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:removeReceivedFriendRequestFromCache", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:addAcceptedFriendToCache", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useFriendList", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useAddFriend", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useReceivedFriendRequests", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useRespondFriendRequest", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:addReceivedFriendRequestToCache", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:removeReceivedFriendRequestFromCache", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:addAcceptedFriendToCache", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useFriendList", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useAddFriend", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useReceivedFriendRequests", "type": "exports", "direction": "forward", "weight": 0.8 },
+    { "source": "file:castlechat/src/hooks/useFriend.js", "target": "function:castlechat/src/hooks/useFriend.js:useRespondFriendRequest", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castlechat/src/hooks/useSearchUsers.js", "target": "function:castlechat/src/hooks/useSearchUsers.js:useSearchUsers", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useSearchUsers.js", "target": "function:castlechat/src/hooks/useSearchUsers.js:useSearchUsers", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castlechat/src/hooks/useUsers.js", "target": "function:castlechat/src/hooks/useUsers.js:useUsers", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castlechat/src/hooks/useUsers.js", "target": "function:castlechat/src/hooks/useUsers.js:useUsers", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "function:castlechat/src/hooks/useAuthUser.js:useLogout", "target": "function:castlechat/src/webSocket/wsClient.js:disconnectWs", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useAuthUser.js:useLogout", "target": "function:castlechat/src/api/userApi.js:logoutApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useAuthUser.js:useMe", "target": "function:castlechat/src/api/userApi.js:meApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useChatRoom.js:useChatRoomActions", "target": "function:castlechat/src/webSocket/wsClient.js:emitWsOpenDirectChat", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useChatRoom.js:useChatRoomActions", "target": "function:castlechat/src/webSocket/wsClient.js:emitWsStartGroupChat", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useChatRoom.js:useChatRoomActions", "target": "function:castlechat/src/webSocket/wsClient.js:emitWsEnterRoomRequest", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useChatRoom.js:useGetMyAllRooms", "target": "function:castlechat/src/api/roomApi.js:getMyAllRoomsApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useSearchUsers.js:useSearchUsers", "target": "function:castlechat/src/api/userApi.js:searchUsersApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/hooks/useUsers.js:useUsers", "target": "function:castlechat/src/api/userApi.js:allUsersApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/components/MyPage/MyPage.jsx:MyPage", "target": "function:castlechat/src/api/userApi.js:updateMyProfileApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/components/MyPage/MyPage.jsx:MyPage", "target": "function:castlechat/src/api/userApi.js:changeMyPasswordApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/components/MyPage/MyPage.jsx:MyPage", "target": "function:castlechat/src/api/chatApi.js:uploadImageApi", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/components/LogIn/LoginPage.jsx:LoginPage", "target": "function:castlechat/src/hooks/useAuthUser.js:useLogin", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/components/Home/Header.jsx:Header", "target": "function:castlechat/src/hooks/useAuthUser.js:useLogout", "type": "calls", "direction": "forward", "weight": 0.8 },
+    { "source": "function:castlechat/src/components/Home/Header.jsx:Header", "target": "function:castlechat/src/hooks/useAuthUser.js:useMe", "type": "calls", "direction": "forward", "weight": 0.8 }
+  ]
+}

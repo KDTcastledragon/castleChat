@@ -12,6 +12,7 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
 import com.chat.contract.grpc.ChEngineChatGrpc;
 import com.chat.contract.grpc.CreateChatMessageRequest;
 import com.chat.contract.grpc.DeleteChatMessageRequest;
@@ -41,8 +42,8 @@ public class WsGateChatClientGrpc implements WsGateChatClient {
 
 	// ====== 1:1 채팅방 첫 메시지 전송 + 방 생성 요청 =======================================================================
 	@Override
-	public ChatMessageViewResponseDTO startDirectChat(StartDirectChatCommand cmd) {
-		StartDirectChatRequest.Builder cmdRequestbuilder = StartDirectChatRequest.newBuilder()
+	public StartChatResponseDTO startDirectChat(StartDirectChatCommand cmd) {
+		StartDirectChatRequest.Builder cmdRequestBuilder = StartDirectChatRequest.newBuilder()
 				.setTargetPublicId(cmd.getTargetPublicId())
 				.setSenderUserId(cmd.getSenderUserId())
 				.setSenderPublicId(cmd.getSenderPublicId())
@@ -50,26 +51,26 @@ public class WsGateChatClientGrpc implements WsGateChatClient {
 				.setMessageText(cmd.getMessageText() == null ? "" : cmd.getMessageText());
 
 		if (cmd.getReplyToMessageId() != null) {
-			cmdRequestbuilder.setReplyToMessageId(cmd.getReplyToMessageId());
+			cmdRequestBuilder.setReplyToMessageId(cmd.getReplyToMessageId());
 		}
 
 		if (cmd.getAttachmentIds() != null && !cmd.getAttachmentIds().isEmpty()) {
-			cmdRequestbuilder.addAllAttachmentIds(cmd.getAttachmentIds());
+			cmdRequestBuilder.addAllAttachmentIds(cmd.getAttachmentIds());
 		}
 
-		ChatMessageViewResponseDTO response = GrpcToDtoConverter
-				.convertGrpcToChatMsgViewDto(chEngineStub.startDirectChat(cmdRequestbuilder.build()));
+		StartChatResponseDTO response = GrpcToDtoConverter
+				.convertGrpcToStartChatResDto(chEngineStub.startDirectChat(cmdRequestBuilder.build()));
 
-		log.info("wsgate-gRPC StartDirectChat = rom:{} mId:{} msg:{} / usr:{}", response.getRoomId(), response.getMessageId(), response
-				.getMessageText(), cmd.getSenderUserId());
+		log.info("wsgate-gRPC StartDirectChat = rom:{} mId:{} msg:{} / usr:{}", response.getEnterRoomInfo().getRoomId(), response
+				.getFirstChatMessage().getMessageId(), response.getFirstChatMessage().getMessageText(), cmd.getSenderUserId());
 
 		return response;
 	}
 
 	// ====== 단톡방 첫 메시지 전송 + 방 생성 요청 =======================================================================
 	@Override
-	public ChatMessageViewResponseDTO startGroupChat(StartGroupChatCommand cmd) {
-		StartGroupChatRequest.Builder cmdRequestbuilder = StartGroupChatRequest.newBuilder()
+	public StartChatResponseDTO startGroupChat(StartGroupChatCommand cmd) {
+		StartGroupChatRequest.Builder cmdRequestBuilder = StartGroupChatRequest.newBuilder()
 				.setRoomName(cmd.getRoomName())
 				.setRoomThumbnail(cmd.getRoomThumbnail() == null ? "" : cmd.getRoomThumbnail())
 				.addAllInviteMemberPublicIds(cmd.getInviteMemberPublicIds())
@@ -79,18 +80,18 @@ public class WsGateChatClientGrpc implements WsGateChatClient {
 				.setMessageText(cmd.getMessageText() == null ? "" : cmd.getMessageText());
 
 		if (cmd.getReplyToMessageId() != null) {
-			cmdRequestbuilder.setReplyToMessageId(cmd.getReplyToMessageId());
+			cmdRequestBuilder.setReplyToMessageId(cmd.getReplyToMessageId());
 		}
 
 		if (cmd.getAttachmentIds() != null && !cmd.getAttachmentIds().isEmpty()) {
-			cmdRequestbuilder.addAllAttachmentIds(cmd.getAttachmentIds());
+			cmdRequestBuilder.addAllAttachmentIds(cmd.getAttachmentIds());
 		}
 
-		ChatMessageViewResponseDTO response = GrpcToDtoConverter
-				.convertGrpcToChatMsgViewDto(chEngineStub.startGroupChat(cmdRequestbuilder.build()));
+		StartChatResponseDTO response = GrpcToDtoConverter
+				.convertGrpcToStartChatResDto(chEngineStub.startGroupChat(cmdRequestBuilder.build()));
 
-		log.info("wsgate-gRPC StartGroupChat = rom:{} mId:{} msg:{} / usr:{}", response.getRoomId(), response.getMessageId(), response
-				.getMessageText(), cmd.getSenderUserId());
+		log.info("wsgate-gRPC StartGroupChat = rom:{} mId:{} msg:{} / usr:{}", response.getEnterRoomInfo().getRoomId(), response
+				.getFirstChatMessage().getMessageId(), response.getFirstChatMessage().getMessageText(), cmd.getSenderUserId());
 
 		return response;
 	}

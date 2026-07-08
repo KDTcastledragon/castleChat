@@ -1,0 +1,417 @@
+{
+  "projectRoot": "D:/castleDragonProjects/castleChat",
+  "batchFiles": [
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/RoomGrpcEndpoint.java",
+      "language": "java",
+      "sizeLines": 156,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java",
+      "language": "java",
+      "sizeLines": 61,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/service/RoomCommandService.java",
+      "language": "java",
+      "sizeLines": 554,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java",
+      "language": "java",
+      "sizeLines": 148,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCreateCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomFeedCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 32,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomNoticeCommandUseCase.java",
+      "language": "java",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "language": "java",
+      "sizeLines": 21,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "language": "java",
+      "sizeLines": 17,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "language": "java",
+      "sizeLines": 18,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "language": "java",
+      "sizeLines": 8,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "language": "java",
+      "sizeLines": 26,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "language": "java",
+      "sizeLines": 19,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java",
+      "language": "java",
+      "sizeLines": 23,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java",
+      "language": "java",
+      "sizeLines": 33,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadApplyRoomNoticeRequestDTO.java",
+      "language": "java",
+      "sizeLines": 20,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadBanMemberRequestDTO.java",
+      "language": "java",
+      "sizeLines": 13,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadChangeMemberRoleRequestDTO.java",
+      "language": "java",
+      "sizeLines": 14,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadExitRoomRequestDTO.java",
+      "language": "java",
+      "sizeLines": 9,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadInviteMemberRequestDTO.java",
+      "language": "java",
+      "sizeLines": 16,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadKickMemberRequestDTO.java",
+      "language": "java",
+      "sizeLines": 15,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadOpenDirectChatRoomRequestDTO.java",
+      "language": "java",
+      "sizeLines": 11,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateRoomClientGrpc.java",
+      "language": "java",
+      "sizeLines": 198,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java",
+      "language": "java",
+      "sizeLines": 261,
+      "fileCategory": "code"
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java",
+      "language": "java",
+      "sizeLines": 272,
+      "fileCategory": "code"
+    }
+  ],
+  "batchImportData": {
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/RoomGrpcEndpoint.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/service/RoomCommandService.java": [
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/ChatMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/RoomMapper.java",
+      "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatRoomsDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/ChatUserLookupDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java",
+      "castledragon/common-redis/src/main/java/com/chat/redis/cache/RoomMemberCache.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/support/DtoToGrpcConverter.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomCreateCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomFeedCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/RoomNoticeCommandUseCase.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java": [],
+    "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadApplyRoomNoticeRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadBanMemberRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadChangeMemberRoleRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadExitRoomRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadInviteMemberRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadKickMemberRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadOpenDirectChatRoomRequestDTO.java": [],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateRoomClientGrpc.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ApplyRoomNoticeCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateRoomClient.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadApplyRoomNoticeRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadBanMemberRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadChangeMemberRoleRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadExitRoomRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadInviteMemberRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadKickMemberRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/room/PayloadOpenDirectChatRoomRequestDTO.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java"
+    ],
+    "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java": [
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/ChatAttachmentDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ChatMessageViewResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/DeleteChatMessageResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReactChatMessageEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/ReadPositionUpdateResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/chatting/domain/res/StartChatResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/EnterRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/OpenDirectChatRoomResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomFeedResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomMemberResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeApplyResponseDTO.java",
+      "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/RoomNoticeViewDTO.java"
+    ]
+  }
+}

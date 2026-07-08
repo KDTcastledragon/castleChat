@@ -1,5 +1,6 @@
 package com.chat.chengine.grpc;
 
+import com.chat.chengine.support.DtoToGrpcConverter;
 import com.chat.chengine.usecase.ChatCommandUseCase;
 import com.chat.contract.chatting.command.CreateChatMessageCommand;
 import com.chat.contract.chatting.command.DeleteChatMessageCommand;
@@ -12,6 +13,7 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
 import com.chat.contract.grpc.ChEngineChatGrpc;
 import com.chat.contract.grpc.ChatAttachment;
 import com.chat.contract.grpc.CreateChatMessageRequest;
@@ -22,6 +24,7 @@ import com.chat.contract.grpc.ReactChatMessageRequest;
 import com.chat.contract.grpc.ReactChatMessageResponse;
 import com.chat.contract.grpc.ReadChatMessageRequest;
 import com.chat.contract.grpc.ReadChatMessageResponse;
+import com.chat.contract.grpc.StartChatResponse;
 import com.chat.contract.grpc.StartDirectChatRequest;
 import com.chat.contract.grpc.StartGroupChatRequest;
 
@@ -81,29 +84,36 @@ public class ChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplBase {
 		return responseBuilder.build();
 	}
 
+	private StartChatResponse buildStartChatResponse(StartChatResponseDTO cmdResult) {
+		return StartChatResponse.newBuilder()
+				.setEnterRoomInfo(DtoToGrpcConverter.convertEnterRoomResDtoToGrpc(cmdResult.getEnterRoomInfo()))
+				.setFirstChatMessage(buildCreateChatMessageResponse(cmdResult.getFirstChatMessage()))
+				.build();
+	}
+
 	@Override
-	public void startDirectChat(StartDirectChatRequest request, StreamObserver<CreateChatMessageResponse> responseObserver) {
+	public void startDirectChat(StartDirectChatRequest request, StreamObserver<StartChatResponse> responseObserver) {
 		StartDirectChatCommand requestedCommand = new StartDirectChatCommand(request.getTargetPublicId(), request.getSenderUserId(), request
 				.getSenderPublicId(), request.getMessageType(), request
 						.getMessageText(), request.hasReplyToMessageId() ? request.getReplyToMessageId() : null, request.getAttachmentIdsList());
 
-		ChatMessageViewResponseDTO cmdResult = chatCommandUseCase.startDirectChat(requestedCommand);
+		StartChatResponseDTO cmdResult = chatCommandUseCase.startDirectChat(requestedCommand);
 
-		CreateChatMessageResponse response = buildCreateChatMessageResponse(cmdResult);
+		StartChatResponse response = buildStartChatResponse(cmdResult);
 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();
 	}
 
 	@Override
-	public void startGroupChat(StartGroupChatRequest request, StreamObserver<CreateChatMessageResponse> responseObserver) {
+	public void startGroupChat(StartGroupChatRequest request, StreamObserver<StartChatResponse> responseObserver) {
 		StartGroupChatCommand requestedCommand = new StartGroupChatCommand(request.getRoomName(), request.getRoomThumbnail(), request
 				.getInviteMemberPublicIdsList(), request.getSenderUserId(), request.getSenderPublicId(), request.getMessageType(), request
 						.getMessageText(), request.hasReplyToMessageId() ? request.getReplyToMessageId() : null, request.getAttachmentIdsList());
 
-		ChatMessageViewResponseDTO cmdResult = chatCommandUseCase.startGroupChat(requestedCommand);
+		StartChatResponseDTO cmdResult = chatCommandUseCase.startGroupChat(requestedCommand);
 
-		CreateChatMessageResponse response = buildCreateChatMessageResponse(cmdResult);
+		StartChatResponse response = buildStartChatResponse(cmdResult);
 
 		responseObserver.onNext(response);
 		responseObserver.onCompleted();

@@ -10,11 +10,12 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
 
 public interface WsGateChatClient {
-	ChatMessageViewResponseDTO startDirectChat(StartDirectChatCommand command);
+	StartChatResponseDTO startDirectChat(StartDirectChatCommand command);
 
-	ChatMessageViewResponseDTO startGroupChat(StartGroupChatCommand command);
+	StartChatResponseDTO startGroupChat(StartGroupChatCommand command);
 
 	ChatMessageViewResponseDTO createChatMessage(CreateChatMessageCommand command);
 

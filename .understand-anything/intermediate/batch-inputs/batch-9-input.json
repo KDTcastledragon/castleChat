@@ -1,0 +1,30 @@
+{
+  "batchIndex": 9,
+  "totalBatches": 16,
+  "files": [
+    {
+      "path": "castlechat/src/components/Home/Friends.css",
+      "language": "css",
+      "sizeLines": 269,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Home/Header.css",
+      "language": "css",
+      "sizeLines": 70,
+      "fileCategory": "markup"
+    },
+    {
+      "path": "castlechat/src/components/Home/Home.css",
+      "language": "css",
+      "sizeLines": 208,
+      "fileCategory": "markup"
+    }
+  ],
+  "batchImportData": {
+    "castlechat/src/components/Home/Friends.css": [],
+    "castlechat/src/components/Home/Header.css": [],
+    "castlechat/src/components/Home/Home.css": []
+  },
+  "neighborMap": {}
+}

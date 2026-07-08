@@ -1,5 +1,6 @@
 import './ChatList.css';
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMe } from '../../hooks/useAuthUser';
 import { useChatRoomActions, useGetMyAllRooms } from '../../hooks/useChatRoom';
 import { registerGlobalWsHandler } from '../../webSocket/wsClient';
@@ -8,6 +9,7 @@ function ChatList() {
     // const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const { data: myAllRooms = [], isLoading, isError } = useGetMyAllRooms(!!me);
+    const queryClient = useQueryClient();
     const [visibleRooms, setVisibleRooms] = useState([]);
 
     const { enterExistingRoom } = useChatRoomActions();
@@ -28,6 +30,13 @@ function ChatList() {
             if (!payload?.roomId) return;
 
             setVisibleRooms(prevRooms => {
+                const roomExistsInList = prevRooms.some(room => Number(room.roomId) === Number(payload.roomId));
+
+                if (!roomExistsInList) {
+                    queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+                    return prevRooms;
+                }
+
                 const nextRooms = prevRooms.map(room => {
                     if (Number(room.roomId) !== Number(payload.roomId)) {
                         return room;
@@ -55,7 +64,7 @@ function ChatList() {
                 });
             });
         });
-    }, [me]);
+    }, [me, queryClient]);
 
     function formatRoomTime(value) {
         if (!value) return '';

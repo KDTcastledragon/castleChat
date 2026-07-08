@@ -1,0 +1,604 @@
+{
+  "nodes": [
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "type": "file",
+      "name": "WsGateFriendClient.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "summary": "Client-facing interface for sending add-friend and respond-friend commands to channel-engine.",
+      "tags": ["interface", "client", "grpc", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java:WsGateFriendClient",
+      "type": "class",
+      "name": "WsGateFriendClient",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "lineRange": [7, 11],
+      "summary": "Abstraction implemented by WsGateFriendClientGrpc, used by WsGateFriendHandler to invoke Friend domain operations without gRPC coupling.",
+      "tags": ["interface", "client", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java",
+      "type": "file",
+      "name": "WebSocketConfig.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java",
+      "summary": "Spring WebSocket configuration registering the WsGateDispatcher at the \"/ws\" endpoint with a handshake interceptor and permissive CORS origin pattern.",
+      "tags": ["configuration", "websocket", "spring", "entry-point"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java:WebSocketConfig",
+      "type": "class",
+      "name": "WebSocketConfig",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java",
+      "lineRange": [13, 52],
+      "summary": "Spring @Configuration class implementing WebSocketConfigurer to wire up the gateway's single WebSocket endpoint.",
+      "tags": ["configuration", "websocket", "spring"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java:registerWebSocketHandlers",
+      "type": "function",
+      "name": "registerWebSocketHandlers",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java",
+      "lineRange": [24, 31],
+      "summary": "Registers WsGateDispatcher as the handler for the \"/ws\" endpoint with an HttpSessionHandshakeInterceptor and wildcard allowed origin patterns.",
+      "tags": ["configuration", "websocket"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "type": "file",
+      "name": "WsGateDispatcher.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "summary": "Central WebSocket message dispatcher that deserializes incoming JSON payloads by wsType and routes them to the appropriate domain handler (connection, friend, room, chat), managing connect/disconnect lifecycle.",
+      "tags": ["dispatcher", "websocket", "routing", "entry-point"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:WsGateDispatcher",
+      "type": "class",
+      "name": "WsGateDispatcher",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "lineRange": [22, 118],
+      "summary": "TextWebSocketHandler implementation acting as the single entry point for all WebSocket traffic in the gateway, fanning out to per-domain handlers.",
+      "tags": ["dispatcher", "websocket", "routing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage",
+      "type": "function",
+      "name": "handleTextMessage",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "lineRange": [38, 93],
+      "summary": "Parses an incoming WebSocketDTO and switches on wsType to dispatch to WsGateConnectionHandler, WsGateFriendHandler, WsGateRoomHandler, or WsGateChatHandler, responding with a failure event for unknown types or parse errors.",
+      "tags": ["dispatcher", "websocket", "routing"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:afterConnectionClosed",
+      "type": "function",
+      "name": "afterConnectionClosed",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "lineRange": [103, 116],
+      "summary": "Cleans up session state on disconnect by removing the connected user and their room memberships from WsGateSessionRegistry and releasing any outbound send lock.",
+      "tags": ["dispatcher", "websocket", "session-management"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java",
+      "type": "file",
+      "name": "PayloadAddFriendRequestDTO.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java",
+      "summary": "Inbound WebSocket payload DTO carrying the target user's public id for an add-friend request.",
+      "tags": ["data-model", "dto", "payload", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java",
+      "type": "file",
+      "name": "PayloadRespondFriendRequestDTO.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java",
+      "summary": "Inbound WebSocket payload DTO carrying the requester's public id and the accept/reject action for a friend response.",
+      "tags": ["data-model", "dto", "payload", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateAuthException.java",
+      "type": "file",
+      "name": "WsGateAuthException.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateAuthException.java",
+      "summary": "Runtime exception thrown when a WebSocket operation requires an authenticated session but none is present.",
+      "tags": ["exception", "authentication", "error-handling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java",
+      "type": "file",
+      "name": "WsGateChEngineFriendClientGrpc.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java",
+      "summary": "gRPC client implementation of WsGateChEngineFriendClient, calling channel-engine's findOnlineFriendTargets RPC and converting the gRPC response to a DTO.",
+      "tags": ["grpc", "client", "friend-domain", "integration"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:WsGateChEngineFriendClientGrpc",
+      "type": "class",
+      "name": "WsGateChEngineFriendClientGrpc",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java",
+      "lineRange": [15, 36],
+      "summary": "gRPC-backed implementation of the WsGateChEngineFriendClient interface used to detect which friends are online.",
+      "tags": ["grpc", "client", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:findOnlineFriendTargets",
+      "type": "function",
+      "name": "findOnlineFriendTargets",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java",
+      "lineRange": [22, 35],
+      "summary": "Builds a FindOnlineFriendTargetsRequest gRPC message, invokes the channel-engine friend gRPC stub, converts the response via GrpcToDtoConverter, and logs the result.",
+      "tags": ["grpc", "client", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "type": "file",
+      "name": "WsGateFriendClientGrpc.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "summary": "gRPC client implementation of WsGateFriendClient, forwarding addFriend/respondFriend commands to channel-engine over gRPC and converting the responses to DTOs.",
+      "tags": ["grpc", "client", "friend-domain", "integration"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:WsGateFriendClientGrpc",
+      "type": "class",
+      "name": "WsGateFriendClientGrpc",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "lineRange": [17, 56],
+      "summary": "gRPC-backed implementation of WsGateFriendClient bridging the WebSocket gateway to the channel-engine Friend service.",
+      "tags": ["grpc", "client", "friend-domain"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:addFriend",
+      "type": "function",
+      "name": "addFriend",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "lineRange": [24, 38],
+      "summary": "Builds an AddFriendRequest gRPC message from the command, invokes the channel-engine friend gRPC stub, and converts the response into a FriendEventResponseDTO.",
+      "tags": ["grpc", "client", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:respondFriend",
+      "type": "function",
+      "name": "respondFriend",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "lineRange": [40, 55],
+      "summary": "Builds a RespondFriendRequest gRPC message from the command, invokes the channel-engine friend gRPC stub, and converts the response into a FriendEventResponseDTO.",
+      "tags": ["grpc", "client", "friend-domain"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "type": "file",
+      "name": "WsGateConnectionHandler.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "summary": "Handles WebSocket connect/disconnect lifecycle events: authenticates the session, registers it in WsGateSessionRegistry, and pushes an online notification to the user's accepted friends.",
+      "tags": ["handler", "websocket", "connection", "friend-domain"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:WsGateConnectionHandler",
+      "type": "class",
+      "name": "WsGateConnectionHandler",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "lineRange": [22, 101],
+      "summary": "Manages the lifecycle of a user's WebSocket connection, including registration, forced disconnects, and presence notifications to friends.",
+      "tags": ["handler", "websocket", "connection"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:handleConnectUser",
+      "type": "function",
+      "name": "handleConnectUser",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "lineRange": [33, 54],
+      "summary": "Authenticates the WebSocket session, registers the connected user in WsGateSessionRegistry, responds with a success event, and triggers an online-notification push to friends.",
+      "tags": ["handler", "websocket", "connection", "authentication"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:pushOnlineNotification",
+      "type": "function",
+      "name": "pushOnlineNotification",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "lineRange": [56, 78],
+      "summary": "Queries WsGateChEngineFriendClient for online friend targets and broadcasts a UserOnlineNotificationDTO to each of them via WsGateOutboundWriter.",
+      "tags": ["handler", "websocket", "notification", "friend-domain"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:closeUserWebSocketConnection",
+      "type": "function",
+      "name": "closeUserWebSocketConnection",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "lineRange": [81, 100],
+      "summary": "Forcibly closes a user's active WebSocket session by user id, used for administrative or forced disconnects.",
+      "tags": ["handler", "websocket", "connection"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "type": "file",
+      "name": "WsGateFriendHandler.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "summary": "Handles inbound \"add friend\" and \"respond friend\" WebSocket messages, validating payloads, invoking WsGateFriendClient, and pushing results to the affected user's session.",
+      "tags": ["handler", "websocket", "friend-domain", "validation"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:WsGateFriendHandler",
+      "type": "class",
+      "name": "WsGateFriendHandler",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "lineRange": [21, 80],
+      "summary": "WebSocket message handler implementing the Friend domain's real-time add/respond request flow.",
+      "tags": ["handler", "websocket", "friend-domain"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleAddFriend",
+      "type": "function",
+      "name": "handleAddFriend",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "lineRange": [31, 53],
+      "summary": "Authenticates the session, validates and converts the payload, sends an AddFriendCommand via WsGateFriendClient, then responds to the sender and pushes the event to the target user if online.",
+      "tags": ["handler", "websocket", "friend-domain", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleRespondFriend",
+      "type": "function",
+      "name": "handleRespondFriend",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "lineRange": [55, 79],
+      "summary": "Authenticates the session, validates the response payload, sends a RespondFriendCommand via WsGateFriendClient, then responds to the sender and notifies the original requester.",
+      "tags": ["handler", "websocket", "friend-domain", "validation"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "type": "file",
+      "name": "WsGateOutboundWriter.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "summary": "Central utility for serializing and safely sending WebSocket responses and broadcasts, including per-session send locking, room broadcasts, and single/multi-user push notifications.",
+      "tags": ["utility", "websocket", "outbound", "concurrency"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:WsGateOutboundWriter",
+      "type": "class",
+      "name": "WsGateOutboundWriter",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [19, 202],
+      "summary": "Shared component handling all outbound WebSocket serialization, per-session locking, and broadcast/push logic for the gateway.",
+      "tags": ["utility", "websocket", "outbound"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:sendSafely",
+      "type": "function",
+      "name": "sendSafely",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [44, 57],
+      "summary": "Sends a serialized payload to a session under a per-session lock, guarding against concurrent writes to the same WebSocket.",
+      "tags": ["utility", "websocket", "concurrency"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createSuccessEvent",
+      "type": "function",
+      "name": "createSuccessEvent",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [59, 68],
+      "summary": "Builds a success WebSocketDTO event with request id, message type, and JSON-serialized payload data.",
+      "tags": ["utility", "websocket", "serialization"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createFailEvent",
+      "type": "function",
+      "name": "createFailEvent",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [70, 79],
+      "summary": "Builds a failure WebSocketDTO event carrying an error message for the given request and message type.",
+      "tags": ["utility", "websocket", "error-handling"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoom",
+      "type": "function",
+      "name": "broadcastToRoom",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [90, 109],
+      "summary": "Serializes a success event once and sends it to every open session currently viewing a room, pruning closed sessions along the way.",
+      "tags": ["utility", "websocket", "broadcast"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoomExceptUser",
+      "type": "function",
+      "name": "broadcastToRoomExceptUser",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [111, 138],
+      "summary": "Same as broadcastToRoom but excludes a specific user (typically the message sender) from the broadcast.",
+      "tags": ["utility", "websocket", "broadcast"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToSingleUser",
+      "type": "function",
+      "name": "pushToSingleUser",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [155, 164],
+      "summary": "Looks up a user's active session via WsGateSessionRegistry and sends them a success event.",
+      "tags": ["utility", "websocket", "notification"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToMultipleUsers",
+      "type": "function",
+      "name": "pushToMultipleUsers",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "lineRange": [166, 192],
+      "summary": "Sends a success event to each session belonging to a set of user ids, pruning closed sessions.",
+      "tags": ["utility", "websocket", "notification"],
+      "complexity": "moderate"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "type": "file",
+      "name": "WsGateSessionRegistry.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "summary": "In-memory registry tracking connected WebSocket sessions per user and per chat room, supporting connect/disconnect, room enter/exit, and lookup/metrics operations.",
+      "tags": ["session-management", "websocket", "registry"],
+      "complexity": "complex"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:WsGateSessionRegistry",
+      "type": "class",
+      "name": "WsGateSessionRegistry",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "lineRange": [15, 139],
+      "summary": "Thread-safe in-memory store mapping WebSocket sessions to users and rooms, used across the dispatcher, handlers, and outbound writer.",
+      "tags": ["session-management", "websocket", "registry"],
+      "complexity": "complex"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:exitRoomSession",
+      "type": "function",
+      "name": "exitRoomSession",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "lineRange": [65, 78],
+      "summary": "Removes a user's session from a room's tracked viewers, cleaning up the room entry entirely once it becomes empty.",
+      "tags": ["session-management", "websocket"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:removeSessionAllRooms",
+      "type": "function",
+      "name": "removeSessionAllRooms",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "lineRange": [82, 92],
+      "summary": "Removes a disconnecting session from every room it was viewing, logging and cleaning up any rooms left empty.",
+      "tags": ["session-management", "websocket"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:getViewingUserIds",
+      "type": "function",
+      "name": "getViewingUserIds",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "lineRange": [103, 113],
+      "summary": "Returns the set of user ids currently viewing a room, pruning any closed sessions first.",
+      "tags": ["session-management", "websocket"],
+      "complexity": "simple"
+    },
+    {
+      "id": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:getRoomSessions",
+      "type": "function",
+      "name": "getRoomSessions",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "lineRange": [115, 125],
+      "summary": "Returns the map of user id to WebSocket session for a room, pruning closed sessions before returning.",
+      "tags": ["session-management", "websocket"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java",
+      "type": "file",
+      "name": "WsGatePayloadConverter.java",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java",
+      "summary": "Utility that converts a generic WebSocketDTO payload into a strongly-typed request DTO class using Jackson.",
+      "tags": ["utility", "serialization", "websocket"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java:WsGatePayloadConverter",
+      "type": "class",
+      "name": "WsGatePayloadConverter",
+      "filePath": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java",
+      "lineRange": [10, 26],
+      "summary": "Jackson-based helper converting untyped WebSocket payloads into specific request DTO types for handlers.",
+      "tags": ["utility", "serialization", "websocket"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/UserOnlineNotificationDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java", "target": "file:castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java", "type": "imports", "direction": "forward", "weight": 0.7},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java:WsGateFriendClient", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java:WsGateFriendClient", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java:WebSocketConfig", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java:registerWebSocketHandlers", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java:WebSocketConfig", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java:registerWebSocketHandlers", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:WsGateDispatcher", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:afterConnectionClosed", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:WsGateDispatcher", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:afterConnectionClosed", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:WsGateChEngineFriendClientGrpc", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:findOnlineFriendTargets", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:WsGateChEngineFriendClientGrpc", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:findOnlineFriendTargets", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:WsGateFriendClientGrpc", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:addFriend", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:respondFriend", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:WsGateFriendClientGrpc", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:addFriend", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:respondFriend", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:WsGateConnectionHandler", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:handleConnectUser", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:pushOnlineNotification", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:closeUserWebSocketConnection", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:WsGateConnectionHandler", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:handleConnectUser", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:closeUserWebSocketConnection", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:WsGateFriendHandler", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleAddFriend", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleRespondFriend", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:WsGateFriendHandler", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleAddFriend", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleRespondFriend", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:WsGateOutboundWriter", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:sendSafely", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createSuccessEvent", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createFailEvent", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoom", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoomExceptUser", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToSingleUser", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToMultipleUsers", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:WsGateOutboundWriter", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoom", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoomExceptUser", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToSingleUser", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToMultipleUsers", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:WsGateSessionRegistry", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:exitRoomSession", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:removeSessionAllRooms", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:getViewingUserIds", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:getRoomSessions", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:WsGateSessionRegistry", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:exitRoomSession", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:removeSessionAllRooms", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:getViewingUserIds", "type": "exports", "direction": "forward", "weight": 0.8},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java:getRoomSessions", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java:WsGatePayloadConverter", "type": "contains", "direction": "forward", "weight": 1.0},
+    {"source": "file:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java:WsGatePayloadConverter", "type": "exports", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:findOnlineFriendTargets", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java:convertGrpcToOnlineFriendTargetsResDto", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:addFriend", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java:convertGrpcToFriendEventResDto", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:respondFriend", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/GrpcToDtoConverter.java:convertGrpcToFriendEventResDto", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleAddFriend", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleRespondFriend", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:handleConnectUser", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleOpenDirectChat", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleEnterRoom", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleExitRoom", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleLeftRoom", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleInviteMember", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleKickMember", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleBanMember", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleChangeMemberRole", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateRoomHandler.java:handleApplyRoomNotice", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleStartDirectChat", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleStartGroupChat", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleTyping", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleSendMessage", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleReadMessage", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleDeleteMessage", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java:handleTextMessage", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateChatHandler.java:handleReactMessage", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:pushOnlineNotification", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:findOnlineFriendTargets", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:handleConnectUser", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java:pushOnlineNotification", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleAddFriend", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:addFriend", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java:handleRespondFriend", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:respondFriend", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoom", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createSuccessEvent", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:broadcastToRoomExceptUser", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createSuccessEvent", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToSingleUser", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createSuccessEvent", "type": "calls", "direction": "forward", "weight": 0.8},
+    {"source": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:pushToMultipleUsers", "target": "function:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java:createSuccessEvent", "type": "calls", "direction": "forward", "weight": 0.8},
+
+    {"source": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java:WsGateFriendClientGrpc", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java:WsGateFriendClient", "type": "implements", "direction": "forward", "weight": 0.9},
+    {"source": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java:WsGateChEngineFriendClientGrpc", "target": "class:castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java:WsGateChEngineFriendClient", "type": "implements", "direction": "forward", "weight": 0.9}
+  ]
+}

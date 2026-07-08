@@ -1,0 +1,30 @@
+{
+  "batchIndex": 11,
+  "totalBatches": 16,
+  "files": [
+    {
+      "path": "castledragon/channel-engine/src/main/resources/mappers/ChatMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 268,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/resources/mappers/FriendMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 57,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/resources/mappers/RoomMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 388,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "castledragon/channel-engine/src/main/resources/mappers/ChatMapperXml.xml": [],
+    "castledragon/channel-engine/src/main/resources/mappers/FriendMapperXml.xml": [],
+    "castledragon/channel-engine/src/main/resources/mappers/RoomMapperXml.xml": []
+  },
+  "neighborMap": {}
+}

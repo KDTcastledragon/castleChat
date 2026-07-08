@@ -1,0 +1,37 @@
+{
+  "batchIndex": 7,
+  "totalBatches": 16,
+  "files": [
+    {
+      "path": "castlechat/README.md",
+      "language": "markdown",
+      "sizeLines": 70,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castlechat/jsconfig.json",
+      "language": "json",
+      "sizeLines": 9,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castlechat/noticeForMe.txt",
+      "language": "txt",
+      "sizeLines": 21,
+      "fileCategory": "docs"
+    },
+    {
+      "path": "castlechat/package.json",
+      "language": "json",
+      "sizeLines": 45,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "castlechat/README.md": [],
+    "castlechat/jsconfig.json": [],
+    "castlechat/noticeForMe.txt": [],
+    "castlechat/package.json": []
+  },
+  "neighborMap": {}
+}

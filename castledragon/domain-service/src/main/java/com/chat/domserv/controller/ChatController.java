@@ -6,6 +6,8 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.chat.contract.chatting.domain.ChatAttachmentDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.domserv.usecase.ChatCommandUseCase;
+import com.chat.domserv.usecase.ChatQueryUseCase;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ChatController {
 	private final ChatCommandUseCase chatCommandUseCase;
+	private final ChatQueryUseCase chatQueryUseCase;
 
 	@PostMapping(value = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<?> uploadChatAttachments(@RequestParam("roomId") Long roomId, @RequestParam("files") List<MultipartFile> files, HttpSession session) {
@@ -55,5 +59,27 @@ public class ChatController {
 		log.info("common image uploaded. uploader={}, imageTarget={}, fileUrl={}", me.getUserId(), imageTarget, fileUrl);
 
 		return ResponseEntity.ok(Map.of("fileUrl", fileUrl));
+	}
+
+	@GetMapping("/messages/{roomId}/{messageId}/reactions")
+	public ResponseEntity<?> getMessageReactionMembers(@PathVariable("roomId") Long roomId, @PathVariable("messageId") Long messageId, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		return ResponseEntity.ok(chatQueryUseCase.findMessageReactionMembers(roomId, messageId, me.getUserId()));
+	}
+
+	@GetMapping("/messages/{roomId}/{messageId}/readers")
+	public ResponseEntity<?> getMessageReaders(@PathVariable("roomId") Long roomId, @PathVariable("messageId") Long messageId, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		return ResponseEntity.ok(chatQueryUseCase.findMessageReaders(roomId, messageId, me.getUserId()));
 	}
 }

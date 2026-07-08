@@ -20,6 +20,7 @@ import com.chat.contract.room.command.KickMemberCommand;
 import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 import com.chat.wsgate.client.WsGateRoomClient;
@@ -43,17 +44,18 @@ public class WsGateRoomClientGrpc implements WsGateRoomClient {
 	//		gRPC returns는 proto message만 가능. Java DTO를 직접 response로 못 씀. 변환은 필수. 귀찮으면 helper로 분리.
 
 	@Override
-	public EnterRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand cmd) {
+	public OpenDirectChatRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand cmd) {
 		OpenDirectChatRoomRequest cmdRequest = OpenDirectChatRoomRequest.newBuilder()
 				.setRequesterUserId(cmd.getRequesterUserId())
 				.setRequesterPublicId(cmd.getRequesterPublicId())
 				.setFriendPublicId(cmd.getFriendPublicId())
 				.build();
 
-		EnterRoomResponseDTO gRpcOpenDirChtResponse = GrpcToDtoConverter
-				.convertGrpcToEnterRoomResDto(chEngineRoomStub.openDirectChatRoom(cmdRequest));
+		OpenDirectChatRoomResponseDTO gRpcOpenDirChtResponse = GrpcToDtoConverter
+				.convertGrpcToOpenDirectChatRoomResDto(chEngineRoomStub.openDirectChatRoom(cmdRequest));
 
-		log.info("wsgate-gRPC OpenDirectChat = rom:{} / usr:{}", gRpcOpenDirChtResponse.getRoomId(), cmd.getRequesterUserId());
+		log.info("wsgate-gRPC OpenDirectChat = exists:{} roomId:{} / usr:{}", gRpcOpenDirChtResponse.getRoomExists(), gRpcOpenDirChtResponse
+				.getEnterRoomInfo() == null ? null : gRpcOpenDirChtResponse.getEnterRoomInfo().getRoomId(), cmd.getRequesterUserId());
 
 		return gRpcOpenDirChtResponse;
 	}

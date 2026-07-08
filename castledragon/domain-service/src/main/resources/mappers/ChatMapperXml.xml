@@ -12,7 +12,10 @@
 	            m.message_id,
 	            m.room_id,
 	            u.public_id AS sender_public_id,
+	            m.message_type,
 	            m.message_text,
+	            m.reply_to_message_id,
+	            m.message_status,
 	            m.created_at,
 	
 	            (
@@ -56,6 +59,93 @@
 		  ON u.user_id = rm.user_id
 		WHERE rm.room_id = #{roomId}
 		  AND rm.member_status = 'ACTIVE'
+	</select>
+
+	<select id="findChatAttachmentsByMessageIds" resultType="com.chat.contract.chatting.domain.ChatAttachmentDTO">
+		SELECT
+			attachment_id AS attachmentId,
+			message_id AS messageId,
+			room_id AS roomId,
+			uploader_user_id AS uploaderUserId,
+			file_url AS fileUrl,
+			original_file_name AS originalFileName,
+			content_type AS contentType,
+			file_size AS fileSize,
+			attachment_kind AS attachmentKind,
+			attachment_status AS attachmentStatus,
+			width,
+			height,
+			duration_ms AS durationMs,
+			sort_order AS sortOrder
+		FROM chat_message_attachments
+		WHERE message_id IN
+		<foreach collection="messageIds" item="messageId" open="(" separator="," close=")">
+			#{messageId}
+		</foreach>
+		  AND attachment_status = 'ATTACHED'
+		ORDER BY message_id ASC, sort_order ASC, attachment_id ASC
+	</select>
+
+	<select id="findReactionSummariesByMessageIds" resultType="com.chat.contract.chatting.domain.res.ChatMessageReactionSummaryDTO">
+		SELECT
+			message_id AS messageId,
+			reaction_type AS reactionType,
+			reaction_code AS reactionCode,
+			COUNT(*) AS count
+		FROM chat_message_reactions
+		WHERE message_id IN
+		<foreach collection="messageIds" item="messageId" open="(" separator="," close=")">
+			#{messageId}
+		</foreach>
+		GROUP BY message_id, reaction_type, reaction_code
+		ORDER BY message_id ASC, MIN(created_at) ASC
+	</select>
+
+	<select id="findMessageReactionMembers" resultType="com.chat.contract.chatting.domain.res.ChatMessageReactionMemberResponseDTO">
+		SELECT
+			r.room_id AS roomId,
+			r.message_id AS messageId,
+			r.reaction_type AS reactionType,
+			r.reaction_code AS reactionCode,
+			u.public_id AS requesterPublicId,
+			u.nickname AS requesterNickname,
+			u.profile_img AS requesterProfileImg,
+			r.created_at AS reactedAt
+		FROM chat_message_reactions r
+		JOIN users u
+		  ON u.user_id = r.requester_user_id
+		WHERE r.room_id = #{roomId}
+		  AND r.message_id = #{messageId}
+		ORDER BY r.created_at ASC
+	</select>
+
+	<select id="findMessageReaderCandidates" resultType="com.chat.domserv.domain.MessageReaderCandidateDTO">
+		SELECT
+			rm.user_id AS userId,
+			u.public_id AS publicId,
+			u.nickname AS nickname,
+			u.friend_code AS friendCode,
+			u.profile_img AS profileImg,
+			rm.role AS role,
+			COALESCE(rm.last_read_message_id, 0) AS lastReadMessageId
+		FROM room_members rm
+		JOIN users u
+		  ON u.user_id = rm.user_id
+		JOIN chat_messages m
+		  ON m.room_id = rm.room_id
+		 AND m.message_id = #{messageId}
+		WHERE rm.room_id = #{roomId}
+		  AND rm.member_status = 'ACTIVE'
+		  AND rm.user_id != m.sender_id
+		ORDER BY rm.last_read_message_id DESC, u.nickname ASC
+	</select>
+
+	<select id="countActiveRoomMember" resultType="int">
+		SELECT COUNT(*)
+		FROM room_members
+		WHERE room_id = #{roomId}
+		  AND user_id = #{userId}
+		  AND member_status = 'ACTIVE'
 	</select>
 	
 	<insert id="insertChatAttachment"

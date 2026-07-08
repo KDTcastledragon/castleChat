@@ -29,7 +29,8 @@ const WS_TYPES = {
     RESPOND_FRIEND: "RESPOND_FRIEND",
     INVITE_MEMBER: "INVITE_MEMBER",
     KICK_MEMBER: "KICK_MEMBER",
-    BAN_MEMBER: "BAN_MEMBER"
+    BAN_MEMBER: "BAN_MEMBER",
+    CHANGE_MEMBER_ROLE: "CHANGE_MEMBER_ROLE"
 
 };
 
@@ -350,8 +351,21 @@ export function emitWsStartGroupChat(roomName, roomThumbnail, inviteMemberPublic
         messageType: 'TEXT',
         messageText
     }, {
-        successTypes: ['MSG_CREATED'],
-        failTypes: ['START_GROUP_ROOM_WITH_MSG_FAIL', 'WS_MESSAGE_FAIL']
+        successTypes: ['START_GROUP_CHAT_OK'],
+        failTypes: ['START_GROUP_CHAT_FAIL', 'WS_MESSAGE_FAIL']
+    });
+}
+
+export function emitWsStartDirectChat(targetPublicId, messageText, options = {}) {
+    return emitWsRequest(WS_TYPES.START_DIRECT_CHAT, {
+        targetPublicId,
+        messageType: options.messageType ?? 'TEXT',
+        messageText,
+        replyToMessageId: options.replyToMessageId,
+        attachmentIds: options.attachmentIds
+    }, {
+        successTypes: ['START_DIRECT_CHAT_OK'],
+        failTypes: ['START_DIRECT_CHAT_FAIL', 'WS_MESSAGE_FAIL']
     });
 }
 
@@ -397,6 +411,14 @@ export function emitWsBanMember(roomId, banTargetPublicId) {
     return emitWs(WS_TYPES.BAN_MEMBER, {
         roomId,
         banTargetPublicId
+    });
+}
+
+export function emitWsChangeMemberRole(roomId, targetPublicId, targetRole) {
+    return emitWs(WS_TYPES.CHANGE_MEMBER_ROLE, {
+        roomId,
+        targetPublicId,
+        targetRole
     });
 }
 

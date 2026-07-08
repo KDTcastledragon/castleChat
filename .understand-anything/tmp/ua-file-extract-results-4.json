@@ -1,0 +1,3606 @@
+{
+  "scriptCompleted": true,
+  "filesAnalyzed": 27,
+  "filesSkipped": [],
+  "results": [
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/grpc/FriendGrpcEndpoint.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 65,
+      "nonEmptyLines": 49,
+      "functions": [
+        {
+          "name": "addFriend",
+          "startLine": 29,
+          "endLine": 39,
+          "params": [
+            "request",
+            "responseObserver"
+          ]
+        },
+        {
+          "name": "respondFriend",
+          "startLine": 41,
+          "endLine": 52,
+          "params": [
+            "request",
+            "responseObserver"
+          ]
+        },
+        {
+          "name": "findOnlineFriendTargets",
+          "startLine": 54,
+          "endLine": 64,
+          "params": [
+            "request",
+            "responseObserver"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FriendGrpcEndpoint",
+          "startLine": 22,
+          "endLine": 65,
+          "methods": [
+            "addFriend",
+            "respondFriend",
+            "findOnlineFriendTargets"
+          ],
+          "properties": [
+            "friendCommandUseCase"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "addFriend",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "respondFriend",
+          "line": 41,
+          "isDefault": false
+        },
+        {
+          "name": "findOnlineFriendTargets",
+          "line": 54,
+          "isDefault": false
+        },
+        {
+          "name": "FriendGrpcEndpoint",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "addFriend",
+          "callee": "new AddFriendCommand",
+          "lineNumber": 31
+        },
+        {
+          "caller": "addFriend",
+          "callee": "request.getRequesterUserId",
+          "lineNumber": 31
+        },
+        {
+          "caller": "addFriend",
+          "callee": "request.getRequesterPublicId",
+          "lineNumber": 31
+        },
+        {
+          "caller": "addFriend",
+          "callee": "request.getTargetPublicId",
+          "lineNumber": 31
+        },
+        {
+          "caller": "addFriend",
+          "callee": "friendCommandUseCase.addFriend",
+          "lineNumber": 33
+        },
+        {
+          "caller": "addFriend",
+          "callee": "DtoToGrpcConverter.convertFriendEventResDtoToGrpc",
+          "lineNumber": 35
+        },
+        {
+          "caller": "addFriend",
+          "callee": "responseObserver.onNext",
+          "lineNumber": 37
+        },
+        {
+          "caller": "addFriend",
+          "callee": "responseObserver.onCompleted",
+          "lineNumber": 38
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new RespondFriendCommand",
+          "lineNumber": 43
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "request.getResponderUserId",
+          "lineNumber": 43
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "request.getResponderPublicId",
+          "lineNumber": 43
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "request.getRequesterPublicId",
+          "lineNumber": 43
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "request.getFriendAction",
+          "lineNumber": 44
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "friendCommandUseCase.respondFriend",
+          "lineNumber": 46
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "DtoToGrpcConverter.convertFriendEventResDtoToGrpc",
+          "lineNumber": 48
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "responseObserver.onNext",
+          "lineNumber": 50
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "responseObserver.onCompleted",
+          "lineNumber": 51
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "new FindOnlineFriendTargetsCommand",
+          "lineNumber": 56
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "request.getUserId",
+          "lineNumber": 56
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "request.getPublicId",
+          "lineNumber": 56
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "friendCommandUseCase.findOnlineFriendTargets",
+          "lineNumber": 58
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "DtoToGrpcConverter.convertOnlineFriendTargetsResDtoToGrpc",
+          "lineNumber": 60
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "responseObserver.onNext",
+          "lineNumber": 62
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "responseObserver.onCompleted",
+          "lineNumber": 63
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/mapper/FriendMapper.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 19,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "FriendMapper",
+          "startLine": 8,
+          "endLine": 19,
+          "methods": [
+            "findUserIdByPublicId",
+            "findNicknameByUserId",
+            "addFriend",
+            "respondFriendRequest",
+            "findAcceptedFriendUserIds"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendMapper",
+          "line": 8,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/service/FriendCommandService.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 156,
+      "nonEmptyLines": 117,
+      "functions": [
+        {
+          "name": "addFriend",
+          "startLine": 35,
+          "endLine": 81,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "respondFriend",
+          "startLine": 83,
+          "endLine": 135,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "findOnlineFriendTargets",
+          "startLine": 137,
+          "endLine": 151,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "hasText",
+          "startLine": 153,
+          "endLine": 155,
+          "params": [
+            "value"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "FriendCommandService",
+          "startLine": 21,
+          "endLine": 156,
+          "methods": [
+            "addFriend",
+            "respondFriend",
+            "findOnlineFriendTargets",
+            "hasText"
+          ],
+          "properties": [
+            "ACCEPT",
+            "REJECT",
+            "PENDING",
+            "ACCEPTED",
+            "REJECTED",
+            "friendMapper"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "addFriend",
+          "line": 35,
+          "isDefault": false
+        },
+        {
+          "name": "respondFriend",
+          "line": 83,
+          "isDefault": false
+        },
+        {
+          "name": "findOnlineFriendTargets",
+          "line": 137,
+          "isDefault": false
+        },
+        {
+          "name": "FriendCommandService",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 39
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 43
+        },
+        {
+          "caller": "addFriend",
+          "callee": "hasText",
+          "lineNumber": 46
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 46
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 47
+        },
+        {
+          "caller": "addFriend",
+          "callee": "hasText",
+          "lineNumber": 50
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getTargetPublicId",
+          "lineNumber": 50
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 51
+        },
+        {
+          "caller": "addFriend",
+          "callee": "friendMapper.findUserIdByPublicId",
+          "lineNumber": 54
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getTargetPublicId",
+          "lineNumber": 54
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 57
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId().equals",
+          "lineNumber": 60
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 60
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 61
+        },
+        {
+          "caller": "addFriend",
+          "callee": "friendMapper.addFriend",
+          "lineNumber": 65
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 65
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new IllegalStateException",
+          "lineNumber": 68
+        },
+        {
+          "caller": "addFriend",
+          "callee": "log.info",
+          "lineNumber": 72
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 72
+        },
+        {
+          "caller": "addFriend",
+          "callee": "friendMapper.findNicknameByUserId",
+          "lineNumber": 76
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 76
+        },
+        {
+          "caller": "addFriend",
+          "callee": "friendMapper.findNicknameByUserId",
+          "lineNumber": 77
+        },
+        {
+          "caller": "addFriend",
+          "callee": "new FriendEventResponseDTO",
+          "lineNumber": 79
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 79
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 79
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getTargetPublicId",
+          "lineNumber": 79
+        },
+        {
+          "caller": "addFriend",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 80
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 87
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId",
+          "lineNumber": 90
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 91
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "hasText",
+          "lineNumber": 94
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderPublicId",
+          "lineNumber": 94
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 95
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "hasText",
+          "lineNumber": 98
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 98
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 99
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "hasText",
+          "lineNumber": 102
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getFriendAction",
+          "lineNumber": 102
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 103
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "friendMapper.findUserIdByPublicId",
+          "lineNumber": 106
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 106
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 109
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId().equals",
+          "lineNumber": 112
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId",
+          "lineNumber": 112
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 113
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getFriendAction",
+          "lineNumber": 116
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 119
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "friendMapper.respondFriendRequest",
+          "lineNumber": 122
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId",
+          "lineNumber": 122
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new IllegalStateException",
+          "lineNumber": 125
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "ACCEPTED.equals",
+          "lineNumber": 128
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "friendMapper.findNicknameByUserId",
+          "lineNumber": 130
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "friendMapper.findNicknameByUserId",
+          "lineNumber": 131
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId",
+          "lineNumber": 131
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "new FriendEventResponseDTO",
+          "lineNumber": 133
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 133
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId",
+          "lineNumber": 133
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderPublicId",
+          "lineNumber": 133
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 134
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 141
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "cmd.getUserId",
+          "lineNumber": 144
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "new IllegalArgumentException",
+          "lineNumber": 145
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "friendMapper.findAcceptedFriendUserIds",
+          "lineNumber": 148
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "cmd.getUserId",
+          "lineNumber": 148
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "new OnlineFriendTargetsResponseDTO",
+          "lineNumber": 150
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "cmd.getUserId",
+          "lineNumber": 150
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "List.of",
+          "lineNumber": 150
+        },
+        {
+          "caller": "hasText",
+          "callee": "value.isBlank",
+          "lineNumber": 154
+        }
+      ],
+      "metrics": {
+        "importCount": 7,
+        "exportCount": 4,
+        "functionCount": 4,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/channel-engine/src/main/java/com/chat/chengine/usecase/FriendCommandUseCase.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "FriendCommandUseCase",
+          "startLine": 9,
+          "endLine": 15,
+          "methods": [
+            "addFriend",
+            "respondFriend",
+            "findOnlineFriendTargets"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendCommandUseCase",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/AddFriendCommand.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "AddFriendCommand",
+          "startLine": 7,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "requesterUserId",
+            "requesterPublicId",
+            "targetPublicId"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "AddFriendCommand",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/FindOnlineFriendTargetsCommand.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "FindOnlineFriendTargetsCommand",
+          "startLine": 7,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "userId",
+            "publicId"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FindOnlineFriendTargetsCommand",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/command/RespondFriendCommand.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 13,
+      "classes": [
+        {
+          "name": "RespondFriendCommand",
+          "startLine": 7,
+          "endLine": 16,
+          "methods": [],
+          "properties": [
+            "responderUserId",
+            "responderPublicId",
+            "requesterPublicId",
+            "friendAction"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "RespondFriendCommand",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/FriendEventResponseDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 25,
+      "nonEmptyLines": 19,
+      "classes": [
+        {
+          "name": "FriendEventResponseDTO",
+          "startLine": 9,
+          "endLine": 25,
+          "methods": [],
+          "properties": [
+            "friendEventType",
+            "requesterUserId",
+            "requesterPublicId",
+            "requesterNickname",
+            "targetUserId",
+            "targetPublicId",
+            "targetNickname",
+            "friendStatus",
+            "eventAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "FriendEventResponseDTO",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/friend/domain/res/OnlineFriendTargetsResponseDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 15,
+      "nonEmptyLines": 12,
+      "classes": [
+        {
+          "name": "OnlineFriendTargetsResponseDTO",
+          "startLine": 9,
+          "endLine": 15,
+          "methods": [],
+          "properties": [
+            "userId",
+            "targetUserIds"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "OnlineFriendTargetsResponseDTO",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/notification/domain/UserOnlineNotificationDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 20,
+      "nonEmptyLines": 16,
+      "classes": [
+        {
+          "name": "UserOnlineNotificationDTO",
+          "startLine": 9,
+          "endLine": 20,
+          "methods": [],
+          "properties": [
+            "userId",
+            "publicId",
+            "nickname",
+            "profileImg",
+            "notificationText",
+            "notifiedAt"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "UserOnlineNotificationDTO",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/user/domain/SessionUserDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 28,
+      "nonEmptyLines": 19,
+      "classes": [
+        {
+          "name": "SessionUserDTO",
+          "startLine": 9,
+          "endLine": 28,
+          "methods": [],
+          "properties": [
+            "serialVersionUID",
+            "userId",
+            "publicId",
+            "nickname",
+            "friendCode",
+            "profileImg"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "SessionUserDTO",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/common-contract/src/main/java/com/chat/contract/websocket/domain/WebSocketDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 16,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "WebSocketDTO",
+          "startLine": 7,
+          "endLine": 16,
+          "methods": [],
+          "properties": [
+            "requestId",
+            "wsType",
+            "isSuccess",
+            "wsMessage",
+            "payload"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "WebSocketDTO",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/auth/WsGateAuth.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 41,
+      "nonEmptyLines": 28,
+      "functions": [
+        {
+          "name": "getLoginUser",
+          "startLine": 13,
+          "endLine": 21,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "getMyUserIdInWsSession",
+          "startLine": 24,
+          "endLine": 26,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "requireLoginUser",
+          "startLine": 29,
+          "endLine": 37,
+          "params": [
+            "session"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateAuth",
+          "startLine": 9,
+          "endLine": 39,
+          "methods": [
+            "getLoginUser",
+            "getMyUserIdInWsSession",
+            "requireLoginUser"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "getLoginUser",
+          "line": 13,
+          "isDefault": false
+        },
+        {
+          "name": "getMyUserIdInWsSession",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "requireLoginUser",
+          "line": 29,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateAuth",
+          "line": 9,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getLoginUser",
+          "callee": "session.getAttributes().get",
+          "lineNumber": 14
+        },
+        {
+          "caller": "getLoginUser",
+          "callee": "session.getAttributes",
+          "lineNumber": 14
+        },
+        {
+          "caller": "getMyUserIdInWsSession",
+          "callee": "requireLoginUser(session).getUserId",
+          "lineNumber": 25
+        },
+        {
+          "caller": "getMyUserIdInWsSession",
+          "callee": "requireLoginUser",
+          "lineNumber": 25
+        },
+        {
+          "caller": "requireLoginUser",
+          "callee": "getLoginUser",
+          "lineNumber": 30
+        },
+        {
+          "caller": "requireLoginUser",
+          "callee": "new WsGateAuthException",
+          "lineNumber": 33
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 4,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateChEngineFriendClient.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 8,
+      "nonEmptyLines": 6,
+      "classes": [
+        {
+          "name": "WsGateChEngineFriendClient",
+          "startLine": 6,
+          "endLine": 8,
+          "methods": [
+            "findOnlineFriendTargets"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "WsGateChEngineFriendClient",
+          "line": 6,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/client/WsGateFriendClient.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 11,
+      "nonEmptyLines": 8,
+      "classes": [
+        {
+          "name": "WsGateFriendClient",
+          "startLine": 7,
+          "endLine": 11,
+          "methods": [
+            "addFriend",
+            "respondFriend"
+          ],
+          "properties": []
+        }
+      ],
+      "exports": [
+        {
+          "name": "WsGateFriendClient",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 3,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/config/WebSocketConfig.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 53,
+      "nonEmptyLines": 42,
+      "functions": [
+        {
+          "name": "registerWebSocketHandlers",
+          "startLine": 24,
+          "endLine": 31,
+          "params": [
+            "registry"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WebSocketConfig",
+          "startLine": 13,
+          "endLine": 52,
+          "methods": [
+            "registerWebSocketHandlers"
+          ],
+          "properties": [
+            "wsGateDispatcher"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerWebSocketHandlers",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "WebSocketConfig",
+          "line": 13,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerWebSocketHandlers",
+          "callee": "registry.addHandler(wsGateDispatcher, \"/ws\")\r\n\t\t\t\t.addInterceptors(new HttpSessionHandshakeInterceptor()).setAllowedOriginPatterns",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerWebSocketHandlers",
+          "callee": "registry.addHandler(wsGateDispatcher, \"/ws\").addInterceptors",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerWebSocketHandlers",
+          "callee": "registry.addHandler",
+          "lineNumber": 28
+        },
+        {
+          "caller": "registerWebSocketHandlers",
+          "callee": "new HttpSessionHandshakeInterceptor",
+          "lineNumber": 29
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/dispatcher/WsGateDispatcher.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 118,
+      "nonEmptyLines": 92,
+      "functions": [
+        {
+          "name": "handleTextMessage",
+          "startLine": 38,
+          "endLine": 93,
+          "params": [
+            "session",
+            "message"
+          ]
+        },
+        {
+          "name": "afterConnectionEstablished",
+          "startLine": 96,
+          "endLine": 100,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "afterConnectionClosed",
+          "startLine": 103,
+          "endLine": 116,
+          "params": [
+            "session",
+            "status"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateDispatcher",
+          "startLine": 22,
+          "endLine": 118,
+          "methods": [
+            "handleTextMessage",
+            "afterConnectionEstablished",
+            "afterConnectionClosed"
+          ],
+          "properties": [
+            "objectMapper",
+            "wsGateSessionRegistry",
+            "wsGateOutboundWriter",
+            "wsGateRoomHandler",
+            "wsGateConnectionHandler",
+            "wsGateChatHandler",
+            "wsGateFriendHandler"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "afterConnectionEstablished",
+          "line": 96,
+          "isDefault": false
+        },
+        {
+          "name": "afterConnectionClosed",
+          "line": 103,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateDispatcher",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "handleTextMessage",
+          "callee": "objectMapper.readValue",
+          "lineNumber": 43
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "message.getPayload",
+          "lineNumber": 43
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "dto.getWsType",
+          "lineNumber": 45
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "log.warn",
+          "lineNumber": 46
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "message.getPayload",
+          "lineNumber": 46
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "dto.getWsType",
+          "lineNumber": 50
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateConnectionHandler.handleConnectUser",
+          "lineNumber": 51
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateFriendHandler.handleAddFriend",
+          "lineNumber": 53
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateFriendHandler.handleRespondFriend",
+          "lineNumber": 54
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleOpenDirectChat",
+          "lineNumber": 56
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleStartDirectChat",
+          "lineNumber": 57
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleStartGroupChat",
+          "lineNumber": 58
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleEnterRoom",
+          "lineNumber": 60
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleExitRoom",
+          "lineNumber": 61
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleLeftRoom",
+          "lineNumber": 62
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleTyping",
+          "lineNumber": 64
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleTyping",
+          "lineNumber": 65
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleSendMessage",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleReadMessage",
+          "lineNumber": 68
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleDeleteMessage",
+          "lineNumber": 69
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateChatHandler.handleReactMessage",
+          "lineNumber": 70
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleInviteMember",
+          "lineNumber": 72
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleKickMember",
+          "lineNumber": 73
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleBanMember",
+          "lineNumber": 74
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleChangeMemberRole",
+          "lineNumber": 75
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateRoomHandler.handleApplyRoomNotice",
+          "lineNumber": 77
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "log.warn",
+          "lineNumber": 80
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "dto.getWsType",
+          "lineNumber": 80
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 81
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "log.error",
+          "lineNumber": 87
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "message.getPayload",
+          "lineNumber": 87
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "session.isOpen",
+          "lineNumber": 89
+        },
+        {
+          "caller": "handleTextMessage",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 90
+        },
+        {
+          "caller": "afterConnectionEstablished",
+          "callee": "log.info",
+          "lineNumber": 99
+        },
+        {
+          "caller": "afterConnectionEstablished",
+          "callee": "session.getId",
+          "lineNumber": 99
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "wsGateSessionRegistry.removeConnectedUser",
+          "lineNumber": 105
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "wsGateSessionRegistry.removeSessionAllRooms",
+          "lineNumber": 106
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "wsGateOutboundWriter.removeSessionLock",
+          "lineNumber": 107
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "log.info",
+          "lineNumber": 110
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "connectedUser.getNickname",
+          "lineNumber": 110
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "connectedUser.getUserId",
+          "lineNumber": 110
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "log.info",
+          "lineNumber": 112
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "session.getId",
+          "lineNumber": 112
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "log.info",
+          "lineNumber": 115
+        },
+        {
+          "caller": "afterConnectionClosed",
+          "callee": "session.getId",
+          "lineNumber": 115
+        }
+      ],
+      "metrics": {
+        "importCount": 8,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadAddFriendRequestDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 10,
+      "classes": [
+        {
+          "name": "PayloadAddFriendRequestDTO",
+          "startLine": 7,
+          "endLine": 12,
+          "methods": [],
+          "properties": [
+            "targetPublicId"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PayloadAddFriendRequestDTO",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/domain/friend/PayloadRespondFriendRequestDTO.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 13,
+      "nonEmptyLines": 11,
+      "classes": [
+        {
+          "name": "PayloadRespondFriendRequestDTO",
+          "startLine": 7,
+          "endLine": 13,
+          "methods": [],
+          "properties": [
+            "requesterPublicId",
+            "friendAction"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "PayloadRespondFriendRequestDTO",
+          "line": 7,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 1,
+        "functionCount": 0,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/exception/WsGateAuthException.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 12,
+      "nonEmptyLines": 9,
+      "functions": [
+        {
+          "name": "WsGateAuthException",
+          "startLine": 8,
+          "endLine": 10,
+          "params": [
+            "exceptionMessage"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateAuthException",
+          "startLine": 3,
+          "endLine": 11,
+          "methods": [
+            "WsGateAuthException"
+          ],
+          "properties": [
+            "serialVersionUID"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "WsGateAuthException",
+          "line": 8,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateAuthException",
+          "line": 3,
+          "isDefault": false
+        }
+      ],
+      "metrics": {
+        "importCount": 0,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateChEngineFriendClientGrpc.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 36,
+      "nonEmptyLines": 27,
+      "functions": [
+        {
+          "name": "findOnlineFriendTargets",
+          "startLine": 22,
+          "endLine": 35,
+          "params": [
+            "cmd"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateChEngineFriendClientGrpc",
+          "startLine": 15,
+          "endLine": 36,
+          "methods": [
+            "findOnlineFriendTargets"
+          ],
+          "properties": [
+            "chEngineFriendStub"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "findOnlineFriendTargets",
+          "line": 22,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateChEngineFriendClientGrpc",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "FindOnlineFriendTargetsRequest.newBuilder()\n\t\t\t\t.setUserId(cmd.getUserId())\n\t\t\t\t.setPublicId(cmd.getPublicId()).build",
+          "lineNumber": 24
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "FindOnlineFriendTargetsRequest.newBuilder()\n\t\t\t\t.setUserId(cmd.getUserId()).setPublicId",
+          "lineNumber": 24
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "FindOnlineFriendTargetsRequest.newBuilder().setUserId",
+          "lineNumber": 24
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "FindOnlineFriendTargetsRequest.newBuilder",
+          "lineNumber": 24
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "cmd.getUserId",
+          "lineNumber": 25
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "cmd.getPublicId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "GrpcToDtoConverter.convertGrpcToOnlineFriendTargetsResDto",
+          "lineNumber": 29
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "chEngineFriendStub.findOnlineFriendTargets",
+          "lineNumber": 30
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "log.info",
+          "lineNumber": 32
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "response.getUserId",
+          "lineNumber": 32
+        },
+        {
+          "caller": "findOnlineFriendTargets",
+          "callee": "response.getTargetUserIds",
+          "lineNumber": 32
+        }
+      ],
+      "metrics": {
+        "importCount": 4,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/grpc/WsGateFriendClientGrpc.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 56,
+      "nonEmptyLines": 43,
+      "functions": [
+        {
+          "name": "addFriend",
+          "startLine": 24,
+          "endLine": 38,
+          "params": [
+            "cmd"
+          ]
+        },
+        {
+          "name": "respondFriend",
+          "startLine": 40,
+          "endLine": 55,
+          "params": [
+            "cmd"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateFriendClientGrpc",
+          "startLine": 17,
+          "endLine": 56,
+          "methods": [
+            "addFriend",
+            "respondFriend"
+          ],
+          "properties": [
+            "chEngineFriendStub"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "addFriend",
+          "line": 24,
+          "isDefault": false
+        },
+        {
+          "name": "respondFriend",
+          "line": 40,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateFriendClientGrpc",
+          "line": 17,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "addFriend",
+          "callee": "AddFriendRequest.newBuilder()\r\n\t\t\t\t.setRequesterUserId(cmd.getRequesterUserId())\r\n\t\t\t\t.setRequesterPublicId(cmd.getRequesterPublicId())\r\n\t\t\t\t.setTargetPublicId(cmd.getTargetPublicId()).build",
+          "lineNumber": 26
+        },
+        {
+          "caller": "addFriend",
+          "callee": "AddFriendRequest.newBuilder()\r\n\t\t\t\t.setRequesterUserId(cmd.getRequesterUserId())\r\n\t\t\t\t.setRequesterPublicId(cmd.getRequesterPublicId()).setTargetPublicId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "addFriend",
+          "callee": "AddFriendRequest.newBuilder()\r\n\t\t\t\t.setRequesterUserId(cmd.getRequesterUserId()).setRequesterPublicId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "addFriend",
+          "callee": "AddFriendRequest.newBuilder().setRequesterUserId",
+          "lineNumber": 26
+        },
+        {
+          "caller": "addFriend",
+          "callee": "AddFriendRequest.newBuilder",
+          "lineNumber": 26
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterUserId",
+          "lineNumber": 27
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 28
+        },
+        {
+          "caller": "addFriend",
+          "callee": "cmd.getTargetPublicId",
+          "lineNumber": 29
+        },
+        {
+          "caller": "addFriend",
+          "callee": "GrpcToDtoConverter.convertGrpcToFriendEventResDto",
+          "lineNumber": 32
+        },
+        {
+          "caller": "addFriend",
+          "callee": "chEngineFriendStub.addFriend",
+          "lineNumber": 32
+        },
+        {
+          "caller": "addFriend",
+          "callee": "log.info",
+          "lineNumber": 34
+        },
+        {
+          "caller": "addFriend",
+          "callee": "response.getFriendEventType",
+          "lineNumber": 34
+        },
+        {
+          "caller": "addFriend",
+          "callee": "response.getRequesterUserId",
+          "lineNumber": 34
+        },
+        {
+          "caller": "addFriend",
+          "callee": "response.getTargetUserId",
+          "lineNumber": 35
+        },
+        {
+          "caller": "addFriend",
+          "callee": "response.getFriendStatus",
+          "lineNumber": 35
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "RespondFriendRequest.newBuilder()\r\n\t\t\t\t.setResponderUserId(cmd.getResponderUserId())\r\n\t\t\t\t.setResponderPublicId(cmd.getResponderPublicId())\r\n\t\t\t\t.setRequesterPublicId(cmd.getRequesterPublicId())\r\n\t\t\t\t.setFriendAction(cmd.getFriendAction()).build",
+          "lineNumber": 42
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "RespondFriendRequest.newBuilder()\r\n\t\t\t\t.setResponderUserId(cmd.getResponderUserId())\r\n\t\t\t\t.setResponderPublicId(cmd.getResponderPublicId())\r\n\t\t\t\t.setRequesterPublicId(cmd.getRequesterPublicId()).setFriendAction",
+          "lineNumber": 42
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "RespondFriendRequest.newBuilder()\r\n\t\t\t\t.setResponderUserId(cmd.getResponderUserId())\r\n\t\t\t\t.setResponderPublicId(cmd.getResponderPublicId()).setRequesterPublicId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "RespondFriendRequest.newBuilder()\r\n\t\t\t\t.setResponderUserId(cmd.getResponderUserId()).setResponderPublicId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "RespondFriendRequest.newBuilder().setResponderUserId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "RespondFriendRequest.newBuilder",
+          "lineNumber": 42
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderUserId",
+          "lineNumber": 43
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getResponderPublicId",
+          "lineNumber": 44
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getRequesterPublicId",
+          "lineNumber": 45
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "cmd.getFriendAction",
+          "lineNumber": 46
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "GrpcToDtoConverter.convertGrpcToFriendEventResDto",
+          "lineNumber": 49
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "chEngineFriendStub.respondFriend",
+          "lineNumber": 49
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "log.info",
+          "lineNumber": 51
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "response.getFriendEventType",
+          "lineNumber": 51
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "response.getRequesterUserId",
+          "lineNumber": 51
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "response.getTargetUserId",
+          "lineNumber": 52
+        },
+        {
+          "caller": "respondFriend",
+          "callee": "response.getFriendStatus",
+          "lineNumber": 52
+        }
+      ],
+      "metrics": {
+        "importCount": 5,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateConnectionHandler.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 103,
+      "nonEmptyLines": 81,
+      "functions": [
+        {
+          "name": "handleConnectUser",
+          "startLine": 33,
+          "endLine": 54,
+          "params": [
+            "session",
+            "dto"
+          ]
+        },
+        {
+          "name": "pushOnlineNotification",
+          "startLine": 56,
+          "endLine": 78,
+          "params": [
+            "loginUser",
+            "requestId"
+          ]
+        },
+        {
+          "name": "closeUserWebSocketConnection",
+          "startLine": 81,
+          "endLine": 100,
+          "params": [
+            "userId"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateConnectionHandler",
+          "startLine": 22,
+          "endLine": 101,
+          "methods": [
+            "handleConnectUser",
+            "pushOnlineNotification",
+            "closeUserWebSocketConnection"
+          ],
+          "properties": [
+            "wsGateAuth",
+            "wsGateSessionRegistry",
+            "wsGateOutboundWriter",
+            "wsGateChEngineFriendClient"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "handleConnectUser",
+          "line": 33,
+          "isDefault": false
+        },
+        {
+          "name": "closeUserWebSocketConnection",
+          "line": 81,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateConnectionHandler",
+          "line": 22,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "handleConnectUser",
+          "callee": "wsGateAuth.getLoginUser",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "log.warn",
+          "lineNumber": 37
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "session.getId",
+          "lineNumber": 37
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 38
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "session.isOpen",
+          "lineNumber": 40
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "session.close",
+          "lineNumber": 41
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "wsGateSessionRegistry.registerConnectedUser",
+          "lineNumber": 48
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "log.info",
+          "lineNumber": 50
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "loginUser.getNickname",
+          "lineNumber": 50
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "loginUser.getUserId",
+          "lineNumber": 50
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "wsGateOutboundWriter.responseOk",
+          "lineNumber": 51
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "pushOnlineNotification",
+          "lineNumber": 52
+        },
+        {
+          "caller": "handleConnectUser",
+          "callee": "dto.getRequestId",
+          "lineNumber": 52
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "new FindOnlineFriendTargetsCommand",
+          "lineNumber": 58
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getUserId",
+          "lineNumber": 58
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getPublicId",
+          "lineNumber": 58
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "wsGateChEngineFriendClient.findOnlineFriendTargets",
+          "lineNumber": 59
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "targets.getTargetUserIds",
+          "lineNumber": 61
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "targets.getTargetUserIds().isEmpty",
+          "lineNumber": 61
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "targets.getTargetUserIds",
+          "lineNumber": 61
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "new UserOnlineNotificationDTO",
+          "lineNumber": 65
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getUserId",
+          "lineNumber": 66
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getPublicId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getNickname",
+          "lineNumber": 68
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getProfileImg",
+          "lineNumber": 69
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getNickname",
+          "lineNumber": 70
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "LocalDateTime.now",
+          "lineNumber": 71
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "wsGateOutboundWriter.pushToMultipleUsers",
+          "lineNumber": 74
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "targets.getTargetUserIds",
+          "lineNumber": 74
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "log.error",
+          "lineNumber": 76
+        },
+        {
+          "caller": "pushOnlineNotification",
+          "callee": "loginUser.getUserId",
+          "lineNumber": 76
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "wsGateSessionRegistry.findSessionByUserId",
+          "lineNumber": 82
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "log.info",
+          "lineNumber": 85
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "targetSession.isOpen",
+          "lineNumber": 89
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "log.info",
+          "lineNumber": 90
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "targetSession.close",
+          "lineNumber": 94
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "log.info",
+          "lineNumber": 95
+        },
+        {
+          "caller": "closeUserWebSocketConnection",
+          "callee": "log.error",
+          "lineNumber": 97
+        }
+      ],
+      "metrics": {
+        "importCount": 9,
+        "exportCount": 3,
+        "functionCount": 3,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/handler/WsGateFriendHandler.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 80,
+      "nonEmptyLines": 62,
+      "functions": [
+        {
+          "name": "handleAddFriend",
+          "startLine": 31,
+          "endLine": 53,
+          "params": [
+            "session",
+            "dto"
+          ]
+        },
+        {
+          "name": "handleRespondFriend",
+          "startLine": 55,
+          "endLine": 79,
+          "params": [
+            "session",
+            "dto"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateFriendHandler",
+          "startLine": 21,
+          "endLine": 80,
+          "methods": [
+            "handleAddFriend",
+            "handleRespondFriend"
+          ],
+          "properties": [
+            "wsGateAuth",
+            "wsGatePayloadConverter",
+            "wsGateFriendClient",
+            "wsGateOutboundWriter"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "handleAddFriend",
+          "line": 31,
+          "isDefault": false
+        },
+        {
+          "name": "handleRespondFriend",
+          "line": 55,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateFriendHandler",
+          "line": 21,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGateAuth.requireLoginUser",
+          "lineNumber": 32
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGatePayloadConverter.convert",
+          "lineNumber": 34
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "payload.getTargetPublicId",
+          "lineNumber": 36
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "payload.getTargetPublicId().isBlank",
+          "lineNumber": 36
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "payload.getTargetPublicId",
+          "lineNumber": 36
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 37
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "new AddFriendCommand",
+          "lineNumber": 42
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "me.getUserId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "me.getPublicId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "payload.getTargetPublicId",
+          "lineNumber": 42
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGateFriendClient.addFriend",
+          "lineNumber": 44
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGateOutboundWriter.responseOk",
+          "lineNumber": 46
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGateOutboundWriter.pushToSingleUser",
+          "lineNumber": 47
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "response.getTargetUserId",
+          "lineNumber": 47
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "dto.getRequestId",
+          "lineNumber": 47
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "log.info",
+          "lineNumber": 48
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "me.getNickname",
+          "lineNumber": 48
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "response.getTargetNickname",
+          "lineNumber": 48
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "log.error",
+          "lineNumber": 50
+        },
+        {
+          "caller": "handleAddFriend",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 51
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGateAuth.requireLoginUser",
+          "lineNumber": 56
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGatePayloadConverter.convert",
+          "lineNumber": 58
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getRequesterPublicId",
+          "lineNumber": 60
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getRequesterPublicId().isBlank",
+          "lineNumber": 60
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getRequesterPublicId",
+          "lineNumber": 60
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getFriendAction",
+          "lineNumber": 60
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getFriendAction().isBlank",
+          "lineNumber": 61
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getFriendAction",
+          "lineNumber": 61
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 62
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "new RespondFriendCommand",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "me.getUserId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "me.getPublicId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getRequesterPublicId",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "payload.getFriendAction",
+          "lineNumber": 67
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGateFriendClient.respondFriend",
+          "lineNumber": 70
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGateOutboundWriter.responseOk",
+          "lineNumber": 72
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGateOutboundWriter.pushToSingleUser",
+          "lineNumber": 73
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "response.getRequesterUserId",
+          "lineNumber": 73
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "dto.getRequestId",
+          "lineNumber": 73
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "log.error",
+          "lineNumber": 76
+        },
+        {
+          "caller": "handleRespondFriend",
+          "callee": "wsGateOutboundWriter.responseFail",
+          "lineNumber": 77
+        }
+      ],
+      "metrics": {
+        "importCount": 11,
+        "exportCount": 3,
+        "functionCount": 2,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/outbound/WsGateOutboundWriter.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 202,
+      "nonEmptyLines": 152,
+      "functions": [
+        {
+          "name": "getSessionSendLock",
+          "startLine": 33,
+          "endLine": 35,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "removeSessionLock",
+          "startLine": 37,
+          "endLine": 42,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "sendSafely",
+          "startLine": 44,
+          "endLine": 57,
+          "params": [
+            "session",
+            "payload"
+          ]
+        },
+        {
+          "name": "createSuccessEvent",
+          "startLine": 59,
+          "endLine": 68,
+          "params": [
+            "type",
+            "payloadData",
+            "requestId"
+          ]
+        },
+        {
+          "name": "createFailEvent",
+          "startLine": 70,
+          "endLine": 79,
+          "params": [
+            "type",
+            "errorMessage",
+            "requestId"
+          ]
+        },
+        {
+          "name": "serialize",
+          "startLine": 81,
+          "endLine": 83,
+          "params": [
+            "event"
+          ]
+        },
+        {
+          "name": "dispatchSerializedToSession",
+          "startLine": 85,
+          "endLine": 87,
+          "params": [
+            "session",
+            "payload"
+          ]
+        },
+        {
+          "name": "broadcastToRoom",
+          "startLine": 90,
+          "endLine": 109,
+          "params": [
+            "roomId",
+            "type",
+            "payloadData",
+            "requestId"
+          ]
+        },
+        {
+          "name": "broadcastToRoomExceptUser",
+          "startLine": 111,
+          "endLine": 138,
+          "params": [
+            "roomId",
+            "type",
+            "payloadData",
+            "requestId",
+            "excludedUserId"
+          ]
+        },
+        {
+          "name": "responseOk",
+          "startLine": 141,
+          "endLine": 143,
+          "params": [
+            "session",
+            "request",
+            "wsType",
+            "payload"
+          ]
+        },
+        {
+          "name": "responseFail",
+          "startLine": 146,
+          "endLine": 148,
+          "params": [
+            "session",
+            "request",
+            "wsType",
+            "errorMessage"
+          ]
+        },
+        {
+          "name": "dispatchToSession",
+          "startLine": 151,
+          "endLine": 153,
+          "params": [
+            "session",
+            "dto"
+          ]
+        },
+        {
+          "name": "pushToSingleUser",
+          "startLine": 155,
+          "endLine": 164,
+          "params": [
+            "userId",
+            "type",
+            "payloadData",
+            "requestId"
+          ]
+        },
+        {
+          "name": "pushToMultipleUsers",
+          "startLine": 166,
+          "endLine": 192,
+          "params": [
+            "userIds",
+            "type",
+            "payloadData",
+            "requestId"
+          ]
+        },
+        {
+          "name": "pushToSingleUserExcept",
+          "startLine": 194,
+          "endLine": 200,
+          "params": [
+            "userId",
+            "type",
+            "payloadData",
+            "requestId",
+            "excludedUserId"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateOutboundWriter",
+          "startLine": 19,
+          "endLine": 202,
+          "methods": [
+            "getSessionSendLock",
+            "removeSessionLock",
+            "sendSafely",
+            "createSuccessEvent",
+            "createFailEvent",
+            "serialize",
+            "dispatchSerializedToSession",
+            "broadcastToRoom",
+            "broadcastToRoomExceptUser",
+            "responseOk",
+            "responseFail",
+            "dispatchToSession",
+            "pushToSingleUser",
+            "pushToMultipleUsers",
+            "pushToSingleUserExcept"
+          ],
+          "properties": [
+            "objectMapper",
+            "wsGateSessionRegistry",
+            "sessionSendLocks"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "removeSessionLock",
+          "line": 37,
+          "isDefault": false
+        },
+        {
+          "name": "broadcastToRoom",
+          "line": 90,
+          "isDefault": false
+        },
+        {
+          "name": "broadcastToRoomExceptUser",
+          "line": 111,
+          "isDefault": false
+        },
+        {
+          "name": "responseOk",
+          "line": 141,
+          "isDefault": false
+        },
+        {
+          "name": "responseFail",
+          "line": 146,
+          "isDefault": false
+        },
+        {
+          "name": "dispatchToSession",
+          "line": 151,
+          "isDefault": false
+        },
+        {
+          "name": "pushToSingleUser",
+          "line": 155,
+          "isDefault": false
+        },
+        {
+          "name": "pushToMultipleUsers",
+          "line": 166,
+          "isDefault": false
+        },
+        {
+          "name": "pushToSingleUserExcept",
+          "line": 194,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateOutboundWriter",
+          "line": 19,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "getSessionSendLock",
+          "callee": "sessionSendLocks.computeIfAbsent",
+          "lineNumber": 34
+        },
+        {
+          "caller": "getSessionSendLock",
+          "callee": "session.getId",
+          "lineNumber": 34
+        },
+        {
+          "caller": "getSessionSendLock",
+          "callee": "new Object",
+          "lineNumber": 34
+        },
+        {
+          "caller": "removeSessionLock",
+          "callee": "sessionSendLocks.remove",
+          "lineNumber": 41
+        },
+        {
+          "caller": "removeSessionLock",
+          "callee": "session.getId",
+          "lineNumber": 41
+        },
+        {
+          "caller": "sendSafely",
+          "callee": "getSessionSendLock",
+          "lineNumber": 49
+        },
+        {
+          "caller": "sendSafely",
+          "callee": "session.isOpen",
+          "lineNumber": 50
+        },
+        {
+          "caller": "sendSafely",
+          "callee": "log.info",
+          "lineNumber": 51
+        },
+        {
+          "caller": "sendSafely",
+          "callee": "session.getId",
+          "lineNumber": 51
+        },
+        {
+          "caller": "sendSafely",
+          "callee": "session.sendMessage",
+          "lineNumber": 55
+        },
+        {
+          "caller": "sendSafely",
+          "callee": "new TextMessage",
+          "lineNumber": 55
+        },
+        {
+          "caller": "createSuccessEvent",
+          "callee": "new WebSocketDTO",
+          "lineNumber": 60
+        },
+        {
+          "caller": "createSuccessEvent",
+          "callee": "event.setRequestId",
+          "lineNumber": 62
+        },
+        {
+          "caller": "createSuccessEvent",
+          "callee": "event.setWsType",
+          "lineNumber": 63
+        },
+        {
+          "caller": "createSuccessEvent",
+          "callee": "event.setIsSuccess",
+          "lineNumber": 64
+        },
+        {
+          "caller": "createSuccessEvent",
+          "callee": "event.setPayload",
+          "lineNumber": 65
+        },
+        {
+          "caller": "createSuccessEvent",
+          "callee": "objectMapper.valueToTree",
+          "lineNumber": 65
+        },
+        {
+          "caller": "createFailEvent",
+          "callee": "new WebSocketDTO",
+          "lineNumber": 71
+        },
+        {
+          "caller": "createFailEvent",
+          "callee": "event.setRequestId",
+          "lineNumber": 73
+        },
+        {
+          "caller": "createFailEvent",
+          "callee": "event.setWsType",
+          "lineNumber": 74
+        },
+        {
+          "caller": "createFailEvent",
+          "callee": "event.setIsSuccess",
+          "lineNumber": 75
+        },
+        {
+          "caller": "createFailEvent",
+          "callee": "event.setWsMessage",
+          "lineNumber": 76
+        },
+        {
+          "caller": "serialize",
+          "callee": "objectMapper.writeValueAsString",
+          "lineNumber": 82
+        },
+        {
+          "caller": "dispatchSerializedToSession",
+          "callee": "sendSafely",
+          "lineNumber": 86
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "wsGateSessionRegistry.getRoomSessions",
+          "lineNumber": 91
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "sessions.isEmpty",
+          "lineNumber": 93
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "log.info",
+          "lineNumber": 94
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "sessions.values().removeIf",
+          "lineNumber": 98
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "sessions.values",
+          "lineNumber": 98
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "socketSession.isOpen",
+          "lineNumber": 98
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "serialize",
+          "lineNumber": 100
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "createSuccessEvent",
+          "lineNumber": 100
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "sessions.values",
+          "lineNumber": 102
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "dispatchSerializedToSession",
+          "lineNumber": 104
+        },
+        {
+          "caller": "broadcastToRoom",
+          "callee": "log.error",
+          "lineNumber": 106
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "wsGateSessionRegistry.getRoomSessions",
+          "lineNumber": 112
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "sessions.isEmpty",
+          "lineNumber": 114
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "log.info",
+          "lineNumber": 115
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "sessions.values().removeIf",
+          "lineNumber": 119
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "sessions.values",
+          "lineNumber": 119
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "socketSession.isOpen",
+          "lineNumber": 119
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "serialize",
+          "lineNumber": 121
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "createSuccessEvent",
+          "lineNumber": 121
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "sessions.entrySet",
+          "lineNumber": 123
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "entry.getKey",
+          "lineNumber": 124
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "entry.getValue",
+          "lineNumber": 125
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "Objects.equals",
+          "lineNumber": 127
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "dispatchSerializedToSession",
+          "lineNumber": 132
+        },
+        {
+          "caller": "broadcastToRoomExceptUser",
+          "callee": "log.error",
+          "lineNumber": 135
+        },
+        {
+          "caller": "responseOk",
+          "callee": "dispatchToSession",
+          "lineNumber": 142
+        },
+        {
+          "caller": "responseOk",
+          "callee": "createSuccessEvent",
+          "lineNumber": 142
+        },
+        {
+          "caller": "responseOk",
+          "callee": "request.getRequestId",
+          "lineNumber": 142
+        },
+        {
+          "caller": "responseFail",
+          "callee": "dispatchToSession",
+          "lineNumber": 147
+        },
+        {
+          "caller": "responseFail",
+          "callee": "createFailEvent",
+          "lineNumber": 147
+        },
+        {
+          "caller": "responseFail",
+          "callee": "request.getRequestId",
+          "lineNumber": 147
+        },
+        {
+          "caller": "dispatchToSession",
+          "callee": "dispatchSerializedToSession",
+          "lineNumber": 152
+        },
+        {
+          "caller": "dispatchToSession",
+          "callee": "serialize",
+          "lineNumber": 152
+        },
+        {
+          "caller": "pushToSingleUser",
+          "callee": "wsGateSessionRegistry.findSessionByUserId",
+          "lineNumber": 156
+        },
+        {
+          "caller": "pushToSingleUser",
+          "callee": "targetSession.isOpen",
+          "lineNumber": 158
+        },
+        {
+          "caller": "pushToSingleUser",
+          "callee": "log.info",
+          "lineNumber": 159
+        },
+        {
+          "caller": "pushToSingleUser",
+          "callee": "dispatchToSession",
+          "lineNumber": 163
+        },
+        {
+          "caller": "pushToSingleUser",
+          "callee": "createSuccessEvent",
+          "lineNumber": 163
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "userIds.isEmpty",
+          "lineNumber": 167
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "log.info",
+          "lineNumber": 168
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "serialize",
+          "lineNumber": 172
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "createSuccessEvent",
+          "lineNumber": 172
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "wsGateSessionRegistry.findSessionByUserId",
+          "lineNumber": 179
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "targetSession.isOpen",
+          "lineNumber": 181
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "log.info",
+          "lineNumber": 182
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "dispatchSerializedToSession",
+          "lineNumber": 187
+        },
+        {
+          "caller": "pushToMultipleUsers",
+          "callee": "log.error",
+          "lineNumber": 189
+        },
+        {
+          "caller": "pushToSingleUserExcept",
+          "callee": "Objects.equals",
+          "lineNumber": 195
+        },
+        {
+          "caller": "pushToSingleUserExcept",
+          "callee": "pushToSingleUser",
+          "lineNumber": 199
+        }
+      ],
+      "metrics": {
+        "importCount": 2,
+        "exportCount": 10,
+        "functionCount": 15,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/session/WsGateSessionRegistry.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 141,
+      "nonEmptyLines": 106,
+      "functions": [
+        {
+          "name": "registerConnectedUser",
+          "startLine": 43,
+          "endLine": 46,
+          "params": [
+            "session",
+            "loginUser"
+          ]
+        },
+        {
+          "name": "removeConnectedUser",
+          "startLine": 49,
+          "endLine": 57,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "enterRoomSession",
+          "startLine": 60,
+          "endLine": 62,
+          "params": [
+            "roomId",
+            "userId",
+            "session"
+          ]
+        },
+        {
+          "name": "exitRoomSession",
+          "startLine": 65,
+          "endLine": 78,
+          "params": [
+            "roomId",
+            "userId"
+          ]
+        },
+        {
+          "name": "removeSessionAllRooms",
+          "startLine": 82,
+          "endLine": 92,
+          "params": [
+            "session"
+          ]
+        },
+        {
+          "name": "findSessionByUserId",
+          "startLine": 95,
+          "endLine": 100,
+          "params": [
+            "userId"
+          ]
+        },
+        {
+          "name": "getViewingUserIds",
+          "startLine": 103,
+          "endLine": 113,
+          "params": [
+            "roomId"
+          ]
+        },
+        {
+          "name": "getRoomSessions",
+          "startLine": 115,
+          "endLine": 125,
+          "params": [
+            "roomId"
+          ]
+        },
+        {
+          "name": "getConnectedSessionCount",
+          "startLine": 127,
+          "endLine": 129,
+          "params": []
+        },
+        {
+          "name": "getActiveRoomCount",
+          "startLine": 131,
+          "endLine": 133,
+          "params": []
+        },
+        {
+          "name": "getRoomViewingSessionCount",
+          "startLine": 135,
+          "endLine": 137,
+          "params": []
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGateSessionRegistry",
+          "startLine": 15,
+          "endLine": 139,
+          "methods": [
+            "registerConnectedUser",
+            "removeConnectedUser",
+            "enterRoomSession",
+            "exitRoomSession",
+            "removeSessionAllRooms",
+            "findSessionByUserId",
+            "getViewingUserIds",
+            "getRoomSessions",
+            "getConnectedSessionCount",
+            "getActiveRoomCount",
+            "getRoomViewingSessionCount"
+          ],
+          "properties": [
+            "wsSessionsToConnectedUser",
+            "userIdToWsSessions",
+            "roomSessions"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "registerConnectedUser",
+          "line": 43,
+          "isDefault": false
+        },
+        {
+          "name": "removeConnectedUser",
+          "line": 49,
+          "isDefault": false
+        },
+        {
+          "name": "enterRoomSession",
+          "line": 60,
+          "isDefault": false
+        },
+        {
+          "name": "exitRoomSession",
+          "line": 65,
+          "isDefault": false
+        },
+        {
+          "name": "removeSessionAllRooms",
+          "line": 82,
+          "isDefault": false
+        },
+        {
+          "name": "findSessionByUserId",
+          "line": 95,
+          "isDefault": false
+        },
+        {
+          "name": "getViewingUserIds",
+          "line": 103,
+          "isDefault": false
+        },
+        {
+          "name": "getRoomSessions",
+          "line": 115,
+          "isDefault": false
+        },
+        {
+          "name": "getConnectedSessionCount",
+          "line": 127,
+          "isDefault": false
+        },
+        {
+          "name": "getActiveRoomCount",
+          "line": 131,
+          "isDefault": false
+        },
+        {
+          "name": "getRoomViewingSessionCount",
+          "line": 135,
+          "isDefault": false
+        },
+        {
+          "name": "WsGateSessionRegistry",
+          "line": 15,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "registerConnectedUser",
+          "callee": "wsSessionsToConnectedUser.put",
+          "lineNumber": 44
+        },
+        {
+          "caller": "registerConnectedUser",
+          "callee": "userIdToWsSessions.put",
+          "lineNumber": 45
+        },
+        {
+          "caller": "registerConnectedUser",
+          "callee": "loginUser.getUserId",
+          "lineNumber": 45
+        },
+        {
+          "caller": "removeConnectedUser",
+          "callee": "wsSessionsToConnectedUser.remove",
+          "lineNumber": 50
+        },
+        {
+          "caller": "removeConnectedUser",
+          "callee": "userIdToWsSessions.remove",
+          "lineNumber": 53
+        },
+        {
+          "caller": "removeConnectedUser",
+          "callee": "removedUser.getUserId",
+          "lineNumber": 53
+        },
+        {
+          "caller": "enterRoomSession",
+          "callee": "roomSessions.computeIfAbsent(roomId, k -> new ConcurrentHashMap<>()).put",
+          "lineNumber": 61
+        },
+        {
+          "caller": "enterRoomSession",
+          "callee": "roomSessions.computeIfAbsent",
+          "lineNumber": 61
+        },
+        {
+          "caller": "enterRoomSession",
+          "callee": "new ConcurrentHashMap<>",
+          "lineNumber": 61
+        },
+        {
+          "caller": "exitRoomSession",
+          "callee": "roomSessions.get",
+          "lineNumber": 66
+        },
+        {
+          "caller": "exitRoomSession",
+          "callee": "enteredUserInfo.isEmpty",
+          "lineNumber": 68
+        },
+        {
+          "caller": "exitRoomSession",
+          "callee": "log.info",
+          "lineNumber": 69
+        },
+        {
+          "caller": "exitRoomSession",
+          "callee": "enteredUserInfo.remove",
+          "lineNumber": 73
+        },
+        {
+          "caller": "exitRoomSession",
+          "callee": "enteredUserInfo.isEmpty",
+          "lineNumber": 75
+        },
+        {
+          "caller": "exitRoomSession",
+          "callee": "roomSessions.remove",
+          "lineNumber": 76
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "roomSessions.forEach",
+          "lineNumber": 83
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "userMap.entrySet().removeIf",
+          "lineNumber": 84
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "userMap.entrySet",
+          "lineNumber": 84
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "entry.getValue().equals",
+          "lineNumber": 84
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "entry.getValue",
+          "lineNumber": 84
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "userMap.isEmpty",
+          "lineNumber": 86
+        },
+        {
+          "caller": "removeSessionAllRooms",
+          "callee": "roomSessions.remove",
+          "lineNumber": 87
+        },
+        {
+          "caller": "findSessionByUserId",
+          "callee": "userIdToWsSessions.get",
+          "lineNumber": 98
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "roomSessions.get",
+          "lineNumber": 104
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "sessions.isEmpty",
+          "lineNumber": 106
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "Set.of",
+          "lineNumber": 107
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "sessions.entrySet().removeIf",
+          "lineNumber": 110
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "sessions.entrySet",
+          "lineNumber": 110
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "entry.getValue().isOpen",
+          "lineNumber": 110
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "entry.getValue",
+          "lineNumber": 110
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "new HashSet<>",
+          "lineNumber": 112
+        },
+        {
+          "caller": "getViewingUserIds",
+          "callee": "sessions.keySet",
+          "lineNumber": 112
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "roomSessions.get",
+          "lineNumber": 116
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "sessions.isEmpty",
+          "lineNumber": 118
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "Map.of",
+          "lineNumber": 119
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "sessions.entrySet().removeIf",
+          "lineNumber": 122
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "sessions.entrySet",
+          "lineNumber": 122
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "entry.getValue().isOpen",
+          "lineNumber": 122
+        },
+        {
+          "caller": "getRoomSessions",
+          "callee": "entry.getValue",
+          "lineNumber": 122
+        },
+        {
+          "caller": "getConnectedSessionCount",
+          "callee": "wsSessionsToConnectedUser.size",
+          "lineNumber": 128
+        },
+        {
+          "caller": "getActiveRoomCount",
+          "callee": "roomSessions.size",
+          "lineNumber": 132
+        },
+        {
+          "caller": "getRoomViewingSessionCount",
+          "callee": "roomSessions.values().stream().mapToInt(Map::size).sum",
+          "lineNumber": 136
+        },
+        {
+          "caller": "getRoomViewingSessionCount",
+          "callee": "roomSessions.values().stream().mapToInt",
+          "lineNumber": 136
+        },
+        {
+          "caller": "getRoomViewingSessionCount",
+          "callee": "roomSessions.values().stream",
+          "lineNumber": 136
+        },
+        {
+          "caller": "getRoomViewingSessionCount",
+          "callee": "roomSessions.values",
+          "lineNumber": 136
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 12,
+        "functionCount": 11,
+        "classCount": 1
+      }
+    },
+    {
+      "path": "castledragon/websocket-gateway/src/main/java/com/chat/wsgate/support/WsGatePayloadConverter.java",
+      "language": "java",
+      "fileCategory": "code",
+      "totalLines": 26,
+      "nonEmptyLines": 20,
+      "functions": [
+        {
+          "name": "convert",
+          "startLine": 15,
+          "endLine": 17,
+          "params": [
+            "dto",
+            "clazz"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "name": "WsGatePayloadConverter",
+          "startLine": 10,
+          "endLine": 26,
+          "methods": [
+            "convert"
+          ],
+          "properties": [
+            "objMapper"
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "name": "convert",
+          "line": 15,
+          "isDefault": false
+        },
+        {
+          "name": "WsGatePayloadConverter",
+          "line": 10,
+          "isDefault": false
+        }
+      ],
+      "callGraph": [
+        {
+          "caller": "convert",
+          "callee": "objMapper.convertValue",
+          "lineNumber": 16
+        },
+        {
+          "caller": "convert",
+          "callee": "dto.getPayload",
+          "lineNumber": 16
+        }
+      ],
+      "metrics": {
+        "importCount": 1,
+        "exportCount": 2,
+        "functionCount": 1,
+        "classCount": 1
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ export function useChatRoomActions() {
 
     function openRoom(roomInfo) {
         dispatch(openChatWindow({
+            isDraft: false,
             roomId: roomInfo.roomId,
             roomType: roomInfo.roomType,
             roomName: roomInfo.customRoomName,
@@ -26,12 +27,43 @@ export function useChatRoomActions() {
         nav('/chatList');
     }
 
+    function openDirectDraft(draft, fallbackFriend) {
+        const friendPublicId = draft?.friendPublicId ?? fallbackFriend?.publicId;
+        const friendNickname = draft?.friendNickname ?? fallbackFriend?.nickname;
+        const friendProfileImg = draft?.friendProfileImg ?? fallbackFriend?.profileImg;
+
+        dispatch(openChatWindow({
+            isDraft: true,
+            draftKey: `direct:${friendPublicId}`,
+            roomId: null,
+            targetPublicId: friendPublicId,
+            roomType: 'DIRECT',
+            roomName: `${friendNickname ?? '상대'}님과의 채팅방`,
+            roomThumbnail: friendProfileImg,
+            memberList: [
+                {
+                    publicId: friendPublicId,
+                    nickname: friendNickname,
+                    profileImg: friendProfileImg,
+                    role: 'MEMBER'
+                }
+            ]
+        }));
+
+        nav('/chatList');
+    }
+
     async function getOrCreateDirectRoom(friend) {
         const wsResponse = await emitWsOpenDirectChat(friend.publicId);
-        const roomInfo = wsResponse.payload;
+        const openDirectResult = wsResponse.payload;
 
-        openRoom(roomInfo);
-        return roomInfo;
+        if (openDirectResult.roomExists && openDirectResult.enterRoomInfo) {
+            openRoom(openDirectResult.enterRoomInfo);
+            return openDirectResult.enterRoomInfo;
+        }
+
+        openDirectDraft(openDirectResult.draft, friend);
+        return openDirectResult;
     }
 
     async function createGroupRoom(roomName, roomThumbnail, selectedFriends, openAfterCreate = false) {
@@ -49,9 +81,8 @@ export function useChatRoomActions() {
             firstMessageText
         );
 
-        const createdMessage = startResponse.payload;
-        const enterResponse = await emitWsEnterRoomRequest(createdMessage.roomId);
-        const roomInfo = enterResponse.payload;
+        const startChat = startResponse.payload;
+        const roomInfo = startChat.enterRoomInfo;
 
         queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
 

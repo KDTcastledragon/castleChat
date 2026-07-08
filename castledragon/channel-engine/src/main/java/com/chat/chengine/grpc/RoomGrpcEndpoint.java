@@ -13,6 +13,7 @@ import com.chat.contract.grpc.InviteMemberRequest;
 import com.chat.contract.grpc.KickMemberRequest;
 import com.chat.contract.grpc.LeftRoomRequest;
 import com.chat.contract.grpc.OpenDirectChatRoomRequest;
+import com.chat.contract.grpc.OpenDirectChatRoomResponse;
 import com.chat.contract.grpc.RoomFeedResponse;
 import com.chat.contract.room.command.ApplyRoomNoticeCommand;
 import com.chat.contract.room.command.BanMemberCommand;
@@ -23,6 +24,7 @@ import com.chat.contract.room.command.KickMemberCommand;
 import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 
@@ -40,14 +42,14 @@ public class RoomGrpcEndpoint extends ChEngineRoomGrpc.ChEngineRoomImplBase {
 	private final RoomCommandUseCase roomCommandUseCase;
 
 	@Override
-	public void openDirectChatRoom(OpenDirectChatRoomRequest request, StreamObserver<EnterRoomResponse> responseObserver) {
+	public void openDirectChatRoom(OpenDirectChatRoomRequest request, StreamObserver<OpenDirectChatRoomResponse> responseObserver) {
 		try {
 			OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(request.getRequesterUserId(), request
 					.getRequesterPublicId(), request.getFriendPublicId());
 
-			EnterRoomResponseDTO response = roomCommandUseCase.openDirectChatRoom(openDirChtCmd);
+			OpenDirectChatRoomResponseDTO response = roomCommandUseCase.openDirectChatRoom(openDirChtCmd);
 
-			EnterRoomResponse grpcResponse = DtoToGrpcConverter.convertEnterRoomResDtoToGrpc(response);
+			OpenDirectChatRoomResponse grpcResponse = DtoToGrpcConverter.convertOpenDirectChatRoomResDtoToGrpc(response);
 
 			responseObserver.onNext(grpcResponse);
 			responseObserver.onCompleted();

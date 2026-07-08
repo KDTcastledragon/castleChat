@@ -1,0 +1,203 @@
+{
+  "nodes": [
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "type": "file",
+      "name": "BanMemberCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed to ban a member from a room, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java:BanMemberCommand",
+      "type": "class",
+      "name": "BanMemberCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java",
+      "lineRange": [7, 17],
+      "summary": "Command DTO with roomId, requesterUserId, requesterPublicId, and banTargetPublicId fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "type": "file",
+      "name": "ChangeMemberRoleCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed to change a room member's role, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java:ChangeMemberRoleCommand",
+      "type": "class",
+      "name": "ChangeMemberRoleCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java",
+      "lineRange": [7, 18],
+      "summary": "Command DTO with roomId, requesterUserId, requesterPublicId, targetPublicId, and targetRole fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "type": "file",
+      "name": "EnterRoomCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed for a requester to enter an existing room, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java:EnterRoomCommand",
+      "type": "class",
+      "name": "EnterRoomCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java",
+      "lineRange": [7, 15],
+      "summary": "Command DTO with roomId, requesterUserId, and requesterPublicId fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "type": "file",
+      "name": "InviteMemberCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed to invite one or more members into a room, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java:InviteMemberCommand",
+      "type": "class",
+      "name": "InviteMemberCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java",
+      "lineRange": [9, 19],
+      "summary": "Command DTO with roomId, requesterUserId, requesterPublicId, and inviteTargetMemberPublicIds fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "type": "file",
+      "name": "KickMemberCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed to kick a member from a room, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java:KickMemberCommand",
+      "type": "class",
+      "name": "KickMemberCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java",
+      "lineRange": [7, 17],
+      "summary": "Command DTO with roomId, requesterUserId, requesterPublicId, and kickTargetPublicId fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "type": "file",
+      "name": "LeftRoomCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed for a requester to leave a room, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java:LeftRoomCommand",
+      "type": "class",
+      "name": "LeftRoomCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java",
+      "lineRange": [7, 15],
+      "summary": "Command DTO with roomId, requesterUserId, and requesterPublicId fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "type": "file",
+      "name": "OpenDirectChatRoomCommand.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "summary": "Shared contract command DTO carrying the fields needed to open or resolve a 1:1 direct chat room, used across channel-engine and websocket-gateway.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java:OpenDirectChatRoomCommand",
+      "type": "class",
+      "name": "OpenDirectChatRoomCommand",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java",
+      "lineRange": [7, 15],
+      "summary": "Command DTO with requesterUserId, requesterPublicId, and friendPublicId fields.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "type": "file",
+      "name": "RoomIdDTO.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "summary": "Minimal shared contract DTO wrapping a single roomId, used as a lightweight identifier payload between room-domain services.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java:RoomIdDTO",
+      "type": "class",
+      "name": "RoomIdDTO",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java",
+      "lineRange": [5, 8],
+      "summary": "Single-field DTO wrapping a roomId.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "type": "file",
+      "name": "DirectChatDraftDTO.java",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "summary": "Shared contract response DTO describing a draft (not-yet-created) direct chat room, carrying the prospective friend's public id, nickname, and profile image.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    },
+    {
+      "id": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java:DirectChatDraftDTO",
+      "type": "class",
+      "name": "DirectChatDraftDTO",
+      "filePath": "castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java",
+      "lineRange": [7, 14],
+      "summary": "DTO with friendPublicId, friendNickname, and friendProfileImg fields describing a not-yet-created direct chat's counterpart.",
+      "tags": ["data-model", "room-domain", "contract"],
+      "complexity": "simple"
+    }
+  ],
+  "edges": [
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java:BanMemberCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/BanMemberCommand.java:BanMemberCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java:ChangeMemberRoleCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/ChangeMemberRoleCommand.java:ChangeMemberRoleCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java:EnterRoomCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/EnterRoomCommand.java:EnterRoomCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java:InviteMemberCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/InviteMemberCommand.java:InviteMemberCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java:KickMemberCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/KickMemberCommand.java:KickMemberCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java:LeftRoomCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/LeftRoomCommand.java:LeftRoomCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java:OpenDirectChatRoomCommand", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/command/OpenDirectChatRoomCommand.java:OpenDirectChatRoomCommand", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java:RoomIdDTO", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/RoomIdDTO.java:RoomIdDTO", "type": "exports", "direction": "forward", "weight": 0.8 },
+
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java:DirectChatDraftDTO", "type": "contains", "direction": "forward", "weight": 1.0 },
+    { "source": "file:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java", "target": "class:castledragon/common-contract/src/main/java/com/chat/contract/room/domain/res/DirectChatDraftDTO.java:DirectChatDraftDTO", "type": "exports", "direction": "forward", "weight": 0.8 }
+  ]
+}

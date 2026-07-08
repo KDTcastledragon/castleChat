@@ -22,12 +22,15 @@ public class ChatMessageViewResponseDTO {
 	private String messageText;
 
 	private Long replyToMessageId;
+	private String messageStatus;
 
 	private LocalDateTime createdAt;
 
 	private Long unreadCount;
 
 	private List<ChatAttachmentDTO> attachments;
+
+	private List<ChatMessageReactionSummaryDTO> reactions;
 
 	private List<Long> notificationTargetUserIds;
 }

@@ -20,12 +20,13 @@
 
 /* ====[상단바]============================================= */
 .chatListTitle {
-    display: grid;
-    grid-template-columns: 52px 1fr 98px;
+    position: relative;
+    display: flex;
     align-items: center;
+    justify-content: center;
     width: 100%;
     height: 36px;
-    padding: 0 8px;
+    padding: 0 106px 0 52px;
     background-color: #000;
     color: #fff;
     box-sizing: border-box;
@@ -34,24 +35,35 @@
 
 .chatTitleLeftControls,
 .chatTitleRightControls {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
     align-items: center;
     min-width: 0;
+    z-index: 2;
 }
 
 .chatTitleLeftControls {
+    left: 8px;
     justify-content: flex-start;
 }
 
 .chatTitleRightControls {
+    right: 8px;
     justify-content: flex-end;
     gap: 6px;
 }
 
 .chatRoomTitleText {
+    position: absolute;
+    left: 68px;
+    right: 112px;
+    z-index: 1;
     min-width: 0;
     font-weight: bold;
     text-align: center;
+    font-size: 18px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -261,6 +273,14 @@
     display: block;
 }
 
+.attachmentImagePreview {
+    cursor: zoom-in;
+}
+
+.attachmentImagePreview:hover {
+    filter: brightness(0.94);
+}
+
 .attachmentFilePreview {
     display: block;
     padding: 8px;
@@ -272,21 +292,69 @@
     word-break: break-all;
 }
 
-.messageReactionList {
+.messageReactionBar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
+    align-items: center;
+    gap: 5px;
     margin-top: 4px;
 }
 
+.messageReactionAddButton,
+.messageReactionSummaryButton {
+    min-height: 24px;
+    border: 1px solid #e7e7e7;
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+}
+
+.messageReactionAddButton {
+    width: 34px;
+    color: #666;
+    font-size: 13px;
+}
+
+.messageReactionSummaryButton {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+}
+
 .messageReactionBadge {
-    padding: 2px 6px;
-    border-radius: 10px;
-    background-color: #ffffff;
-    border: 1px solid #eeeeee;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
     color: #444;
-    font-size: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    font-size: 13px;
+}
+
+.messageHoverReactionButton {
+    width: 30px;
+    height: 24px;
+    align-self: flex-end;
+    margin-bottom: 2px;
+    border: 1px solid #dddddd;
+    border-radius: 13px;
+    background-color: rgba(255, 255, 255, 0.92);
+    color: #555;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(2px);
+    transition: opacity 0.12s ease, transform 0.12s ease, background-color 0.12s ease;
+}
+
+.chatRow:hover .messageHoverReactionButton {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.messageHoverReactionButton:hover,
+.messageReactionAddButton:hover,
+.messageReactionSummaryButton:hover {
+    background-color: #fff6b5;
 }
 
 .messageInfo {
@@ -363,8 +431,8 @@
 .reactionPicker {
     position: absolute;
     left: 14px;
-    bottom: 128px;
-    width: 210px;
+    top: 72px;
+    width: 190px;
     padding: 8px;
     border: 1px solid #d6d6d6;
     border-radius: 12px;
@@ -387,16 +455,229 @@
 
 .reactionPickerButtons button {
     flex: 1;
-    height: 30px;
+    height: 34px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background-color: #fafafa;
     cursor: pointer;
-    font-size: 11px;
+    font-size: 18px;
 }
 
 .reactionPickerButtons button:hover {
     background-color: #fff6b5;
+}
+
+/* ====[리액션 목록 / 읽은 사람]============================================= */
+.reactionViewerOverlay,
+.messageReadersOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 118;
+    background-color: rgba(0, 0, 0, 0.12);
+}
+
+.reactionViewer,
+.messageReadersBox {
+    position: absolute;
+    top: 24px;
+    right: 18px;
+    width: 300px;
+    min-height: 360px;
+    padding: 18px 16px;
+    border-radius: 14px;
+    background-color: #ffffff;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+    box-sizing: border-box;
+}
+
+.reactionViewerCloseButton,
+.messageReadersCloseButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    color: #777;
+    cursor: pointer;
+}
+
+.reactionViewerTitle,
+.messageReadersTitle {
+    margin-bottom: 18px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.reactionViewerTabs {
+    display: flex;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.reactionViewerTabs button {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 32px;
+    border: 0;
+    border-radius: 16px;
+    background-color: transparent;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.reactionViewerTabs button.active {
+    background-color: #f3f3f3;
+}
+
+.reactionViewerTabs button span {
+    font-size: 12px;
+    color: #555;
+}
+
+.reactionViewerCount {
+    margin: 12px 0;
+    color: #777;
+    font-size: 13px;
+}
+
+.reactionViewerMemberList,
+.messageReadersList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.reactionViewerMemberItem,
+.messageReaderItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+}
+
+.reactionViewerMemberItem img,
+.messageReaderItem img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reactionViewerMemberReaction {
+    width: 24px;
+    text-align: center;
+    font-size: 17px;
+}
+
+.messageReaderNickname {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.messageReaderRole {
+    margin-top: 2px;
+    color: #888;
+    font-size: 11px;
+}
+
+.reactionViewerEmpty,
+.messageReadersEmpty {
+    padding: 28px 0;
+    color: #777;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* ====[이미지 뷰어]============================================= */
+.imageViewerOverlay {
+    position: absolute;
+    inset: 0;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background-color: rgba(0, 0, 0, 0.78);
+    box-sizing: border-box;
+}
+
+.imageViewerBox {
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 14px;
+    background-color: #111;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
+    overflow: hidden;
+}
+
+.imageViewerToolbar {
+    min-height: 42px;
+    padding: 7px 8px 7px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #fff;
+    box-sizing: border-box;
+}
+
+.imageViewerFileName {
+    min-width: 0;
+    max-width: 300px;
+    font-size: 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.imageViewerActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.imageViewerDownloadButton,
+.imageViewerCloseButton {
+    width: 32px;
+    height: 30px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    background-color: #222;
+    color: #fff;
+    cursor: pointer;
+}
+
+.imageViewerDownloadButton {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.imageViewerCloseButton {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.imageViewerDownloadButton:hover,
+.imageViewerCloseButton:hover {
+    background-color: #fee500;
+    border-color: #fee500;
+    color: #111;
+}
+
+.imageViewerImage {
+    display: block;
+    max-width: 420px;
+    max-height: 460px;
+    object-fit: contain;
+    background-color: #000;
 }
 
 /* ====[타이핑 알림]============================================= */
@@ -642,9 +923,9 @@
 
 .roomMemberItem {
     display: grid;
-    grid-template-columns: 34px 1fr 70px 76px;
+    grid-template-columns: 30px minmax(0, 1fr) 46px 68px 66px;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     min-height: 44px;
     padding: 6px 8px;
     border-bottom: 1px solid #f0f0f0;
@@ -699,6 +980,22 @@
     font-weight: bold;
     text-align: center;
     color: #555;
+}
+
+.memberRoleSelect {
+    width: 68px;
+    height: 26px;
+    border: 1px solid #dddddd;
+    border-radius: 7px;
+    background-color: #ffffff;
+    color: #333333;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.memberRoleSelectPlaceholder {
+    width: 68px;
+    height: 1px;
 }
 
 .role-HOST {

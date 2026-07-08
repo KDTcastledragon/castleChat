@@ -1,0 +1,37 @@
+{
+  "batchIndex": 13,
+  "totalBatches": 16,
+  "files": [
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/ChatMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 394,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/FriendMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 42,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/RoomMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 400,
+      "fileCategory": "config"
+    },
+    {
+      "path": "castledragon/domain-service/src/main/resources/mappers/UserMapperXml.xml",
+      "language": "xml",
+      "sizeLines": 104,
+      "fileCategory": "config"
+    }
+  ],
+  "batchImportData": {
+    "castledragon/domain-service/src/main/resources/mappers/ChatMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mappers/FriendMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mappers/RoomMapperXml.xml": [],
+    "castledragon/domain-service/src/main/resources/mappers/UserMapperXml.xml": []
+  },
+  "neighborMap": {}
+}

@@ -3,13 +3,17 @@ package com.chat.chengine.support;
 import com.chat.contract.friend.domain.res.FriendEventResponseDTO;
 import com.chat.contract.friend.domain.res.OnlineFriendTargetsResponseDTO;
 import com.chat.contract.grpc.ApplyRoomNoticeResponse;
+import com.chat.contract.grpc.DirectChatDraft;
 import com.chat.contract.grpc.EnterRoomResponse;
 import com.chat.contract.grpc.FriendEventResponse;
 import com.chat.contract.grpc.OnlineFriendTargetsResponse;
+import com.chat.contract.grpc.OpenDirectChatRoomResponse;
 import com.chat.contract.grpc.RoomFeedResponse;
 import com.chat.contract.grpc.RoomMemberProfile;
 import com.chat.contract.grpc.RoomNoticeView;
+import com.chat.contract.room.domain.res.DirectChatDraftDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
@@ -54,6 +58,29 @@ public final class DtoToGrpcConverter {
 		return responseBuilder.build();
 	}
 
+	private static DirectChatDraft convertDirectChatDraftDtoToGrpc(DirectChatDraftDTO dto) {
+		return DirectChatDraft.newBuilder()
+				.setFriendPublicId(nvl(dto.getFriendPublicId()))
+				.setFriendNickname(nvl(dto.getFriendNickname()))
+				.setFriendProfileImg(nvl(dto.getFriendProfileImg()))
+				.build();
+	}
+
+	public static OpenDirectChatRoomResponse convertOpenDirectChatRoomResDtoToGrpc(OpenDirectChatRoomResponseDTO dto) {
+		OpenDirectChatRoomResponse.Builder builder = OpenDirectChatRoomResponse.newBuilder()
+				.setRoomExists(Boolean.TRUE.equals(dto.getRoomExists()));
+
+		if (dto.getEnterRoomInfo() != null) {
+			builder.setEnterRoomInfo(convertEnterRoomResDtoToGrpc(dto.getEnterRoomInfo()));
+		}
+
+		if (dto.getDraft() != null) {
+			builder.setDraft(convertDirectChatDraftDtoToGrpc(dto.getDraft()));
+		}
+
+		return builder.build();
+	}
+
 	private static RoomNoticeView convertRoomNoticeViewResDtoToGrpc(RoomNoticeViewDTO dto) {
 		return RoomNoticeView.newBuilder()
 				.setRoomNoticeId(dto.getRoomNoticeId())
@@ -73,6 +100,7 @@ public final class DtoToGrpcConverter {
 				.setFeedType(nvl(dto.getFeedType()))
 				.setRequesterPublicId(nvl(dto.getRequesterPublicId()))
 				.setRequesterNickname(nvl(dto.getRequesterNickname()))
+				.setTargetRole(nvl(dto.getTargetRole()))
 				.setFeedText(nvl(dto.getFeedText()))
 				.setFeedAt(dto.getFeedAt() == null ? "" : dto.getFeedAt().toString());
 
@@ -109,8 +137,7 @@ public final class DtoToGrpcConverter {
 	}
 
 	public static OnlineFriendTargetsResponse convertOnlineFriendTargetsResDtoToGrpc(OnlineFriendTargetsResponseDTO dto) {
-		OnlineFriendTargetsResponse.Builder builder = OnlineFriendTargetsResponse.newBuilder()
-				.setUserId(dto.getUserId());
+		OnlineFriendTargetsResponse.Builder builder = OnlineFriendTargetsResponse.newBuilder().setUserId(dto.getUserId());
 
 		if (dto.getTargetUserIds() != null && !dto.getTargetUserIds().isEmpty()) {
 			builder.addAllTargetUserIds(dto.getTargetUserIds());

@@ -21,7 +21,9 @@ import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.ChatRoomsDTO;
 import com.chat.contract.room.domain.ChatUserLookupDTO;
+import com.chat.contract.room.domain.res.DirectChatDraftDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
@@ -277,6 +279,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 		return value != null && !value.isBlank();
 	}
 
+	// ==================================================================================================================================
+	// ==================================================================================================================================
 	private ChatRoomsDTO createDirectRoom(Long requesterUserId, ChatUserLookupDTO requesterUser, ChatUserLookupDTO friendUser) {
 		ChatRoomsDTO room = new ChatRoomsDTO();
 		room.setRoomType(DIRECT);
@@ -290,8 +294,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("1:1 채팅방 생성 실패");
 		}
 
-		int insertedRequester = chatMapper.insertRoomMember(room.getRoomId(), requesterUserId, MEMBER, friendUser.getNickname() + "님과의 채팅방", friendUser
-				.getProfileImg(), null, ACTIVE);
+		int insertedRequester = chatMapper.insertRoomMember(room.getRoomId(), requesterUserId, MEMBER, friendUser.getNickname()
+				+ "님과의 채팅방", friendUser.getProfileImg(), null, ACTIVE);
 
 		int insertedFriend = chatMapper.insertRoomMember(room.getRoomId(), friendUser.getUserId(), MEMBER, requesterUser.getNickname()
 				+ "님과의 채팅방", requesterUser.getProfileImg(), null, ACTIVE);
@@ -330,8 +334,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 	// ========================================================================================================================================
 
 	@Override
-	@Transactional
-	public EnterRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand cmd) {
+	@Transactional(readOnly = true)
+	public OpenDirectChatRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand cmd) {
 		if (cmd.getRequesterUserId() == null) {
 			throw new IllegalArgumentException("requesterUserId가 없습니다.");
 		}
@@ -344,40 +348,24 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalArgumentException("friendPublicId가 없습니다.");
 		}
 
-		ChatUserLookupDTO requesterUser = chatMapper.findUserInfoByPublicId(cmd.getRequesterPublicId());
+		EnterRoomResponseDTO roomInfo = roomMapper.findDirectRoomForEnter(cmd.getRequesterUserId(), cmd.getFriendPublicId());
 
-		if (requesterUser == null || !cmd.getRequesterUserId().equals(requesterUser.getUserId())) {
-			throw new IllegalArgumentException("요청자 정보를 찾을 수 없습니다.");
+		if (roomInfo != null) {
+			roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(roomInfo.getRoomId()));
+			roomInfo.setRoomNotice(roomMapper.findActiveRoomNoticeView(roomInfo.getRoomId()));
+
+			return new OpenDirectChatRoomResponseDTO(true, roomInfo, null);
 		}
 
-		ChatUserLookupDTO friendUser = chatMapper.findUserInfoByPublicId(cmd.getFriendPublicId());
+		ChatUserLookupDTO friend = chatMapper.findUserInfoByPublicId(cmd.getFriendPublicId());
 
-		if (friendUser == null) {
+		if (friend == null) {
 			throw new IllegalArgumentException("존재하지 않는 친구입니다.");
 		}
 
-		if (cmd.getRequesterUserId().equals(friendUser.getUserId())) {
-			throw new IllegalArgumentException("자기 자신과 1:1 채팅방을 열 수 없습니다.");
-		}
+		DirectChatDraftDTO draft = new DirectChatDraftDTO(friend.getPublicId(), friend.getNickname(), friend.getProfileImg());
 
-		ChatRoomsDTO room = chatMapper.findDirectRoom(cmd.getRequesterUserId(), friendUser.getUserId());
-
-		if (room == null) {
-			room = createDirectRoom(cmd.getRequesterUserId(), requesterUser, friendUser);
-		} else {
-			reactivateDirectMembers(room.getRoomId(), cmd.getRequesterUserId(), friendUser.getUserId());
-		}
-
-		EnterRoomResponseDTO roomInfo = roomMapper.findDirectRoomForEnter(cmd.getRequesterUserId(), cmd.getFriendPublicId());
-
-		if (roomInfo == null) {
-			throw new IllegalStateException("1:1 채팅방 입장 정보 조회 실패");
-		}
-
-		roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(roomInfo.getRoomId()));
-		roomInfo.setRoomNotice(roomMapper.findActiveRoomNoticeView(roomInfo.getRoomId()));
-
-		return roomInfo;
+		return new OpenDirectChatRoomResponseDTO(false, null, draft);
 	}
 
 	@Override
@@ -500,6 +488,16 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalArgumentException("변경할 role이 없습니다.");
 		}
 
+		if (!"MANAGER".equals(cmd.getTargetRole()) && !"MEMBER".equals(cmd.getTargetRole())) {
+			throw new IllegalArgumentException("변경할 수 없는 role입니다.");
+		}
+
+		String requesterRole = roomMapper.findActiveRoomMemberRole(cmd.getRoomId(), cmd.getRequesterUserId());
+
+		if (!"HOST".equals(requesterRole)) {
+			throw new IllegalArgumentException("방장만 멤버 권한을 변경할 수 있습니다.");
+		}
+
 		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
 		String targetNickname = roomMapper.findNicknameByPublicId(cmd.getTargetPublicId());
 
@@ -509,9 +507,12 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("권한 변경 실패");
 		}
 
-		return createRoomFeed(cmd.getRoomId(), "ROLE_CHANGED", cmd.getRequesterPublicId(), requesterNickname, List
+		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), "ROLE_CHANGED", cmd.getRequesterPublicId(), requesterNickname, List
 				.of(cmd.getTargetPublicId()), List
 						.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님의 권한을 " + cmd.getTargetRole() + "로 변경했습니다.");
+		roomFeed.setTargetRole(cmd.getTargetRole());
+
+		return roomFeed;
 	}
 
 	// ========================================================================================================================================
@@ -560,7 +561,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 	}
 
 	private RoomFeedResponseDTO createRoomFeed(Long roomId, String feedType, String requesterPublicId, String requesterNickname, List<String> targetPublicIds, List<String> targetNicknames, String feedText) {
-		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, feedText, LocalDateTime
+		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, null, feedText, LocalDateTime
 				.now());
 	}
 }

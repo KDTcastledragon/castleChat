@@ -9,11 +9,12 @@ import com.chat.contract.room.command.KickMemberCommand;
 import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 
 public interface RoomCommandUseCase {
-	EnterRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand command);
+	OpenDirectChatRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand command);
 
 	EnterRoomResponseDTO enterRoom(EnterRoomCommand command);
 

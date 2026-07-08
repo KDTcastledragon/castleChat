@@ -3,6 +3,7 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import {
+    emitWsChangeMemberRole,
     emitWsDeleteMessage,
     emitWsExitRoom,
     emitWsBanMember,
@@ -12,6 +13,7 @@ import {
     emitWsReadMessage,
     emitWsReactMessage,
     emitWsSendMessage,
+    emitWsStartDirectChat,
     emitWsTypingStart,
     emitWsTypingStop,
     registerRoomHandler,
@@ -21,10 +23,10 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
-import { loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
+import { getMessageReactionMembersApi, getMessageReadersApi, loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
 import { updateMyRoomSettingsApi } from '../../api/roomApi';
 
-function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
+function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const [typingUsers, setTypingUsers] = useState([]);
@@ -35,9 +37,13 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
     const [isInvitingMembers, setIsInvitingMembers] = useState(false);
 
     const [profileTargetMember, setProfileTargetMember] = useState(null);
+    const [imageViewerAttachment, setImageViewerAttachment] = useState(null);
     const [messageContextMenu, setMessageContextMenu] = useState(null);
     const [replyTargetMessage, setReplyTargetMessage] = useState(null);
     const [reactionTargetMessage, setReactionTargetMessage] = useState(null);
+    const [reactionPickerPosition, setReactionPickerPosition] = useState(null);
+    const [reactionViewer, setReactionViewer] = useState(null);
+    const [messageReadersViewer, setMessageReadersViewer] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(null);
     const [isUploadingFiles, setIsUploadingFiles] = useState(false);
@@ -50,12 +56,14 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
     const [locallyRemovedMemberPublicIds, setLocallyRemovedMemberPublicIds] = useState(() => new Set());
     const [locallyAddedRoomMembers, setLocallyAddedRoomMembers] = useState([]);
+    const [locallyChangedMemberRoles, setLocallyChangedMemberRoles] = useState({});
 
     const queryClient = useQueryClient();
-    const { getOrCreateDirectRoom } = useChatRoomActions();
+    const { getOrCreateDirectRoom, openRoom } = useChatRoomActions();
 
     const { data: me } = useMe();
     const { publicId: myPublicId } = me || {};
+    const isDraftDirectRoom = isDraft && roomType === 'DIRECT' && !roomId;
 
     const { data: friendList = [], isLoading: isFriendListLoading } = useFriendList(!!me && isInviteFriendPanelOpen);
 
@@ -74,8 +82,11 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
             map.delete(publicId);
         });
 
-        return Array.from(map.values());
-    }, [memberList, locallyAddedRoomMembers, locallyRemovedMemberPublicIds]);
+        return Array.from(map.values()).map(member => ({
+            ...member,
+            role: locallyChangedMemberRoles[member.publicId] ?? member.role
+        }));
+    }, [memberList, locallyAddedRoomMembers, locallyRemovedMemberPublicIds, locallyChangedMemberRoles]);
 
     const memberMap = useMemo(() => {
         const map = {};
@@ -140,6 +151,15 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         return myRoomRole === 'MANAGER' && member.role === 'MEMBER';
     }
 
+    function canChangeMemberRole(member) {
+        if (!member) return false;
+        if (roomType !== 'GROUP') return false;
+        if (myRoomRole !== 'HOST') return false;
+        if (member.publicId === myPublicId) return false;
+
+        return member.role !== 'HOST';
+    }
+
     const chatRoomSectionRef = useRef(null);
     const isChatBoxFocusedRef = useRef(false);
 
@@ -159,9 +179,11 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
     const LOAD_PREV_THRESHOLD_PX = 80;
     const MAX_UPLOAD_SIZE = 320 * 1024 * 1024;
     const REACTION_OPTIONS = [
-        { label: '좋아요', code: 'like' },
-        { label: '싫어요', code: 'dislike' },
-        { label: '슬퍼요', code: 'sad' }
+        { label: '👍', code: 'like', title: '좋아요' },
+        { label: '👎', code: 'dislike', title: '싫어요' },
+        { label: '😿', code: 'cat_sad', title: '슬퍼요' },
+        { label: '😢', code: 'sad', title: '눈물' },
+        { label: '😈', code: 'devil', title: '장난' }
     ];
 
     const chatListRef = useRef(null);
@@ -233,6 +255,11 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
     }
 
     function addSelectedFiles(fileList) {
+        if (isDraftDirectRoom) {
+            alert('첫 메시지 파일 첨부는 방 생성 후 전송해주세요.');
+            return;
+        }
+
         const incomingFiles = Array.from(fileList ?? []);
         if (incomingFiles.length === 0) return;
 
@@ -454,6 +481,10 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
     function handleChatScroll() {
         setMessageContextMenu(null);
+        setReactionTargetMessage(null);
+        setReactionPickerPosition(null);
+
+        if (!roomId) return;
 
         const chatListEl = chatListRef.current;
         if (!chatListEl) return;
@@ -464,26 +495,33 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
     }
 
     useEffect(() => {
-        if (!roomId || !myPublicId) return;
-
         isLoadingPrevRef.current = false;
-        hasMorePrevRef.current = true;
+        hasMorePrevRef.current = Boolean(roomId);
         oldestMessageIdRef.current = null;
         isPrependingPrevRef.current = false;
 
+        setPrevChattings([]);
+        setTypingUsers([]);
         setIsRoomMenuOpen(false);
         setIsInviteFriendPanelOpen(false);
         setSelectedInviteFriends([]);
         setProfileTargetMember(null);
+        setImageViewerAttachment(null);
         setMessageContextMenu(null);
         setReplyTargetMessage(null);
         setReactionTargetMessage(null);
+        setReactionPickerPosition(null);
+        setReactionViewer(null);
+        setMessageReadersViewer(null);
         setSelectedFiles([]);
         setUploadProgress(null);
         setIsUploadingFiles(false);
         setLocallyRemovedMemberPublicIds(new Set());
         setLocallyAddedRoomMembers([]);
+        setLocallyChangedMemberRoles({});
         setMyReactionMap({});
+
+        if (!roomId || !myPublicId) return;
 
         const initChatRoom = async () => {
             try {
@@ -686,6 +724,18 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                         return next;
                     });
                 }
+
+                if (wsResponse.wsType === "ROOM_MEMBER_ROLE_CHANGED") {
+                    const targetPublicId = feed?.targetPublicIds?.[0];
+                    const targetRole = feed?.targetRole;
+
+                    if (targetPublicId && targetRole) {
+                        setLocallyChangedMemberRoles(prev => ({
+                            ...prev,
+                            [targetPublicId]: targetRole
+                        }));
+                    }
+                }
             }
 
             if (wsResponse.wsType === "TYPING_START") {
@@ -748,7 +798,10 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
         if (isTypingRef.current) {
             isTypingRef.current = false;
-            emitWsTypingStop(roomId);
+
+            if (roomId) {
+                emitWsTypingStop(roomId);
+            }
         }
 
         if (typingTimerRef.current) {
@@ -760,6 +813,41 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         const messageType = resolveMessageTypeByFiles(selectedFiles);
 
         try {
+            if (isDraftDirectRoom) {
+                if (!targetPublicId) {
+                    alert('1:1 채팅 대상 정보가 없습니다.');
+                    return;
+                }
+
+                if (selectedFiles.length > 0) {
+                    alert('첫 메시지 파일 첨부는 방 생성 후 전송해주세요.');
+                    return;
+                }
+
+                const startResponse = await emitWsStartDirectChat(targetPublicId, chatMessage, {
+                    messageType: 'TEXT',
+                    replyToMessageId: null,
+                    attachmentIds: []
+                });
+
+                const startChat = startResponse.payload;
+
+                setChatMessage('');
+                setSelectedFiles([]);
+                setReplyTargetMessage(null);
+                setUploadProgress(null);
+
+                exitChatRoom();
+                openRoom(startChat.enterRoomInfo);
+                queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+                return;
+            }
+
+            if (!roomId) {
+                alert('채팅방 정보가 없습니다.');
+                return;
+            }
+
             if (selectedFiles.length > 0) {
                 setIsUploadingFiles(true);
                 setUploadProgress({
@@ -811,6 +899,8 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
         setChatMessage(nextValue);
 
+        if (!roomId) return;
+
         const isNowTyping = nextValue.length > 0;
 
         if (isNowTyping && !isTypingRef.current) {
@@ -838,6 +928,7 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
     };
 
     function scheduleReadMessage(messageId) {
+        if (!roomId) return;
         if (!messageId) return;
 
         pendingReadMessageIdRef.current = Math.max(
@@ -869,6 +960,11 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
             readDebounceTimerRef.current = null;
         }
 
+        if (!roomId) {
+            pendingReadMessageIdRef.current = null;
+            return;
+        }
+
         if (lastReadMessageId) {
             emitWsReadMessage(roomId, lastReadMessageId);
         }
@@ -881,7 +977,10 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
         if (isTypingRef.current) {
             isTypingRef.current = false;
-            emitWsTypingStop(roomId);
+
+            if (roomId) {
+                emitWsTypingStop(roomId);
+            }
         }
 
         if (typingTimerRef.current) {
@@ -889,7 +988,10 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
             typingTimerRef.current = null;
         }
 
-        emitWsExitRoom(roomId);
+        if (roomId) {
+            emitWsExitRoom(roomId);
+        }
+
         exitChatRoom();
     };
 
@@ -923,6 +1025,22 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
             if (reactionTargetMessage) {
                 setReactionTargetMessage(null);
+                setReactionPickerPosition(null);
+                return;
+            }
+
+            if (reactionViewer) {
+                setReactionViewer(null);
+                return;
+            }
+
+            if (messageReadersViewer) {
+                setMessageReadersViewer(null);
+                return;
+            }
+
+            if (imageViewerAttachment) {
+                closeImageViewer();
                 return;
             }
 
@@ -951,9 +1069,14 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         return () => {
             window.removeEventListener('keydown', handleEscKeyDown);
         };
-    }, [messageContextMenu, reactionTargetMessage, profileTargetMember, isInviteFriendPanelOpen, isRoomMenuOpen]);
+    }, [messageContextMenu, reactionTargetMessage, reactionViewer, messageReadersViewer, imageViewerAttachment, profileTargetMember, isInviteFriendPanelOpen, isRoomMenuOpen]);
 
     async function leftRoom() {
+        if (!roomId) {
+            exitChatRoom();
+            return;
+        }
+
         try {
             flushPendingReadMessage();
 
@@ -1020,6 +1143,28 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         } catch (e) {
             console.error('영구강퇴 실패', e);
             alert(e.response?.data ?? '영구강퇴 실패');
+        }
+    }
+
+    async function changeMemberRole(member, targetRole) {
+        if (!member) return;
+        if (!canChangeMemberRole(member)) return;
+        if (member.role === targetRole) return;
+
+        const confirmed = window.confirm(`${member.nickname}님의 권한을 ${targetRole}로 변경하시겠습니까?`);
+
+        if (!confirmed) return;
+
+        try {
+            const emitted = emitWsChangeMemberRole(roomId, member.publicId, targetRole);
+
+            if (!emitted) {
+                alert('WebSocket 연결 안 됨');
+                return;
+            }
+        } catch (e) {
+            console.error('권한 변경 실패', e);
+            alert(e.response?.data ?? '권한 변경 실패');
         }
     }
 
@@ -1109,6 +1254,52 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         setProfileTargetMember(null);
     }
 
+    function openImageViewer(attachment) {
+        if (!attachment?.fileUrl) return;
+
+        setImageViewerAttachment(attachment);
+    }
+
+    function closeImageViewer() {
+        setImageViewerAttachment(null);
+    }
+
+    async function downloadImageFromViewer() {
+        if (!imageViewerAttachment?.fileUrl) return;
+
+        const fileName = imageViewerAttachment.originalFileName || `image-${imageViewerAttachment.attachmentId ?? Date.now()}`;
+        const confirmed = window.confirm(`${fileName} 파일을 다운로드하시겠습니까?`);
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(imageViewerAttachment.fileUrl);
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(blobUrl);
+        } catch (e) {
+            console.error('이미지 다운로드 실패', e);
+
+            const link = document.createElement('a');
+            link.href = imageViewerAttachment.fileUrl;
+            link.download = fileName;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+    }
+
     async function startDirectChatFromProfile() {
         if (!profileTargetMember) return;
 
@@ -1150,14 +1341,93 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         });
     }
 
+    function openReactionPicker(e, message) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        const boxRect = chatRoomSectionRef.current?.getBoundingClientRect();
+        const clickX = e?.clientX ?? (boxRect ? boxRect.left + 24 : 24);
+        const clickY = e?.clientY ?? (boxRect ? boxRect.top + 80 : 80);
+
+        if (boxRect) {
+            setReactionPickerPosition({
+                left: Math.min(Math.max(clickX - boxRect.left, 8), boxRect.width - 220),
+                top: Math.min(Math.max(clickY - boxRect.top, 52), boxRect.height - 120)
+            });
+        } else {
+            setReactionPickerPosition(null);
+        }
+
+        setReactionTargetMessage(message);
+        setMessageContextMenu(null);
+    }
+
+    async function openReactionMemberViewer(message) {
+        if (!message?.messageId) return;
+
+        setReactionViewer({
+            message,
+            members: [],
+            selectedCode: null,
+            isLoading: true
+        });
+
+        try {
+            const members = await getMessageReactionMembersApi(roomId, message.messageId);
+            const firstCode = members?.[0]?.reactionCode ?? null;
+
+            setReactionViewer({
+                message,
+                members: members ?? [],
+                selectedCode: firstCode,
+                isLoading: false
+            });
+        } catch (e) {
+            console.error('리액션 멤버 조회 실패', e);
+            alert(e.response?.data ?? '리액션 멤버 조회 실패');
+            setReactionViewer(null);
+        }
+    }
+
+    async function openMessageReadersViewer(message) {
+        if (!message?.messageId) return;
+
+        setMessageReadersViewer({
+            message,
+            readers: [],
+            isLoading: true
+        });
+
+        try {
+            const readers = await getMessageReadersApi(roomId, message.messageId);
+
+            setMessageReadersViewer({
+                message,
+                readers: readers ?? [],
+                isLoading: false
+            });
+        } catch (e) {
+            console.error('읽은 사람 조회 실패', e);
+            alert(e.response?.data ?? '읽은 사람 조회 실패');
+            setMessageReadersViewer(null);
+        }
+    }
+
     function handleMessageMenuAction(action) {
         const targetMessage = messageContextMenu?.message;
+        const menuEventPosition = messageContextMenu;
 
         setMessageContextMenu(null);
 
         if (!targetMessage) return;
 
         if (action === 'REACT') {
+            setReactionPickerPosition(menuEventPosition ? {
+                left: menuEventPosition.left,
+                top: menuEventPosition.top
+            } : null);
             setReactionTargetMessage(targetMessage);
             return;
         }
@@ -1178,7 +1448,7 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
         }
 
         if (action === 'READERS') {
-            alert(`이 메시지 읽은 사람: ${targetMessage.messageId}`);
+            openMessageReadersViewer(targetMessage);
             return;
         }
 
@@ -1200,6 +1470,11 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
         emitWsReactMessage(roomId, reactionTargetMessage.messageId, reactionCode, addRequested);
         setReactionTargetMessage(null);
+        setReactionPickerPosition(null);
+    }
+
+    function getReactionLabel(reactionCode) {
+        return REACTION_OPTIONS.find(item => item.code === reactionCode)?.label ?? reactionCode;
     }
 
     return (
@@ -1223,9 +1498,13 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                     <div className="chatTitleLeftControls">
                         <button
                             className={`roomMenuButton ${isRoomMenuOpen ? 'active' : ''}`}
-                            title="채팅방 메뉴"
+                            title={isDraftDirectRoom ? '첫 메시지 전송 후 메뉴를 사용할 수 있습니다.' : '채팅방 메뉴'}
                             onMouseDown={(e) => e.stopPropagation()}
-                            onClick={() => setIsRoomMenuOpen(prev => !prev)}
+                            onClick={() => {
+                                if (isDraftDirectRoom) return;
+                                setIsRoomMenuOpen(prev => !prev);
+                            }}
+                            disabled={isDraftDirectRoom}
                         >
                             <span className="roomMenuButtonIcon">☰</span>
                         </button>
@@ -1236,9 +1515,10 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                     <div className="chatTitleRightControls">
                         <button
                             className={`notificationBellButton ${isMessageNotificationEnabled ? 'on' : 'off'}`}
-                            title={isMessageNotificationEnabled ? '메시지 알림 켜짐' : '메시지 알림 꺼짐'}
+                            title={isDraftDirectRoom ? '첫 메시지 전송 후 알림 설정을 사용할 수 있습니다.' : isMessageNotificationEnabled ? '메시지 알림 켜짐' : '메시지 알림 꺼짐'}
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={toggleMessageNotification}
+                            disabled={isDraftDirectRoom}
                         >
                             {isMessageNotificationEnabled ? '🔔' : '🔕'}
                         </button>
@@ -1349,6 +1629,19 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                                     <div className={`roomMemberRole role-${member.role}`}>
                                         {member.role}
                                     </div>
+
+                                    {canChangeMemberRole(member) ? (
+                                        <select
+                                            className="memberRoleSelect"
+                                            value={member.role}
+                                            onChange={(e) => changeMemberRole(member, e.target.value)}
+                                        >
+                                            <option value="MEMBER">MEMBER</option>
+                                            <option value="MANAGER">MANAGER</option>
+                                        </select>
+                                    ) : (
+                                        <div className="memberRoleSelectPlaceholder" />
+                                    )}
 
                                     {canKickMember(member) ? (
                                         <div className="memberDangerActions">
@@ -1523,6 +1816,10 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                 {reactionTargetMessage && (
                     <div
                         className="reactionPicker"
+                        style={reactionPickerPosition ? {
+                            left: reactionPickerPosition.left,
+                            top: reactionPickerPosition.top
+                        } : undefined}
                         onMouseDown={(e) => e.stopPropagation()}
                     >
                         <div className="reactionPickerTitle">리액션</div>
@@ -1531,11 +1828,172 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                             {REACTION_OPTIONS.map(reaction => (
                                 <button
                                     key={reaction.code}
+                                    title={reaction.title}
                                     onClick={() => applyReaction(reaction.code)}
                                 >
                                     {reaction.label}
                                 </button>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {reactionViewer && (
+                    <div
+                        className="reactionViewerOverlay"
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            setReactionViewer(null);
+                        }}
+                    >
+                        <div
+                            className="reactionViewer"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <button className="reactionViewerCloseButton" onClick={() => setReactionViewer(null)}>
+                                ×
+                            </button>
+
+                            <div className="reactionViewerTitle">리액션</div>
+
+                            {reactionViewer.isLoading ? (
+                                <div className="reactionViewerEmpty">불러오는 중...</div>
+                            ) : (
+                                <>
+                                    <div className="reactionViewerTabs">
+                                        {REACTION_OPTIONS
+                                            .filter(reaction => reactionViewer.members.some(member => member.reactionCode === reaction.code))
+                                            .map(reaction => {
+                                                const count = reactionViewer.members.filter(member => member.reactionCode === reaction.code).length;
+
+                                                return (
+                                                    <button
+                                                        key={reaction.code}
+                                                        className={reactionViewer.selectedCode === reaction.code ? 'active' : ''}
+                                                        title={reaction.title}
+                                                        onClick={() => setReactionViewer(prev => ({
+                                                            ...prev,
+                                                            selectedCode: reaction.code
+                                                        }))}
+                                                    >
+                                                        {reaction.label}
+                                                        <span>{count}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                    </div>
+
+                                    <div className="reactionViewerCount">
+                                        {reactionViewer.members.filter(member => !reactionViewer.selectedCode || member.reactionCode === reactionViewer.selectedCode).length}명
+                                    </div>
+
+                                    <div className="reactionViewerMemberList">
+                                        {reactionViewer.members
+                                            .filter(member => !reactionViewer.selectedCode || member.reactionCode === reactionViewer.selectedCode)
+                                            .map(member => (
+                                                <div className="reactionViewerMemberItem" key={`${member.reactionCode}-${member.requesterPublicId}`}>
+                                                    <img
+                                                        src={member.requesterProfileImg || '/images/mococo_question.png'}
+                                                        alt={member.requesterNickname}
+                                                    />
+
+                                                    <span className="reactionViewerMemberReaction">
+                                                        {getReactionLabel(member.reactionCode)}
+                                                    </span>
+
+                                                    <span>{member.requesterNickname}</span>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {messageReadersViewer && (
+                    <div
+                        className="messageReadersOverlay"
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            setMessageReadersViewer(null);
+                        }}
+                    >
+                        <div
+                            className="messageReadersBox"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <button className="messageReadersCloseButton" onClick={() => setMessageReadersViewer(null)}>
+                                ×
+                            </button>
+
+                            <div className="messageReadersTitle">이 메시지를 읽은 사람</div>
+
+                            {messageReadersViewer.isLoading ? (
+                                <div className="messageReadersEmpty">불러오는 중...</div>
+                            ) : messageReadersViewer.readers.length > 0 ? (
+                                <div className="messageReadersList">
+                                    {messageReadersViewer.readers.map(reader => (
+                                        <div className="messageReaderItem" key={reader.publicId}>
+                                            <img
+                                                src={reader.profileImg || '/images/mococo_question.png'}
+                                                alt={reader.nickname}
+                                            />
+
+                                            <div>
+                                                <div className="messageReaderNickname">{reader.nickname}</div>
+                                                <div className="messageReaderRole">{reader.role}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="messageReadersEmpty">아직 읽은 사람이 없습니다.</div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {imageViewerAttachment && (
+                    <div
+                        className="imageViewerOverlay"
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            closeImageViewer();
+                        }}
+                    >
+                        <div
+                            className="imageViewerBox"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <div className="imageViewerToolbar">
+                                <div className="imageViewerFileName">
+                                    {imageViewerAttachment.originalFileName || '이미지'}
+                                </div>
+
+                                <div className="imageViewerActions">
+                                    <button
+                                        className="imageViewerDownloadButton"
+                                        title="다운로드"
+                                        onClick={downloadImageFromViewer}
+                                    >
+                                        ⭳
+                                    </button>
+
+                                    <button
+                                        className="imageViewerCloseButton"
+                                        onClick={closeImageViewer}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
+
+                            <img
+                                className="imageViewerImage"
+                                src={imageViewerAttachment.fileUrl}
+                                alt={imageViewerAttachment.originalFileName || 'image'}
+                            />
                         </div>
                     </div>
                 )}
@@ -1594,6 +2052,16 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                                         </div>
                                     )}
 
+                                    {isMine && !isDeletedMessage && (
+                                        <button
+                                            className="messageHoverReactionButton"
+                                            title="리액션"
+                                            onClick={(e) => openReactionPicker(e, d)}
+                                        >
+                                            ☺+
+                                        </button>
+                                    )}
+
                                     <div className="messageContent">
                                         {!isMine && (
                                             <div className="senderNickname">{senderNickname}</div>
@@ -1620,6 +2088,7 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                                                                     className="attachmentImagePreview"
                                                                     src={attachment.fileUrl}
                                                                     alt={attachment.originalFileName}
+                                                                    onClick={() => openImageViewer(attachment)}
                                                                 />
                                                             ) : attachment.attachmentKind === 'VIDEO' ? (
                                                                 <video
@@ -1648,16 +2117,40 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
                                         </div>
 
                                         {reactions.length > 0 && (
-                                            <div className="messageReactionList">
-                                                {reactions.map(reaction => (
-                                                    <span className="messageReactionBadge" key={reaction.reactionCode}>
-                                                        {REACTION_OPTIONS.find(item => item.code === reaction.reactionCode)?.label ?? reaction.reactionCode}
-                                                        {Number(reaction.count ?? 0) > 1 ? ` ${reaction.count}` : ''}
-                                                    </span>
-                                                ))}
+                                            <div className="messageReactionBar">
+                                                <button
+                                                    className="messageReactionAddButton"
+                                                    title="리액션 추가"
+                                                    onClick={(e) => openReactionPicker(e, d)}
+                                                >
+                                                    ☺+
+                                                </button>
+
+                                                <button
+                                                    className="messageReactionSummaryButton"
+                                                    title="리액션 한 사람"
+                                                    onClick={() => openReactionMemberViewer(d)}
+                                                >
+                                                    {reactions.map(reaction => (
+                                                        <span className="messageReactionBadge" key={reaction.reactionCode}>
+                                                            {getReactionLabel(reaction.reactionCode)}
+                                                            {` ${Number(reaction.count ?? 0)}`}
+                                                        </span>
+                                                    ))}
+                                                </button>
                                             </div>
                                         )}
                                     </div>
+
+                                    {!isMine && !isDeletedMessage && (
+                                        <button
+                                            className="messageHoverReactionButton"
+                                            title="리액션"
+                                            onClick={(e) => openReactionPicker(e, d)}
+                                        >
+                                            ☺+
+                                        </button>
+                                    )}
 
                                     {!isMine && (
                                         <div className='messageInfo'>
@@ -1745,7 +2238,14 @@ function ChatBox({ roomId, roomType, roomName, roomThumbnail, customRoomBackgrou
 
                     <button
                         className="attachFileButton"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                            if (isDraftDirectRoom) {
+                                alert('첫 메시지 파일 첨부는 방 생성 후 전송해주세요.');
+                                return;
+                            }
+
+                            fileInputRef.current?.click();
+                        }}
                         disabled={isUploadingFiles}
                     >
                         +

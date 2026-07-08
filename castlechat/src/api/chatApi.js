@@ -51,3 +51,13 @@ export async function loadMessagesInRoomApi(roomId, messagePageSize, beforeMessa
     });
     return res.data;
 }
+
+export async function getMessageReactionMembersApi(roomId, messageId) {
+    const res = await axios.get(`/chat/messages/${roomId}/${messageId}/reactions`);
+    return res.data;
+}
+
+export async function getMessageReadersApi(roomId, messageId) {
+    const res = await axios.get(`/chat/messages/${roomId}/${messageId}/readers`);
+    return res.data;
+}

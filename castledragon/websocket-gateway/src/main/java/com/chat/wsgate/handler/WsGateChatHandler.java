@@ -17,6 +17,7 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
 import com.chat.contract.notification.domain.ChatMessageNotificationDTO;
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.websocket.domain.WebSocketDTO;
@@ -140,12 +141,12 @@ public class WsGateChatHandler {
 		PayloadStartDirectChatRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadStartDirectChatRequestDTO.class);
 
 		if (payload.getTargetPublicId() == null || payload.getTargetPublicId().isBlank()) {
-			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "targetPublicId 누락");
+			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_CHAT_FAIL", "targetPublicId 누락");
 			return;
 		}
 
 		if (isEmptyMessage(payload.getMessageText(), payload.getAttachmentIds())) {
-			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "메시지 내용 없음");
+			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_CHAT_FAIL", "메시지 내용 없음");
 			return;
 		}
 
@@ -154,16 +155,18 @@ public class WsGateChatHandler {
 					.getPublicId(), defaultMessageType(payload.getMessageType(), payload.getAttachmentIds()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.startDirectChat(startDirChtCmd);
+			StartChatResponseDTO grpcResponse = wsGateChatClient.startDirectChat(startDirChtCmd);
+			ChatMessageViewResponseDTO firstChatMessage = grpcResponse.getFirstChatMessage();
 
-			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
-			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
-			pushChatMessageNotification(me, grpcResponse, dto.getRequestId());
-			log.info("{}번유저 -> {}번방 start갠톡 : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
+			wsGateSessionRegistry.enterRoomSession(grpcResponse.getEnterRoomInfo().getRoomId(), me.getUserId(), session);
+			wsGateOutboundWriter.responseOk(session, dto, "START_DIRECT_CHAT_OK", grpcResponse);
+			wsGateOutboundWriter.broadcastToRoom(firstChatMessage.getRoomId(), "MSG_CREATED", firstChatMessage, dto.getRequestId());
+			pushChatMessageNotification(me, firstChatMessage, dto.getRequestId());
+			log.info("{}번유저 -> {}번방 start갠톡 : {}", me.getUserId(), firstChatMessage.getRoomId(), firstChatMessage.getMessageText());
 
 		} catch (Exception e) {
-			log.error("START_DIRECT_ROOM_WITH_MSG 예외", e);
-			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_ROOM_WITH_MSG_FAIL", "1:1 첫 메시지 전송 실패");
+			log.error("START_DIRECT_CHAT 예외", e);
+			wsGateOutboundWriter.responseFail(session, dto, "START_DIRECT_CHAT_FAIL", "1:1 첫 메시지 전송 실패");
 		}
 	}
 
@@ -174,12 +177,12 @@ public class WsGateChatHandler {
 		PayloadStartGroupChatRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadStartGroupChatRequestDTO.class);
 
 		if (payload.getInviteMemberPublicIds() == null || payload.getInviteMemberPublicIds().isEmpty()) {
-			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "초대 멤버 없음");
+			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_CHAT_FAIL", "초대 멤버 없음");
 			return;
 		}
 
 		if (isEmptyMessage(payload.getMessageText(), payload.getAttachmentIds())) {
-			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "메시지 내용 없음");
+			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_CHAT_FAIL", "메시지 내용 없음");
 			return;
 		}
 
@@ -189,15 +192,17 @@ public class WsGateChatHandler {
 							.getAttachmentIds()), payload
 							.getMessageText(), payload.getReplyToMessageId(), payload.getAttachmentIds());
 
-			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.startGroupChat(startGrpChtCmd);
+			StartChatResponseDTO grpcResponse = wsGateChatClient.startGroupChat(startGrpChtCmd);
+			ChatMessageViewResponseDTO firstChatMessage = grpcResponse.getFirstChatMessage();
 
-			wsGateSessionRegistry.enterRoomSession(grpcResponse.getRoomId(), me.getUserId(), session);
-			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId());
-			pushChatMessageNotification(me, grpcResponse, dto.getRequestId());
-			log.info("{}번유저 -> {}번방 start단톡 : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
+			wsGateSessionRegistry.enterRoomSession(grpcResponse.getEnterRoomInfo().getRoomId(), me.getUserId(), session);
+			wsGateOutboundWriter.responseOk(session, dto, "START_GROUP_CHAT_OK", grpcResponse);
+			wsGateOutboundWriter.broadcastToRoom(firstChatMessage.getRoomId(), "MSG_CREATED", firstChatMessage, dto.getRequestId());
+			pushChatMessageNotification(me, firstChatMessage, dto.getRequestId());
+			log.info("{}번유저 -> {}번방 start단톡 : {}", me.getUserId(), firstChatMessage.getRoomId(), firstChatMessage.getMessageText());
 		} catch (Exception e) {
-			log.error("START_GROUP_ROOM_WITH_MSG 예외", e);
-			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_ROOM_WITH_MSG_FAIL", "그룹방 첫 메시지 전송 실패");
+			log.error("START_GROUP_CHAT 예외", e);
+			wsGateOutboundWriter.responseFail(session, dto, "START_GROUP_CHAT_FAIL", "그룹방 첫 메시지 전송 실패");
 		}
 	}
 

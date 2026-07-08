@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.chengine.mapper.ChatMapper;
+import com.chat.chengine.mapper.RoomMapper;
 import com.chat.chengine.usecase.ChatCommandUseCase;
 import com.chat.contract.chatting.command.CreateChatMessageCommand;
 import com.chat.contract.chatting.command.DeleteChatMessageCommand;
@@ -22,8 +23,10 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
+import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
 import com.chat.contract.room.domain.ChatRoomsDTO;
 import com.chat.contract.room.domain.ChatUserLookupDTO;
+import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.redis.cache.ReadPositionUpdateResult;
 import com.chat.redis.cache.RoomMemberCache;
 import com.chat.redis.cache.RoomReadPositionCache;
@@ -38,6 +41,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 
 	//	@Autowired 빼는 이유 : 필수 의존성이 명확함. final 가능. 테스트 쉬움. Spring 권장 방식. 객체 생성 시점에 의존성 누락을 바로 알 수 있음
 	private final ChatMapper chatMapper;
+	private final RoomMapper roomMapper;
 
 	private final RoomMemberCache roomMemberCache;
 	private final RoomReadPositionCache roomReadPositionCache;
@@ -83,10 +87,36 @@ public class ChatCommandService implements ChatCommandUseCase {
 		return value != null && !value.isBlank();
 	}
 
+	private EnterRoomResponseDTO buildEnterRoomInfo(Long roomId, Long requesterUserId) {
+		EnterRoomResponseDTO roomInfo = roomMapper.findRoomForEnter(roomId, requesterUserId);
+
+		if (roomInfo == null) {
+			throw new IllegalStateException("채팅방 입장 정보 조회 실패");
+		}
+
+		roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(roomId));
+		roomInfo.setRoomNotice(roomMapper.findActiveRoomNoticeView(roomId));
+
+		return roomInfo;
+	}
+
+	private EnterRoomResponseDTO buildDirectEnterRoomInfo(Long requesterUserId, String targetPublicId) {
+		EnterRoomResponseDTO roomInfo = roomMapper.findDirectRoomForEnter(requesterUserId, targetPublicId);
+
+		if (roomInfo == null) {
+			throw new IllegalStateException("1:1 채팅방 입장 정보 조회 실패");
+		}
+
+		roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(roomInfo.getRoomId()));
+		roomInfo.setRoomNotice(roomMapper.findActiveRoomNoticeView(roomInfo.getRoomId()));
+
+		return roomInfo;
+	}
+
 	// ====== 메시지 보내기 ==========================================================================================================================
 	@Override
 	@Transactional
-	public ChatMessageViewResponseDTO startDirectChat(StartDirectChatCommand cmd) {
+	public StartChatResponseDTO startDirectChat(StartDirectChatCommand cmd) {
 		if (cmd == null) {
 			throw new IllegalArgumentException("startDirectChat 요청이 없습니다.");
 		}
@@ -152,13 +182,16 @@ public class ChatCommandService implements ChatCommandUseCase {
 		CreateChatMessageCommand createCmd = new CreateChatMessageCommand(room.getRoomId(), cmd.getSenderUserId(), cmd.getSenderPublicId(), cmd
 				.getMessageType(), cmd.getMessageText(), cmd.getReplyToMessageId(), cmd.getAttachmentIds());
 
-		return createChatMessage(createCmd);
+		ChatMessageViewResponseDTO firstChatMessage = createChatMessage(createCmd);
+		EnterRoomResponseDTO enterRoomInfo = buildDirectEnterRoomInfo(cmd.getSenderUserId(), cmd.getTargetPublicId());
+
+		return new StartChatResponseDTO(enterRoomInfo, firstChatMessage);
 	}
 
 	// ====== 메시지 보내기 ==========================================================================================================================
 	@Override
 	@Transactional
-	public ChatMessageViewResponseDTO startGroupChat(StartGroupChatCommand cmd) {
+	public StartChatResponseDTO startGroupChat(StartGroupChatCommand cmd) {
 		if (cmd == null) {
 			throw new IllegalArgumentException("startGroupChat 요청이 없습니다.");
 		}
@@ -209,7 +242,10 @@ public class ChatCommandService implements ChatCommandUseCase {
 		CreateChatMessageCommand createCmd = new CreateChatMessageCommand(room.getRoomId(), cmd.getSenderUserId(), cmd.getSenderPublicId(), cmd
 				.getMessageType(), cmd.getMessageText(), cmd.getReplyToMessageId(), cmd.getAttachmentIds());
 
-		return createChatMessage(createCmd);
+		ChatMessageViewResponseDTO firstChatMessage = createChatMessage(createCmd);
+		EnterRoomResponseDTO enterRoomInfo = buildEnterRoomInfo(room.getRoomId(), cmd.getSenderUserId());
+
+		return new StartChatResponseDTO(enterRoomInfo, firstChatMessage);
 	}
 
 	// ====== 메시지 보내기 ==========================================================================================================================
@@ -283,6 +319,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 		response.setMessageType(msg.getMessageType());
 		response.setMessageText(msg.getMessageText());
 		response.setReplyToMessageId(msg.getReplyToMessageId());
+		response.setMessageStatus("ACTIVE");
 		response.setAttachments(attachments == null ? List.of() : attachments);
 		response.setCreatedAt(msg.getCreatedAt());
 		response.setUnreadCount(unreadCount);

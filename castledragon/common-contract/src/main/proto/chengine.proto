@@ -5,8 +5,8 @@ option java_package = "com.chat.contract.grpc";
 option java_outer_classname = "ChEngineProto";
 
 service ChEngineChat {
-  rpc StartDirectChat (StartDirectChatRequest) returns (CreateChatMessageResponse);
-  rpc StartGroupChat (StartGroupChatRequest) returns (CreateChatMessageResponse);
+  rpc StartDirectChat (StartDirectChatRequest) returns (StartChatResponse);
+  rpc StartGroupChat (StartGroupChatRequest) returns (StartChatResponse);
 
   rpc CreateChatMessage (CreateChatMessageRequest) returns (CreateChatMessageResponse);
   rpc ReadChatMessage (ReadChatMessageRequest) returns (ReadChatMessageResponse);
@@ -16,7 +16,7 @@ service ChEngineChat {
 }
 
 service ChEngineRoom {
-  rpc OpenDirectChatRoom (OpenDirectChatRoomRequest) returns (EnterRoomResponse);
+  rpc OpenDirectChatRoom (OpenDirectChatRoomRequest) returns (OpenDirectChatRoomResponse);
   
   rpc EnterRoom (EnterRoomRequest) returns (EnterRoomResponse);
   rpc LeftRoom (LeftRoomRequest) returns (RoomFeedResponse);
@@ -62,6 +62,23 @@ message OpenDirectChatRoomRequest {
   string requester_public_id = 2;
 
   string friend_public_id = 3;
+}
+
+message DirectChatDraft {
+  string friend_public_id = 1;
+  string friend_nickname = 2;
+  string friend_profile_img = 3;
+}
+
+message OpenDirectChatRoomResponse {
+  bool room_exists = 1;
+  EnterRoomResponse enter_room_info = 2;
+  DirectChatDraft draft = 3;
+}
+
+message StartChatResponse {
+  EnterRoomResponse enter_room_info = 1;
+  CreateChatMessageResponse first_chat_message = 2;
 }
 
 message StartDirectChatRequest {
@@ -211,7 +228,7 @@ message EnterRoomResponse {
   int64 room_member_count = 5;
   repeated RoomMemberProfile member_list = 6;
 
-  optional RoomNoticeView active_room_notice = 7;
+  RoomNoticeView active_room_notice = 7;
 
   string room_background = 8;
   bool message_notification_enabled = 9;
@@ -276,8 +293,10 @@ message RoomFeedResponse {
   repeated string target_public_ids = 5;
   repeated string target_nicknames = 6;
 
-  string feed_text = 7;
-  string feed_at = 8;
+  string target_role = 7;
+
+  string feed_text = 8;
+  string feed_at = 9;
 }
 
 message ApplyRoomNoticeRequest {

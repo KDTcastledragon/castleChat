@@ -50,6 +50,8 @@ public interface RoomMapper {
 
 	List<String> findNicknamesByPublicIds(@Param("publicIds") List<String> publicIds);
 
+	String findActiveRoomMemberRole(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
 	int leftRoom(@Param("roomId") Long roomId, @Param("requesterUserId") Long requesterUserId);
 
 	int inviteMembers(@Param("roomId") Long roomId, @Param("targetPublicIds") List<String> targetPublicIds); // 좀 무거운 편이다.

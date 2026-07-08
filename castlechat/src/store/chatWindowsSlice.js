@@ -4,20 +4,28 @@ const initialState = {
     windows: []
 };
 
+function getChatWindowKey(room) {
+    if (room.chatWindowKey) return room.chatWindowKey;
+    if (room.roomId !== null && room.roomId !== undefined) return `room:${room.roomId}`;
+    if (room.draftKey) return room.draftKey;
+    return `draft:${Date.now()}`;
+}
+
 const chatWindowsSlice = createSlice({
     name: 'chatWindows',
     initialState,
     reducers: {
         openChatWindow: (state, action) => {
             const room = action.payload;
+            const chatWindowKey = getChatWindowKey(room);
 
             const alreadyOpen = state.windows.some(
-                win => Number(win.roomId) === Number(room.roomId)
+                win => win.chatWindowKey === chatWindowKey
             );
 
             if (alreadyOpen) {
                 state.windows = state.windows.map(win =>
-                    Number(win.roomId) === Number(room.roomId)
+                    win.chatWindowKey === chatWindowKey
                         ? { ...win, zIndex: Date.now() }
                         : win
                 );
@@ -25,7 +33,11 @@ const chatWindowsSlice = createSlice({
             }
 
             state.windows.push({
+                chatWindowKey,
                 roomId: room.roomId,
+                isDraft: room.isDraft ?? false,
+                draftKey: room.draftKey ?? null,
+                targetPublicId: room.targetPublicId ?? null,
                 roomType: room.roomType,
                 roomName: room.displayRoomName || room.roomName,
                 roomThumbnail: room.roomThumbnail || room.customRoomThumbnail || null,
@@ -40,18 +52,18 @@ const chatWindowsSlice = createSlice({
         },
 
         closeChatWindow: (state, action) => {
-            const roomId = action.payload;
+            const chatWindowKey = action.payload;
 
             state.windows = state.windows.filter(
-                win => Number(win.roomId) !== Number(roomId)
+                win => win.chatWindowKey !== chatWindowKey
             );
         },
 
         moveChatWindow: (state, action) => {
-            const { roomId, x, y } = action.payload;
+            const { chatWindowKey, x, y } = action.payload;
 
             const target = state.windows.find(
-                win => Number(win.roomId) === Number(roomId)
+                win => win.chatWindowKey === chatWindowKey
             );
 
             if (target) {
@@ -61,10 +73,10 @@ const chatWindowsSlice = createSlice({
         },
 
         focusChatWindow: (state, action) => {
-            const roomId = action.payload;
+            const chatWindowKey = action.payload;
 
             const target = state.windows.find(
-                win => Number(win.roomId) === Number(roomId)
+                win => win.chatWindowKey === chatWindowKey
             );
 
             if (target) {

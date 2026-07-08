@@ -15,15 +15,21 @@ import com.chat.contract.grpc.ApplyRoomNoticeResponse;
 import com.chat.contract.grpc.ChatAttachment;
 import com.chat.contract.grpc.CreateChatMessageResponse;
 import com.chat.contract.grpc.DeleteChatMessageResponse;
+import com.chat.contract.grpc.DirectChatDraft;
 import com.chat.contract.grpc.EnterRoomResponse;
 import com.chat.contract.grpc.FriendEventResponse;
 import com.chat.contract.grpc.OnlineFriendTargetsResponse;
+import com.chat.contract.grpc.OpenDirectChatRoomResponse;
 import com.chat.contract.grpc.ReactChatMessageResponse;
 import com.chat.contract.grpc.ReadChatMessageResponse;
 import com.chat.contract.grpc.RoomFeedResponse;
 import com.chat.contract.grpc.RoomMemberProfile;
 import com.chat.contract.grpc.RoomNoticeView;
+import com.chat.contract.grpc.StartChatResponse;
+import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
+import com.chat.contract.room.domain.res.DirectChatDraftDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
+import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
@@ -156,6 +162,41 @@ public final class GrpcToDtoConverter {
 		return enterRoom;
 	}
 
+	private static DirectChatDraftDTO convertGrpcToDirectChatDraftDto(DirectChatDraft response) {
+		DirectChatDraftDTO draft = new DirectChatDraftDTO();
+
+		draft.setFriendPublicId(response.getFriendPublicId());
+		draft.setFriendNickname(response.getFriendNickname());
+		draft.setFriendProfileImg(response.getFriendProfileImg());
+
+		return draft;
+	}
+
+	public static OpenDirectChatRoomResponseDTO convertGrpcToOpenDirectChatRoomResDto(OpenDirectChatRoomResponse response) {
+		OpenDirectChatRoomResponseDTO openDirectChat = new OpenDirectChatRoomResponseDTO();
+
+		openDirectChat.setRoomExists(response.getRoomExists());
+
+		if (response.hasEnterRoomInfo()) {
+			openDirectChat.setEnterRoomInfo(convertGrpcToEnterRoomResDto(response.getEnterRoomInfo()));
+		}
+
+		if (response.hasDraft()) {
+			openDirectChat.setDraft(convertGrpcToDirectChatDraftDto(response.getDraft()));
+		}
+
+		return openDirectChat;
+	}
+
+	public static StartChatResponseDTO convertGrpcToStartChatResDto(StartChatResponse response) {
+		StartChatResponseDTO startChat = new StartChatResponseDTO();
+
+		startChat.setEnterRoomInfo(convertGrpcToEnterRoomResDto(response.getEnterRoomInfo()));
+		startChat.setFirstChatMessage(convertGrpcToChatMsgViewDto(response.getFirstChatMessage()));
+
+		return startChat;
+	}
+
 	private static RoomNoticeViewDTO convertGrpcToRoomNoticeViewDto(RoomNoticeView response) {
 		RoomNoticeViewDTO roomNoticeView = new RoomNoticeViewDTO();
 
@@ -183,6 +224,7 @@ public final class GrpcToDtoConverter {
 		roomFeed.setRequesterNickname(response.getRequesterNickname());
 		roomFeed.setTargetPublicIds(response.getTargetPublicIdsList());
 		roomFeed.setTargetNicknames(response.getTargetNicknamesList());
+		roomFeed.setTargetRole(response.getTargetRole());
 		roomFeed.setFeedText(response.getFeedText());
 
 		if (response.getFeedAt() != null && !response.getFeedAt().isBlank()) {
