@@ -9,11 +9,7 @@ import com.chat.contract.user.domain.UserProfileResponseDTO;
 
 @Mapper
 public interface FriendMapper {
-	int addFriend(@Param("myUserId") Long myUserId, @Param("targetUserId") Long targetUserId);
-
 	List<UserProfileResponseDTO> getFriendList(@Param("myUserId") Long myUserId);
 
 	List<UserProfileResponseDTO> getReceivedFriendRequests(@Param("myUserId") Long myUserId);
-
-	int respondFriendRequest(@Param("myUserId") Long myUserId, @Param("requesterUserId") Long requesterUserId, @Param("nextStatus") String nextStatus);
 }

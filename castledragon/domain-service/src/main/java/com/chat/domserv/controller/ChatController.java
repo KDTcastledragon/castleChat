@@ -1,6 +1,7 @@
 package com.chat.domserv.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,5 +40,20 @@ public class ChatController {
 		log.info("chat attachment uploaded. roomId={}, uploader={}, count={}", roomId, me.getUserId(), uploadedAttachments.size());
 
 		return ResponseEntity.ok(uploadedAttachments);
+	}
+
+	@PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<?> uploadCommonImage(@RequestParam("file") MultipartFile file, @RequestParam(value = "imageTarget", required = false) String imageTarget, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		String fileUrl = chatCommandUseCase.uploadCommonImage(me, file, imageTarget);
+
+		log.info("common image uploaded. uploader={}, imageTarget={}, fileUrl={}", me.getUserId(), imageTarget, fileUrl);
+
+		return ResponseEntity.ok(Map.of("fileUrl", fileUrl));
 	}
 }

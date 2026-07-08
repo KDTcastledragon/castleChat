@@ -2,8 +2,8 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { openChatWindow } from '../store/chatWindowsSlice';
-import { emitWs } from '../webSocket/wsClient';
-import { getOrCreateDirectRoomApi, createGroupRoomApi, enterExistedRoomApi, getMyAllRoomsApi } from '../api/roomApi';
+import { emitWsEnterRoomRequest, emitWsOpenDirectChat, emitWsStartGroupChat } from '../webSocket/wsClient';
+import { getMyAllRoomsApi } from '../api/roomApi';
 
 export function useChatRoomActions() {
     const dispatch = useDispatch();
@@ -11,8 +11,6 @@ export function useChatRoomActions() {
     const queryClient = useQueryClient();
 
     function openRoom(roomInfo) {
-        emitWs("ENTER_ROOM", { roomId: roomInfo.roomId });
-
         dispatch(openChatWindow({
             roomId: roomInfo.roomId,
             roomType: roomInfo.roomType,
@@ -29,7 +27,9 @@ export function useChatRoomActions() {
     }
 
     async function getOrCreateDirectRoom(friend) {
-        const roomInfo = await getOrCreateDirectRoomApi(friend.publicId);
+        const wsResponse = await emitWsOpenDirectChat(friend.publicId);
+        const roomInfo = wsResponse.payload;
+
         openRoom(roomInfo);
         return roomInfo;
     }
@@ -39,13 +39,19 @@ export function useChatRoomActions() {
             throw new Error('초대할 친구를 선택해주세요.');
         }
 
-        const selectedFriendPublicIdList = selectedFriends.map(friend => friend.publicId);
+        const inviteMemberPublicIds = selectedFriends.map(friend => friend.publicId);
+        const firstMessageText = `${roomName?.trim() || '단톡방'}이 생성되었습니다.`;
 
-        const roomInfo = await createGroupRoomApi({
+        const startResponse = await emitWsStartGroupChat(
             roomName,
             roomThumbnail,
-            selectedFriendPublicIdList
-        });
+            inviteMemberPublicIds,
+            firstMessageText
+        );
+
+        const createdMessage = startResponse.payload;
+        const enterResponse = await emitWsEnterRoomRequest(createdMessage.roomId);
+        const roomInfo = enterResponse.payload;
 
         queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
 
@@ -58,7 +64,9 @@ export function useChatRoomActions() {
 
     // getOr & enterExist -> 둘 다 “방 정보 반환”이라 겹쳐 보이지만, 식별자가 다르다는 점에서 역할이 분명히 달라.
     async function enterExistingRoom(roomId) {
-        const roomInfo = await enterExistedRoomApi(roomId);
+        const wsResponse = await emitWsEnterRoomRequest(roomId);
+        const roomInfo = wsResponse.payload;
+
         openRoom(roomInfo);
         return roomInfo;
     }

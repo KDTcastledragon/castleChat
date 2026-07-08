@@ -1,11 +1,14 @@
 package com.chat.chengine.service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.chat.chengine.mapper.ChatMapper;
 import com.chat.chengine.mapper.RoomMapper;
 import com.chat.chengine.usecase.RoomCommandUseCase;
 import com.chat.contract.room.command.ApplyRoomNoticeCommand;
@@ -16,10 +19,13 @@ import com.chat.contract.room.command.InviteMemberCommand;
 import com.chat.contract.room.command.KickMemberCommand;
 import com.chat.contract.room.command.LeftRoomCommand;
 import com.chat.contract.room.command.OpenDirectChatRoomCommand;
+import com.chat.contract.room.domain.ChatRoomsDTO;
+import com.chat.contract.room.domain.ChatUserLookupDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
+import com.chat.redis.cache.RoomMemberCache;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -42,7 +48,12 @@ public class RoomCommandService implements RoomCommandUseCase {
 	private static final String INACTIVE = "INACTIVE";
 	private static final String DELETED = "DELETED";
 
+	private static final String DIRECT = "DIRECT";
+	private static final String MEMBER = "MEMBER";
+
 	private final RoomMapper roomMapper;
+	private final ChatMapper chatMapper;
+	private final RoomMemberCache roomMemberCache;
 
 	@Override
 	@Transactional
@@ -266,11 +277,60 @@ public class RoomCommandService implements RoomCommandUseCase {
 		return value != null && !value.isBlank();
 	}
 
+	private ChatRoomsDTO createDirectRoom(Long requesterUserId, ChatUserLookupDTO requesterUser, ChatUserLookupDTO friendUser) {
+		ChatRoomsDTO room = new ChatRoomsDTO();
+		room.setRoomType(DIRECT);
+		room.setRoomStatus(ACTIVE);
+		room.setRoomName("D:" + requesterUserId + ":" + friendUser.getUserId());
+		room.setCreatedBy(requesterUserId);
+
+		int created = chatMapper.createRoom(room);
+
+		if (created != 1 || room.getRoomId() == null) {
+			throw new IllegalStateException("1:1 채팅방 생성 실패");
+		}
+
+		int insertedRequester = chatMapper.insertRoomMember(room.getRoomId(), requesterUserId, MEMBER, friendUser.getNickname() + "님과의 채팅방", friendUser
+				.getProfileImg(), null, ACTIVE);
+
+		int insertedFriend = chatMapper.insertRoomMember(room.getRoomId(), friendUser.getUserId(), MEMBER, requesterUser.getNickname()
+				+ "님과의 채팅방", requesterUser.getProfileImg(), null, ACTIVE);
+
+		if (insertedRequester != 1 || insertedFriend != 1) {
+			throw new IllegalStateException("1:1 채팅방 멤버 생성 실패");
+		}
+
+		roomMemberCache.initOrReplaceRoomMembers(room.getRoomId(), Set.of(requesterUserId, friendUser.getUserId()));
+
+		return room;
+	}
+
+	private void reactivateDirectMembers(Long roomId, Long requesterUserId, Long friendUserId) {
+		List<Long> directMemberIds = List.of(requesterUserId, friendUserId);
+
+		chatMapper.reactivateRoomMembers(roomId, directMemberIds);
+
+		Set<Long> expectedMemberIds = new HashSet<>(directMemberIds);
+		Set<Long> cachedMemberIds = roomMemberCache.getRoomMembers(roomId);
+
+		if (cachedMemberIds == null || cachedMemberIds.isEmpty()) {
+			roomMemberCache.initOrReplaceRoomMembers(roomId, expectedMemberIds);
+			return;
+		}
+
+		Set<Long> missingMemberIds = new HashSet<>(expectedMemberIds);
+		missingMemberIds.removeAll(cachedMemberIds);
+
+		if (!missingMemberIds.isEmpty()) {
+			roomMemberCache.addRoomMembers(roomId, missingMemberIds);
+		}
+	}
+
 	// ========================================================================================================================================
 	// ========================================================================================================================================
 
 	@Override
-	@Transactional(readOnly = true)
+	@Transactional
 	public EnterRoomResponseDTO openDirectChatRoom(OpenDirectChatRoomCommand cmd) {
 		if (cmd.getRequesterUserId() == null) {
 			throw new IllegalArgumentException("requesterUserId가 없습니다.");
@@ -284,10 +344,34 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalArgumentException("friendPublicId가 없습니다.");
 		}
 
+		ChatUserLookupDTO requesterUser = chatMapper.findUserInfoByPublicId(cmd.getRequesterPublicId());
+
+		if (requesterUser == null || !cmd.getRequesterUserId().equals(requesterUser.getUserId())) {
+			throw new IllegalArgumentException("요청자 정보를 찾을 수 없습니다.");
+		}
+
+		ChatUserLookupDTO friendUser = chatMapper.findUserInfoByPublicId(cmd.getFriendPublicId());
+
+		if (friendUser == null) {
+			throw new IllegalArgumentException("존재하지 않는 친구입니다.");
+		}
+
+		if (cmd.getRequesterUserId().equals(friendUser.getUserId())) {
+			throw new IllegalArgumentException("자기 자신과 1:1 채팅방을 열 수 없습니다.");
+		}
+
+		ChatRoomsDTO room = chatMapper.findDirectRoom(cmd.getRequesterUserId(), friendUser.getUserId());
+
+		if (room == null) {
+			room = createDirectRoom(cmd.getRequesterUserId(), requesterUser, friendUser);
+		} else {
+			reactivateDirectMembers(room.getRoomId(), cmd.getRequesterUserId(), friendUser.getUserId());
+		}
+
 		EnterRoomResponseDTO roomInfo = roomMapper.findDirectRoomForEnter(cmd.getRequesterUserId(), cmd.getFriendPublicId());
 
 		if (roomInfo == null) {
-			throw new IllegalArgumentException("1:1 채팅방이 없습니다. 첫 메시지 전송으로 방을 생성해야 합니다.");
+			throw new IllegalStateException("1:1 채팅방 입장 정보 조회 실패");
 		}
 
 		roomInfo.setMemberList(roomMapper.findRoomMemberProfiles(roomInfo.getRoomId()));

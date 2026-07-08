@@ -6,11 +6,15 @@ let isConnected = false; // isWsConnectedRef 대체.
 let isManualDisconnect = false;
 const roomHandlers = {}; // 방별 이벤트 처리 함수 보관소야.
 const globalHandlers = new Set();
+const requestWaiters = new Map();
 
 
 // ====== 2. constants =========================================================================================================
 const WS_TYPES = {
     CONNECT_USER: "CONNECT_USER",
+    OPEN_DIRECT_CHAT: "OPEN_DIRECT_CHAT",
+    START_DIRECT_CHAT: "START_DIRECT_CHAT",
+    START_GROUP_CHAT: "START_GROUP_CHAT",
     ENTER_ROOM: "ENTER_ROOM",
     EXIT_ROOM: "EXIT_ROOM",
     LEFT_ROOM: "LEFT_ROOM",
@@ -52,6 +56,104 @@ export function emitWs(wsType, payload = {}) {
         payload: payload
     }));
     return true;
+}
+
+function waitUntilWsOpen(timeoutMs = 3000) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        return Promise.resolve();
+    }
+
+    if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+        connectWs();
+    }
+
+    return new Promise((resolve, reject) => {
+        const startedAt = Date.now();
+
+        const timerId = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                clearInterval(timerId);
+                resolve();
+                return;
+            }
+
+            if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+                clearInterval(timerId);
+                reject(new Error('WebSocket 연결 종료'));
+                return;
+            }
+
+            if (Date.now() - startedAt >= timeoutMs) {
+                clearInterval(timerId);
+                reject(new Error('WebSocket 연결 시간 초과'));
+            }
+        }, 50);
+    });
+}
+
+export async function emitWsRequest(wsType, payload = {}, options = {}) {
+    await waitUntilWsOpen(options.connectTimeoutMs ?? 3000);
+
+    const requestId = crypto.randomUUID();
+    const successTypes = new Set(options.successTypes ?? []);
+    const failTypes = new Set(options.failTypes ?? []);
+    const timeoutMs = options.timeoutMs ?? 7000;
+
+    return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+            requestWaiters.delete(requestId);
+            reject(new Error(`${wsType} 응답 시간 초과`));
+        }, timeoutMs);
+
+        requestWaiters.set(requestId, {
+            successTypes,
+            failTypes,
+            resolve,
+            reject,
+            timeoutId
+        });
+
+        ws.send(JSON.stringify({
+            requestId,
+            wsType,
+            payload
+        }));
+    });
+}
+
+function settleWsRequest(wsEvt) {
+    const requestId = wsEvt?.requestId;
+
+    if (!requestId || !requestWaiters.has(requestId)) {
+        return;
+    }
+
+    const waiter = requestWaiters.get(requestId);
+    const successMatched = waiter.successTypes.size === 0 || waiter.successTypes.has(wsEvt.wsType);
+    const failMatched = waiter.failTypes.has(wsEvt.wsType) || wsEvt.isSuccess === false;
+
+    if (!successMatched && !failMatched) {
+        return;
+    }
+
+    clearTimeout(waiter.timeoutId);
+    requestWaiters.delete(requestId);
+
+    if (failMatched) {
+        waiter.reject(new Error(wsEvt.wsMessage || `${wsEvt.wsType} 실패`));
+        return;
+    }
+
+    waiter.resolve(wsEvt);
+}
+
+function rejectAllWsRequests(message) {
+    requestWaiters.forEach(waiter => {
+        clearTimeout(waiter.timeoutId);
+        waiter.reject(new Error(message));
+    });
+
+    requestWaiters.clear();
 }
 
 export function connectWs() {
@@ -101,6 +203,8 @@ export function connectWs() {
     ws.onmessage = (evt) => {
         const wsEvt = JSON.parse(evt.data); // evt.data는 서버가 보낸 JSON 문자열이야.
         console.log('ws 수신', wsEvt);
+
+        settleWsRequest(wsEvt);
 
         globalHandlers.forEach(handler => handler(wsEvt));
 
@@ -160,6 +264,7 @@ export function connectWs() {
         }
 
         isConnected = false;
+        rejectAllWsRequests('WebSocket 연결 종료');
 
         // 현재 살아있는 최신 ws를 실수로 지우지 않기 위해서, 아래의 조건을 둔거다. 닫힌 소켓이 현재 모듈이 들고 있는 ws와 같은 소켓일 때만 null 처리.
         // ws가 evt.target이 아니면? === 닫힌 건 예전 소켓이고, 현재 ws는 이미 다른 새 소켓이다. 그래서! 비우면 안 됨.
@@ -182,6 +287,7 @@ export function disconnectWs(action) {
     isManualDisconnect = true;
     isConnected = false;
     ws = null;
+    rejectAllWsRequests('WebSocket 연결 종료');
 
     Object.keys(roomHandlers).forEach((roomId) => {
         delete roomHandlers[roomId];
@@ -225,6 +331,37 @@ export function registerGlobalWsHandler(handler) {
 
 export function emitWsConnectUser() {
     return emitWs(WS_TYPES.CONNECT_USER);
+}
+
+export function emitWsOpenDirectChat(friendPublicId) {
+    return emitWsRequest(WS_TYPES.OPEN_DIRECT_CHAT, {
+        friendPublicId
+    }, {
+        successTypes: ['OPEN_DIRECT_CHAT_OK'],
+        failTypes: ['OPEN_DIRECT_CHAT_FAIL', 'WS_MESSAGE_FAIL']
+    });
+}
+
+export function emitWsStartGroupChat(roomName, roomThumbnail, inviteMemberPublicIds, messageText) {
+    return emitWsRequest(WS_TYPES.START_GROUP_CHAT, {
+        roomName,
+        roomThumbnail,
+        inviteMemberPublicIds,
+        messageType: 'TEXT',
+        messageText
+    }, {
+        successTypes: ['MSG_CREATED'],
+        failTypes: ['START_GROUP_ROOM_WITH_MSG_FAIL', 'WS_MESSAGE_FAIL']
+    });
+}
+
+export function emitWsEnterRoomRequest(roomId) {
+    return emitWsRequest(WS_TYPES.ENTER_ROOM, {
+        roomId
+    }, {
+        successTypes: ['ENTER_ROOM_OK'],
+        failTypes: ['ENTER_ROOM_FAIL', 'WS_MESSAGE_FAIL']
+    });
 }
 
 export function emitWsEnterRoom(roomId) {

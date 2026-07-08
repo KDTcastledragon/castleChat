@@ -91,6 +91,52 @@ public class ChatCommandService implements ChatCommandUseCase {
 		return uploadedAttachments;
 	}
 
+	@Override
+	public String uploadCommonImage(SessionUserDTO uploader, MultipartFile file, String imageTarget) {
+		if (uploader == null || uploader.getUserId() == null) {
+			throw new IllegalArgumentException("로그인 정보가 없습니다.");
+		}
+
+		if (file == null || file.isEmpty()) {
+			throw new IllegalArgumentException("업로드할 이미지가 없습니다.");
+		}
+
+		if (file.getSize() > MAX_TOTAL_UPLOAD_BYTES) {
+			throw new IllegalArgumentException("업로드 용량은 최대 320MB까지 가능합니다.");
+		}
+
+		String contentType = file.getContentType();
+
+		if (contentType == null || !contentType.startsWith("image/")) {
+			throw new IllegalArgumentException("이미지 파일만 업로드할 수 있습니다.");
+		}
+
+		String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() == null ? "image" : file.getOriginalFilename());
+
+		if (originalFileName.contains("..")) {
+			throw new IllegalArgumentException("잘못된 파일명입니다.");
+		}
+
+		String safeTarget = hasText(imageTarget) ? imageTarget.toUpperCase().replaceAll("[^A-Z0-9_-]", "_") : "COMMON";
+		String extension = extractExtension(originalFileName);
+		String storedFileName = UUID.randomUUID().toString().replace("-", "") + extension;
+
+		Path commonUploadDir = Paths.get(uploadDir).toAbsolutePath().normalize().resolve("common").resolve(safeTarget);
+		Path targetPath = commonUploadDir.resolve(storedFileName).normalize();
+
+		try {
+			Files.createDirectories(commonUploadDir);
+
+			try (InputStream fileInputStream = file.getInputStream()) {
+				Files.copy(fileInputStream, targetPath, StandardCopyOption.REPLACE_EXISTING);
+			}
+
+			return publicPrefix + "/common/" + safeTarget + "/" + storedFileName;
+		} catch (IOException e) {
+			throw new IllegalStateException("이미지 저장 실패", e);
+		}
+	}
+
 	private ChatAttachmentDTO saveOneAttachment(Long roomId, Long uploaderUserId, MultipartFile file, int sortOrder) {
 		String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() == null ? "file" : file.getOriginalFilename());
 
@@ -190,5 +236,9 @@ public class ChatCommandService implements ChatCommandUseCase {
 		}
 
 		return fileName.substring(dotIndex).toLowerCase();
+	}
+
+	private boolean hasText(String value) {
+		return value != null && !value.isBlank();
 	}
 }

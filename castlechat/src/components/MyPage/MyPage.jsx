@@ -1,16 +1,20 @@
 import './MyPage.css';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMe } from '../../hooks/useAuthUser';
 import { changeMyPasswordApi, updateMyProfileApi } from '../../api/userApi';
+import { uploadImageApi } from '../../api/chatApi';
 
 function MyPage() {
     const queryClient = useQueryClient();
     const { data: me, isLoading } = useMe();
+    const profileImgInputRef = useRef(null);
 
     const [nickname, setNickname] = useState('');
     const [profileImg, setProfileImg] = useState('');
+    const [profileImgFileName, setProfileImgFileName] = useState('');
+    const [isUploadingProfileImg, setIsUploadingProfileImg] = useState(false);
     const [prevPw, setPrevPw] = useState('');
     const [newPw, setNewPw] = useState('');
     const [isPasswordBoxOpen, setIsPasswordBoxOpen] = useState(false);
@@ -21,6 +25,7 @@ function MyPage() {
             queryClient.setQueryData(['me'], updatedMe);
             setNickname('');
             setProfileImg('');
+            setProfileImgFileName('');
             alert('내 정보가 변경되었습니다.');
         }
     });
@@ -53,6 +58,36 @@ function MyPage() {
         });
     }
 
+    async function changeProfileImage(e) {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 선택할 수 있습니다.');
+            return;
+        }
+
+        try {
+            setIsUploadingProfileImg(true);
+            const uploadedImageUrl = await uploadImageApi(file, 'PROFILE_IMAGE');
+
+            if (!uploadedImageUrl) {
+                throw new Error('업로드된 이미지 주소가 없습니다.');
+            }
+
+            setProfileImg(uploadedImageUrl);
+            setProfileImgFileName(file.name);
+        } catch (err) {
+            alert(err.message || '프로필 이미지 업로드 실패');
+        } finally {
+            setIsUploadingProfileImg(false);
+        }
+    }
+
     function changePassword() {
         if (!prevPw || !newPw) {
             alert('현재 비밀번호와 새 비밀번호를 입력해주세요.');
@@ -67,7 +102,7 @@ function MyPage() {
 
     return (
         <div className="myPageContainer">
-            <section className="myPageCard">
+            <div className="myPageCard">
                 <div className="myPageHeader">
                     <img
                         className="myPageProfileImg"
@@ -105,19 +140,31 @@ function MyPage() {
                         />
                     </label>
 
-                    <label>
-                        프로필 이미지 URL
+                    <div className="profileImageEditBox">
+                        <span>프로필 이미지</span>
+                        <strong>{profileImgFileName || (profileImg ? '새 이미지 선택됨' : '현재 이미지 유지')}</strong>
+
+                        <button
+                            type="button"
+                            onClick={() => profileImgInputRef.current?.click()}
+                            disabled={isUploadingProfileImg}
+                        >
+                            {isUploadingProfileImg ? '업로드 중...' : '파일 선택'}
+                        </button>
+
                         <input
-                            value={profileImg}
-                            onChange={(e) => setProfileImg(e.target.value)}
-                            placeholder={me.profileImg || '/images/mococo_question.png'}
+                            ref={profileImgInputRef}
+                            type="file"
+                            accept="image/*"
+                            hidden
+                            onChange={changeProfileImage}
                         />
-                    </label>
+                    </div>
 
                     <button
                         className="myPrimaryButton"
                         onClick={saveMyProfile}
-                        disabled={updateProfileMutation.isPending}
+                        disabled={updateProfileMutation.isPending || isUploadingProfileImg}
                     >
                         프로필 저장
                     </button>
@@ -156,7 +203,7 @@ function MyPage() {
                         </div>
                     )}
                 </div>
-            </section>
+            </div>
         </div>
     );
 }

@@ -79,6 +79,52 @@
     font-weight: bold;
 }
 
+.profileImageEditBox {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr 92px;
+    gap: 6px 8px;
+    align-items: end;
+    color: #555;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.profileImageEditBox span {
+    grid-column: 1 / span 2;
+}
+
+.profileImageEditBox strong {
+    min-width: 0;
+    height: 34px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.profileImageEditBox button {
+    height: 34px;
+    border: 0;
+    border-radius: 8px;
+    background: #111;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.profileImageEditBox button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
 .myEditSection input,
 .passwordEditBox input {
     height: 34px;

@@ -1,0 +1,37 @@
+cd D:\castleDragonProjects\castleChat\castledragon
+
+.\gradlew.bat :common-contract:clean
+
+.\gradlew.bat :common-contract:generateProto
+
+.\gradlew.bat :common-contract:compileJava
+
+.\gradlew.bat :websocket-gateway:compileJava
+
+.\gradlew.bat :channel-engine:compileJava
+
+
+
+cd D:\castleDragonProjects\castleChat\castledragon
+
+ .\gradlew.bat :common-contract:clean :common-contract:generateProto :common-contract:compileJava :websocket-gateway:compileJava :channel-engine:compileJava                
+
+
+
+cd D:\castleDragonProjects\castleChat\castledragon
+
+
+
+
+.\gradlew.bat :common-contract:clean :common-contract:generateProto :common-contract:compileJava 
+
+
+
+
+
+
+
+
+
+
+//

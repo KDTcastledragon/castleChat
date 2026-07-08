@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chat.chengine.mapper.FriendMapper">
+
+	<select id="findUserIdByPublicId" resultType="java.lang.Long">
+		SELECT user_id
+		FROM users
+		WHERE public_id = #{publicId}
+		  AND user_status = 'ACTIVE'
+	</select>
+
+	<select id="findNicknameByUserId" resultType="java.lang.String">
+		SELECT nickname
+		FROM users
+		WHERE user_id = #{userId}
+		  AND user_status = 'ACTIVE'
+	</select>
+
+	<insert id="addFriend">
+		INSERT INTO friendships (
+			requester_user_id,
+			receiver_user_id,
+			friendship_status
+		)
+		VALUES (
+			#{requesterUserId},
+			#{targetUserId},
+			'PENDING'
+		)
+	</insert>
+
+	<update id="respondFriendRequest">
+		UPDATE friendships
+		SET friendship_status = #{nextStatus}
+		WHERE receiver_user_id = #{responderUserId}
+		  AND requester_user_id = #{requesterUserId}
+		  AND friendship_status = 'PENDING'
+	</update>
+
+	<select id="findAcceptedFriendUserIds" resultType="java.lang.Long">
+		SELECT
+			CASE
+				WHEN requester_user_id = #{userId} THEN receiver_user_id
+				ELSE requester_user_id
+			END AS friendUserId
+		FROM friendships
+		WHERE friendship_status = 'ACCEPTED'
+		  AND (
+			  requester_user_id = #{userId}
+			  OR receiver_user_id = #{userId}
+		  )
+	</select>
+
+</mapper>

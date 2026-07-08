@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chat.chengine.mapper.RoomMapper">
+
+	<select id="lockRoomForUpdate" resultType="java.lang.Long">
+		SELECT room_id
+		FROM chat_rooms
+		WHERE room_id = #{roomId}
+		FOR UPDATE
+	</select>
+
+	<select id="findActiveRoomNoticeId" resultType="java.lang.Long">
+		SELECT room_notice_id
+		FROM chat_room_notices
+		WHERE room_id = #{roomId}
+		  AND room_notice_status = 'ACTIVE'
+		ORDER BY room_notice_id DESC
+		LIMIT 1
+	</select>
+
+	<select id="findRoomNoticeStatus" resultType="java.lang.String">
+		SELECT room_notice_status
+		FROM chat_room_notices
+		WHERE room_id = #{roomId}
+		  AND room_notice_id = #{roomNoticeId}
+	</select>
+
+	<select id="findRoomNoticeRequesterUserId" resultType="java.lang.Long">
+		SELECT requester_id
+		FROM chat_room_notices
+		WHERE room_id = #{roomId}
+		  AND room_notice_id = #{roomNoticeId}
+	</select>
+
+	<insert id="insertRoomNotice"
+			parameterType="com.chat.contract.room.command.ApplyRoomNoticeCommand"
+			useGeneratedKeys="true"
+			keyProperty="targetRoomNoticeId">
+		INSERT INTO chat_room_notices (
+			room_id,
+			requester_id,
+			room_notice_action,
+			room_notice_type,
+			source_message_id,
+			room_notice_contents,
+			room_notice_status,
+			created_at
+		)
+		VALUES (
+			#{roomId},
+			#{requesterUserId},
+			'CREATE',
+			#{roomNoticeType},
+			#{sourceMessageId},
+			#{roomNoticeContents},
+			'ACTIVE',
+			NOW()
+		)
+	</insert>
+
+	<update id="updateRoomNotice">
+		UPDATE chat_room_notices
+		SET
+			room_notice_action = 'UPDATE',
+			<if test="roomNoticeType != null">
+				room_notice_type = #{roomNoticeType},
+			</if>
+			<if test="sourceMessageId != null">
+				source_message_id = #{sourceMessageId},
+			</if>
+			room_notice_contents = #{roomNoticeContents},
+			updated_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND room_notice_id = #{targetRoomNoticeId}
+		  AND requester_id = #{requesterUserId}
+		  AND room_notice_status != 'DELETED'
+	</update>
+
+	<update id="inactivateActiveRoomNotice">
+		UPDATE chat_room_notices
+		SET
+			room_notice_action = 'INACTIVATE',
+			room_notice_status = 'INACTIVE',
+			inactivated_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND requester_id = #{requesterUserId}
+		  AND room_notice_status = 'ACTIVE'
+	</update>
+
+	<update id="inactivateRoomNotice">
+		UPDATE chat_room_notices
+		SET
+			room_notice_action = 'INACTIVATE',
+			room_notice_status = 'INACTIVE',
+			inactivated_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND room_notice_id = #{roomNoticeId}
+		  AND room_notice_status = 'ACTIVE'
+	</update>
+
+	<update id="reactivateRoomNotice">
+		UPDATE chat_room_notices
+		SET
+			room_notice_action = 'REACTIVATE',
+			room_notice_status = 'ACTIVE',
+			reactivated_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND room_notice_id = #{roomNoticeId}
+		  AND room_notice_status = 'INACTIVE'
+	</update>
+
+	<update id="deleteRoomNotice">
+		UPDATE chat_room_notices
+		SET
+			room_notice_action = 'DELETE',
+			room_notice_status = 'DELETED',
+			deleted_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND room_notice_id = #{roomNoticeId}
+		  AND room_notice_status != 'DELETED'
+	</update>
+
+	<select id="findLatestRoomNoticeView" resultType="com.chat.contract.room.domain.res.RoomNoticeViewDTO">
+		SELECT
+			rn.room_notice_id AS roomNoticeId,
+			rn.room_id AS roomId,
+			rn.room_notice_action AS roomNoticeAction,
+			rn.room_notice_type AS roomNoticeType,
+			rn.room_notice_contents AS roomNoticeContents,
+			rn.room_notice_status AS roomNoticeStatus,
+			u.public_id AS requesterPublicId,
+			CASE rn.room_notice_action
+				WHEN 'CREATE' THEN rn.created_at
+				WHEN 'UPDATE' THEN rn.updated_at
+				WHEN 'INACTIVATE' THEN rn.inactivated_at
+				WHEN 'REACTIVATE' THEN rn.reactivated_at
+				WHEN 'DELETE' THEN rn.deleted_at
+			END AS lastAppliedAt
+		FROM chat_room_notices rn
+		JOIN users u
+		  ON u.user_id = rn.requester_id
+		WHERE rn.room_id = #{roomId}
+		ORDER BY rn.room_notice_id DESC
+		LIMIT 1
+	</select>
+
+	<select id="findRoomNoticeViewById" resultType="com.chat.contract.room.domain.res.RoomNoticeViewDTO">
+		SELECT
+			rn.room_notice_id AS roomNoticeId,
+			rn.room_id AS roomId,
+			rn.room_notice_action AS roomNoticeAction,
+			rn.room_notice_type AS roomNoticeType,
+			rn.room_notice_contents AS roomNoticeContents,
+			rn.room_notice_status AS roomNoticeStatus,
+			u.public_id AS requesterPublicId,
+			CASE rn.room_notice_action
+				WHEN 'CREATE' THEN rn.created_at
+				WHEN 'UPDATE' THEN rn.updated_at
+				WHEN 'INACTIVATE' THEN rn.inactivated_at
+				WHEN 'REACTIVATE' THEN rn.reactivated_at
+				WHEN 'DELETE' THEN rn.deleted_at
+			END AS lastAppliedAt
+		FROM chat_room_notices rn
+		JOIN users u
+		  ON u.user_id = rn.requester_id
+		WHERE rn.room_id = #{roomId}
+		  AND rn.room_notice_id = #{roomNoticeId}
+	</select>
+
+	<select id="findDirectRoomForEnter" resultType="com.chat.contract.room.domain.res.EnterRoomResponseDTO">
+		SELECT
+			cr.room_id AS roomId,
+			cr.room_type AS roomType,
+			requester_rm.custom_room_name AS customRoomName,
+			requester_rm.custom_room_thumbnail AS customRoomThumbnail,
+			requester_rm.custom_room_background AS customRoomBackground,
+			requester_rm.message_notification_enabled AS messageNotificationEnabled,
+			(
+				SELECT COUNT(*)
+				FROM room_members cnt_rm
+				WHERE cnt_rm.room_id = cr.room_id
+				  AND cnt_rm.member_status = 'ACTIVE'
+			) AS roomMemberCount
+		FROM chat_rooms cr
+		JOIN room_members requester_rm
+		  ON requester_rm.room_id = cr.room_id
+		 AND requester_rm.user_id = #{requesterUserId}
+		JOIN room_members friend_rm
+		  ON friend_rm.room_id = cr.room_id
+		 AND friend_rm.user_id != requester_rm.user_id
+		JOIN users friend_user
+		  ON friend_user.user_id = friend_rm.user_id
+		 AND friend_user.public_id = #{friendPublicId}
+		WHERE cr.room_type = 'DIRECT'
+		  AND cr.room_status = 'ACTIVE'
+		  AND requester_rm.member_status = 'ACTIVE'
+		LIMIT 1
+	</select>
+
+	<select id="findRoomForEnter" resultType="com.chat.contract.room.domain.res.EnterRoomResponseDTO">
+		SELECT
+			cr.room_id AS roomId,
+			cr.room_type AS roomType,
+			rm.custom_room_name AS customRoomName,
+			rm.custom_room_thumbnail AS customRoomThumbnail,
+			rm.custom_room_background AS customRoomBackground,
+			rm.message_notification_enabled AS messageNotificationEnabled,
+			(
+				SELECT COUNT(*)
+				FROM room_members cnt_rm
+				WHERE cnt_rm.room_id = cr.room_id
+				  AND cnt_rm.member_status = 'ACTIVE'
+			) AS roomMemberCount
+		FROM chat_rooms cr
+		JOIN room_members rm
+		  ON rm.room_id = cr.room_id
+		WHERE cr.room_id = #{roomId}
+		  AND cr.room_status = 'ACTIVE'
+		  AND rm.user_id = #{requesterUserId}
+		  AND rm.member_status = 'ACTIVE'
+	</select>
+
+	<select id="findRoomMemberProfiles" resultType="com.chat.contract.room.domain.res.RoomMemberResponseDTO">
+		SELECT
+			u.public_id AS publicId,
+			u.nickname AS nickname,
+			u.friend_code AS friendCode,
+			u.profile_img AS profileImg,
+			rm.role AS role
+		FROM room_members rm
+		JOIN users u
+		  ON u.user_id = rm.user_id
+		WHERE rm.room_id = #{roomId}
+		  AND rm.member_status = 'ACTIVE'
+		ORDER BY
+			CASE rm.role
+				WHEN 'HOST' THEN 1
+				WHEN 'MANAGER' THEN 2
+				ELSE 3
+			END,
+			rm.room_member_id ASC
+	</select>
+
+	<select id="findActiveRoomNoticeView" resultType="com.chat.contract.room.domain.res.RoomNoticeViewDTO">
+		SELECT
+			rn.room_notice_id AS roomNoticeId,
+			rn.room_id AS roomId,
+			rn.room_notice_action AS roomNoticeAction,
+			rn.room_notice_type AS roomNoticeType,
+			rn.room_notice_contents AS roomNoticeContents,
+			rn.room_notice_status AS roomNoticeStatus,
+			u.public_id AS requesterPublicId,
+			CASE rn.room_notice_action
+				WHEN 'CREATE' THEN rn.created_at
+				WHEN 'UPDATE' THEN rn.updated_at
+				WHEN 'INACTIVATE' THEN rn.inactivated_at
+				WHEN 'REACTIVATE' THEN rn.reactivated_at
+				WHEN 'DELETE' THEN rn.deleted_at
+			END AS lastAppliedAt
+		FROM chat_room_notices rn
+		JOIN users u
+		  ON u.user_id = rn.requester_id
+		WHERE rn.room_id = #{roomId}
+		  AND rn.room_notice_status = 'ACTIVE'
+		ORDER BY rn.room_notice_id DESC
+		LIMIT 1
+	</select>
+
+	<select id="findNicknameByUserId" resultType="java.lang.String">
+		SELECT nickname
+		FROM users
+		WHERE user_id = #{userId}
+	</select>
+
+	<select id="findNicknameByPublicId" resultType="java.lang.String">
+		SELECT nickname
+		FROM users
+		WHERE public_id = #{publicId}
+	</select>
+
+	<select id="findNicknamesByPublicIds" resultType="java.lang.String">
+		SELECT nickname
+		FROM users
+		WHERE public_id IN
+		<foreach collection="publicIds" item="publicId" open="(" separator="," close=")">
+			#{publicId}
+		</foreach>
+		ORDER BY FIELD(public_id,
+		<foreach collection="publicIds" item="publicId" separator=",">
+			#{publicId}
+		</foreach>
+		)
+	</select>
+
+	<update id="leftRoom">
+		UPDATE room_members
+		SET
+			member_status = 'LEFT',
+			role = IF(role = 'HOST', 'HOST', role),
+			left_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND user_id = #{requesterUserId}
+		  AND member_status = 'ACTIVE'
+	</update>
+
+	<insert id="inviteMembers">
+		INSERT INTO room_members (
+			room_id,
+			user_id,
+			role,
+			custom_room_name,
+			custom_room_thumbnail,
+			custom_roomback_ground,
+			member_status,
+			invited_at
+		)
+		SELECT
+			#{roomId},
+			u.user_id,
+			'MEMBER',
+			cr.room_name,
+			cr.room_thumbnail,
+			NULL,
+			'ACTIVE',
+			NOW()
+		FROM users u
+		JOIN chat_rooms cr
+		  ON cr.room_id = #{roomId}
+		WHERE u.public_id IN
+		<foreach collection="targetPublicIds" item="publicId" open="(" separator="," close=")">
+			#{publicId}
+		</foreach>
+		AND u.user_status = 'ACTIVE'
+		ON DUPLICATE KEY UPDATE
+			role = IF(room_members.role = 'NONE', 'MEMBER', room_members.role),
+			member_status = 'ACTIVE',
+			left_at = NULL,
+			kicked_at = NULL,
+			invited_at = NOW(),
+			rejoined_at = NOW()
+	</insert>
+
+	<update id="kickMember">
+		UPDATE room_members rm
+		JOIN users u
+		  ON u.user_id = rm.user_id
+		SET
+			rm.role = 'NONE',
+			rm.member_status = 'KICKED',
+			rm.kicked_at = NOW()
+		WHERE rm.room_id = #{roomId}
+		  AND u.public_id = #{targetPublicId}
+		  AND rm.user_id != #{requesterUserId}
+		  AND rm.member_status = 'ACTIVE'
+		  AND rm.role != 'HOST'
+	</update>
+
+	<update id="banMember">
+		UPDATE room_members rm
+		JOIN users u
+		  ON u.user_id = rm.user_id
+		SET
+			rm.role = 'NONE',
+			rm.member_status = 'BANNED',
+			rm.banned_at = NOW()
+		WHERE rm.room_id = #{roomId}
+		  AND u.public_id = #{targetPublicId}
+		  AND rm.user_id != #{requesterUserId}
+		  AND rm.member_status = 'ACTIVE'
+		  AND rm.role != 'HOST'
+	</update>
+
+	<update id="changeMemberRole">
+		UPDATE room_members rm
+		JOIN users u
+		  ON u.user_id = rm.user_id
+		SET rm.role = #{targetRole}
+		WHERE rm.room_id = #{roomId}
+		  AND u.public_id = #{targetPublicId}
+		  AND rm.user_id != #{requesterUserId}
+		  AND rm.member_status = 'ACTIVE'
+		  AND rm.role != 'HOST'
+	</update>
+
+</mapper>

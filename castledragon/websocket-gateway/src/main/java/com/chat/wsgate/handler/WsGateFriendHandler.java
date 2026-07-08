@@ -45,7 +45,7 @@ public class WsGateFriendHandler {
 
 			wsGateOutboundWriter.responseOk(session, dto, "ADD_FRIEND_OK", response);
 			wsGateOutboundWriter.pushToSingleUser(response.getTargetUserId(), "FRIEND_REQUEST_RECEIVED", response, dto.getRequestId());
-
+			log.info("{} -> {} 친구요청", me.getNickname(), response.getTargetNickname());
 		} catch (Exception e) {
 			log.error("ADD_FRIEND 예외", e);
 			wsGateOutboundWriter.responseFail(session, dto, "ADD_FRIEND_FAIL", "친구 요청 실패");

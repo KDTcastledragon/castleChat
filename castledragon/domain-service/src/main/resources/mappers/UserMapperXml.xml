@@ -19,9 +19,13 @@
   	</select>
   	
 	<select id="searchUsers" resultType="com.chat.contract.user.domain.UserProfileResponseDTO" >
-	  	SELECT public_id, nickname, friend_code, profile_img
+		SELECT
+			public_id AS publicId,
+			nickname,
+			friend_code AS friendCode,
+			profile_img AS profileImg
 		FROM users
-		WHERE status = 'ACTIVE'
+		WHERE user_status = 'ACTIVE'
 		  AND user_id != #{userId}
 <!-- 		  AND user_id &lt;&gt; #{myUserId} -->
 		  AND (
@@ -32,7 +36,7 @@
   	</select>
   	
   	<select id="findUserIdByPublicId" resultType="java.lang.Long">
-	select user_id from users where public_id =#{publicId} and status ='ACTIVE'
+	select user_id from users where public_id =#{publicId} and user_status ='ACTIVE'
 	</select>
 	
 	<select id="findUserInfoByPublicId" resultType="com.chat.contract.room.domain.ChatUserLookupDTO">
@@ -71,7 +75,7 @@
 			nickname = #{nickname},
 			profile_img = #{profileImg}
 		WHERE user_id = #{userId}
-		  AND status = 'ACTIVE'
+		  AND user_status = 'ACTIVE'
 	</update>
     
     <delete id="withdrawMember">

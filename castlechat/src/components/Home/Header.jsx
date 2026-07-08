@@ -33,26 +33,17 @@ function Header() {
                         </div>
                     </div>
 
-            <div className='headerButtonSection'>
-                <button onClick={() => nav('/')}>친구목록</button>
-                <button onClick={() => nav('/chatList')}>채팅</button>
-                <button onClick={() => nav('/settings')}>설정</button>
-                <button onClick={() => nav('/myPage')}>내정보</button>
-            </div>
+                    <div className='headerButtonSection'>
+                        <button onClick={() => nav('/')}>친구목록</button>
+                        <button onClick={() => nav('/chatList')}>채팅</button>
+                        <button onClick={() => nav('/settings')}>설정</button>
+                        <button onClick={() => nav('/myPage')}>내정보</button>
+                    </div>
 
                 </div>
                 :
                 <div className='loginedHeader'>
                     caslteChat &nbsp;&nbsp;
-                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                    <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                    <div><button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                        <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                        <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                        <button onClick={() => nav('/login')}>로그인로그인로그인로그인</button>
-                    </div>
                 </div>
             }
 

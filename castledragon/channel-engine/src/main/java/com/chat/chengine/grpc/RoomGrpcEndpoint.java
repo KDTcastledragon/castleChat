@@ -26,6 +26,7 @@ import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -40,15 +41,24 @@ public class RoomGrpcEndpoint extends ChEngineRoomGrpc.ChEngineRoomImplBase {
 
 	@Override
 	public void openDirectChatRoom(OpenDirectChatRoomRequest request, StreamObserver<EnterRoomResponse> responseObserver) {
-		OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(request.getRequesterUserId(), request
-				.getRequesterPublicId(), request.getFriendPublicId());
+		try {
+			OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(request.getRequesterUserId(), request
+					.getRequesterPublicId(), request.getFriendPublicId());
 
-		EnterRoomResponseDTO response = roomCommandUseCase.openDirectChatRoom(openDirChtCmd);
+			EnterRoomResponseDTO response = roomCommandUseCase.openDirectChatRoom(openDirChtCmd);
 
-		EnterRoomResponse grpcResponse = DtoToGrpcConverter.convertEnterRoomResDtoToGrpc(response);
+			EnterRoomResponse grpcResponse = DtoToGrpcConverter.convertEnterRoomResDtoToGrpc(response);
 
-		responseObserver.onNext(grpcResponse);
-		responseObserver.onCompleted();
+			responseObserver.onNext(grpcResponse);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.error("openDirectChatRoom 처리 실패. requesterUserId={}, requesterPublicId={}, friendPublicId={}", request
+					.getRequesterUserId(), request.getRequesterPublicId(), request.getFriendPublicId(), e);
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getMessage() == null ? "1:1 채팅방 열기 실패" : e.getMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
 	}
 
 	@Override

@@ -19,24 +19,28 @@ public final class DtoToGrpcConverter {
 	private DtoToGrpcConverter() {
 	}
 
+	private static String nvl(String value) {
+		return value == null ? "" : value;
+	}
+
 	public static EnterRoomResponse convertEnterRoomResDtoToGrpc(EnterRoomResponseDTO dto) {
 		EnterRoomResponse.Builder responseBuilder = EnterRoomResponse.newBuilder()
 				.setRoomId(dto.getRoomId())
-				.setRoomType(dto.getRoomType())
-				.setRoomName(dto.getCustomRoomName())
-				.setRoomThumbnail(dto.getCustomRoomThumbnail() == null ? "" : dto.getCustomRoomThumbnail())
-				.setRoomBackground(dto.getCustomRoomBackground() == null ? "" : dto.getCustomRoomBackground())
+				.setRoomType(nvl(dto.getRoomType()))
+				.setRoomName(nvl(dto.getCustomRoomName()))
+				.setRoomThumbnail(nvl(dto.getCustomRoomThumbnail()))
+				.setRoomBackground(nvl(dto.getCustomRoomBackground()))
 				.setMessageNotificationEnabled(Boolean.TRUE.equals(dto.getMessageNotificationEnabled()))
-				.setRoomMemberCount(dto.getRoomMemberCount());
+				.setRoomMemberCount(dto.getRoomMemberCount() == null ? 0L : dto.getRoomMemberCount());
 
 		if (dto.getMemberList() != null) {
 			for (RoomMemberResponseDTO member : dto.getMemberList()) {
 				RoomMemberProfile memberProfile = RoomMemberProfile.newBuilder()
-						.setPublicId(member.getPublicId())
-						.setNickname(member.getNickname())
-						.setFriendCode(member.getFriendCode() == null ? "" : member.getFriendCode())
-						.setProfileImg(member.getProfileImg() == null ? "" : member.getProfileImg())
-						.setRole(member.getRole())
+						.setPublicId(nvl(member.getPublicId()))
+						.setNickname(nvl(member.getNickname()))
+						.setFriendCode(nvl(member.getFriendCode()))
+						.setProfileImg(nvl(member.getProfileImg()))
+						.setRole(nvl(member.getRole()))
 						.build();
 
 				responseBuilder.addMemberList(memberProfile);
@@ -54,11 +58,11 @@ public final class DtoToGrpcConverter {
 		return RoomNoticeView.newBuilder()
 				.setRoomNoticeId(dto.getRoomNoticeId())
 				.setRoomId(dto.getRoomId())
-				.setRoomNoticeAction(dto.getRoomNoticeAction())
-				.setRoomNoticeType(dto.getRoomNoticeType())
-				.setRoomNoticeContents(dto.getRoomNoticeContents())
-				.setRoomNoticeStatus(dto.getRoomNoticeStatus())
-				.setRequesterPublicId(dto.getRequesterPublicId())
+				.setRoomNoticeAction(nvl(dto.getRoomNoticeAction()))
+				.setRoomNoticeType(nvl(dto.getRoomNoticeType()))
+				.setRoomNoticeContents(nvl(dto.getRoomNoticeContents()))
+				.setRoomNoticeStatus(nvl(dto.getRoomNoticeStatus()))
+				.setRequesterPublicId(nvl(dto.getRequesterPublicId()))
 				.setLastAppliedAt(dto.getLastAppliedAt() == null ? "" : dto.getLastAppliedAt().toString())
 				.build();
 	}
@@ -66,10 +70,10 @@ public final class DtoToGrpcConverter {
 	public static RoomFeedResponse convertRoomFeedResDtoToGrpc(RoomFeedResponseDTO dto) {
 		RoomFeedResponse.Builder builder = RoomFeedResponse.newBuilder()
 				.setRoomId(dto.getRoomId())
-				.setFeedType(dto.getFeedType())
-				.setRequesterPublicId(dto.getRequesterPublicId())
-				.setRequesterNickname(dto.getRequesterNickname())
-				.setFeedText(dto.getFeedText())
+				.setFeedType(nvl(dto.getFeedType()))
+				.setRequesterPublicId(nvl(dto.getRequesterPublicId()))
+				.setRequesterNickname(nvl(dto.getRequesterNickname()))
+				.setFeedText(nvl(dto.getFeedText()))
 				.setFeedAt(dto.getFeedAt() == null ? "" : dto.getFeedAt().toString());
 
 		if (dto.getTargetPublicIds() != null) {
@@ -92,14 +96,14 @@ public final class DtoToGrpcConverter {
 
 	public static FriendEventResponse convertFriendEventResDtoToGrpc(FriendEventResponseDTO dto) {
 		return FriendEventResponse.newBuilder()
-				.setFriendEventType(dto.getFriendEventType())
+				.setFriendEventType(nvl(dto.getFriendEventType()))
 				.setRequesterUserId(dto.getRequesterUserId())
-				.setRequesterPublicId(dto.getRequesterPublicId())
-				.setRequesterNickname(dto.getRequesterNickname() == null ? "" : dto.getRequesterNickname())
+				.setRequesterPublicId(nvl(dto.getRequesterPublicId()))
+				.setRequesterNickname(nvl(dto.getRequesterNickname()))
 				.setTargetUserId(dto.getTargetUserId())
-				.setTargetPublicId(dto.getTargetPublicId())
-				.setTargetNickname(dto.getTargetNickname() == null ? "" : dto.getTargetNickname())
-				.setFriendStatus(dto.getFriendStatus())
+				.setTargetPublicId(nvl(dto.getTargetPublicId()))
+				.setTargetNickname(nvl(dto.getTargetNickname()))
+				.setFriendStatus(nvl(dto.getFriendStatus()))
 				.setEventAt(dto.getEventAt() == null ? "" : dto.getEventAt().toString())
 				.build();
 	}

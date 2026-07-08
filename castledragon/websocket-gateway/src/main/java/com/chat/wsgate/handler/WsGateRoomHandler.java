@@ -30,6 +30,7 @@ import com.chat.wsgate.outbound.WsGateOutboundWriter;
 import com.chat.wsgate.session.WsGateSessionRegistry;
 import com.chat.wsgate.support.WsGatePayloadConverter;
 
+import io.grpc.StatusRuntimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -55,15 +56,36 @@ public class WsGateRoomHandler {
 			return;
 		}
 
-		OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(me.getUserId(), me.getPublicId(), payload.getFriendPublicId());
+		try {
+			OpenDirectChatRoomCommand openDirChtCmd = new OpenDirectChatRoomCommand(me.getUserId(), me.getPublicId(), payload.getFriendPublicId());
 
-		EnterRoomResponseDTO openDirChtResponse = wsGateRoomClient.openDirectChatRoom(openDirChtCmd);
+			EnterRoomResponseDTO openDirChtResponse = wsGateRoomClient.openDirectChatRoom(openDirChtCmd);
 
-		wsGateSessionRegistry.enterRoomSession(openDirChtResponse.getRoomId(), me.getUserId(), session);
+			wsGateSessionRegistry.enterRoomSession(openDirChtResponse.getRoomId(), me.getUserId(), session);
 
-		log.info("{}번 유저 direct room open. roomId={}", me.getUserId(), openDirChtResponse.getRoomId());
+			log.info("{}번 유저 direct room open. roomId={}", me.getUserId(), openDirChtResponse.getRoomId());
 
-		wsGateOutboundWriter.responseOk(session, dto, "OPEN_DIRECT_CHAT_OK", openDirChtResponse);
+			wsGateOutboundWriter.responseOk(session, dto, "OPEN_DIRECT_CHAT_OK", openDirChtResponse);
+		} catch (Exception e) {
+			log.error("OPEN_DIRECT_CHAT 예외", e);
+			wsGateOutboundWriter.responseFail(session, dto, "OPEN_DIRECT_CHAT_FAIL", createOpenDirectChatFailMessage(e));
+		}
+	}
+
+	private String createOpenDirectChatFailMessage(Exception e) {
+		if (e instanceof StatusRuntimeException grpcException) {
+			String description = grpcException.getStatus().getDescription();
+
+			if (description != null && !description.isBlank()) {
+				return description;
+			}
+		}
+
+		if (e.getMessage() != null && !e.getMessage().isBlank()) {
+			return e.getMessage();
+		}
+
+		return "1:1 채팅방 열기 실패";
 	}
 
 	// ====== 기존 채팅방 입장 ===========================================================================================================

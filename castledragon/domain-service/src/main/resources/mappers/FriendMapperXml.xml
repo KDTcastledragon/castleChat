@@ -5,50 +5,39 @@
 
 <mapper namespace="com.chat.domserv.mapper.FriendMapper">
 
-	<insert id="addFriend">
-		INSERT INTO friendships (requester_user_id,receiver_user_id,status)
-		VALUES (#{myUserId},#{targetUserId},'PENDING')
-	</insert>
-	
 	<select id="getFriendList" resultType="com.chat.contract.user.domain.UserProfileResponseDTO">
-		SELECT 
-	    u.public_id,
-	    u.nickname,
-	    u.friend_code,
-	    u.profile_img
-	FROM friendships f
-	JOIN users u
-	  ON u.user_id = CASE 
-	      WHEN f.requester_user_id = #{myUserId} THEN f.receiver_user_id
-	      ELSE f.requester_user_id
-	  END
-	WHERE f.status = 'ACCEPTED'
-	  AND (f.requester_user_id = #{myUserId}
-	       OR f.receiver_user_id = #{myUserId})
-	  AND u.status = 'ACTIVE'
+		SELECT
+			u.public_id AS publicId,
+			u.nickname AS nickname,
+			u.friend_code AS friendCode,
+			u.profile_img AS profileImg
+		FROM friendships f
+		JOIN users u
+		  ON u.user_id = CASE
+		      WHEN f.requester_user_id = #{myUserId} THEN f.receiver_user_id
+		      ELSE f.requester_user_id
+		  END
+		WHERE f.friendship_status = 'ACCEPTED'
+		  AND (
+			  f.requester_user_id = #{myUserId}
+			  OR f.receiver_user_id = #{myUserId}
+		  )
+		  AND u.user_status = 'ACTIVE'
 	</select>
-	
+
 	<select id="getReceivedFriendRequests" resultType="com.chat.contract.user.domain.UserProfileResponseDTO">
 		SELECT
-	    u.public_id,
-	    u.nickname,
-	    u.friend_code,
-	    u.profile_img
-	FROM friendships f
-	JOIN users u
-	  ON u.user_id = f.requester_user_id
-	WHERE f.receiver_user_id = #{myUserId}
-	  AND f.status = 'PENDING'
-	  AND u.status = 'ACTIVE'
+			u.public_id AS publicId,
+			u.nickname AS nickname,
+			u.friend_code AS friendCode,
+			u.profile_img AS profileImg
+		FROM friendships f
+		JOIN users u
+		  ON u.user_id = f.requester_user_id
+		WHERE f.receiver_user_id = #{myUserId}
+		  AND f.friendship_status = 'PENDING'
+		  AND u.user_status = 'ACTIVE'
 	</select>
-	
-	<update id="respondFriendRequest">
-	UPDATE friendships
-	SET status = #{nextStatus}
-	WHERE receiver_user_id = #{myUserId}
-	  AND requester_user_id = #{requesterUserId}
-	  AND status = 'PENDING'
-</update>
-	
+
 </mapper>
 		

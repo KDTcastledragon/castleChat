@@ -1,5 +1,28 @@
 import axios from "axios";
 
+export async function uploadImageApi(file, imageTarget) {
+    const formData = new FormData();
+
+    formData.append('file', file);
+    formData.append('imageTarget', imageTarget);
+
+    const res = await axios.post('/chat/image', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    if (typeof res.data === 'string') {
+        return res.data;
+    }
+
+    return res.data.fileUrl
+        || res.data.url
+        || res.data.profileImg
+        || res.data.roomThumbnail
+        || res.data.imageUrl;
+}
+
 export async function sendFileApi(roomId, files, onUploadProgress) {
     const formData = new FormData();
 

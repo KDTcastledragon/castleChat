@@ -1,6 +1,6 @@
 import './Friends.css';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -8,8 +8,17 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useSearchUsers } from '../../hooks/useSearchUsers';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
-import { useFriendList, useAddFriend, useReceivedFriendRequests, useRespondFriendRequest } from '../../hooks/useFriend';
+import {
+    addAcceptedFriendToCache,
+    addReceivedFriendRequestToCache,
+    removeReceivedFriendRequestFromCache,
+    useFriendList,
+    useAddFriend,
+    useReceivedFriendRequests,
+    useRespondFriendRequest
+} from '../../hooks/useFriend';
 import { registerGlobalWsHandler } from '../../webSocket/wsClient';
+import { uploadImageApi } from '../../api/chatApi';
 
 function FriendList() {
     const nav = useNavigate();
@@ -22,9 +31,12 @@ function FriendList() {
     const addFriendMutation = useAddFriend();
     const respondFriendRequestMutation = useRespondFriendRequest();
     const { getOrCreateDirectRoom, createGroupRoom } = useChatRoomActions();
+    const groupThumbnailInputRef = useRef(null);
 
     const [roomName, setRoomName] = useState('');
     const [roomThumbnail, setRoomThumbnail] = useState('');
+    const [roomThumbnailFileName, setRoomThumbnailFileName] = useState('');
+    const [isUploadingRoomThumbnail, setIsUploadingRoomThumbnail] = useState(false);
     const [selectedFriendList, setSelectedFriendList] = useState([]);
     const [searchWord, setSearchWord] = useState('');
 
@@ -42,11 +54,13 @@ function FriendList() {
 
             switch (wsEvt.wsType) {
                 case 'FRIEND_REQUEST_RECEIVED':
+                    addReceivedFriendRequestToCache(queryClient, payload);
                     queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
                     queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
                     break;
 
                 case 'FRIEND_REQUEST_RESPONDED':
+                    addAcceptedFriendToCache(queryClient, payload, me.publicId);
                     queryClient.invalidateQueries({ queryKey: ['friends'] });
                     queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
                     queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
@@ -54,6 +68,8 @@ function FriendList() {
                     break;
 
                 case 'RESPOND_FRIEND_OK':
+                    addAcceptedFriendToCache(queryClient, payload, me.publicId);
+                    removeReceivedFriendRequestFromCache(queryClient, payload);
                     queryClient.invalidateQueries({ queryKey: ['friends'] });
                     queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
                     queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
@@ -105,9 +121,40 @@ function FriendList() {
             await createGroupRoom(roomName, roomThumbnail, selectedFriendList, true);
             setRoomName('');
             setRoomThumbnail('');
+            setRoomThumbnailFileName('');
             setSelectedFriendList([]);
         } catch (e) {
             alert(e.message || '단톡방 생성 실패');
+        }
+    }
+
+    async function changeGroupRoomThumbnail(e) {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 선택할 수 있습니다.');
+            return;
+        }
+
+        try {
+            setIsUploadingRoomThumbnail(true);
+            const uploadedImageUrl = await uploadImageApi(file, 'ROOM_THUMBNAIL');
+
+            if (!uploadedImageUrl) {
+                throw new Error('업로드된 이미지 주소가 없습니다.');
+            }
+
+            setRoomThumbnail(uploadedImageUrl);
+            setRoomThumbnailFileName(file.name);
+        } catch (err) {
+            alert(err.message || '단톡방 썸네일 업로드 실패');
+        } finally {
+            setIsUploadingRoomThumbnail(false);
         }
     }
 
@@ -141,7 +188,7 @@ function FriendList() {
 
     return (
         <div className='FriendListContainer'>
-            <section className='friendPanel friendListPanel'>
+            <div className='friendPanel friendListPanel'>
                 <div className='friendPanelHeader'>
                     <div>
                         <h2>친구목록</h2>
@@ -180,9 +227,9 @@ function FriendList() {
                         <div className='friendEmpty'>친구 없음</div>
                     )}
                 </div>
-            </section>
+            </div>
 
-            <section className='friendPanel groupCreatePanel'>
+            <div className='friendPanel groupCreatePanel'>
                 <div className='friendPanelHeader'>
                     <div>
                         <h2>단톡 만들기</h2>
@@ -198,13 +245,33 @@ function FriendList() {
                     placeholder='단톡방 이름'
                 />
 
-                <input
-                    className='groupInput'
-                    type="text"
-                    value={roomThumbnail}
-                    onChange={(e) => setRoomThumbnail(e.target.value)}
-                    placeholder='썸네일 URL'
-                />
+                <div className='groupThumbnailPicker'>
+                    <img
+                        src={roomThumbnail || '/images/mococo_question.png'}
+                        alt='단톡방 썸네일'
+                    />
+
+                    <div className='groupThumbnailControl'>
+                        <strong>{roomThumbnailFileName || '썸네일 이미지 선택'}</strong>
+                        <span>{roomThumbnail ? '선택 완료' : '선택하지 않으면 기본 이미지로 생성됩니다.'}</span>
+
+                        <button
+                            type='button'
+                            onClick={() => groupThumbnailInputRef.current?.click()}
+                            disabled={isUploadingRoomThumbnail}
+                        >
+                            {isUploadingRoomThumbnail ? '업로드 중...' : '파일 선택'}
+                        </button>
+                    </div>
+
+                    <input
+                        ref={groupThumbnailInputRef}
+                        type='file'
+                        accept='image/*'
+                        hidden
+                        onChange={changeGroupRoomThumbnail}
+                    />
+                </div>
 
                 <div className='selectedFriendChips'>
                     {selectedFriendList.length > 0
@@ -248,9 +315,9 @@ function FriendList() {
                         <div className='friendEmpty'>받은 친구 요청 없음</div>
                     )}
                 </div>
-            </section>
+            </div>
 
-            <section className='friendPanel searchPanel'>
+            <div className='friendPanel searchPanel'>
                 <div className='friendPanelHeader'>
                     <div>
                         <h2>친구추가</h2>
@@ -286,12 +353,12 @@ function FriendList() {
                                 onClick={() => addFriend(user.publicId)}
                                 disabled={addFriendMutation.isPending}
                             >
-                                추가
+                                친구 요청
                             </button>
                         </div>
                     ))}
                 </div>
-            </section>
+            </div>
         </div>
     );
 }

@@ -4,6 +4,7 @@ import './AppShell.css';
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 
 import Header from "../Home/Header"
 import RouteBody from "../Home/RouteBody"
@@ -11,6 +12,7 @@ import RouteBody from "../Home/RouteBody"
 import { useMe } from "../../hooks/useAuthUser";
 import { closeChatWindow, moveChatWindow, focusChatWindow, clearChatWindows } from '../../store/chatWindowsSlice';
 import { connectWs, disconnectWs, registerGlobalWsHandler, registerWsCloseListener } from "../../webSocket/wsClient";
+import { addAcceptedFriendToCache, addReceivedFriendRequestToCache, removeReceivedFriendRequestFromCache } from '../../hooks/useFriend';
 
 import ChatBox from '../Chattings/ChatBox';
 
@@ -25,15 +27,22 @@ function AppShell() {
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const [toastList, setToastList] = useState([]);
     const queryClient = useQueryClient();
+    const navigator = useNavigate();
 
     const dispatch = useDispatch();
     const chatWindows = useSelector(state => state.chatWindows.windows);
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
-        if (!me?.publicId) return;
+        if (isCheckingLogin) return;
+
+        if (!me) {
+            navigator('/login', { replace: true });
+            return;
+        }
+
         connectWs();
-    }, [me?.publicId]);
+    }, [me, isCheckingLogin, navigator]);
 
     useEffect(() => {
         return () => {
@@ -51,25 +60,40 @@ function AppShell() {
     }, [dispatch]);
 
     useEffect(() => {
-        if (!me) return;
+        if (!me) {
+
+            return;
+        }
+
 
         return registerGlobalWsHandler((wsEvt) => {
             const payload = wsEvt.payload ?? {};
             let text = '';
 
             if (wsEvt.wsType === 'FRIEND_REQUEST_RECEIVED') {
+                addReceivedFriendRequestToCache(queryClient, payload);
                 queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
                 queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
                 text = `${payload.requesterNickname ?? payload.requesterPublicId ?? '상대'}님에게 친구 요청이 왔습니다.`;
             }
 
             if (wsEvt.wsType === 'FRIEND_REQUEST_RESPONDED') {
+                addAcceptedFriendToCache(queryClient, payload, me.publicId);
+                removeReceivedFriendRequestFromCache(queryClient, payload);
                 queryClient.invalidateQueries({ queryKey: ['friends'] });
                 queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
                 queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
                 text = payload.friendStatus === 'ACCEPTED'
                     ? `${payload.targetNickname ?? payload.targetPublicId ?? '상대'}님이 친구 요청을 수락했습니다.`
                     : `${payload.targetNickname ?? payload.targetPublicId ?? '상대'}님이 친구 요청을 거절했습니다.`;
+            }
+
+            if (wsEvt.wsType === 'RESPOND_FRIEND_OK') {
+                addAcceptedFriendToCache(queryClient, payload, me.publicId);
+                removeReceivedFriendRequestFromCache(queryClient, payload);
+                queryClient.invalidateQueries({ queryKey: ['friends'] });
+                queryClient.invalidateQueries({ queryKey: ['receivedFriendRequests'] });
+                queryClient.invalidateQueries({ queryKey: ['searchUsers'] });
             }
 
             if (wsEvt.wsType === 'FRIEND_ONLINE_NOTIFICATION') {
