@@ -26,7 +26,7 @@
     justify-content: center;
     width: 100%;
     height: 36px;
-    padding: 0 106px 0 52px;
+    padding: 0 96px 0 52px;
     background-color: #000;
     color: #fff;
     box-sizing: border-box;
@@ -50,15 +50,16 @@
 }
 
 .chatTitleRightControls {
-    right: 8px;
+    right: 6px;
     justify-content: flex-end;
-    gap: 6px;
+    gap: 5px;
 }
 
 .chatRoomTitleText {
     position: absolute;
-    left: 68px;
-    right: 112px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 188px);
     z-index: 1;
     min-width: 0;
     font-weight: bold;
@@ -101,17 +102,26 @@
 }
 
 .chatCloseButton {
-    min-width: 44px;
-    height: 26px;
-    border: 1px solid #555;
-    border-radius: 6px;
-    background-color: #f5f5f5;
-    color: #111;
+    width: 28px;
+    height: 28px;
+    border: 1px solid #3f3f3f;
+    border-radius: 50%;
+    background-color: #171717;
+    color: #f1f1f1;
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-size: 20px;
+    line-height: 1;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 .chatCloseButton:hover {
-    background-color: #ffffff;
+    background-color: #f05a5a;
+    border-color: #f05a5a;
+    color: #ffffff;
 }
 
 /* ====[채팅 메시지 영역]============================================= */
@@ -210,12 +220,19 @@
 }
 
 .notificationBellButton {
-    width: 30px;
+    width: 32px;
     height: 26px;
     border: 1px solid #555;
     border-radius: 8px;
     background: #1d1d1d;
     cursor: pointer;
+    color: #111;
+    font-size: 15px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 .notificationBellButton.on {
@@ -982,18 +999,65 @@
     color: #555;
 }
 
-.memberRoleSelect {
+.memberRoleChangeDetails {
+    position: relative;
     width: 68px;
+    font-size: 10px;
+}
+
+.memberRoleChangeDetails summary {
     height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #dddddd;
     border-radius: 7px;
     background-color: #ffffff;
     color: #333333;
+    font-weight: bold;
+    cursor: pointer;
+    list-style: none;
+}
+
+.memberRoleChangeDetails summary::-webkit-details-marker {
+    display: none;
+}
+
+.memberRoleChangeDetails summary:hover {
+    background-color: #fff6b5;
+}
+
+.memberRoleChangeMenu {
+    position: absolute;
+    right: 0;
+    top: 30px;
+    width: 88px;
+    padding: 5px;
+    border: 1px solid #dddddd;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+    z-index: 20;
+    box-sizing: border-box;
+}
+
+.memberRoleChangeMenu button {
+    width: 100%;
+    height: 26px;
+    border: 0;
+    border-radius: 6px;
+    background-color: transparent;
     font-size: 10px;
     cursor: pointer;
 }
 
-.memberRoleSelectPlaceholder {
+.memberRoleChangeMenu button:hover,
+.memberRoleChangeMenu button.active {
+    background-color: #fee500;
+    font-weight: bold;
+}
+
+.memberRoleChangePlaceholder {
     width: 68px;
     height: 1px;
 }

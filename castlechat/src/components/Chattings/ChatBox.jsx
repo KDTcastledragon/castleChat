@@ -23,12 +23,13 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
-import { getMessageReactionMembersApi, getMessageReadersApi, loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
+import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
 import { updateMyRoomSettingsApi } from '../../api/roomApi';
 
 function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
+    const prevChattingsRef = useRef([]);
     const [typingUsers, setTypingUsers] = useState([]);
 
     const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
@@ -199,6 +200,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         startX: 0,
         startY: 0
     });
+
+    useEffect(() => {
+        prevChattingsRef.current = prevChattings;
+    }, [prevChattings]);
 
     useEffect(() => {
         setLocalRoomName(roomName ?? '');
@@ -494,6 +499,39 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         }
     }
 
+    async function syncVisibleMessageUnreadCounts() {
+        if (!roomId) return;
+
+        const currentMessages = prevChattingsRef.current ?? [];
+        const messageIds = currentMessages
+            .map(msg => Number(msg.messageId))
+            .filter(messageId => Number.isFinite(messageId));
+
+        if (messageIds.length === 0) return;
+
+        try {
+            const unreadCountMap = await getMessageUnreadCountsApi(roomId, messageIds);
+
+            setPrevChattings(prev =>
+                prev.map(msg => {
+                    const messageId = Number(msg.messageId);
+                    const nextUnreadCount = unreadCountMap?.[messageId];
+
+                    if (nextUnreadCount === undefined || nextUnreadCount === null) {
+                        return msg;
+                    }
+
+                    return {
+                        ...msg,
+                        unreadCount: Number(nextUnreadCount)
+                    };
+                })
+            );
+        } catch (e) {
+            console.error('메시지 unreadCount 재동기화 실패', e);
+        }
+    }
+
     useEffect(() => {
         isLoadingPrevRef.current = false;
         hasMorePrevRef.current = Boolean(roomId);
@@ -716,13 +754,19 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                 }
 
                 if (wsResponse.wsType === "ROOM_MEMBER_KICKED" || wsResponse.wsType === "ROOM_MEMBER_BANNED" || wsResponse.wsType === "LEFT_ROOM") {
-                    const targets = feed?.targetPublicIds ?? [];
+                    const targets = wsResponse.wsType === "LEFT_ROOM"
+                        ? [feed?.requesterPublicId].filter(Boolean)
+                        : feed?.targetPublicIds ?? [];
 
                     setLocallyRemovedMemberPublicIds(prev => {
                         const next = new Set(prev);
                         targets.forEach(publicId => next.add(publicId));
                         return next;
                     });
+                }
+
+                if (wsResponse.wsType !== "ROOM_MEMBER_ROLE_CHANGED") {
+                    syncVisibleMessageUnreadCounts();
                 }
 
                 if (wsResponse.wsType === "ROOM_MEMBER_ROLE_CHANGED") {
@@ -1525,10 +1569,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
 
                         <button
                             className="chatCloseButton"
+                            title="채팅창 닫기"
+                            aria-label="채팅창 닫기"
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={closeChatAndExitRoom}
                         >
-                            닫기
+                            ×
                         </button>
                     </div>
                 </div>
@@ -1631,16 +1677,27 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                                     </div>
 
                                     {canChangeMemberRole(member) ? (
-                                        <select
-                                            className="memberRoleSelect"
-                                            value={member.role}
-                                            onChange={(e) => changeMemberRole(member, e.target.value)}
-                                        >
-                                            <option value="MEMBER">MEMBER</option>
-                                            <option value="MANAGER">MANAGER</option>
-                                        </select>
+                                        <details className="memberRoleChangeDetails">
+                                            <summary>권한</summary>
+
+                                            <div className="memberRoleChangeMenu">
+                                                <button
+                                                    className={member.role === 'MEMBER' ? 'active' : ''}
+                                                    onClick={() => changeMemberRole(member, 'MEMBER')}
+                                                >
+                                                    MEMBER
+                                                </button>
+
+                                                <button
+                                                    className={member.role === 'MANAGER' ? 'active' : ''}
+                                                    onClick={() => changeMemberRole(member, 'MANAGER')}
+                                                >
+                                                    MANAGER
+                                                </button>
+                                            </div>
+                                        </details>
                                     ) : (
-                                        <div className="memberRoleSelectPlaceholder" />
+                                        <div className="memberRoleChangePlaceholder" />
                                     )}
 
                                     {canKickMember(member) ? (

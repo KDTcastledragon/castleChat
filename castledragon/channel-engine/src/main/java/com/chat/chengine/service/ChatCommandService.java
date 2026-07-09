@@ -8,8 +8,11 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.chat.chengine.dto.ChatMessageCreatedEventDTO;
+import com.chat.chengine.kafka.ChatMessageEventPublisher;
 import com.chat.chengine.mapper.ChatMapper;
 import com.chat.chengine.mapper.RoomMapper;
+import com.chat.chengine.support.ChatMessageIdGenerator;
 import com.chat.chengine.usecase.ChatCommandUseCase;
 import com.chat.contract.chatting.command.CreateChatMessageCommand;
 import com.chat.contract.chatting.command.DeleteChatMessageCommand;
@@ -45,6 +48,9 @@ public class ChatCommandService implements ChatCommandUseCase {
 
 	private final RoomMemberCache roomMemberCache;
 	private final RoomReadPositionCache roomReadPositionCache;
+
+	private final ChatMessageIdGenerator chatMessageIdGenerator;
+	private final ChatMessageEventPublisher chatMessageEventPublisher;
 
 	private static final String DIRECT = "DIRECT";
 	private static final String GROUP = "GROUP";
@@ -249,6 +255,8 @@ public class ChatCommandService implements ChatCommandUseCase {
 	}
 
 	// ====== 메시지 보내기 ==========================================================================================================================
+	// prpr 3 : DB insert 후 response 하지 않는다. kafka durable save 후 response 하고,
+	//          DB insert는 ChatMessagePersistWorker(kafka consumer)가 비동기로 처리한다.
 	@Override
 	@Transactional
 	public ChatMessageViewResponseDTO createChatMessage(CreateChatMessageCommand cmd) {
@@ -276,52 +284,50 @@ public class ChatCommandService implements ChatCommandUseCase {
 
 		LocalDateTime now = LocalDateTime.now();
 
-		ChatMessagesDTO msg = new ChatMessagesDTO();
-		msg.setRoomId(cmd.getRoomId());
-		msg.setSenderId(cmd.getSenderUserId());
-		msg.setMessageType(cmd.getMessageType());
-		msg.setMessageText(cmd.getMessageText());
-		msg.setReplyToMessageId(cmd.getReplyToMessageId());
-		msg.setCreatedAt(now);
+		// DB auto_increment 대신 앱에서 채번. (snowflake. response 시점에 이미 확정된 messageId)
+		Long messageId = chatMessageIdGenerator.nextMessageId();
 
-		// DB insert
-		int isCreated = chatMapper.insertChatMessage(msg); // useGK + keyP 설정 => msgId PK 사용 가능. 
-
-		if (isCreated != 1) {
-			throw new IllegalStateException("insert Msg Failed");
-		}
-
+		// 첨부는 이미 업로드 시점에 TEMP row로 존재 -> 응답 조립용으로 select만 한다. (연결(UPDATE)은 consumer가 비동기 처리)
 		List<ChatAttachmentDTO> attachments = List.of();
 
 		if (cmd.getAttachmentIds() != null && !cmd.getAttachmentIds().isEmpty()) {
-			int attached = chatMapper.updateChatMessageAttachments(msg.getMessageId(), msg.getRoomId(), cmd.getAttachmentIds());
+			attachments = chatMapper.findChatAttachmentsByIds(cmd.getRoomId(), cmd.getAttachmentIds());
 
-			if (attached != cmd.getAttachmentIds().size()) {
-				throw new IllegalStateException("첨부파일 메시지 연결 실패");
+			if (attachments == null || attachments.size() != cmd.getAttachmentIds().size()) {
+				throw new IllegalStateException("첨부파일 정보를 찾을 수 없습니다.");
 			}
 
-			attachments = chatMapper.findChatMessageAttachments(msg.getMessageId());
+			for (ChatAttachmentDTO attachment : attachments) {
+				attachment.setMessageId(messageId);
+			}
 		}
 
+		// kafka durable save. (acks=all 기록 확인까지 대기. 실패하면 여기서 예외 -> client 전송실패)
+		ChatMessageCreatedEventDTO event = new ChatMessageCreatedEventDTO(messageId, cmd.getRoomId(), cmd.getSenderUserId(), cmd
+				.getSenderPublicId(), cmd.getMessageType(), cmd.getMessageText(), cmd.getReplyToMessageId(), cmd.getAttachmentIds(), now);
+
+		chatMessageEventPublisher.publishChatMessageCreated(event);
+
 		// ====== sender의 lastReadMsg In Room도 적용시켜준다. 단, readMsg 흐름과 다르게 독립적으로 조용히. ==============================================================
-		ReadPositionUpdateResult rslt = roomReadPositionCache.updateIfGreater(cmd.getRoomId(), cmd.getSenderUserId(), msg
-				.getMessageId(), () -> chatMapper.findLastReadMessageId(cmd.getRoomId(), cmd.getSenderUserId()));
+		ReadPositionUpdateResult rslt = roomReadPositionCache.updateIfGreater(cmd.getRoomId(), cmd.getSenderUserId(), messageId,
+				() -> chatMapper.findLastReadMessageId(cmd.getRoomId(), cmd.getSenderUserId()));
 		log.info("[sendMsg]redisGreater 결과 = room:{} sender:{} old:{} new:{}", cmd.getRoomId(), cmd.getSenderUserId(), rslt
 				.oldLastReadMessageId(), rslt.newLastReadMessageId());
 
 		Long unreadCount = Math.max(allActiveMemberIdsInRoom.size() - 1L, 0L); // 메시지 읽지 않은 멤버 수. (sender 제외)
 		List<Long> notificationTargetUserIds = chatMapper.findChatMessageNotificationTargetUserIds(cmd.getRoomId(), cmd.getSenderUserId());
 
+		// DB insert 결과가 아닌, 위에서 확정한 메모리 값으로 response 조립.
 		ChatMessageViewResponseDTO response = new ChatMessageViewResponseDTO();
-		response.setMessageId(msg.getMessageId());
-		response.setRoomId(msg.getRoomId());
+		response.setMessageId(messageId);
+		response.setRoomId(cmd.getRoomId());
 		response.setSenderPublicId(cmd.getSenderPublicId());
-		response.setMessageType(msg.getMessageType());
-		response.setMessageText(msg.getMessageText());
-		response.setReplyToMessageId(msg.getReplyToMessageId());
+		response.setMessageType(cmd.getMessageType());
+		response.setMessageText(cmd.getMessageText());
+		response.setReplyToMessageId(cmd.getReplyToMessageId());
 		response.setMessageStatus("ACTIVE");
 		response.setAttachments(attachments == null ? List.of() : attachments);
-		response.setCreatedAt(msg.getCreatedAt());
+		response.setCreatedAt(now);
 		response.setUnreadCount(unreadCount);
 		response.setNotificationTargetUserIds(notificationTargetUserIds == null ? List.of() : notificationTargetUserIds);
 

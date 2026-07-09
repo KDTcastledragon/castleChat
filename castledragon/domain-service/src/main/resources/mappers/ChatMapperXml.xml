@@ -47,6 +47,20 @@
 	    ORDER BY t.message_id ASC
 	</select>
 	
+	<select id="findMessageSenderPublicIds" resultType="com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO">
+		SELECT
+			m.message_id AS messageId,
+			u.public_id AS senderPublicId
+		FROM chat_messages m
+		JOIN users u
+		  ON u.user_id = m.sender_id
+		WHERE m.room_id = #{roomId}
+		  AND m.message_id IN
+		  <foreach collection="messageIds" item="messageId" open="(" separator="," close=")">
+			  #{messageId}
+		  </foreach>
+	</select>
+	
 	
 	<select id="findActiveRoomReadPositions" resultType="com.chat.contract.redis.RedisRoomMemberReadPositionDTO">
 		SELECT

@@ -57,6 +57,17 @@ public class RoomCommandService implements RoomCommandUseCase {
 	private final ChatMapper chatMapper;
 	private final RoomMemberCache roomMemberCache;
 
+	private void syncActiveRoomMemberCache(Long roomId) {
+		List<Long> activeMemberIds = chatMapper.findAllActiveMemberIdsInRoom(roomId);
+
+		if (activeMemberIds == null || activeMemberIds.isEmpty()) {
+			roomMemberCache.initOrReplaceRoomMembers(roomId, Set.<Long>of());
+			return;
+		}
+
+		roomMemberCache.initOrReplaceRoomMembers(roomId, new HashSet<>(activeMemberIds));
+	}
+
 	@Override
 	@Transactional
 	public RoomNoticeApplyResponseDTO applyRoomNotice(ApplyRoomNoticeCommand cmd) {
@@ -404,7 +415,10 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("방 나가기 실패");
 		}
 
-		return createRoomFeed(cmd.getRoomId(), "LEFT", cmd.getRequesterPublicId(), requesterNickname, List.of(), List.of(), requesterNickname
+		syncActiveRoomMemberCache(cmd.getRoomId());
+
+		return createRoomFeed(cmd.getRoomId(), "LEFT", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getRequesterPublicId()), List
+				.of(requesterNickname), requesterNickname
 				+ "님이 방을 나갔습니다.");
 	}
 
@@ -424,6 +438,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 		if (inserted < 1) {
 			throw new IllegalStateException("초대 처리 실패");
 		}
+
+		syncActiveRoomMemberCache(cmd.getRoomId());
 
 		List<String> targetNicknames = roomMapper.findNicknamesByPublicIds(cmd.getInviteTargetMemberPublicIds());
 
@@ -449,6 +465,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("강퇴 실패");
 		}
 
+		syncActiveRoomMemberCache(cmd.getRoomId());
+
 		return createRoomFeed(cmd.getRoomId(), "KICK", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getKickTargetPublicId()), List
 				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 강퇴했습니다.");
 	}
@@ -470,6 +488,8 @@ public class RoomCommandService implements RoomCommandUseCase {
 		if (updated != 1) {
 			throw new IllegalStateException("영구강퇴 실패");
 		}
+
+		syncActiveRoomMemberCache(cmd.getRoomId());
 
 		return createRoomFeed(cmd.getRoomId(), "BAN", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getBanTargetPublicId()), List
 				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 영구강퇴했습니다.");

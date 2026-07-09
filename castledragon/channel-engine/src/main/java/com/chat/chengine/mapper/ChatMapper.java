@@ -49,6 +49,8 @@ public interface ChatMapper {
 
 	List<ChatAttachmentDTO> findChatMessageAttachments(@Param("messageId") Long messageId);
 
+	List<ChatAttachmentDTO> findChatAttachmentsByIds(@Param("roomId") Long roomId, @Param("attachmentIds") List<Long> attachmentIds);
+
 	List<Long> findChatMessageNotificationTargetUserIds(@Param("roomId") Long roomId, @Param("senderUserId") Long senderUserId);
 
 }

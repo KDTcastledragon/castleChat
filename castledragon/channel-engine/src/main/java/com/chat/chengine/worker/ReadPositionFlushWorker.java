@@ -21,7 +21,7 @@ public class ReadPositionFlushWorker {
 	private final ChatMapper chatMapper;
 
 	//	@Scheduled(fixedDelay = 5000)
-	@Scheduled(fixedDelayString = "${chat.read-position.flush-delay-ms:3000}")
+	@Scheduled(fixedDelayString = "${chat.read-position.flush-delay-ms:5000}")
 	@Transactional
 	public void flushDirtyReadPositions() {
 		Map<String, Long> dirtyReadPositions = roomReadPositionCache.getDirtyReadPositions();
@@ -58,4 +58,3 @@ public class ReadPositionFlushWorker {
 		}
 	}
 }
-

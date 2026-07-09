@@ -4,7 +4,7 @@ import './AppShell.css';
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import Header from "../Home/Header"
 import RouteBody from "../Home/RouteBody"
@@ -28,9 +28,11 @@ function AppShell() {
     const [toastList, setToastList] = useState([]);
     const queryClient = useQueryClient();
     const navigator = useNavigate();
+    const location = useLocation();
 
     const dispatch = useDispatch();
     const chatWindows = useSelector(state => state.chatWindows.windows);
+    const canShowChatWindows = location.pathname === '/chatList';
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
@@ -125,7 +127,7 @@ function AppShell() {
 
             <RouteBody />
 
-            {chatWindows.map((win) => (
+            {canShowChatWindows && chatWindows.map((win) => (
                 <ChatBox
                     key={win.chatWindowKey}
 

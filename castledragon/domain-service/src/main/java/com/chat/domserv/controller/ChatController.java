@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -81,5 +82,16 @@ public class ChatController {
 		}
 
 		return ResponseEntity.ok(chatQueryUseCase.findMessageReaders(roomId, messageId, me.getUserId()));
+	}
+
+	@PostMapping("/messages/{roomId}/unreadCounts")
+	public ResponseEntity<?> getMessageUnreadCounts(@PathVariable("roomId") Long roomId, @RequestBody List<Long> messageIds, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		return ResponseEntity.ok(chatQueryUseCase.findMessageUnreadCounts(roomId, messageIds, me.getUserId()));
 	}
 }

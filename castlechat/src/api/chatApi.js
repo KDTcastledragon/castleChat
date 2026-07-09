@@ -61,3 +61,8 @@ export async function getMessageReadersApi(roomId, messageId) {
     const res = await axios.get(`/chat/messages/${roomId}/${messageId}/readers`);
     return res.data;
 }
+
+export async function getMessageUnreadCountsApi(roomId, messageIds) {
+    const res = await axios.post(`/chat/messages/${roomId}/unreadCounts`, messageIds);
+    return res.data;
+}

@@ -19,6 +19,8 @@ public interface DomServChatMapper {
 
 	List<ChatMessageViewResponseDTO> loadMessagesInRoom(@Param("roomId") Long roomId, @Param("beforeMessageId") Long beforeMessageId, @Param("limit") int limit);
 
+	List<ChatMessageViewResponseDTO> findMessageSenderPublicIds(@Param("roomId") Long roomId, @Param("messageIds") List<Long> messageIds);
+
 	List<ChatAttachmentDTO> findChatAttachmentsByMessageIds(@Param("messageIds") List<Long> messageIds);
 
 	List<ChatMessageReactionSummaryDTO> findReactionSummariesByMessageIds(@Param("messageIds") List<Long> messageIds);
