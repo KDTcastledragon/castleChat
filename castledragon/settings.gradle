@@ -6,5 +6,6 @@ include 'common-redis'
 include 'domain-service'
 include 'websocket-gateway'
 include 'channel-engine'
+include 'ai-assistant-service'
 
 /* include의 name과 실제 root Folder 하위의 Module Folder name이 일치해야만 JRE System Library[JavaSE-17]이 생성되고, Git에도 연동된다. 주의! */

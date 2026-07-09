@@ -1,4 +1,4 @@
-package com.chat.chengine.dto;
+package com.chat.chengine.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,9 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdatedUnreadMessagesDTO {
-	private Long messageId;
-	private Long unreadCount;
+public class PayloadReadChatMessageRequestDTO {
+	private Long roomId;
+	private Long lastReadMessageId;
 }
-
 

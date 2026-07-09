@@ -1,4 +1,4 @@
-package com.chat.chengine.dto;
+package com.chat.chengine.domain;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

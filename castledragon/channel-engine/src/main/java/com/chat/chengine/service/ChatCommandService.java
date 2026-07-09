@@ -8,7 +8,9 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.chengine.dto.ChatMessageCreatedEventDTO;
+import com.chat.chengine.domain.ChatMessageCreatedEventDTO;
+import com.chat.chengine.domain.ChatMessageDeletedEventDTO;
+import com.chat.chengine.domain.ChatMessageReactedEventDTO;
 import com.chat.chengine.kafka.ChatMessageEventPublisher;
 import com.chat.chengine.mapper.ChatMapper;
 import com.chat.chengine.mapper.RoomMapper;
@@ -389,14 +391,13 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalArgumentException("requesterPublicId가 없습니다.");
 		}
 
-		// room row lock까지는 과하고, message row만 잠그면 됨.
-		Long lockedMessageId = chatMapper.lockChatMessageForUpdate(cmd.getRoomId(), cmd.getMessageId());
+		// prpr 3 : 검증(select)만 동기로 하고, DB update는 kafka consumer(ChatMessagePersistWorker)가 비동기 처리.
+		// 기존의 row lock(FOR UPDATE)은 제거 -> consumer의 조건부 UPDATE(WHERE message_status='ACTIVE')가 경합을 멱등 흡수한다.
+		String messageStatus = chatMapper.findChatMessageStatus(cmd.getRoomId(), cmd.getMessageId());
 
-		if (lockedMessageId == null) {
+		if (messageStatus == null) {
 			throw new IllegalArgumentException("존재하지 않는 메시지입니다.");
 		}
-
-		String messageStatus = chatMapper.findChatMessageStatus(cmd.getRoomId(), cmd.getMessageId());
 
 		if ("DELETED".equals(messageStatus)) {
 			throw new IllegalStateException("이미 삭제된 메시지입니다.");
@@ -412,13 +413,15 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalArgumentException("메시지 작성자만 삭제할 수 있습니다.");
 		}
 
-		int updated = chatMapper.deleteChatMessage(cmd.getRoomId(), cmd.getMessageId(), cmd.getRequesterUserId());
+		LocalDateTime now = LocalDateTime.now();
 
-		if (updated != 1) {
-			throw new IllegalStateException("메시지 삭제 실패");
-		}
+		// kafka durable save 후 response. (실제 UPDATE는 consumer가 비동기 수행)
+		ChatMessageDeletedEventDTO event = new ChatMessageDeletedEventDTO(cmd.getMessageId(), cmd.getRoomId(), cmd
+				.getRequesterUserId(), cmd.getRequesterPublicId(), now);
 
-		return new DeleteChatMessageResponseDTO(cmd.getRoomId(), cmd.getMessageId(), cmd.getRequesterPublicId(), "DELETED", LocalDateTime.now());
+		chatMessageEventPublisher.publishChatMessageDeleted(event);
+
+		return new DeleteChatMessageResponseDTO(cmd.getRoomId(), cmd.getMessageId(), cmd.getRequesterPublicId(), "DELETED", now);
 	}
 
 	@Override
@@ -456,13 +459,12 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalArgumentException("addRequested가 없습니다.");
 		}
 
-		Long lockedMessageId = chatMapper.lockChatMessageForUpdate(cmd.getRoomId(), cmd.getMessageId());
+		// prpr 3 : 검증(select/redis)만 동기로 하고, DB insert/delete는 kafka consumer가 비동기 처리.
+		String messageStatus = chatMapper.findChatMessageStatus(cmd.getRoomId(), cmd.getMessageId());
 
-		if (lockedMessageId == null) {
+		if (messageStatus == null) {
 			throw new IllegalArgumentException("존재하지 않는 메시지입니다.");
 		}
-
-		String messageStatus = chatMapper.findChatMessageStatus(cmd.getRoomId(), cmd.getMessageId());
 
 		if ("DELETED".equals(messageStatus)) {
 			throw new IllegalStateException("삭제된 메시지에는 리액션할 수 없습니다.");
@@ -480,26 +482,16 @@ public class ChatCommandService implements ChatCommandUseCase {
 		}
 
 		LocalDateTime now = LocalDateTime.now();
+		boolean addRequested = Boolean.TRUE.equals(cmd.getAddRequested());
 
-		if (Boolean.TRUE.equals(cmd.getAddRequested())) {
-			int inserted = chatMapper.insertChatMessageReaction(cmd);
+		// kafka durable save 후 response. (실제 insert/delete는 consumer가 비동기 수행. INSERT IGNORE/DELETE 멱등)
+		ChatMessageReactedEventDTO event = new ChatMessageReactedEventDTO(cmd.getRoomId(), cmd.getMessageId(), cmd
+				.getRequesterUserId(), cmd.getRequesterPublicId(), cmd.getReactionType(), cmd.getReactionCode(), addRequested, now);
 
-			if (inserted < 1) {
-				throw new IllegalStateException("리액션 추가 실패");
-			}
-
-			return new ReactChatMessageEventResponseDTO(cmd.getRoomId(), cmd.getMessageId(), cmd.getRequesterPublicId(), cmd.getReactionType(), cmd
-					.getReactionCode(), true, now);
-		}
-
-		int deleted = chatMapper.deleteChatMessageReaction(cmd.getRoomId(), cmd.getMessageId(), cmd.getRequesterUserId(), cmd.getReactionCode());
-
-		if (deleted < 1) {
-			throw new IllegalStateException("리액션 취소 실패");
-		}
+		chatMessageEventPublisher.publishChatMessageReacted(event);
 
 		return new ReactChatMessageEventResponseDTO(cmd.getRoomId(), cmd.getMessageId(), cmd.getRequesterPublicId(), cmd.getReactionType(), cmd
-				.getReactionCode(), false, now);
+				.getReactionCode(), addRequested, now);
 	}
 
 }

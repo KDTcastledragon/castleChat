@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.chat.aiassist.mapper.AiAssistMapper">
+
+	<!-- 추천 프롬프트용 최근 메시지. read-only. 최신순으로 뽑아서 service에서 시간순으로 뒤집어 쓴다. -->
+	<select id="findRecentMessagesInRoom" resultType="com.chat.aiassist.domain.RecentMessageDTO">
+		SELECT
+			cm.message_id AS messageId,
+			cm.sender_id AS senderId,
+			u.nickname AS senderNickname,
+			cm.message_text AS messageText,
+			cm.created_at AS createdAt
+		FROM chat_messages cm
+		JOIN users u ON u.user_id = cm.sender_id
+		WHERE cm.room_id = #{roomId}
+		  AND cm.message_status = 'ACTIVE'
+		  AND cm.message_text IS NOT NULL
+		ORDER BY cm.message_id DESC
+		LIMIT #{limit}
+	</select>
+
+</mapper>

@@ -1,4 +1,4 @@
-package com.chat.chengine.dto;
+package com.chat.chengine.domain;
 
 import java.time.LocalDateTime;
 

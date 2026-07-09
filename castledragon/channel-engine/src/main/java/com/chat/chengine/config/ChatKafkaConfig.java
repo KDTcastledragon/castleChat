@@ -22,28 +22,30 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class ChatKafkaConfig {
 
-	public static final String CHAT_MESSAGE_CREATED_TOPIC = "castlechat.chat.message.created";
-	public static final String CHAT_MESSAGE_CREATED_DLT = "castlechat.chat.message.created.dlt";
+	// 메시지 도메인 이벤트 스트림 (created/deleted/reacted 3종이 한 토픽에 흐른다)
+	// 한 토픽 + key=roomId 이어야 같은 방의 create -> delete/react 소비 순서가 보장된다(파티션 내 순서 보장).
+	public static final String CHAT_MESSAGE_TOPIC = "castlechat.chat.message";
+	public static final String CHAT_MESSAGE_DLT = "castlechat.chat.message.dlt";
 
 	// 같은 roomId(key)는 항상 같은 파티션 -> 방 단위 순서 보장.
 	// 파티션 증설은 key->파티션 매핑을 바꾸므로 초기값을 넉넉히. (MVP 기준 6)
-	private static final int CHAT_MESSAGE_CREATED_PARTITIONS = 6;
+	private static final int CHAT_MESSAGE_PARTITIONS = 6;
 
 	// 로컬 단일 브로커 기준 1. 다중 브로커 전환 시 3으로 변경할 것. (설계문서 G항목 참고)
 	private static final short REPLICATION_FACTOR = 1;
 
 	@Bean
-	public NewTopic chatMessageCreatedTopic() {
-		return TopicBuilder.name(CHAT_MESSAGE_CREATED_TOPIC)
-				.partitions(CHAT_MESSAGE_CREATED_PARTITIONS)
+	public NewTopic chatMessageTopic() {
+		return TopicBuilder.name(CHAT_MESSAGE_TOPIC)
+				.partitions(CHAT_MESSAGE_PARTITIONS)
 				.replicas(REPLICATION_FACTOR)
 				.build();
 	}
 
 	@Bean
-	public NewTopic chatMessageCreatedDltTopic() {
-		return TopicBuilder.name(CHAT_MESSAGE_CREATED_DLT)
-				.partitions(CHAT_MESSAGE_CREATED_PARTITIONS)
+	public NewTopic chatMessageDltTopic() {
+		return TopicBuilder.name(CHAT_MESSAGE_DLT)
+				.partitions(CHAT_MESSAGE_PARTITIONS)
 				.replicas(REPLICATION_FACTOR)
 				.build();
 	}

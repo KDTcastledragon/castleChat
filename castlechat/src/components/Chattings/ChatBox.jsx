@@ -23,6 +23,7 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
+import { recommendMessagesApi } from '../../api/aiAssistApi';
 import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
 import { updateMyRoomSettingsApi } from '../../api/roomApi';
 
@@ -48,6 +49,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(null);
     const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+    const [isAiRecommendLoading, setIsAiRecommendLoading] = useState(false);
+    const [aiRecommendedMessages, setAiRecommendedMessages] = useState([]);
     const [myReactionMap, setMyReactionMap] = useState({});
     const [localRoomName, setLocalRoomName] = useState(roomName ?? '');
     const [roomThumbnailUrl, setRoomThumbnailUrl] = useState(roomThumbnail ?? '');
@@ -554,6 +557,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         setSelectedFiles([]);
         setUploadProgress(null);
         setIsUploadingFiles(false);
+        setIsAiRecommendLoading(false);
+        setAiRecommendedMessages([]);
         setLocallyRemovedMemberPublicIds(new Set());
         setLocallyAddedRoomMembers([]);
         setLocallyChangedMemberRoles({});
@@ -936,6 +941,32 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         } finally {
             setIsUploadingFiles(false);
         }
+    }
+
+    async function requestAiRecommendedMessages() {
+        if (isAiRecommendLoading) return;
+
+        if (!roomId) {
+            alert('AI 추천은 실제 채팅방이 생성된 뒤 사용할 수 있습니다.');
+            return;
+        }
+
+        try {
+            setIsAiRecommendLoading(true);
+            const recommendations = await recommendMessagesApi(roomId);
+
+            setAiRecommendedMessages(Array.isArray(recommendations) ? recommendations : []);
+        } catch (e) {
+            console.error('AI 메시지 추천 실패', e);
+            alert(e.response?.data?.message ?? e.response?.data ?? 'AI 메시지 추천 실패');
+        } finally {
+            setIsAiRecommendLoading(false);
+        }
+    }
+
+    function applyAiRecommendedMessage(recommendedMessage) {
+        setChatMessage(recommendedMessage);
+        setAiRecommendedMessages([]);
     }
 
     const handleChatMessageChange = (e) => {
@@ -2283,6 +2314,31 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                         )}
                     </div>
                 )}
+
+                <div className="aiRecommendBox">
+                    <button
+                        className="aiRecommendButton"
+                        onClick={requestAiRecommendedMessages}
+                        disabled={isAiRecommendLoading || isUploadingFiles}
+                    >
+                        {isAiRecommendLoading ? 'AI 추천 받는 중...' : 'AI에게 메시지 추천받기'}
+                    </button>
+
+                    {aiRecommendedMessages.length > 0 && (
+                        <div className="aiRecommendList">
+                            {aiRecommendedMessages.map((recommendedMessage, index) => (
+                                <button
+                                    key={`${recommendedMessage}-${index}`}
+                                    className="aiRecommendItem"
+                                    onClick={() => applyAiRecommendedMessage(recommendedMessage)}
+                                    title="클릭하면 입력창에 들어갑니다."
+                                >
+                                    {recommendedMessage}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
                 <div className='inputChat'>
                     <input

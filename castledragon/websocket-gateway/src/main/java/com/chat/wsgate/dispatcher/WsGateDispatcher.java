@@ -52,6 +52,7 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 
 			case "ADD_FRIEND" -> wsGateFriendHandler.handleAddFriend(session, dto);
 			case "RESPOND_FRIEND" -> wsGateFriendHandler.handleRespondFriend(session, dto);
+			case "BLOCK_FRIEND" -> wsGateFriendHandler.handleRespondFriend(session, dto);
 
 			case "OPEN_DIRECT_CHAT" -> wsGateRoomHandler.handleOpenDirectChat(session, dto);
 			case "START_DIRECT_CHAT" -> wsGateChatHandler.handleStartDirectChat(session, dto);
@@ -72,9 +73,10 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 			case "INVITE_MEMBER" -> wsGateRoomHandler.handleInviteMember(session, dto);
 			case "KICK_MEMBER" -> wsGateRoomHandler.handleKickMember(session, dto);
 			case "BAN_MEMBER" -> wsGateRoomHandler.handleBanMember(session, dto);
-			case "CHANGE_MEMBER_ROLE" -> wsGateRoomHandler.handleChangeMemberRole(session, dto);
 
 			case "APPLY_ROOM_NOTICE" -> wsGateRoomHandler.handleApplyRoomNotice(session, dto);
+
+			case "CHANGE_MEMBER_ROLE" -> wsGateRoomHandler.handleChangeMemberRole(session, dto);
 
 			default -> {
 				log.warn("알 수 없는 WS TYPE : {}", dto.getWsType());
