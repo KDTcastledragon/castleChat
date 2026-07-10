@@ -5,29 +5,6 @@
 
 <mapper namespace="com.chat.chengine.mapper.ChatMapper">
 
-	<!-- messageId는 앱(ChatMessageIdGenerator)에서 채번하여 명시. kafka 재전달 대비 INSERT IGNORE로 멱등 처리. -->
-	<insert id="insertChatMessage"
-			parameterType="com.chat.contract.chatting.domain.ChatMessagesDTO">
-		INSERT IGNORE INTO chat_messages (
-			message_id,
-			room_id,
-			sender_id,
-			message_type,
-			message_text,
-			reply_to_message_id,
-			created_at
-		)
-		VALUES (
-			#{messageId},
-			#{roomId},
-			#{senderId},
-			#{messageType},
-			#{messageText},
-			#{replyToMessageId},
-			#{createdAt}
-		)
-	</insert>
-
 	<select id="findAllActiveMemberIdsInRoom" resultType="java.lang.Long">
 		SELECT user_id
 		FROM room_members
@@ -72,44 +49,6 @@
 		WHERE room_id = #{roomId}
 		  AND message_id = #{messageId}
 	</select>
-
-	<update id="deleteChatMessage">
-		UPDATE chat_messages
-		SET
-			message_status = 'DELETED',
-			deleted_at = NOW()
-		WHERE room_id = #{roomId}
-		  AND message_id = #{messageId}
-		  AND sender_id = #{requesterUserId}
-		  AND message_status = 'ACTIVE'
-	</update>
-
-	<insert id="insertChatMessageReaction">
-		INSERT IGNORE INTO chat_message_reactions (
-			room_id,
-			message_id,
-			requester_user_id,
-			reaction_type,
-			reaction_code,
-			created_at
-		)
-		VALUES (
-			#{roomId},
-			#{messageId},
-			#{requesterUserId},
-			#{reactionType},
-			#{reactionCode},
-			NOW()
-		)
-	</insert>
-
-	<delete id="deleteChatMessageReaction">
-		DELETE FROM chat_message_reactions
-		WHERE room_id = #{roomId}
-		  AND message_id = #{messageId}
-		  AND requester_user_id = #{requesterUserId}
-		  AND reaction_code = #{reactionCode}
-	</delete>
 
 	<select id="findUserInfoByPublicId" resultType="com.chat.contract.room.domain.ChatUserLookupDTO">
 		SELECT
@@ -220,20 +159,6 @@
 			  #{publicId}
 		  </foreach>
 	</select>
-
-	<update id="updateChatMessageAttachments">
-		UPDATE chat_message_attachments
-		SET
-			message_id = #{messageId},
-			attachment_status = 'ATTACHED',
-			attached_at = NOW()
-		WHERE room_id = #{roomId}
-		  AND attachment_status = 'TEMP'
-		  AND attachment_id IN
-		  <foreach collection="attachmentIds" item="attachmentId" open="(" separator="," close=")">
-			  #{attachmentId}
-		  </foreach>
-	</update>
 
 	<select id="findChatMessageAttachments" resultType="com.chat.contract.chatting.domain.ChatAttachmentDTO">
 		SELECT

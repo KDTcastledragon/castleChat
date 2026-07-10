@@ -3,6 +3,7 @@ import './ChatBox.css';
 import axios from 'axios';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import {
+    emitWsApplyRoomNotice,
     emitWsChangeMemberRole,
     emitWsDeleteMessage,
     emitWsExitRoom,
@@ -14,6 +15,7 @@ import {
     emitWsReactMessage,
     emitWsSendMessage,
     emitWsStartDirectChat,
+    emitWsStartGroupChat,
     emitWsTypingStart,
     emitWsTypingStop,
     registerRoomHandler,
@@ -24,10 +26,10 @@ import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
 import { recommendMessagesApi } from '../../api/aiAssistApi';
-import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi } from '../../api/chatApi';
+import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi, uploadImageApi } from '../../api/chatApi';
 import { updateMyRoomSettingsApi } from '../../api/roomApi';
 
-function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
+function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, roomNotice, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const prevChattingsRef = useRef([]);
@@ -55,7 +57,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
     const [localRoomName, setLocalRoomName] = useState(roomName ?? '');
     const [roomThumbnailUrl, setRoomThumbnailUrl] = useState(roomThumbnail ?? '');
     const [roomBackgroundUrl, setRoomBackgroundUrl] = useState(customRoomBackground ?? '');
+    const [settingRoomName, setSettingRoomName] = useState(roomName ?? '');
+    const [settingRoomThumbnailUrl, setSettingRoomThumbnailUrl] = useState(roomThumbnail ?? '');
+    const [settingRoomBackgroundUrl, setSettingRoomBackgroundUrl] = useState(customRoomBackground ?? '');
+    const [settingRoomThumbnailFileName, setSettingRoomThumbnailFileName] = useState('');
+    const [settingRoomBackgroundFileName, setSettingRoomBackgroundFileName] = useState('');
+    const [isRoomNameEditing, setIsRoomNameEditing] = useState(false);
     const [isMessageNotificationEnabled, setIsMessageNotificationEnabled] = useState(messageNotificationEnabled ?? true);
+    const [currentRoomNotice, setCurrentRoomNotice] = useState(roomNotice ?? null);
     const [isSavingRoomSettings, setIsSavingRoomSettings] = useState(false);
 
     const [locallyRemovedMemberPublicIds, setLocallyRemovedMemberPublicIds] = useState(() => new Set());
@@ -68,6 +77,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
     const { data: me } = useMe();
     const { publicId: myPublicId } = me || {};
     const isDraftDirectRoom = isDraft && roomType === 'DIRECT' && !roomId;
+    const isDraftGroupRoom = isDraft && roomType === 'GROUP' && !roomId;
+    const isDraftRoom = isDraft && !roomId;
 
     const { data: friendList = [], isLoading: isFriendListLoading } = useFriendList(!!me && isInviteFriendPanelOpen);
 
@@ -210,19 +221,28 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
 
     useEffect(() => {
         setLocalRoomName(roomName ?? '');
+        setSettingRoomName(roomName ?? '');
     }, [roomName]);
 
     useEffect(() => {
         setRoomThumbnailUrl(roomThumbnail ?? '');
+        setSettingRoomThumbnailUrl(roomThumbnail ?? '');
+        setSettingRoomThumbnailFileName('');
     }, [roomThumbnail]);
 
     useEffect(() => {
         setRoomBackgroundUrl(customRoomBackground ?? '');
+        setSettingRoomBackgroundUrl(customRoomBackground ?? '');
+        setSettingRoomBackgroundFileName('');
     }, [customRoomBackground]);
 
     useEffect(() => {
         setIsMessageNotificationEnabled(messageNotificationEnabled ?? true);
     }, [messageNotificationEnabled]);
+
+    useEffect(() => {
+        setCurrentRoomNotice(roomNotice ?? null);
+    }, [roomNotice]);
 
     const formatTime = (isoString) => {
         const date = new Date(isoString);
@@ -263,7 +283,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
     }
 
     function addSelectedFiles(fileList) {
-        if (isDraftDirectRoom) {
+        if (isDraftRoom) {
             alert('첫 메시지 파일 첨부는 방 생성 후 전송해주세요.');
             return;
         }
@@ -324,8 +344,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         }
 
         try {
-            const uploaded = await sendFileApi(roomId, [file]);
-            const fileUrl = uploaded?.[0]?.fileUrl;
+            const fileUrl = await uploadImageApi(file, target === 'THUMBNAIL' ? 'ROOM_THUMBNAIL' : 'ROOM_BACKGROUND');
 
             if (!fileUrl) {
                 alert('파일 URL을 받을 수 없습니다.');
@@ -333,11 +352,13 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
             }
 
             if (target === 'THUMBNAIL') {
-                setRoomThumbnailUrl(fileUrl);
+                setSettingRoomThumbnailUrl(fileUrl);
+                setSettingRoomThumbnailFileName(file.name);
             }
 
             if (target === 'BACKGROUND') {
-                setRoomBackgroundUrl(fileUrl);
+                setSettingRoomBackgroundUrl(fileUrl);
+                setSettingRoomBackgroundFileName(file.name);
             }
         } catch (err) {
             console.error('방 설정 이미지 업로드 실패', err);
@@ -345,17 +366,33 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         }
     }
 
-    async function saveRoomSettings(nextNotificationEnabled = isMessageNotificationEnabled) {
+    async function saveRoomSettings(nextNotificationEnabled = isMessageNotificationEnabled, useDraftSettings = true) {
+        const nextRoomName = (useDraftSettings ? settingRoomName : localRoomName).trim();
+        const nextRoomThumbnailUrl = useDraftSettings ? settingRoomThumbnailUrl : roomThumbnailUrl;
+        const nextRoomBackgroundUrl = useDraftSettings ? settingRoomBackgroundUrl : roomBackgroundUrl;
+
+        if (!nextRoomName) {
+            alert('방 이름을 입력해주세요.');
+            return;
+        }
+
         try {
             setIsSavingRoomSettings(true);
 
             await updateMyRoomSettingsApi({
                 roomId,
-                customRoomName: localRoomName,
-                customRoomThumbnail: roomThumbnailUrl,
-                customRoomBackground: roomBackgroundUrl,
+                customRoomName: nextRoomName,
+                customRoomThumbnail: nextRoomThumbnailUrl,
+                customRoomBackground: nextRoomBackgroundUrl,
                 messageNotificationEnabled: nextNotificationEnabled
             });
+
+            if (useDraftSettings) {
+                setLocalRoomName(nextRoomName);
+                setRoomThumbnailUrl(nextRoomThumbnailUrl);
+                setRoomBackgroundUrl(nextRoomBackgroundUrl);
+                setIsRoomNameEditing(false);
+            }
 
             queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
         } catch (err) {
@@ -369,7 +406,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
     async function toggleMessageNotification() {
         const nextEnabled = !isMessageNotificationEnabled;
         setIsMessageNotificationEnabled(nextEnabled);
-        await saveRoomSettings(nextEnabled);
+        await saveRoomSettings(nextEnabled, false);
     }
 
     function buildUploadProgressText() {
@@ -817,7 +854,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
 
             if (wsResponse.wsType === "ROOM_NOTICE" || wsResponse.wsType === "ROOM_NOTICE_APPLIED") {
                 const notice = wsResponse.payload;
-                const feed = notice.roomFeed ?? notice;
+                const noticeView = notice.roomNoticeView ?? null;
+                const feed = notice.roomFeedResponse ?? notice.roomFeed ?? notice;
+
+                if (noticeView) {
+                    setCurrentRoomNotice(noticeView.roomNoticeStatus === 'DELETED' ? null : noticeView);
+                }
 
                 setPrevChattings(prev => [
                     ...prev,
@@ -862,22 +904,36 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         const messageType = resolveMessageTypeByFiles(selectedFiles);
 
         try {
-            if (isDraftDirectRoom) {
-                if (!targetPublicId) {
-                    alert('1:1 채팅 대상 정보가 없습니다.');
-                    return;
-                }
-
+            if (isDraftRoom) {
                 if (selectedFiles.length > 0) {
                     alert('첫 메시지 파일 첨부는 방 생성 후 전송해주세요.');
                     return;
                 }
 
-                const startResponse = await emitWsStartDirectChat(targetPublicId, chatMessage, {
-                    messageType: 'TEXT',
-                    replyToMessageId: null,
-                    attachmentIds: []
-                });
+                let startResponse;
+
+                if (isDraftDirectRoom) {
+                    if (!targetPublicId) {
+                        alert('1:1 채팅 대상 정보가 없습니다.');
+                        return;
+                    }
+
+                    startResponse = await emitWsStartDirectChat(targetPublicId, chatMessage, {
+                        messageType: 'TEXT',
+                        replyToMessageId: null,
+                        attachmentIds: []
+                    });
+                } else if (isDraftGroupRoom) {
+                    if (!Array.isArray(inviteMemberPublicIds) || inviteMemberPublicIds.length === 0) {
+                        alert('단톡방 초대 대상 정보가 없습니다.');
+                        return;
+                    }
+
+                    startResponse = await emitWsStartGroupChat(localRoomName, roomThumbnailUrl, inviteMemberPublicIds, chatMessage);
+                } else {
+                    alert('draft 채팅방 정보가 올바르지 않습니다.');
+                    return;
+                }
 
                 const startChat = startResponse.payload;
 
@@ -1533,7 +1589,50 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
         }
 
         if (action === 'NOTICE') {
-            alert(`공지: ${targetMessage.messageId}`);
+            applyMessageAsRoomNotice(targetMessage);
+        }
+    }
+
+    async function applyMessageAsRoomNotice(targetMessage) {
+        if (!roomId || !targetMessage?.messageId) return;
+
+        const contents = targetMessage.messageText || '첨부 메시지';
+        const confirmed = window.confirm('이 메시지를 공지로 등록하시겠습니까?');
+
+        if (!confirmed) return;
+
+        try {
+            await emitWsApplyRoomNotice({
+                roomId,
+                roomNoticeAction: 'CREATE',
+                roomNoticeType: 'MESSAGE',
+                sourceMessageId: targetMessage.messageId,
+                roomNoticeContents: contents
+            });
+        } catch (e) {
+            console.error('공지 등록 실패', e);
+            alert(e.message || '공지 등록 실패');
+        }
+    }
+
+    async function applyRoomNoticeAction(roomNoticeAction) {
+        if (!currentRoomNotice?.roomNoticeId) {
+            alert('처리할 공지가 없습니다.');
+            return;
+        }
+
+        try {
+            await emitWsApplyRoomNotice({
+                roomId,
+                roomNoticeAction,
+                targetRoomNoticeId: currentRoomNotice.roomNoticeId,
+                roomNoticeType: currentRoomNotice.roomNoticeType || 'CUSTOM',
+                sourceMessageId: currentRoomNotice.sourceMessageId,
+                roomNoticeContents: currentRoomNotice.roomNoticeContents
+            });
+        } catch (e) {
+            console.error('공지 처리 실패', e);
+            alert(e.message || '공지 처리 실패');
         }
     }
 
@@ -1573,13 +1672,13 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                     <div className="chatTitleLeftControls">
                         <button
                             className={`roomMenuButton ${isRoomMenuOpen ? 'active' : ''}`}
-                            title={isDraftDirectRoom ? '첫 메시지 전송 후 메뉴를 사용할 수 있습니다.' : '채팅방 메뉴'}
+                            title={isDraftRoom ? '첫 메시지 전송 후 메뉴를 사용할 수 있습니다.' : '채팅방 메뉴'}
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={() => {
-                                if (isDraftDirectRoom) return;
+                                if (isDraftRoom) return;
                                 setIsRoomMenuOpen(prev => !prev);
                             }}
-                            disabled={isDraftDirectRoom}
+                            disabled={isDraftRoom}
                         >
                             <span className="roomMenuButtonIcon">☰</span>
                         </button>
@@ -1590,10 +1689,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                     <div className="chatTitleRightControls">
                         <button
                             className={`notificationBellButton ${isMessageNotificationEnabled ? 'on' : 'off'}`}
-                            title={isDraftDirectRoom ? '첫 메시지 전송 후 알림 설정을 사용할 수 있습니다.' : isMessageNotificationEnabled ? '메시지 알림 켜짐' : '메시지 알림 꺼짐'}
+                            title={isDraftRoom ? '첫 메시지 전송 후 알림 설정을 사용할 수 있습니다.' : isMessageNotificationEnabled ? '메시지 알림 켜짐' : '메시지 알림 꺼짐'}
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={toggleMessageNotification}
-                            disabled={isDraftDirectRoom}
+                            disabled={isDraftRoom}
                         >
                             {isMessageNotificationEnabled ? '🔔' : '🔕'}
                         </button>
@@ -1629,14 +1728,22 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                     </div>
 
                     <div className="roomSettingsBox">
-                        <div className="roomSidePanelSubTitle">방 설정</div>
+                        <div className="roomNameSettingHeader">
+                            <span>방 이름</span>
+                            <button
+                                type="button"
+                                onClick={() => setIsRoomNameEditing(prev => !prev)}
+                            >
+                                변경
+                            </button>
+                        </div>
 
                         <label className="roomSettingLabel">
-                            방 이름
                             <input
-                                value={localRoomName}
-                                onChange={(e) => setLocalRoomName(e.target.value)}
+                                value={settingRoomName}
+                                onChange={(e) => setSettingRoomName(e.target.value)}
                                 placeholder="방 이름"
+                                disabled={!isRoomNameEditing}
                             />
                         </label>
 
@@ -1644,7 +1751,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                             <button onClick={() => roomThumbnailInputRef.current?.click()}>
                                 썸네일 사진
                             </button>
-                            <span>{roomThumbnailUrl ? '선택됨' : '기본 이미지'}</span>
+                            <span>{settingRoomThumbnailFileName || (settingRoomThumbnailUrl ? '기존 썸네일 사용 중' : '기본 이미지')}</span>
                             <input
                                 ref={roomThumbnailInputRef}
                                 type="file"
@@ -1658,7 +1765,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                             <button onClick={() => roomBackgroundInputRef.current?.click()}>
                                 배경 사진
                             </button>
-                            <span>{roomBackgroundUrl ? '선택됨' : '기본 배경'}</span>
+                            <span>{settingRoomBackgroundFileName || (settingRoomBackgroundUrl ? '기존 배경 사용 중' : '기본 배경')}</span>
                             <input
                                 ref={roomBackgroundInputRef}
                                 type="file"
@@ -1675,6 +1782,30 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                         >
                             방 설정 저장
                         </button>
+                    </div>
+
+                    <div className="roomNoticeSettingBox">
+                        <div className="roomNoticeSettingHeader">공지사항</div>
+
+                        {currentRoomNotice ? (
+                            <>
+                                <div className="roomNoticeContents">
+                                    {currentRoomNotice.roomNoticeContents}
+                                </div>
+
+                                <div className="roomNoticeActions">
+                                    {currentRoomNotice.roomNoticeStatus === 'ACTIVE' ? (
+                                        <button onClick={() => applyRoomNoticeAction('INACTIVATE')}>내리기</button>
+                                    ) : (
+                                        <button onClick={() => applyRoomNoticeAction('REACTIVATE')}>재공지</button>
+                                    )}
+
+                                    <button onClick={() => applyRoomNoticeAction('DELETE')}>삭제</button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="roomNoticeEmpty">등록된 공지 없음</div>
+                        )}
                     </div>
 
                     <div className="roomSidePanelSubTitle">
@@ -2108,7 +2239,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
 
                             const sender = memberMap[d.senderPublicId];
                             const senderNickname = sender?.nickname ?? '알 수 없음';
-                            const senderProfileImg = sender?.profileImg ?? '/images/mococo_question.png';
+                            const senderProfileImg = sender?.profileImg || '/images/mococo_question.png';
 
                             const isMine = d.senderPublicId === myPublicId;
                             const isDeletedMessage = d.messageStatus === 'DELETED';
@@ -2352,7 +2483,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, roomType, roomName, roomThum
                     <button
                         className="attachFileButton"
                         onClick={() => {
-                            if (isDraftDirectRoom) {
+                            if (isDraftRoom) {
                                 alert('첫 메시지 파일 첨부는 방 생성 후 전송해주세요.');
                                 return;
                             }

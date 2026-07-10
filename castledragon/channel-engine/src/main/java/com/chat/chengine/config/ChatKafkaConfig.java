@@ -9,6 +9,8 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 
+import com.chat.contract.kafka.ChatKafkaTopics;
+
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -24,8 +26,8 @@ public class ChatKafkaConfig {
 
 	// 메시지 도메인 이벤트 스트림 (created/deleted/reacted 3종이 한 토픽에 흐른다)
 	// 한 토픽 + key=roomId 이어야 같은 방의 create -> delete/react 소비 순서가 보장된다(파티션 내 순서 보장).
-	public static final String CHAT_MESSAGE_TOPIC = "castlechat.chat.message";
-	public static final String CHAT_MESSAGE_DLT = "castlechat.chat.message.dlt";
+	public static final String CHAT_MESSAGE_TOPIC = ChatKafkaTopics.CHAT_EVENT_TOPIC;
+	public static final String CHAT_MESSAGE_DLT = ChatKafkaTopics.CHAT_EVENT_DLT;
 
 	// 같은 roomId(key)는 항상 같은 파티션 -> 방 단위 순서 보장.
 	// 파티션 증설은 key->파티션 매핑을 바꾸므로 초기값을 넉넉히. (MVP 기준 6)

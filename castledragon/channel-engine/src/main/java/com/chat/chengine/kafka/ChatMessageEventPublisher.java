@@ -8,9 +8,9 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import com.chat.chengine.config.ChatKafkaConfig;
-import com.chat.chengine.domain.ChatMessageCreatedEventDTO;
-import com.chat.chengine.domain.ChatMessageDeletedEventDTO;
-import com.chat.chengine.domain.ChatMessageReactedEventDTO;
+import com.chat.contract.event.chatting.ChatMessageCreatedEventDTO;
+import com.chat.contract.event.chatting.ChatMessageDeletedEventDTO;
+import com.chat.contract.event.chatting.ChatMessageReactedEventDTO;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

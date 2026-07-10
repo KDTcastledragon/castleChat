@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- chat kafka 이벤트를 db에 반영하는 sql이다. -->
+<mapper namespace="com.chat.eventworker.mapper.EventPersistChatMapper">
+
+	<insert id="insertChatMessage"
+			parameterType="com.chat.contract.chatting.domain.ChatMessagesDTO">
+		INSERT IGNORE INTO chat_messages (
+			message_id,
+			room_id,
+			sender_id,
+			message_type,
+			message_text,
+			reply_to_message_id,
+			created_at
+		)
+		VALUES (
+			#{messageId},
+			#{roomId},
+			#{senderId},
+			#{messageType},
+			#{messageText},
+			#{replyToMessageId},
+			#{createdAt}
+		)
+	</insert>
+
+	<update id="updateChatMessageAttachments">
+		UPDATE chat_message_attachments
+		SET
+			message_id = #{messageId},
+			attachment_status = 'ATTACHED',
+			attached_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND attachment_status = 'TEMP'
+		  AND attachment_id IN
+		  <foreach collection="attachmentIds" item="attachmentId" open="(" separator="," close=")">
+			  #{attachmentId}
+		  </foreach>
+	</update>
+
+	<update id="deleteChatMessage">
+		UPDATE chat_messages
+		SET
+			message_status = 'DELETED',
+			deleted_at = NOW()
+		WHERE room_id = #{roomId}
+		  AND message_id = #{messageId}
+		  AND sender_id = #{requesterUserId}
+		  AND message_status = 'ACTIVE'
+	</update>
+
+	<insert id="insertChatMessageReaction">
+		INSERT IGNORE INTO chat_message_reactions (
+			room_id,
+			message_id,
+			requester_user_id,
+			reaction_type,
+			reaction_code,
+			created_at
+		)
+		VALUES (
+			#{roomId},
+			#{messageId},
+			#{requesterUserId},
+			#{reactionType},
+			#{reactionCode},
+			NOW()
+		)
+	</insert>
+
+	<delete id="deleteChatMessageReaction">
+		DELETE FROM chat_message_reactions
+		WHERE room_id = #{roomId}
+		  AND message_id = #{messageId}
+		  AND requester_user_id = #{requesterUserId}
+		  AND reaction_code = #{reactionCode}
+	</delete>
+
+</mapper>

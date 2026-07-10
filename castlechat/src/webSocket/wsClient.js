@@ -30,7 +30,8 @@ const WS_TYPES = {
     INVITE_MEMBER: "INVITE_MEMBER",
     KICK_MEMBER: "KICK_MEMBER",
     BAN_MEMBER: "BAN_MEMBER",
-    CHANGE_MEMBER_ROLE: "CHANGE_MEMBER_ROLE"
+    CHANGE_MEMBER_ROLE: "CHANGE_MEMBER_ROLE",
+    APPLY_ROOM_NOTICE: "APPLY_ROOM_NOTICE"
 
 };
 
@@ -419,6 +420,13 @@ export function emitWsChangeMemberRole(roomId, targetPublicId, targetRole) {
         roomId,
         targetPublicId,
         targetRole
+    });
+}
+
+export function emitWsApplyRoomNotice(payload) {
+    return emitWsRequest(WS_TYPES.APPLY_ROOM_NOTICE, payload, {
+        successTypes: ['ROOM_NOTICE_APPLIED'],
+        failTypes: ['APPLY_ROOM_NOTICE_FAIL', 'ROOM_NOTICE_APPLIED_FAIL', 'WS_MESSAGE_FAIL']
     });
 }
 

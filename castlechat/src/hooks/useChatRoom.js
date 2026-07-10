@@ -1,14 +1,15 @@
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { openChatWindow } from '../store/chatWindowsSlice';
-import { emitWsEnterRoomRequest, emitWsOpenDirectChat, emitWsStartGroupChat } from '../webSocket/wsClient';
+import { emitWsEnterRoomRequest, emitWsOpenDirectChat } from '../webSocket/wsClient';
 import { getMyAllRoomsApi } from '../api/roomApi';
+import { useMe } from './useAuthUser';
 
 export function useChatRoomActions() {
     const dispatch = useDispatch();
     const nav = useNavigate();
-    const queryClient = useQueryClient();
+    const { data: me } = useMe();
 
     function openRoom(roomInfo) {
         dispatch(openChatWindow({
@@ -19,9 +20,44 @@ export function useChatRoomActions() {
             roomThumbnail: roomInfo.customRoomThumbnail,
             customRoomBackground: roomInfo.customRoomBackground,
             messageNotificationEnabled: roomInfo.messageNotificationEnabled,
+            roomNotice: roomInfo.roomNotice,
             roomMemberCount: roomInfo.roomMemberCount,
             memberList: roomInfo.memberList,
             lastReadMessageId: roomInfo.lastReadMessageId
+        }));
+
+        nav('/chatList');
+    }
+
+    function openGroupDraft(roomName, roomThumbnail, selectedFriends) {
+        const trimmedRoomName = roomName?.trim();
+        const draftRoomName = trimmedRoomName || `${me?.nickname ?? '나'}님의 단톡방`;
+        const inviteMemberPublicIds = selectedFriends.map(friend => friend.publicId);
+        const draftMemberList = [
+            {
+                publicId: me?.publicId,
+                nickname: me?.nickname,
+                profileImg: me?.profileImg,
+                role: 'HOST'
+            },
+            ...selectedFriends.map(friend => ({
+                publicId: friend.publicId,
+                nickname: friend.nickname,
+                profileImg: friend.profileImg,
+                friendCode: friend.friendCode,
+                role: 'MEMBER'
+            }))
+        ].filter(member => member.publicId);
+
+        dispatch(openChatWindow({
+            isDraft: true,
+            draftKey: `group:${inviteMemberPublicIds.slice().sort().join(':')}:${draftRoomName}`,
+            roomId: null,
+            roomType: 'GROUP',
+            roomName: draftRoomName,
+            roomThumbnail,
+            inviteMemberPublicIds,
+            memberList: draftMemberList
         }));
 
         nav('/chatList');
@@ -71,26 +107,15 @@ export function useChatRoomActions() {
             throw new Error('초대할 친구를 선택해주세요.');
         }
 
-        const inviteMemberPublicIds = selectedFriends.map(friend => friend.publicId);
-        const firstMessageText = `${roomName?.trim() || '단톡방'}이 생성되었습니다.`;
-
-        const startResponse = await emitWsStartGroupChat(
-            roomName,
-            roomThumbnail,
-            inviteMemberPublicIds,
-            firstMessageText
-        );
-
-        const startChat = startResponse.payload;
-        const roomInfo = startChat.enterRoomInfo;
-
-        queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
-
         if (openAfterCreate) {
-            openRoom(roomInfo);
+            openGroupDraft(roomName, roomThumbnail, selectedFriends);
         }
 
-        return roomInfo;
+        return {
+            roomName: roomName?.trim(),
+            roomThumbnail,
+            inviteMemberPublicIds: selectedFriends.map(friend => friend.publicId)
+        };
     }
 
     // getOr & enterExist -> 둘 다 “방 정보 반환”이라 겹쳐 보이지만, 식별자가 다르다는 점에서 역할이 분명히 달라.

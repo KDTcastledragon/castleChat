@@ -136,11 +136,13 @@ function AppShell() {
                     isDraft={win.isDraft}
                     draftKey={win.draftKey}
                     targetPublicId={win.targetPublicId}
+                    inviteMemberPublicIds={win.inviteMemberPublicIds}
                     roomType={win.roomType}
                     roomName={win.roomName}
                     roomThumbnail={win.roomThumbnail}
                     customRoomBackground={win.customRoomBackground}
                     messageNotificationEnabled={win.messageNotificationEnabled}
+                    roomNotice={win.roomNotice}
                     memberList={win.memberList}
 
                     x={win.x}

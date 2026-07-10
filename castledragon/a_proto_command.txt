@@ -14,8 +14,7 @@ cd D:\castleDragonProjects\castleChat\castledragon
 
 cd D:\castleDragonProjects\castleChat\castledragon
 
- .\gradlew.bat :common-contract:clean :common-contract:generateProto :common-contract:compileJava :websocket-gateway:compileJava :channel-engine:compileJava                
-
+.\gradlew.bat :common-contract:clean :common-contract:generateProto :common-contract:compileJava :common-redis:compileJava :websocket-gateway:compileJava :channel-engine:compileJava :event-persist-worker:compileJava
 
 
 cd D:\castleDragonProjects\castleChat\castledragon

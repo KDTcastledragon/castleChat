@@ -33,7 +33,7 @@ public class AiRecommendController {
 	}
 
 	@GetMapping("/recommendMessages/{roomId}")
-	public ResponseEntity<?> recommendMessages(@PathVariable Long roomId, HttpSession session) {
+	public ResponseEntity<?> recommendMessages(@PathVariable("roomId") Long roomId, HttpSession session) {
 		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
 
 		if (me == null) {
@@ -41,6 +41,8 @@ public class AiRecommendController {
 		}
 
 		List<String> recommendations = aiRecommendUseCase.recommendMessages(me.getUserId(), roomId);
+
+		log.info("{}에게 ai가 추천 : {}", me.getNickname(), recommendations);
 
 		return ResponseEntity.ok(recommendations);
 	}

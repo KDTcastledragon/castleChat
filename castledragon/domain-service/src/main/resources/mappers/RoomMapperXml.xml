@@ -201,7 +201,7 @@
 		SET
 			custom_room_name = #{customRoomName},
 			custom_room_thumbnail = #{customRoomThumbnail},
-			custom_room_back_ground = #{customRoomBackground},
+			custom_room_background = #{customRoomBackground},
 			message_notification_enabled = #{messageNotificationEnabled}
 		WHERE room_id = #{roomId}
 		  AND user_id = #{userId}

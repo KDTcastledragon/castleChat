@@ -284,7 +284,7 @@ function FriendList() {
                     onClick={createGroupRoomBySelectedFriends}
                     disabled={selectedFriendList.length === 0}
                 >
-                    단톡초대하기
+                    단톡방 열기
                 </button>
 
                 <div className='requestBox'>

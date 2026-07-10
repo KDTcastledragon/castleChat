@@ -321,7 +321,7 @@
 			role,
 			custom_room_name,
 			custom_room_thumbnail,
-			custom_room_back_ground,
+			custom_room_background,
 			member_status,
 			invited_at
 		)

@@ -8,9 +8,6 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chat.chengine.domain.ChatMessageCreatedEventDTO;
-import com.chat.chengine.domain.ChatMessageDeletedEventDTO;
-import com.chat.chengine.domain.ChatMessageReactedEventDTO;
 import com.chat.chengine.kafka.ChatMessageEventPublisher;
 import com.chat.chengine.mapper.ChatMapper;
 import com.chat.chengine.mapper.RoomMapper;
@@ -29,6 +26,9 @@ import com.chat.contract.chatting.domain.res.DeleteChatMessageResponseDTO;
 import com.chat.contract.chatting.domain.res.ReactChatMessageEventResponseDTO;
 import com.chat.contract.chatting.domain.res.ReadPositionUpdateResponseDTO;
 import com.chat.contract.chatting.domain.res.StartChatResponseDTO;
+import com.chat.contract.event.chatting.ChatMessageCreatedEventDTO;
+import com.chat.contract.event.chatting.ChatMessageDeletedEventDTO;
+import com.chat.contract.event.chatting.ChatMessageReactedEventDTO;
 import com.chat.contract.room.domain.ChatRoomsDTO;
 import com.chat.contract.room.domain.ChatUserLookupDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
@@ -258,7 +258,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 
 	// ====== 메시지 보내기 ==========================================================================================================================
 	// prpr 3 : DB insert 후 response 하지 않는다. kafka durable save 후 response 하고,
-	//          DB insert는 ChatMessagePersistWorker(kafka consumer)가 비동기로 처리한다.
+	//          DB insert는 event-persist-worker(kafka consumer)가 비동기로 처리한다.
 	@Override
 	@Transactional
 	public ChatMessageViewResponseDTO createChatMessage(CreateChatMessageCommand cmd) {
@@ -391,7 +391,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalArgumentException("requesterPublicId가 없습니다.");
 		}
 
-		// prpr 3 : 검증(select)만 동기로 하고, DB update는 kafka consumer(ChatMessagePersistWorker)가 비동기 처리.
+		// prpr 3 : 검증(select)만 동기로 하고, DB update는 event-persist-worker(kafka consumer)가 비동기 처리.
 		// 기존의 row lock(FOR UPDATE)은 제거 -> consumer의 조건부 UPDATE(WHERE message_status='ACTIVE')가 경합을 멱등 흡수한다.
 		String messageStatus = chatMapper.findChatMessageStatus(cmd.getRoomId(), cmd.getMessageId());
 

@@ -43,6 +43,15 @@
     cursor: default;
 }
 
+.chatListRoomThumbnail {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #f1f1f1;
+}
+
 .chatListBox span {
     display: inline-block;
 

@@ -110,6 +110,12 @@ function ChatList() {
 
                     return (
                     <div className='chatListBox' key={r.roomId}>
+                        <img
+                            className="chatListRoomThumbnail"
+                            src={r.customRoomThumbnail || '/images/mococo_question.png'}
+                            alt={r.customRoomName}
+                        />
+
                         <div className="chatListMainInfo">
                             <div className="chatListRoomNameLine">
                                 <span className="chatListRoomName">{r.customRoomName}</span>
