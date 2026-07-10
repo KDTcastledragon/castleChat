@@ -99,8 +99,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 		Long activeNoticeId = roomMapper.findActiveRoomNoticeId(cmd.getRoomId());
 
 		if (activeNoticeId != null) {
-			validateNoticeOwner(cmd.getRoomId(), activeNoticeId, cmd.getRequesterUserId());
-			roomMapper.inactivateActiveRoomNotice(cmd.getRoomId(), cmd.getRequesterUserId());
+			roomMapper.inactivateActiveRoomNotice(cmd.getRoomId());
 		}
 
 		int inserted = roomMapper.insertRoomNotice(cmd);
@@ -162,8 +161,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 		Long activeNoticeId = roomMapper.findActiveRoomNoticeId(cmd.getRoomId());
 
 		if (activeNoticeId != null) {
-			validateNoticeOwner(cmd.getRoomId(), activeNoticeId, cmd.getRequesterUserId());
-			roomMapper.inactivateActiveRoomNotice(cmd.getRoomId(), cmd.getRequesterUserId());
+			roomMapper.inactivateActiveRoomNotice(cmd.getRoomId());
 		}
 
 		int updated = roomMapper.reactivateRoomNotice(cmd.getRoomId(), cmd.getTargetRoomNoticeId());
@@ -240,10 +238,6 @@ public class RoomCommandService implements RoomCommandUseCase {
 		}
 
 		validateNoticeType(cmd.getRoomNoticeType());
-
-		if (MESSAGE.equals(cmd.getRoomNoticeType()) && cmd.getSourceMessageId() == null) {
-			throw new IllegalArgumentException("메시지 공지는 sourceMessageId가 필요합니다.");
-		}
 	}
 
 	private void validateNoticeType(String roomNoticeType) {

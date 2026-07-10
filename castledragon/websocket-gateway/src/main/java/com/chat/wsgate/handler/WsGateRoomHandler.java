@@ -233,11 +233,10 @@ public class WsGateRoomHandler {
 
 		PayloadApplyRoomNoticeRequestDTO payload = wsGatePayloadConverter.convert(dto, PayloadApplyRoomNoticeRequestDTO.class);
 
-		if (payload.getRoomId() == null || payload.getRoomNoticeAction() == null || payload.getRoomNoticeType() == null
-				|| payload.getRoomNoticeContents() == null) {
+		if (payload.getRoomId() == null || payload.getRoomNoticeAction() == null || payload.getRoomNoticeAction().isBlank()) {
 			log.warn("APPLY_ROOM_NOTICE 누락 : roomId:{} act:{} type:{} ctn:{}", payload.getRoomId(), payload.getRoomNoticeAction(), payload
 					.getRoomNoticeType(), payload.getRoomNoticeContents());
-			wsGateOutboundWriter.responseFail(session, dto, "APPLY_ROOM_NOTICE_FAIL", "NOTICE FAIL");
+			wsGateOutboundWriter.responseFail(session, dto, "APPLY_ROOM_NOTICE_FAIL", "roomId 또는 action 누락");
 			return;
 		}
 
@@ -252,8 +251,8 @@ public class WsGateRoomHandler {
 					.broadcastToRoom(grpcResponse.getRoomNoticeView().getRoomId(), "ROOM_NOTICE_APPLIED", grpcResponse, dto.getRequestId());
 
 		} catch (Exception e) {
-			log.error("ROOM_NOTICE_APPLIED 예외처리발생: {}", e);
-			wsGateOutboundWriter.responseFail(session, dto, "ROOM_NOTICE_APPLIED_FAIL", "ROOM_NOTICE_APPLIED 예외처리발생");
+			log.error("ROOM_NOTICE_APPLIED 예외처리발생", e);
+			wsGateOutboundWriter.responseFail(session, dto, "ROOM_NOTICE_APPLIED_FAIL", e.getMessage() == null ? "ROOM_NOTICE_APPLIED 예외처리발생" : e.getMessage());
 		}
 
 	}

@@ -1,5 +1,5 @@
 // chat 관련 kafka 이벤트를 db에 반영하기 위한 mapper다.
-package com.chat.eventworker.mapper;
+package com.chat.evtwk.mapper;
 
 import java.util.List;
 

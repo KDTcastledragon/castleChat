@@ -112,6 +112,31 @@ public class WsGateChatHandler {
 		wsGateOutboundWriter.pushToMultipleUsers(targetUserIds, "CHAT_MESSAGE_NOTIFICATION", notification, requestId);
 	}
 
+	private void pushChatRoomUpdate(SessionUserDTO sender, ChatMessageViewResponseDTO message, String requestId) throws Exception {
+		if (message.getRoomUpdateTargetUserIds() == null || message.getRoomUpdateTargetUserIds().isEmpty()) {
+			return;
+		}
+
+		List<Long> targetUserIds = new ArrayList<>(message.getRoomUpdateTargetUserIds());
+		targetUserIds.removeAll(wsGateSessionRegistry.getViewingUserIds(message.getRoomId()));
+
+		if (targetUserIds.isEmpty()) {
+			return;
+		}
+
+		ChatMessageNotificationDTO roomUpdate = new ChatMessageNotificationDTO();
+		roomUpdate.setRoomId(message.getRoomId());
+		roomUpdate.setMessageId(message.getMessageId());
+		roomUpdate.setSenderPublicId(sender.getPublicId());
+		roomUpdate.setSenderNickname(sender.getNickname());
+		roomUpdate.setSenderProfileImg(sender.getProfileImg());
+		roomUpdate.setMessageType(defaultMessageType(message.getMessageType()));
+		roomUpdate.setPreviewText(notificationPreviewText(message));
+		roomUpdate.setNotifiedAt(message.getCreatedAt());
+
+		wsGateOutboundWriter.pushToMultipleUsers(targetUserIds, "CHAT_ROOM_UPDATED", roomUpdate, requestId);
+	}
+
 	//	====== 채팅 입력 이벤트 start/stop =========================================================================================================
 	//*** 이 메소드만 예외적으로 channel-engine을 거치지 않고, 그대로 response 한다. business logic이 없기 때문. [ 책임분리 < UX ] 
 	public void handleTyping(WebSocketSession session, WebSocketDTO dto, String eventType) throws Exception {
@@ -161,6 +186,7 @@ public class WsGateChatHandler {
 			wsGateSessionRegistry.enterRoomSession(grpcResponse.getEnterRoomInfo().getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.responseOk(session, dto, "START_DIRECT_CHAT_OK", grpcResponse);
 			wsGateOutboundWriter.broadcastToRoom(firstChatMessage.getRoomId(), "MSG_CREATED", firstChatMessage, dto.getRequestId());
+			pushChatRoomUpdate(me, firstChatMessage, dto.getRequestId());
 			pushChatMessageNotification(me, firstChatMessage, dto.getRequestId());
 			log.info("{}번유저 -> {}번방 start갠톡 : {}", me.getUserId(), firstChatMessage.getRoomId(), firstChatMessage.getMessageText());
 
@@ -198,6 +224,7 @@ public class WsGateChatHandler {
 			wsGateSessionRegistry.enterRoomSession(grpcResponse.getEnterRoomInfo().getRoomId(), me.getUserId(), session);
 			wsGateOutboundWriter.responseOk(session, dto, "START_GROUP_CHAT_OK", grpcResponse);
 			wsGateOutboundWriter.broadcastToRoom(firstChatMessage.getRoomId(), "MSG_CREATED", firstChatMessage, dto.getRequestId());
+			pushChatRoomUpdate(me, firstChatMessage, dto.getRequestId());
 			pushChatMessageNotification(me, firstChatMessage, dto.getRequestId());
 			log.info("{}번유저 -> {}번방 start단톡 : {}", me.getUserId(), firstChatMessage.getRoomId(), firstChatMessage.getMessageText());
 		} catch (Exception e) {
@@ -233,6 +260,7 @@ public class WsGateChatHandler {
 			ChatMessageViewResponseDTO grpcResponse = wsGateChatClient.createChatMessage(createChtMsgCmd);
 
 			wsGateOutboundWriter.broadcastToRoom(grpcResponse.getRoomId(), "MSG_CREATED", grpcResponse, dto.getRequestId()); // chatService.sendMessage()가 성공했을 때만 broadcast해야 하니까. try{}안에 두어라.
+			pushChatRoomUpdate(me, grpcResponse, dto.getRequestId());
 			pushChatMessageNotification(me, grpcResponse, dto.getRequestId());
 			log.info("{}번유저 -> {}번방 sendMsg : {}", me.getUserId(), grpcResponse.getRoomId(), grpcResponse.getMessageText());
 

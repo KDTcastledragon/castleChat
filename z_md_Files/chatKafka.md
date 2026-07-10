@@ -339,3 +339,64 @@ docker stats --no-stream
 I-6. 운영 전환 시 주의
 
 이번 설정은 노트북 개발환경 최적화다. 실제 운영형 대용량 구조에서는 `cpus: 1.0`, `mem_limit: 512m`, `Xmx256m` 같은 제한을 그대로 쓰면 안 된다. 운영에서는 브로커 3대 이상, replication factor 3, min.insync.replicas 2, 충분한 heap과 디스크 I/O를 기준으로 다시 잡아야 한다.
+
+<claude 해결 0710 >
+
+J. "Invalid bound statement: com.chat.evtwk.mapper.EventPersistChatMapper.insertChatMessage" 해결 기록
+
+J-1. 증상
+
+- sendMessage가 fe에는 표시되는데 db(chat_messages)에는 저장되지 않았다.
+- event-persist-worker 로그에 "Invalid bound statement (not found): com.chat.evtwk.mapper.EventPersistChatMapper.insertChatMessage"가 찍히고,
+  10회 재시도 후 "kafka worker 최종 실패. dlt 이동" 로그와 함께 이벤트가 DLT(castlechat.chat.message.dlt)로 빠졌다.
+- XML의 mapper namespace를 com.chat.eventworker... -> com.chat.evtwk...로 직접 고치고 gradle refresh까지 했는데도 같은 에러가 계속 났다.
+
+J-2. 먼저, durable save는 정상 동작 중이었다
+
+이 에러 로그 자체가 증거다. "dlt 이동" 로그는 consumer(event-persist-worker)가 kafka에서 메시지를 꺼내서 처리하다 실패했다는 뜻이다.
+즉 "producer 발행 -> broker 디스크 기록(acks=all) -> consumer 소비"까지는 전부 성공했고, 마지막 단계인 DB insert에서만 죽은 것이다.
+fe에 메시지가 뜬 것도 prpr 3(durable save 후 response) 규약대로 정상 동작한 결과다. 파이프라인이 끊긴 지점은 오직 "consumer -> DB" 한 곳이다.
+
+J-3. 원인 조사 과정 (증거 타임라인)
+
+파일 수정 시각으로 사건을 재구성했다.
+
+1. 09:50 - gradle 빌드 산출물(build/classes)에 옛 패키지 com.chat.eventworker.* 클래스가 생성됨. (codex가 이 패키지명으로 처음 만들었던 흔적)
+2. 11:40 - 패키지를 com.chat.evtwk로 바꾼 뒤 Eclipse가 bin/main에 새 클래스 컴파일. 이 시점에 XML namespace는 아직 옛 이름(com.chat.eventworker...)이었다.
+3. (11:40 ~ 12:57 사이) - worker 앱 기동 + 테스트. 에러 메시지가 com.chat.evtwk를 가리키는 걸 보면 이 구간에 뜬 JVM이다.
+4. 12:57 - 사용자가 XML namespace를 com.chat.evtwk로 수정. src와 bin/main 사본 모두 즉시 갱신됨(확인 완료).
+
+J-4. 진짜 원인 : XML 수정이 "이미 떠 있는 JVM"에는 반영되지 않는다
+
+MyBatis는 mapper XML을 앱 기동 시점에 딱 한 번 파싱해서 SqlSessionFactory 안에 statement 목록을 굳혀버린다.
+그래서 기동 당시 XML의 namespace가 옛 이름이면, statement는 "com.chat.eventworker....insertChatMessage"라는 id로 등록되고,
+새 인터페이스 프록시가 찾는 "com.chat.evtwk....insertChatMessage"는 존재하지 않아 Invalid bound statement가 난다.
+
+XML을 고친 뒤에 한 "gradle refresh"는 IDE의 프로젝트 설정 동기화일 뿐, 떠 있는 앱의 SqlSessionFactory를 다시 만들지 않는다.
+즉 "고쳤는데도 안 된다"가 아니라 "고친 버전으로는 아직 한 번도 안 떠본 것"이었다.
+
+검증한 것들 (전부 정상 확인)
+- src / bin\main 두 곳의 XML namespace 모두 com.chat.evtwk...로 일치.
+- mybatis.mapper-locations=classpath:mappers/*.xml 정상, 의존성(common-contract)에 mappers 폴더 없어 클래스패스 충돌 없음.
+- 발행측(channel-engine)도 com.chat.contract.event.chatting.* DTO로 통일, 토픽 상수(ChatKafkaTopics) 일치.
+  에러가 mapper 단계에서 났다는 것 자체가 역직렬화까지는 성공했다는 뜻이라 producer/consumer 계약도 문제 없음.
+
+J-5. 조치
+
+1. event-persist-worker\build 폴더 삭제 (claude가 수행함).
+   옛 패키지 com.chat.eventworker.* 클래스가 09:50 산출물로 남아 있었다. 이대로 두면 나중에 bootJar를 만들 때
+   옛/새 패키지가 한 jar에 같이 들어가 @SpringBootApplication이 2개가 되는 사고가 날 수 있다. 다음 빌드 때 전체 재컴파일되므로 부작용 없음.
+2. event-persist-worker 재기동 (사용자 수행).
+   현재 디스크의 소스/클래스/XML은 전부 정합 상태라, 다시 띄우기만 하면 새 XML로 SqlSessionFactory가 만들어진다.
+
+J-6. 재기동 후 알아둘 것
+
+- 이전 테스트에서 실패한 메시지들은 main 토픽에서 이미 소비 완료(offset commit) 처리되어 DLT에 들어가 있다.
+  재기동해도 그 메시지들은 자동으로 다시 소비되지 않으므로, 옛 테스트 메시지는 DB에 나타나지 않는 게 정상이다.
+  재기동 후 "새로" 보낸 메시지부터 DB에 저장되면 성공이다.
+- DLT에 쌓인 이벤트를 살리고 싶으면 DLT 재처리 워커(완성본 과제)로 main 토픽에 재발행하면 된다. 지금은 테스트 데이터라 버려도 무방.
+
+J-7. 교훈
+
+- mapper XML / application.properties / bean 설정을 고쳤으면 반드시 해당 앱을 재기동해야 한다. IDE refresh는 실행 중인 JVM과 무관하다.
+- 패키지명을 바꾼 뒤에는 옛 패키지의 빌드 산출물(build/, bin/)이 남아있지 않은지 확인한다. gradle clean이 가장 확실하다. 

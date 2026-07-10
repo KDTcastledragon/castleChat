@@ -19,6 +19,7 @@ public class RoomNoticeViewDTO {
 	private String roomNoticeStatus;
 
 	private String requesterPublicId;
+	private String requesterNickname;
 	private LocalDateTime lastAppliedAt;
 
 }

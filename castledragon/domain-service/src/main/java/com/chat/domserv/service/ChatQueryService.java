@@ -90,7 +90,7 @@ public class ChatQueryService implements ChatQueryUseCase {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<ChatMessageViewResponseDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit) {
+	public List<ChatMessageViewResponseDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit, Long requesterUserId) {
 		if (roomId == null) {
 			throw new IllegalArgumentException("roomId가 없습니다.");
 		}
@@ -114,7 +114,7 @@ public class ChatQueryService implements ChatQueryUseCase {
 					.stream()
 					.collect(Collectors.groupingBy(ChatAttachmentDTO::getMessageId));
 
-			List<ChatMessageReactionSummaryDTO> reactionSummaries = domServChatMapper.findReactionSummariesByMessageIds(messageIds);
+			List<ChatMessageReactionSummaryDTO> reactionSummaries = domServChatMapper.findReactionSummariesByMessageIds(messageIds, requesterUserId);
 
 			Map<Long, List<ChatMessageReactionSummaryDTO>> reactionMap = (reactionSummaries == null ? List.<ChatMessageReactionSummaryDTO>of() : reactionSummaries)
 					.stream()

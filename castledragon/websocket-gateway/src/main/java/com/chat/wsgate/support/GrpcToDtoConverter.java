@@ -53,6 +53,7 @@ public final class GrpcToDtoConverter {
 		chatMsgView.setCreatedAt(LocalDateTime.parse(response.getCreatedAt()));
 		chatMsgView.setUnreadCount(response.getUnreadCount());
 		chatMsgView.setNotificationTargetUserIds(response.getNotificationTargetUserIdsList());
+		chatMsgView.setRoomUpdateTargetUserIds(response.getRoomUpdateTargetUserIdsList());
 		chatMsgView.setAttachments(convertGrpcToChatAttachmentDtoList(response.getAttachmentsList()));
 
 		return chatMsgView;
@@ -207,6 +208,7 @@ public final class GrpcToDtoConverter {
 		roomNoticeView.setRoomNoticeContents(response.getRoomNoticeContents());
 		roomNoticeView.setRoomNoticeStatus(response.getRoomNoticeStatus());
 		roomNoticeView.setRequesterPublicId(response.getRequesterPublicId());
+		roomNoticeView.setRequesterNickname(response.getRequesterNickname());
 
 		if (response.getLastAppliedAt() != null && !response.getLastAppliedAt().isBlank()) {
 			roomNoticeView.setLastAppliedAt(LocalDateTime.parse(response.getLastAppliedAt()));

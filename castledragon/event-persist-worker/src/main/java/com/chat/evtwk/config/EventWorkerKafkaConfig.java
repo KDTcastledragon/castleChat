@@ -1,5 +1,5 @@
 // event worker의 kafka consumer 재시도와 dlt 이동 정책을 관리한다.
-package com.chat.eventworker.config;
+package com.chat.evtwk.config;
 
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.clients.admin.NewTopic;

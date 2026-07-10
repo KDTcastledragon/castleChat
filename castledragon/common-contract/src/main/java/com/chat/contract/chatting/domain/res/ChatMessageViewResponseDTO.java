@@ -33,6 +33,7 @@ public class ChatMessageViewResponseDTO {
 	private List<ChatMessageReactionSummaryDTO> reactions;
 
 	private List<Long> notificationTargetUserIds;
+	private List<Long> roomUpdateTargetUserIds;
 }
 
 //unreadCount 

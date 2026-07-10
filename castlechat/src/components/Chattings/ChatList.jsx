@@ -22,7 +22,7 @@ function ChatList() {
         if (!me) return;
 
         return registerGlobalWsHandler((wsEvt) => {
-            if (wsEvt.wsType !== 'CHAT_MESSAGE_NOTIFICATION' && wsEvt.wsType !== 'MSG_CREATED') {
+            if (wsEvt.wsType !== 'CHAT_ROOM_UPDATED' && wsEvt.wsType !== 'MSG_CREATED') {
                 return;
             }
 
@@ -46,7 +46,7 @@ function ChatList() {
                     const previewText = payload.previewText ?? payload.messageText ?? room.lastMessage ?? '';
                     const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? room.lastMessageAt;
                     const unreadCount = Number(room.unreadMessageCount ?? room.unreadCount ?? 0);
-                    const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_MESSAGE_NOTIFICATION' && !isMyMessage;
+                    const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage;
 
                     return {
                         ...room,

@@ -9,6 +9,7 @@ import com.chat.contract.room.domain.ChatRoomListDTO;
 import com.chat.contract.room.domain.ChatRoomsDTO;
 import com.chat.contract.room.domain.RoomMembersDTO;
 import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
+import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
 
 @Mapper
 public interface RoomMapper {
@@ -40,6 +41,10 @@ public interface RoomMapper {
 	int reactivateRoomMember(Long roomId, List<Long> directMemberPublicIds);
 
 	int updateMyRoomSettings(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("customRoomName") String customRoomName, @Param("customRoomThumbnail") String customRoomThumbnail, @Param("customRoomBackground") String customRoomBackground, @Param("messageNotificationEnabled") Boolean messageNotificationEnabled);
+
+	int countActiveRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
+	List<RoomNoticeViewDTO> findRoomNotices(@Param("roomId") Long roomId, @Param("beforeRoomNoticeId") Long beforeRoomNoticeId, @Param("limit") int limit);
 }
 
 // Mapper는 SQL 소유권 기준으로 RoomMapper, MessageMapper, UserMapper처럼 도메인별로 유지했다.

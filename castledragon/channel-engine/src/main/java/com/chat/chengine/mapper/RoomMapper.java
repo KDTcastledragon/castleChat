@@ -24,7 +24,7 @@ public interface RoomMapper {
 
 	int updateRoomNotice(ApplyRoomNoticeCommand cmd);
 
-	int inactivateActiveRoomNotice(@Param("roomId") Long roomId, @Param("requesterUserId") Long requesterUserId);
+	int inactivateActiveRoomNotice(@Param("roomId") Long roomId);
 
 	int inactivateRoomNotice(@Param("roomId") Long roomId, @Param("roomNoticeId") Long roomNoticeId);
 

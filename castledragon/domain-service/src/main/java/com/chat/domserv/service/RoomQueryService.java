@@ -4,8 +4,10 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.contract.room.domain.ChatRoomListDTO;
+import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.RoomQueryUseCase;
 
@@ -22,6 +24,22 @@ public class RoomQueryService implements RoomQueryUseCase {
 	public List<ChatRoomListDTO> getMyAllChatRooms(Long userId) {
 		List<ChatRoomListDTO> roomList = roomMapper.getMyAllChatRooms(userId);
 		return roomList;
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public List<RoomNoticeViewDTO> loadRoomNotices(Long roomId, Long beforeRoomNoticeId, int limit, Long requesterUserId) {
+		if (roomId == null) {
+			throw new IllegalArgumentException("roomId가 없습니다.");
+		}
+
+		if (requesterUserId == null || roomMapper.countActiveRoomMember(roomId, requesterUserId) < 1) {
+			throw new IllegalArgumentException("현재 채팅방의 멤버가 아닙니다.");
+		}
+
+		int pageSize = limit <= 0 ? 20 : Math.min(limit, 20);
+
+		return roomMapper.findRoomNotices(roomId, beforeRoomNoticeId, pageSize);
 	}
 
 	//	@Override

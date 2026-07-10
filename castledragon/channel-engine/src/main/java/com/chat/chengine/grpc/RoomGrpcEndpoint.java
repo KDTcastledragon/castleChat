@@ -141,16 +141,24 @@ public class RoomGrpcEndpoint extends ChEngineRoomGrpc.ChEngineRoomImplBase {
 
 	@Override
 	public void applyRoomNotice(ApplyRoomNoticeRequest request, StreamObserver<ApplyRoomNoticeResponse> responseObserver) {
-		ApplyRoomNoticeCommand command = new ApplyRoomNoticeCommand(request.getRoomId(), request
-				.getRoomNoticeAction(), request.hasTargetRoomNoticeId() ? request.getTargetRoomNoticeId() : null, request
-						.getRoomNoticeType(), request.hasSourceMessageId() ? request.getSourceMessageId()
-								: null, request.getRoomNoticeContents(), request.getRequesterUserId(), request.getRequesterPublicId());
+		try {
+			ApplyRoomNoticeCommand command = new ApplyRoomNoticeCommand(request.getRoomId(), request
+					.getRoomNoticeAction(), request.hasTargetRoomNoticeId() ? request.getTargetRoomNoticeId() : null, request
+							.getRoomNoticeType(), request.hasSourceMessageId() ? request.getSourceMessageId()
+									: null, request.getRoomNoticeContents(), request.getRequesterUserId(), request.getRequesterPublicId());
 
-		RoomNoticeApplyResponseDTO result = roomCommandUseCase.applyRoomNotice(command);
+			RoomNoticeApplyResponseDTO result = roomCommandUseCase.applyRoomNotice(command);
+			ApplyRoomNoticeResponse response = DtoToGrpcConverter.convertRoomNoticeApplyResDtoToGrpc(result);
 
-		ApplyRoomNoticeResponse response = DtoToGrpcConverter.convertRoomNoticeApplyResDtoToGrpc(result);
-
-		responseObserver.onNext(response);
-		responseObserver.onCompleted();
+			responseObserver.onNext(response);
+			responseObserver.onCompleted();
+		} catch (Exception e) {
+			log.error("applyRoomNotice 처리 실패. roomId={}, action={}, requesterUserId={}", request.getRoomId(), request
+					.getRoomNoticeAction(), request.getRequesterUserId(), e);
+			responseObserver.onError(Status.INTERNAL
+					.withDescription(e.getMessage() == null ? "공지 처리 실패" : e.getMessage())
+					.withCause(e)
+					.asRuntimeException());
+		}
 	}
 }

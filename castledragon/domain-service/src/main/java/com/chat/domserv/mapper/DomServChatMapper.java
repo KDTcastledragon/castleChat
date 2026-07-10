@@ -23,7 +23,7 @@ public interface DomServChatMapper {
 
 	List<ChatAttachmentDTO> findChatAttachmentsByMessageIds(@Param("messageIds") List<Long> messageIds);
 
-	List<ChatMessageReactionSummaryDTO> findReactionSummariesByMessageIds(@Param("messageIds") List<Long> messageIds);
+	List<ChatMessageReactionSummaryDTO> findReactionSummariesByMessageIds(@Param("messageIds") List<Long> messageIds, @Param("requesterUserId") Long requesterUserId);
 
 	List<ChatMessageReactionMemberResponseDTO> findMessageReactionMembers(@Param("roomId") Long roomId, @Param("messageId") Long messageId);
 

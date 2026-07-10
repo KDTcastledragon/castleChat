@@ -4,7 +4,7 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!-- chat kafka 이벤트를 db에 반영하는 sql이다. -->
-<mapper namespace="com.chat.eventworker.mapper.EventPersistChatMapper">
+<mapper namespace="com.chat.evtwk.mapper.EventPersistChatMapper">
 
 	<insert id="insertChatMessage"
 			parameterType="com.chat.contract.chatting.domain.ChatMessagesDTO">

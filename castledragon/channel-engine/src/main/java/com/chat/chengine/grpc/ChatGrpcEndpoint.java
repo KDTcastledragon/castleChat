@@ -81,6 +81,10 @@ public class ChatGrpcEndpoint extends ChEngineChatGrpc.ChEngineChatImplBase {
 			responseBuilder.addAllNotificationTargetUserIds(cmdResult.getNotificationTargetUserIds());
 		}
 
+		if (cmdResult.getRoomUpdateTargetUserIds() != null && !cmdResult.getRoomUpdateTargetUserIds().isEmpty()) {
+			responseBuilder.addAllRoomUpdateTargetUserIds(cmdResult.getRoomUpdateTargetUserIds());
+		}
+
 		return responseBuilder.build();
 	}
 

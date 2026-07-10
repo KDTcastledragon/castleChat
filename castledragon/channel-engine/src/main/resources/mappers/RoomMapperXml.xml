@@ -86,7 +86,6 @@
 			room_notice_status = 'INACTIVE',
 			inactivated_at = NOW()
 		WHERE room_id = #{roomId}
-		  AND requester_id = #{requesterUserId}
 		  AND room_notice_status = 'ACTIVE'
 	</update>
 
@@ -132,6 +131,7 @@
 			rn.room_notice_contents AS roomNoticeContents,
 			rn.room_notice_status AS roomNoticeStatus,
 			u.public_id AS requesterPublicId,
+			u.nickname AS requesterNickname,
 			CASE rn.room_notice_action
 				WHEN 'CREATE' THEN rn.created_at
 				WHEN 'UPDATE' THEN rn.updated_at
@@ -156,6 +156,7 @@
 			rn.room_notice_contents AS roomNoticeContents,
 			rn.room_notice_status AS roomNoticeStatus,
 			u.public_id AS requesterPublicId,
+			u.nickname AS requesterNickname,
 			CASE rn.room_notice_action
 				WHEN 'CREATE' THEN rn.created_at
 				WHEN 'UPDATE' THEN rn.updated_at
@@ -253,6 +254,7 @@
 			rn.room_notice_contents AS roomNoticeContents,
 			rn.room_notice_status AS roomNoticeStatus,
 			u.public_id AS requesterPublicId,
+			u.nickname AS requesterNickname,
 			CASE rn.room_notice_action
 				WHEN 'CREATE' THEN rn.created_at
 				WHEN 'UPDATE' THEN rn.updated_at

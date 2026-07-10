@@ -8,7 +8,7 @@ import com.chat.contract.chatting.domain.res.ChatMessageViewResponseDTO;
 import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
 
 public interface ChatQueryUseCase {
-	List<ChatMessageViewResponseDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit);
+	List<ChatMessageViewResponseDTO> loadMessagesInRoom(Long roomId, Long beforeMessageId, int limit, Long requesterUserId);
 
 	List<ChatMessageReactionMemberResponseDTO> findMessageReactionMembers(Long roomId, Long messageId, Long requesterUserId);
 

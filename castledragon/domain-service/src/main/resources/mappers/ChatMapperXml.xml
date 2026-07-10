@@ -105,7 +105,8 @@
 			message_id AS messageId,
 			reaction_type AS reactionType,
 			reaction_code AS reactionCode,
-			COUNT(*) AS count
+			COUNT(*) AS count,
+			MAX(CASE WHEN requester_user_id = #{requesterUserId} THEN 1 ELSE 0 END) AS reactedByMe
 		FROM chat_message_reactions
 		WHERE message_id IN
 		<foreach collection="messageIds" item="messageId" open="(" separator="," close=")">

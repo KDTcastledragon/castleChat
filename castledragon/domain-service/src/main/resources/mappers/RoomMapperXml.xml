@@ -207,6 +207,42 @@
 		  AND user_id = #{userId}
 		  AND member_status = 'ACTIVE'
 	</update>
+
+	<select id="countActiveRoomMember" resultType="int">
+		SELECT COUNT(*)
+		FROM room_members
+		WHERE room_id = #{roomId}
+		  AND user_id = #{userId}
+		  AND member_status = 'ACTIVE'
+	</select>
+
+	<select id="findRoomNotices" resultType="com.chat.contract.room.domain.res.RoomNoticeViewDTO">
+		SELECT
+			rn.room_notice_id AS roomNoticeId,
+			rn.room_id AS roomId,
+			rn.room_notice_action AS roomNoticeAction,
+			rn.room_notice_type AS roomNoticeType,
+			rn.room_notice_contents AS roomNoticeContents,
+			rn.room_notice_status AS roomNoticeStatus,
+			u.public_id AS requesterPublicId,
+			u.nickname AS requesterNickname,
+			CASE rn.room_notice_action
+				WHEN 'CREATE' THEN rn.created_at
+				WHEN 'UPDATE' THEN rn.updated_at
+				WHEN 'INACTIVATE' THEN rn.inactivated_at
+				WHEN 'REACTIVATE' THEN rn.reactivated_at
+				WHEN 'DELETE' THEN rn.deleted_at
+			END AS lastAppliedAt
+		FROM chat_room_notices rn
+		JOIN users u
+		  ON u.user_id = rn.requester_id
+		WHERE rn.room_id = #{roomId}
+		<if test="beforeRoomNoticeId != null">
+			AND rn.room_notice_id &lt; #{beforeRoomNoticeId}
+		</if>
+		ORDER BY rn.room_notice_id DESC
+		LIMIT #{limit}
+	</select>
 </mapper>
 
 <!-- <select id="getMyAllChatRooms" resultType="com.chat.castledragon.domain.ChatRoomListDTO">

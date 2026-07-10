@@ -174,3 +174,118 @@ An empty string ("") was passed to the src attribute.
 6. 방 이름/썸네일/배경이 저장 버튼 후에만 적용되는지 확인.
 7. 메시지 우클릭 공지가 실제 공지로 올라가는지 확인.
 8. 채팅방 목록에 썸네일이 보이는지 확인.
+
+## 2026-07-10 카카오톡 스타일 공지·알림·리액션 개선
+
+### 1. 활성 공지 상단 고정과 숨김 토글
+
+문제.
+
+- 활성 공지가 채팅방 데이터에는 있었지만 메시지 영역 상단에 고정 표시되는 UI가 없었다.
+- 공지를 잠깐 숨기는 UI 상태와 서버의 `ACTIVE/INACTIVE` 상태를 구분할 필요가 있었다.
+
+수정 내용.
+
+- `castlechat/src/components/Chattings/ChatBox.jsx`.
+  - 활성 공지를 `[닉네임] : [공지내용]` 형식으로 상단에 고정했다.
+  - 닉네임과 내용은 각각 말줄임 처리한다.
+  - `숨기기/표시하기` 토글을 추가했다.
+  - 숨김은 해당 채팅창의 UI 상태만 변경하며 공지를 실제로 내리지 않는다.
+- `castlechat/src/components/Chattings/ChatBox.css`.
+  - 상단 공지 바와 축소 상태 스타일을 추가했다.
+
+### 2. 공지사항 이력 패널과 20개 커서 조회
+
+문제.
+
+- 서버와 FE 모두 현재 활성 공지 하나만 취급해 과거 공지를 볼 방법이 없었다.
+- 채팅방 메뉴가 공지 내용과 내리기/삭제 버튼을 직접 노출해 공지 이력 진입점 역할을 하지 못했다.
+
+수정 내용.
+
+- `domain-service`에 `GET /room/{roomId}/notices`를 추가했다.
+- `beforeRoomNoticeId` 기준 최신순 20개 커서 페이지를 사용한다.
+- 활성 방 멤버인지 확인한 후에만 이력을 반환한다.
+- 삭제 공지는 DB 원문을 유지하지만 FE에는 `삭제된 공지사항입니다.`로 표시한다.
+- 상단 공지 또는 채팅방 메뉴의 공지를 누르면 전체 공지 패널이 열린다.
+- 스크롤 하단 도달 시 이전 공지 20개를 추가 조회한다.
+- 작성자에게만 수정/내리기/재공지/삭제 버튼을 표시한다.
+- ESC 입력 시 공지 패널을 먼저 닫는다.
+- 채팅방 메뉴에서는 직접 액션 버튼을 제거하고 공지 패널 진입만 제공한다.
+
+### 3. 새 공지·내림·삭제 반영 실패와 gRPC UNKNOWN
+
+원인.
+
+- `ROOM_NOTICE_APPLIED` payload의 roomId는 `payload.roomNoticeView.roomId`였지만 `wsClient.js`가 `payload.roomId`만 읽었다. 성공한 broadcast가 방 핸들러까지 전달되지 않았다.
+- 새 공지가 기존 활성 공지를 교체할 때 기존 활성 공지의 작성자 소유권까지 검사했다. 다른 작성자가 새 공지를 올리면 예외가 발생했다.
+- WebSocket handler가 CREATE/UPDATE/INACTIVATE/REACTIVATE/DELETE 전부에 타입과 내용을 강제해 action별 요청 형태를 수용하지 못했다.
+- `RoomGrpcEndpoint.applyRoomNotice`에 예외 변환이 없어 실제 원인이 gRPC `UNKNOWN`으로만 노출됐다.
+
+수정 내용.
+
+- FE 라우터가 `payload.roomId ?? payload.roomNoticeView.roomId`를 사용한다.
+- 새 공지와 재공지는 기존 활성 공지를 방 기준으로 내리고 적용한다.
+- 수정/내림/재공지/삭제 대상의 작성자 검증은 그대로 유지한다.
+- gateway는 transport 최소값인 roomId와 action만 확인하고 action별 정책 검증은 channel-engine service가 담당한다.
+- gRPC endpoint가 실제 예외 메시지를 `INTERNAL` description으로 전달한다.
+
+### 4. 알림 OFF 상태에서 채팅방 목록이 갱신되지 않던 문제
+
+원인.
+
+- 채팅방 목록의 마지막 메시지와 unreadCount 갱신이 `CHAT_MESSAGE_NOTIFICATION` 이벤트에 결합돼 있었다.
+- 서버는 `message_notification_enabled = FALSE`인 사용자를 이 이벤트 대상에서 제외한다.
+- 결과적으로 토스트를 끄면 채팅방 상태 갱신 이벤트까지 함께 사라졌다.
+
+수정 내용.
+
+- `CHAT_MESSAGE_NOTIFICATION`은 알림 토스트 전용으로 유지한다.
+- 알림 설정과 관계없이 활성 멤버에게 전달되는 `CHAT_ROOM_UPDATED` 이벤트를 추가했다.
+- 현재 해당 방을 보고 있는 사용자는 기존 `MSG_CREATED`로 상태를 갱신하고, 보고 있지 않은 사용자는 `CHAT_ROOM_UPDATED`로 목록을 갱신한다.
+- 채팅 목록은 더 이상 `CHAT_MESSAGE_NOTIFICATION`을 상태 변경 근거로 사용하지 않는다.
+- Kafka durable save와 메시지 DB 비동기 저장 흐름은 변경하지 않았다.
+
+### 5. 1:1 채팅방 목록 썸네일 가이드
+
+이번 항목은 지시대로 코드 변경하지 않았다.
+
+권장 변경 방향.
+
+- 현재 `domain-service RoomMapperXml.getMyAllChatRooms`는 `me.custom_room_thumbnail`을 그대로 반환한다.
+- DIRECT 방에서는 이 값을 사용하지 말고 상대 `room_members.user_id`를 통해 `users.profile_img`를 조회해야 한다.
+- GROUP 방은 현재처럼 `me.custom_room_thumbnail`을 유지한다.
+- 권장 결과식은 `CASE WHEN r.room_type = 'DIRECT' THEN 상대 users.profile_img ELSE me.custom_room_thumbnail END AS customRoomThumbnail` 형태다.
+- 상대 프로필 변경이 즉시 목록에 반영되도록 DIRECT 썸네일을 `room_members`에 복제 저장하지 않는 편이 안전하다.
+- 상대가 LEFT 상태여도 기존 DIRECT 방의 상대는 동일하므로 상대 멤버 조회에서 ACTIVE만 강제하지 않는 정책 검토가 필요하다.
+- 실제 적용 전 DIRECT 방 재입장/차단/탈퇴 시 썸네일 정책을 먼저 확정해야 한다.
+
+### 6. 리액션 선택 상태 표시
+
+원인.
+
+- `myReactionMap`은 현재 세션에서 리액션 이벤트를 받은 뒤에만 채워졌다.
+- 방 재입장이나 과거 메시지 로드 후에는 내가 이미 선택한 리액션인지 알 수 없었다.
+
+수정 내용.
+
+- 메시지 페이지의 기존 reaction 집계 쿼리에 `reactedByMe`를 추가했다.
+- 메시지별 추가 쿼리 없이 같은 GROUP BY 결과에서 현재 사용자 선택 여부를 계산한다.
+- 리액션 선택창에서 내가 선택한 이모티콘은 노란 배경, 테두리, 음영 효과로 표시한다.
+- 텍스트 안내는 추가하지 않았다.
+
+### 7. 리액션 멤버 목록 버튼 분리
+
+수정 내용.
+
+- 기존 이모티콘 요약 전체를 클릭해야 멤버 목록이 열리던 동작을 제거했다.
+- 리액션 추가 버튼 옆에 사람 상반신 아이콘 `👤` 버튼을 추가했다.
+- 이 버튼만 기존 `openReactionMemberViewer`를 호출한다.
+- 이모티콘별 반응 수와 기존 멤버 상세 패널의 내용은 변경하지 않았다.
+
+### 검증 결과
+
+- `npm.cmd run build` 성공.
+- `./gradlew.bat --offline --no-daemon --console=plain :common-contract:generateProto :common-contract:compileJava :domain-service:compileJava :websocket-gateway:compileJava :channel-engine:compileJava` 성공.
+- channel-engine/domain-service의 수정된 MyBatis XML 3개 문법 검사 성공.
+- 실제 DB와 WebSocket 다중 사용자 통합 테스트는 실행 중인 서비스와 로그인 세션이 필요하므로 코드 빌드 검증까지만 수행했다.

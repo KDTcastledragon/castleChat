@@ -90,6 +90,7 @@ public final class DtoToGrpcConverter {
 				.setRoomNoticeContents(nvl(dto.getRoomNoticeContents()))
 				.setRoomNoticeStatus(nvl(dto.getRoomNoticeStatus()))
 				.setRequesterPublicId(nvl(dto.getRequesterPublicId()))
+				.setRequesterNickname(nvl(dto.getRequesterNickname()))
 				.setLastAppliedAt(dto.getLastAppliedAt() == null ? "" : dto.getLastAppliedAt().toString())
 				.build();
 	}

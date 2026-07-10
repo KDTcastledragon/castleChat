@@ -1,5 +1,5 @@
 // chat kafka 이벤트를 소비해서 db write를 전담한다.
-package com.chat.eventworker.worker;
+package com.chat.evtwk.worker;
 
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,7 +12,7 @@ import com.chat.contract.event.chatting.ChatMessageCreatedEventDTO;
 import com.chat.contract.event.chatting.ChatMessageDeletedEventDTO;
 import com.chat.contract.event.chatting.ChatMessageReactedEventDTO;
 import com.chat.contract.kafka.ChatKafkaTopics;
-import com.chat.eventworker.mapper.EventPersistChatMapper;
+import com.chat.evtwk.mapper.EventPersistChatMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

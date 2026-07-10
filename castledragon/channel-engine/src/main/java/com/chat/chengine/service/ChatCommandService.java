@@ -332,6 +332,7 @@ public class ChatCommandService implements ChatCommandUseCase {
 		response.setCreatedAt(now);
 		response.setUnreadCount(unreadCount);
 		response.setNotificationTargetUserIds(notificationTargetUserIds == null ? List.of() : notificationTargetUserIds);
+		response.setRoomUpdateTargetUserIds(List.copyOf(allActiveMemberIdsInRoom));
 
 		return response;
 	}

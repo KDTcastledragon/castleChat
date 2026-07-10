@@ -12,4 +12,5 @@ public class ChatMessageReactionSummaryDTO {
 	private String reactionType;
 	private String reactionCode;
 	private Long count;
+	private Boolean reactedByMe;
 }

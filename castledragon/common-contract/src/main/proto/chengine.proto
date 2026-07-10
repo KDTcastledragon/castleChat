@@ -137,6 +137,7 @@ message CreateChatMessageResponse {
 
   repeated ChatAttachment attachments = 9;
   repeated int64 notification_target_user_ids = 10;
+  repeated int64 room_update_target_user_ids = 11;
 }
 
 message ReadChatMessageRequest {
@@ -217,6 +218,7 @@ message RoomNoticeView {
 
   string requester_public_id = 7;
   string last_applied_at = 8;
+  string requester_nickname = 9;
 }
 
 message EnterRoomResponse {

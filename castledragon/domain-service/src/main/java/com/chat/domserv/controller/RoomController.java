@@ -47,7 +47,7 @@ public class RoomController {
 
 		log.info("loadMessagesInRoom 호출: user={}, roomId={}, beforeMessageId={}, limit={}", me.getNickname(), roomId, beforeMessageId, limit);
 
-		List<ChatMessageViewResponseDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId, beforeMessageId, limit);
+		List<ChatMessageViewResponseDTO> loadedMessagesInRoom = ChtQryUseCase.loadMessagesInRoom(roomId, beforeMessageId, limit, me.getUserId());
 
 		return ResponseEntity.ok(loadedMessagesInRoom);
 	}
@@ -63,6 +63,17 @@ public class RoomController {
 		List<ChatRoomListDTO> roomList = romQryUseCase.getMyAllChatRooms(me.getUserId());
 
 		return ResponseEntity.ok(roomList);
+	}
+
+	@GetMapping("/{roomId}/notices")
+	public ResponseEntity<?> loadRoomNotices(@PathVariable("roomId") Long roomId, @RequestParam(value = "beforeRoomNoticeId", required = false) Long beforeRoomNoticeId, @RequestParam(value = "limit", defaultValue = "20") int limit, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		return ResponseEntity.ok(romQryUseCase.loadRoomNotices(roomId, beforeRoomNoticeId, limit, me.getUserId()));
 	}
 
 	@PostMapping("/updateMyRoomSettings")
