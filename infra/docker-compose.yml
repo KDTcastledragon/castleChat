@@ -2,6 +2,8 @@
 # chatRedis : 세션 + RoomMemberCache/RoomReadPositionCache (lrm) 저장소
 # chatKafka : sendMessage durable save용 kafka 브로커 (KRaft 단일 노드. Zookeeper 불필요)
 services:
+
+  # ====== Redis =====================================================================================================
   chatRedis:
     image: redis:7
     container_name: castle-redis
@@ -14,6 +16,7 @@ services:
 
     mem_limit: 256m
 
+  # ====== Kafka =====================================================================================================
   chatKafka:
     image: apache/kafka:3.9.0
     container_name: castle-chatKafka
@@ -31,13 +34,17 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 3
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_NUM_PARTITIONS: 3
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_HEAP_OPTS: "-Xms128m -Xmx256m"
       KAFKA_NUM_NETWORK_THREADS: 2
       KAFKA_NUM_IO_THREADS: 2
       KAFKA_BACKGROUND_THREADS: 2
+      KAFKA_NUM_RECOVERY_THREADS_PER_DATA_DIR: 1
+      KAFKA_LOG_CLEANER_THREADS: 1
       KAFKA_LOG_RETENTION_HOURS: 24
       KAFKA_LOG_RETENTION_BYTES: 268435456
       KAFKA_LOG_SEGMENT_BYTES: 67108864

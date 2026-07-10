@@ -249,17 +249,23 @@ I-3. 적용한 해결
 `infra/docker-compose.yml`의 `chatKafka` 서비스에 개발용 제한을 추가했다.
 
 ```yaml
-KAFKA_HEAP_OPTS: "-Xms128m -Xmx256m"
-KAFKA_NUM_NETWORK_THREADS: 2
-KAFKA_NUM_IO_THREADS: 2
-KAFKA_BACKGROUND_THREADS: 2
-KAFKA_LOG_RETENTION_HOURS: 24
-KAFKA_LOG_RETENTION_BYTES: 268435456
-KAFKA_LOG_SEGMENT_BYTES: 67108864
-KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-mem_limit: 512m
-cpus: 1.0
+KAFKA_HEAP_OPTS: 미설정(JVM/container 기본 산정) -> "-Xms128m -Xmx256m"  # Kafka JVM heap 시작/최대 크기
+KAFKA_NUM_NETWORK_THREADS: 3 -> 2                                      # client 요청을 받는 네트워크 스레드 수
+KAFKA_NUM_IO_THREADS: 8 -> 2                                           # 디스크 I/O와 요청 처리를 맡는 스레드 수
+KAFKA_BACKGROUND_THREADS: 10 -> 2                                      # background 작업 스레드 수
+KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS: 50 -> 3                            # consumer offset 저장 내부 토픽 파티션 수
+KAFKA_TRANSACTION_STATE_LOG_NUM_PARTITIONS: 50 -> 3                    # transaction 상태 내부 토픽 파티션 수
+KAFKA_NUM_RECOVERY_THREADS_PER_DATA_DIR: 1 -> 1 (명시)                 # 로그 복구용 스레드 수
+KAFKA_LOG_CLEANER_THREADS: 1 -> 1 (명시)                               # compact/delete 로그 정리 스레드 수
+KAFKA_LOG_RETENTION_HOURS: 168 -> 24                                   # 로그 보관 시간
+KAFKA_LOG_RETENTION_BYTES: -1 -> 268435456                             # 파티션별 로그 보관 용량 제한
+KAFKA_LOG_SEGMENT_BYTES: 1073741824 -> 67108864                        # 로그 segment 파일 크기
+KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000 -> 0                      # consumer group 초기 rebalance 대기 시간
+mem_limit: 768m -> 512m                                                # Docker 컨테이너 메모리 상한
+cpus: 미설정 -> 1.0                                                    # Docker 컨테이너 CPU 사용 상한
 ```
+
+위 설정들은 Docker Desktop 화면에서 직접 만지는 값이 아니라 `infra/docker-compose.yml`에 적는 compose 설정이다. 수정은 IDE나 메모장으로 파일을 고쳐도 되고, pwsh에서 파일 편집 명령으로 바꿔도 된다. 적용은 `docker compose down` 후 `docker compose up -d`로 컨테이너를 재생성해야 반영된다.
 
 설정 의도는 다음과 같다.
 
@@ -267,6 +273,8 @@ cpus: 1.0
 - `mem_limit`은 컨테이너 전체 메모리 상한을 512MiB로 낮춘다.
 - `cpus`는 개발 PC에서 Kafka가 1코어 이상을 오래 점유하지 못하게 막는다.
 - `KAFKA_NUM_NETWORK_THREADS`, `KAFKA_NUM_IO_THREADS`, `KAFKA_BACKGROUND_THREADS`는 개발용 단일 브로커에 맞게 스레드 수를 줄인다.
+- `KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS`, `KAFKA_TRANSACTION_STATE_LOG_NUM_PARTITIONS`는 개발용 내부 토픽 파티션 수를 줄인다.
+- `KAFKA_NUM_RECOVERY_THREADS_PER_DATA_DIR`, `KAFKA_LOG_CLEANER_THREADS`는 로컬 개발환경에서 로그 복구/정리용 background thread 수를 낮춘다.
 - `KAFKA_LOG_RETENTION_*`는 테스트 중 쌓인 이벤트 로그가 무한히 커지지 않게 제한한다.
 - `KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0`은 로컬 개발에서 consumer group 초기 대기 시간을 줄인다.
 
@@ -295,6 +303,38 @@ docker stats --no-stream
 ```
 
 `down -v`는 Kafka/Redis volume을 삭제하므로 기존 테스트 데이터가 사라진다. 메시지 이벤트 로그까지 초기화해도 되는 상황에서만 사용한다.
+
+I-7. CPU가 계속 100%처럼 보일 때 추가 확인
+
+수정 후에도 기동 직후 `CPU 100%` 근처가 보일 수 있다. 이건 Kafka가 시작하면서 내부 토픽과 consumer group metadata를 로딩하기 때문이다. 특히 기존 volume에 `__consumer_offsets`가 기본 50파티션으로 이미 만들어져 있으면, compose에 `KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS=3`을 추가해도 기존 내부 토픽에는 소급 적용되지 않는다.
+
+로그에서 아래처럼 `__consumer_offsets-0`부터 `__consumer_offsets-49`까지 계속 보이면 기존 volume의 내부 토픽이 50파티션인 상태다.
+
+```text
+Finished loading offsets and group metadata from __consumer_offsets-49
+```
+
+이 경우 CPU를 더 줄이려면 Kafka volume을 초기화해야 한다.
+
+```powershell
+cd D:\castleDragonProjects\castleChat\infra
+docker compose down -v
+docker compose up -d
+docker stats --no-stream
+```
+
+단, `down -v`는 Kafka/Redis volume을 삭제한다. 로컬 테스트 메시지 이벤트 로그와 Redis 데이터가 사라져도 되는 상황에서만 실행한다.
+Redis 데이터는 유지하고 Kafka volume만 초기화하려면 아래가 더 안전하다.
+
+```powershell
+cd D:\castleDragonProjects\castleChat\infra
+docker compose down
+docker volume rm infra_chatkafka-data
+docker compose up -d
+docker stats --no-stream
+```
+
+이번에 확인한 실제 상태는 `OOMKilled=false`, `ExitCode=137`였다. 로그에는 `SIGTERM`을 받고 shutdown하는 흐름이 찍혔다. 즉 Docker가 메모리 부족으로 죽였다는 증거는 없고, 종료 신호를 받은 뒤 제한 시간 안에 완전히 내려가지 못해 최종 exit code가 137로 남은 쪽에 가깝다.
 
 I-6. 운영 전환 시 주의
 
