@@ -1,5 +1,6 @@
 import './ChatList.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMe } from '../../hooks/useAuthUser';
 import { useChatRoomActions, useGetMyAllRooms } from '../../hooks/useChatRoom';
@@ -15,6 +16,8 @@ function ChatList() {
 	const localUnreadCountRef = useRef({});
 
     const { enterExistingRoom } = useChatRoomActions();
+    // 디스코드식 싱글뷰 : 현재 열려있는 방을 목록에서 하이라이트하기 위한 read-only 참조.
+    const activeChatWindowKey = useSelector(state => state.chatWindows.windows[0]?.chatWindowKey ?? null);
 
     useEffect(() => {
 		const nextRooms = myAllRooms.map(room => {
@@ -129,10 +132,13 @@ function ChatList() {
         return date.toTimeString().slice(0, 5);
     }
 
-    function handleEnterRoom(roomId) {
-		resetRoomUnreadCount(roomId);
-
-        enterExistingRoom(roomId);
+    async function handleEnterRoom(roomId) {
+        try {
+            await enterExistingRoom(roomId);
+            resetRoomUnreadCount(roomId);
+        } catch (e) {
+            console.error('채팅방 입장 실패', e);
+        }
     }
 
     if (isCheckingLogin || isLoading) {
@@ -155,9 +161,14 @@ function ChatList() {
                 <div className='chatListTitle'><span>채팅방 목록</span></div>
                 {visibleRooms.map((r) => {
                     const unreadCount = Number(r.unreadMessageCount ?? r.unreadCount ?? 0);
+                    const isActiveRoom = activeChatWindowKey === `room:${r.roomId}`;
 
                     return (
-                    <div className='chatListBox' key={r.roomId}>
+                    <div
+                        className={isActiveRoom ? 'chatListBox active' : 'chatListBox'}
+                        key={r.roomId}
+                        onClick={() => handleEnterRoom(r.roomId)}
+                    >
                         <img
                             className="chatListRoomThumbnail"
                             src={r.customRoomThumbnail || '/images/mococo_question.png'}
@@ -184,8 +195,6 @@ function ChatList() {
                                 <div className="chatListUnreadBadge">{unreadCount > 999 ? '999+' : unreadCount}</div>
                             )}
                         </div>
-
-                        <button onClick={() => handleEnterRoom(r.roomId)}>채팅</button>
                     </div>
                     );
                 })}

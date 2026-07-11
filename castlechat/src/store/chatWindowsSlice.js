@@ -32,6 +32,9 @@ const chatWindowsSlice = createSlice({
                 return;
             }
 
+            // 디스코드식 싱글뷰 : 활성 방은 항상 1개만 유지한다. (팝아웃 재도입 시 이 줄을 제거하고 push만 남기면 멀티창 복구)
+            state.windows = [];
+
             state.windows.push({
                 chatWindowKey,
                 roomId: room.roomId,

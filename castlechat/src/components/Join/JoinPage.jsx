@@ -168,18 +168,27 @@ function JoinPage() {
         // if (validId && vaildPw && pw === confirmPw && validName && year !== null && month !== null && day !== null && validPhoneNumber) {
         if (validId && vaildPw && password === confirmPw && validNickname) {
 
-            const joinFormData = new FormData();
-
-            joinFormData.append('loginId', loginId);
-            joinFormData.append('password', password);
-            joinFormData.append('nickname', nickname);
+            let joinRequestData;
 
             if (profileImgFile) {
+                const joinFormData = new FormData();
+
+                joinFormData.append('loginId', loginId);
+                joinFormData.append('password', password);
+                joinFormData.append('nickname', nickname);
                 joinFormData.append('profileImgFile', profileImgFile);
+
+                joinRequestData = joinFormData;
+            } else {
+                joinRequestData = {
+                    loginId,
+                    password,
+                    nickname
+                };
             }
 
             axios
-                .post(`/user/join`, joinFormData)
+                .post(`/user/join`, joinRequestData)
                 .then((r) => {
                     navigator('/');
                     alert(`회원가입 완료. 로그인 페이지로 이동합니다.`);
@@ -315,11 +324,6 @@ function JoinPage() {
                     <button type="button" onClick={() => profileImgInputRef.current?.click()}>
                         파일 선택
                     </button>
-                    {profileImgFile && (
-                        <button type="button" className="joinProfileResetButton" onClick={() => setProfileImgFile(null)}>
-                            기본 이미지
-                        </button>
-                    )}
                     <input
                         ref={profileImgInputRef}
                         type="file"

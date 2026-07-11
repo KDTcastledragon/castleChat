@@ -1,23 +1,24 @@
 :root {
   color-scheme: light;
-  --castle-bg: #f4f7fb;
+  /* 녹색 계열 테마. 저채도 green으로 눈 피로를 줄이고 본문 대비(가시성)는 유지한다. */
+  --castle-bg: #f2f6f3;
   --castle-surface: #ffffff;
-  --castle-surface-soft: #f8fafc;
-  --castle-surface-muted: #e2e8f0;
-  --castle-nav: #0f172a;
-  --castle-nav-soft: #1e293b;
-  --castle-primary: #0f766e;
-  --castle-primary-hover: #115e59;
-  --castle-primary-soft: #ccfbf1;
-  --castle-primary-pale: #f0fdfa;
-  --castle-text: #0f172a;
-  --castle-text-muted: #64748b;
-  --castle-border: #cbd5e1;
-  --castle-border-soft: #e2e8f0;
+  --castle-surface-soft: #f6faf7;
+  --castle-surface-muted: #e2ebe4;
+  --castle-nav: #1b2e23;
+  --castle-nav-soft: #27402f;
+  --castle-primary: #2e7d5b;
+  --castle-primary-hover: #256549;
+  --castle-primary-soft: #d7ecdf;
+  --castle-primary-pale: #edf6f0;
+  --castle-text: #182420;
+  --castle-text-muted: #5e7268;
+  --castle-border: #c8d6cc;
+  --castle-border-soft: #dfe9e1;
   --castle-danger: #dc2626;
   --castle-warning: #d97706;
-  --castle-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
-  --castle-shadow-strong: 0 16px 40px rgba(15, 23, 42, 0.18);
+  --castle-shadow: 0 12px 32px rgba(24, 46, 33, 0.1);
+  --castle-shadow-strong: 0 16px 40px rgba(24, 46, 33, 0.18);
 }
 
 html {
@@ -47,7 +48,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 3px solid rgba(20, 184, 166, 0.24);
+  outline: 3px solid rgba(46, 125, 91, 0.28);
   outline-offset: 2px;
 }
 

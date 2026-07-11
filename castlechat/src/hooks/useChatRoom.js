@@ -1,8 +1,8 @@
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { openChatWindow } from '../store/chatWindowsSlice';
-import { emitWsEnterRoomRequest, emitWsOpenDirectChat } from '../webSocket/wsClient';
+import { emitWsEnterRoomRequest, emitWsExitRoom, emitWsOpenDirectChat } from '../webSocket/wsClient';
 import { getMyAllRoomsApi } from '../api/roomApi';
 import { useMe } from './useAuthUser';
 
@@ -10,8 +10,18 @@ export function useChatRoomActions() {
     const dispatch = useDispatch();
     const nav = useNavigate();
     const { data: me } = useMe();
+    const activeRoomId = useSelector(state => state.chatWindows.windows[0]?.roomId ?? null);
+
+    function exitPreviousRoom(nextRoomId = null) {
+        if (activeRoomId == null) return;
+        if (nextRoomId != null && Number(activeRoomId) === Number(nextRoomId)) return;
+
+        emitWsExitRoom(activeRoomId);
+    }
 
     function openRoom(roomInfo, initialMessages = []) {
+        exitPreviousRoom(roomInfo.roomId);
+
         dispatch(openChatWindow({
             isDraft: false,
             roomId: roomInfo.roomId,
@@ -31,6 +41,8 @@ export function useChatRoomActions() {
     }
 
     function openGroupDraft(roomName, roomThumbnail, selectedFriends) {
+        exitPreviousRoom();
+
         const trimmedRoomName = roomName?.trim();
         const draftRoomName = trimmedRoomName || `${me?.nickname ?? '나'}님의 단톡방`;
         const inviteMemberPublicIds = selectedFriends.map(friend => friend.publicId);
@@ -65,6 +77,8 @@ export function useChatRoomActions() {
     }
 
     function openDirectDraft(draft, fallbackFriend) {
+        exitPreviousRoom();
+
         const friendPublicId = draft?.friendPublicId ?? fallbackFriend?.publicId;
         const friendNickname = draft?.friendNickname ?? fallbackFriend?.nickname;
         const friendProfileImg = draft?.friendProfileImg ?? fallbackFriend?.profileImg;

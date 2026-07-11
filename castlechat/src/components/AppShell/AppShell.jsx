@@ -1,7 +1,7 @@
 
 import './AppShell.css';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import RouteBody from "../Home/RouteBody"
 
 import { useMe } from "../../hooks/useAuthUser";
 import { closeChatWindow, moveChatWindow, focusChatWindow, clearChatWindows } from '../../store/chatWindowsSlice';
-import { connectWs, disconnectWs, registerGlobalWsHandler, registerWsCloseListener } from "../../webSocket/wsClient";
+import { connectWs, disconnectWs, emitWsEnterRoom, emitWsExitRoom, registerGlobalWsHandler, registerWsCloseListener } from "../../webSocket/wsClient";
 import { addAcceptedFriendToCache, addReceivedFriendRequestToCache, removeReceivedFriendRequestFromCache } from '../../hooks/useFriend';
 
 import ChatBox from '../Chattings/ChatBox';
@@ -34,6 +34,9 @@ function AppShell() {
     const chatWindows = useSelector(state => state.chatWindows.windows);
     const canShowChatWindows = location.pathname === '/chatList';
     const isPublicRoute = location.pathname === '/login' || location.pathname === '/join';
+    const activeRoomId = chatWindows[0]?.roomId ?? null;
+    const wasChatRouteRef = useRef(canShowChatWindows);
+    const routeExitedRoomIdRef = useRef(null);
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
@@ -63,6 +66,27 @@ function AppShell() {
 
         return unregister;
     }, [dispatch]);
+
+    useEffect(() => {
+        const wasChatRoute = wasChatRouteRef.current;
+
+        if (wasChatRoute && !canShowChatWindows && activeRoomId != null) {
+            emitWsExitRoom(activeRoomId);
+            routeExitedRoomIdRef.current = activeRoomId;
+        }
+
+        if (
+            !wasChatRoute
+            && canShowChatWindows
+            && activeRoomId != null
+            && Number(routeExitedRoomIdRef.current) === Number(activeRoomId)
+        ) {
+            emitWsEnterRoom(activeRoomId);
+            routeExitedRoomIdRef.current = null;
+        }
+
+        wasChatRouteRef.current = canShowChatWindows;
+    }, [activeRoomId, canShowChatWindows]);
 
     useEffect(() => {
         if (!me) {
@@ -133,36 +157,51 @@ function AppShell() {
         <>
             <Header />
 
-            <RouteBody />
+            {/* 디스코드식 싱글뷰 : /chatList에서는 좌(방 목록) + 우(활성 방) 2패널로 배치한다. 다른 라우트는 기존 그대로. */}
+            <div className={canShowChatWindows ? 'appBody chatSplitLayout' : 'appBody'}>
+                <RouteBody />
 
-            {canShowChatWindows && chatWindows.map((win) => (
-                <ChatBox
-                    key={win.chatWindowKey}
+                {canShowChatWindows && (
+                    <div className="chatMainPane">
+                        {chatWindows.length === 0 && (
+                            <div className="chatMainPaneEmpty">
+                                <img className="chatMainPaneEmptyImg" src="/images/mococo_question.png" alt="채팅방 미선택" />
+                                <span>왼쪽 목록에서 채팅방을 선택하세요.</span>
+                            </div>
+                        )}
 
-                    chatWindowKey={win.chatWindowKey}
-                    roomId={win.roomId}
-                    isDraft={win.isDraft}
-                    draftKey={win.draftKey}
-                    targetPublicId={win.targetPublicId}
-                    inviteMemberPublicIds={win.inviteMemberPublicIds}
-                    roomType={win.roomType}
-                    roomName={win.roomName}
-                    roomThumbnail={win.roomThumbnail}
-                    customRoomBackground={win.customRoomBackground}
-                    messageNotificationEnabled={win.messageNotificationEnabled}
-                    roomNotice={win.roomNotice}
-                    memberList={win.memberList}
-                    initialMessages={win.initialMessages}
+                        {chatWindows.map((win) => (
+                            <ChatBox
+                                key={win.chatWindowKey}
 
-                    x={win.x}
-                    y={win.y}
-                    zIndex={win.zIndex}
+                                chatWindowKey={win.chatWindowKey}
+                                roomId={win.roomId}
+                                isDraft={win.isDraft}
+                                draftKey={win.draftKey}
+                                targetPublicId={win.targetPublicId}
+                                inviteMemberPublicIds={win.inviteMemberPublicIds}
+                                roomType={win.roomType}
+                                roomName={win.roomName}
+                                roomThumbnail={win.roomThumbnail}
+                                customRoomBackground={win.customRoomBackground}
+                                messageNotificationEnabled={win.messageNotificationEnabled}
+                                roomNotice={win.roomNotice}
+                                memberList={win.memberList}
+                                initialMessages={win.initialMessages}
 
-                    exitChatRoom={() => dispatch(closeChatWindow(win.chatWindowKey))}
-                    onMove={(x, y) => dispatch(moveChatWindow({ chatWindowKey: win.chatWindowKey, x, y }))}
-                    onFocus={() => dispatch(focusChatWindow(win.chatWindowKey))}
-                />
-            ))}
+                                isDocked={true}
+                                x={win.x}
+                                y={win.y}
+                                zIndex={win.zIndex}
+
+                                exitChatRoom={() => dispatch(closeChatWindow(win.chatWindowKey))}
+                                onMove={(x, y) => dispatch(moveChatWindow({ chatWindowKey: win.chatWindowKey, x, y }))}
+                                onFocus={() => dispatch(focusChatWindow(win.chatWindowKey))}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
 
             <div className="globalToastBox">
                 {toastList.map(toast => (

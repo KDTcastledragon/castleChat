@@ -29,7 +29,7 @@ import { recommendMessagesApi } from '../../api/aiAssistApi';
 import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi, uploadImageApi } from '../../api/chatApi';
 import { loadRoomNoticesApi, updateMyRoomSettingsApi } from '../../api/roomApi';
 
-function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, roomNotice, memberList, initialMessages, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
+function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, roomNotice, memberList, initialMessages, isDocked = false, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const prevChattingsRef = useRef([]);
@@ -48,6 +48,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const [reactionPickerPosition, setReactionPickerPosition] = useState(null);
     const [reactionViewer, setReactionViewer] = useState(null);
     const [messageReadersViewer, setMessageReadersViewer] = useState(null);
+    const [highlightedMessageId, setHighlightedMessageId] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(null);
     const [isUploadingFiles, setIsUploadingFiles] = useState(false);
@@ -187,7 +188,6 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const chatRoomSectionRef = useRef(null);
     const isChatBoxFocusedRef = useRef(false);
 
-    const chatEndRef = useRef(null);
     const fileInputRef = useRef(null);
     const roomThumbnailInputRef = useRef(null);
     const roomBackgroundInputRef = useRef(null);
@@ -216,6 +216,9 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const hasMorePrevRef = useRef(true);
     const oldestMessageIdRef = useRef(null);
     const isPrependingPrevRef = useRef(false);
+    const shouldStickToBottomRef = useRef(true);
+    const isInitialRoomScrollPendingRef = useRef(true);
+    const messageHighlightTimerRef = useRef(null);
 
     const dragRef = useRef({
         isDragging: false,
@@ -490,14 +493,23 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         };
     }, [onMove]);
 
-    useEffect(() => {
-        if (isPrependingPrevRef.current) {
-            isPrependingPrevRef.current = false;
-            return;
-        }
+    const latestMessageId = prevChattings[prevChattings.length - 1]?.messageId ?? null;
 
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [prevChattings]);
+    useEffect(() => {
+        if (isPrependingPrevRef.current) return;
+        if (latestMessageId == null) return;
+        if (!isInitialRoomScrollPendingRef.current && !shouldStickToBottomRef.current) return;
+
+        requestAnimationFrame(() => {
+            const chatListEl = chatListRef.current;
+
+            if (!chatListEl) return;
+
+            chatListEl.scrollTop = chatListEl.scrollHeight;
+            shouldStickToBottomRef.current = true;
+            isInitialRoomScrollPendingRef.current = false;
+        });
+    }, [roomId, latestMessageId, prevChattings.length]);
 
     async function loadOlderMessages() {
         if (isLoadingPrevRef.current) return;
@@ -550,10 +562,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
             requestAnimationFrame(() => {
                 const currentEl = chatListRef.current;
-                if (!currentEl) return;
+                if (!currentEl) {
+                    isPrependingPrevRef.current = false;
+                    return;
+                }
 
                 const newScrollHeight = currentEl.scrollHeight;
                 currentEl.scrollTop = newScrollHeight - prevScrollHeight;
+                isPrependingPrevRef.current = false;
             });
         } catch (e) {
             console.error("이전 메시지 로딩 실패", e);
@@ -573,9 +589,60 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         const chatListEl = chatListRef.current;
         if (!chatListEl) return;
 
+        const distanceToBottom = chatListEl.scrollHeight - chatListEl.scrollTop - chatListEl.clientHeight;
+        shouldStickToBottomRef.current = distanceToBottom <= 80;
+
         if (chatListEl.scrollTop <= LOAD_PREV_THRESHOLD_PX) {
             loadOlderMessages();
         }
+    }
+
+    function keepLatestMessageVisibleAfterMediaLoad() {
+        if (!shouldStickToBottomRef.current && !isInitialRoomScrollPendingRef.current) return;
+
+        requestAnimationFrame(() => {
+            const chatListEl = chatListRef.current;
+
+            if (!chatListEl) return;
+
+            chatListEl.scrollTop = chatListEl.scrollHeight;
+            shouldStickToBottomRef.current = true;
+            isInitialRoomScrollPendingRef.current = false;
+        });
+    }
+
+    function scrollToMessage(messageId) {
+        const chatListEl = chatListRef.current;
+
+        if (!chatListEl || messageId == null) return;
+
+        const targetMessageEl = chatListEl.querySelector(`[data-message-id="${String(messageId)}"]`);
+
+        if (!targetMessageEl) return;
+
+        const chatListRect = chatListEl.getBoundingClientRect();
+        const targetMessageRect = targetMessageEl.getBoundingClientRect();
+        const nextScrollTop = chatListEl.scrollTop
+            + targetMessageRect.top
+            - chatListRect.top
+            - ((chatListEl.clientHeight - targetMessageRect.height) / 2);
+
+        shouldStickToBottomRef.current = false;
+        chatListEl.scrollTo({
+            top: Math.max(nextScrollTop, 0),
+            behavior: 'smooth'
+        });
+
+        setHighlightedMessageId(String(messageId));
+
+        if (messageHighlightTimerRef.current) {
+            clearTimeout(messageHighlightTimerRef.current);
+        }
+
+        messageHighlightTimerRef.current = setTimeout(() => {
+            setHighlightedMessageId(null);
+            messageHighlightTimerRef.current = null;
+        }, 1400);
     }
 
     async function syncVisibleMessageUnreadCounts() {
@@ -616,6 +683,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         hasMorePrevRef.current = Boolean(roomId);
         oldestMessageIdRef.current = null;
         isPrependingPrevRef.current = false;
+        shouldStickToBottomRef.current = true;
+        isInitialRoomScrollPendingRef.current = true;
 
         setPrevChattings(Array.isArray(initialMessages) ? initialMessages : []);
         setTypingUsers([]);
@@ -630,6 +699,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setReactionPickerPosition(null);
         setReactionViewer(null);
         setMessageReadersViewer(null);
+        setHighlightedMessageId(null);
         setIsRoomNoticePanelOpen(false);
         setRoomNoticeList([]);
         setIsLoadingRoomNotices(false);
@@ -681,7 +751,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 if (messages.length) {
                     const lastOtherMsgInRoom = [...messages]
                         .reverse()
-                        .find(msg => msg.senderPublicId !== myPublicId);
+                        .find(msg => msg.messageType !== 'SYSTEM' && msg.senderPublicId !== myPublicId);
 
                     if (lastOtherMsgInRoom !== undefined) {
                         scheduleReadMessage(lastOtherMsgInRoom.messageId);
@@ -966,6 +1036,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             unregisterRoomHandler(roomId);
         };
     }, [roomId, myPublicId, initialMessages]);
+
+    useEffect(() => {
+        return () => {
+            if (messageHighlightTimerRef.current) {
+                clearTimeout(messageHighlightTimerRef.current);
+            }
+        };
+    }, []);
 
     async function sendChatMessage() {
         if (isUploadingFiles) return;
@@ -1853,8 +1931,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         <div className='chatBoxContainer'>
             <div
                 ref={chatRoomSectionRef}
-                className='chattingRoomSection'
-                style={{
+                className={isDocked ? 'chattingRoomSection docked' : 'chattingRoomSection'}
+                style={isDocked ? undefined : {
                     left: x,
                     top: y,
                     zIndex
@@ -1866,7 +1944,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 onDrop={handleChatDrop}
                 onDragOver={handleChatDragOver}
             >
-                <div className='chatListTitle' onMouseDown={startDrag}>
+                <div className='chatListTitle' onMouseDown={isDocked ? undefined : startDrag}>
                     <div className="chatTitleLeftControls">
                         <button
                             className={`roomMenuButton ${isRoomMenuOpen ? 'active' : ''}`}
@@ -2524,7 +2602,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             return (
                                 <div
                                     key={d.messageId}
-                                    className={`chatRow ${isMine ? 'mine' : 'other'}`}
+                                    className={`chatRow ${isMine ? 'mine' : 'other'} ${String(highlightedMessageId) === String(d.messageId) ? 'replyTargetHighlighted' : ''}`}
+                                    data-message-id={String(d.messageId)}
                                     onContextMenu={(e) => openMessageContextMenu(e, d)}
                                 >
                                     {!isMine && (
@@ -2560,7 +2639,18 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
                                         <div className={`messageWrap ${isDeletedMessage ? 'deleted' : ''}`}>
                                             {replyMessage && !isDeletedMessage && (
-                                                <div className="replyPreviewInMessage">
+                                                <div
+                                                    className="replyPreviewInMessage"
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={() => scrollToMessage(replyMessage.messageId)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                            e.preventDefault();
+                                                            scrollToMessage(replyMessage.messageId);
+                                                        }
+                                                    }}
+                                                >
                                                     <div className="replyPreviewSender">
                                                         {memberMap[replyMessage.senderPublicId]?.nickname ?? '답장'}
                                                     </div>
@@ -2580,12 +2670,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                                                     src={attachment.fileUrl}
                                                                     alt={attachment.originalFileName}
                                                                     onClick={() => openImageViewer(attachment)}
+                                                                    onLoad={keepLatestMessageVisibleAfterMediaLoad}
                                                                 />
                                                             ) : attachment.attachmentKind === 'VIDEO' ? (
                                                                 <video
                                                                     className="attachmentVideoPreview"
                                                                     src={attachment.fileUrl}
                                                                     controls
+                                                                    onLoadedMetadata={keepLatestMessageVisibleAfterMediaLoad}
                                                                 />
                                                             ) : (
                                                                 <a
@@ -2660,7 +2752,6 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                         <div className="emptyChatMessage">친구와 새로운 이야기를 시작해보세요.</div>
                     }
 
-                    <div ref={chatEndRef} />
                 </div>
 
                 {typingUsers.length > 0 && (

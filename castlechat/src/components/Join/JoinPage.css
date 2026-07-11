@@ -155,13 +155,6 @@
     cursor: pointer;
 }
 
-.joinProfileImage>.joinProfileResetButton {
-    background: #666;
-    color: #fff;
-    border: 0;
-}
-
-
 /* ========[생년 월일]=================================== */
 .joinBirth>span:nth-of-type(2),
 .joinBirth>span:nth-of-type(3),
@@ -257,10 +250,6 @@
 .joinId>button:hover,
 .joinProfileImage>button:hover {
     background: var(--castle-primary-hover);
-}
-
-.joinProfileImage>.joinProfileResetButton {
-    background: #64748b;
 }
 
 .joinButton>button {
