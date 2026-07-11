@@ -14,11 +14,12 @@
     max-width: 360px;
     padding: 12px 14px;
     border-radius: 14px;
-    background: rgba(17, 17, 17, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: rgba(15, 23, 42, 0.96);
     color: #fff;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    box-shadow: var(--castle-shadow-strong);
     animation: toastSlideIn 160ms ease-out;
 }
 

@@ -95,7 +95,18 @@
             END
         ) AS customRoomName,
 
-        me.custom_room_thumbnail AS customRoomThumbnail,
+		CASE
+			WHEN r.room_type = 'DIRECT' THEN (
+				SELECT COALESCE(NULLIF(TRIM(u.profile_img), ''), '/images/mococo_question.png')
+				FROM room_members other_rm
+				JOIN users u
+				  ON u.user_id = other_rm.user_id
+				WHERE other_rm.room_id = r.room_id
+				  AND other_rm.user_id != me.user_id
+				LIMIT 1
+			)
+			ELSE me.custom_room_thumbnail
+		END AS customRoomThumbnail,
 
         (
             SELECT COUNT(*)
@@ -162,7 +173,7 @@
         u.public_id AS publicId,
         u.nickname AS nickname,
         u.friend_code AS friendCode,
-        u.profile_img AS profileImg,
+        COALESCE(NULLIF(TRIM(u.profile_img), ''), '/images/mococo_question.png') AS profileImg,
         rm.role AS role
     FROM room_members rm
     JOIN users u

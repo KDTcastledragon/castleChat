@@ -3,8 +3,24 @@ import './MyPage.css';
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMe } from '../../hooks/useAuthUser';
-import { changeMyPasswordApi, updateMyProfileApi } from '../../api/userApi';
+import { changeMyPasswordApi, updateMyNicknameApi, updateMyProfileImageApi } from '../../api/userApi';
 import { uploadImageApi } from '../../api/chatApi';
+import { emitWsProfileUpdated } from '../../webSocket/wsClient';
+
+const DEFAULT_PROFILE_IMAGE = '/images/mococo_question.png';
+
+function getProfileImageFileName(profileImgUrl) {
+    if (!profileImgUrl) return 'mococo_question.png';
+
+    const urlWithoutQuery = profileImgUrl.split('?')[0].split('#')[0];
+    const fileName = urlWithoutQuery.substring(urlWithoutQuery.lastIndexOf('/') + 1);
+
+    try {
+        return decodeURIComponent(fileName || 'mococo_question.png');
+    } catch {
+        return fileName || 'mococo_question.png';
+    }
+}
 
 function MyPage() {
     const queryClient = useQueryClient();
@@ -17,26 +33,44 @@ function MyPage() {
     const [isUploadingProfileImg, setIsUploadingProfileImg] = useState(false);
     const [prevPw, setPrevPw] = useState('');
     const [newPw, setNewPw] = useState('');
+    const [newPwConfirm, setNewPwConfirm] = useState('');
     const [isPasswordBoxOpen, setIsPasswordBoxOpen] = useState(false);
 
-    const updateProfileMutation = useMutation({
-        mutationFn: updateMyProfileApi,
+    const updateNicknameMutation = useMutation({
+        mutationFn: updateMyNicknameApi,
         onSuccess: (updatedMe) => {
             queryClient.setQueryData(['me'], updatedMe);
+            emitWsProfileUpdated();
             setNickname('');
+            alert('닉네임이 변경되었습니다.');
+        },
+        onError: (err) => {
+            alert(err.response?.data ?? '닉네임 변경 실패');
+        }
+    });
+
+    const updateProfileImageMutation = useMutation({
+        mutationFn: updateMyProfileImageApi,
+        onSuccess: (updatedMe) => {
+            queryClient.setQueryData(['me'], updatedMe);
+            emitWsProfileUpdated();
             setProfileImg('');
             setProfileImgFileName('');
-            alert('내 정보가 변경되었습니다.');
+            alert('프로필 이미지가 변경되었습니다.');
+        },
+        onError: (err) => {
+            alert(err.response?.data ?? '프로필 이미지 변경 실패');
         }
     });
 
     const changePasswordMutation = useMutation({
         mutationFn: changeMyPasswordApi,
         onSuccess: () => {
-            setPrevPw('');
-            setNewPw('');
-            setIsPasswordBoxOpen(false);
+            closePasswordModal();
             alert('비밀번호가 변경되었습니다.');
+        },
+        onError: (err) => {
+            alert(err.response?.data ?? '비밀번호 변경 실패');
         }
     });
 
@@ -48,14 +82,33 @@ function MyPage() {
         return <div className="myPageContainer">로그인이 필요합니다.</div>;
     }
 
-    const nextNickname = nickname.trim() || me.nickname;
-    const nextProfileImg = profileImg.trim() || me.profileImg;
+    const nextProfileImg = profileImg || me.profileImg || DEFAULT_PROFILE_IMAGE;
+    const currentProfileImageFileName = getProfileImageFileName(me.profileImg || DEFAULT_PROFILE_IMAGE);
+    const selectedProfileImageFileName = profileImgFileName || getProfileImageFileName(nextProfileImg);
 
-    function saveMyProfile() {
-        updateProfileMutation.mutate({
-            nickname: nextNickname,
-            profileImg: nextProfileImg
-        });
+    function saveMyNickname() {
+        const nextNickname = nickname.trim();
+
+        if (!nextNickname) {
+            alert('변경할 닉네임을 입력해주세요.');
+            return;
+        }
+
+        updateNicknameMutation.mutate(nextNickname);
+    }
+
+    function saveMyProfileImage() {
+        if (!profileImg) {
+            alert('변경할 프로필 이미지를 선택해주세요.');
+            return;
+        }
+
+        updateProfileImageMutation.mutate(profileImg);
+    }
+
+    function selectDefaultProfileImage() {
+        setProfileImg(DEFAULT_PROFILE_IMAGE);
+        setProfileImgFileName('mococo_question.png');
     }
 
     async function changeProfileImage(e) {
@@ -89,8 +142,13 @@ function MyPage() {
     }
 
     function changePassword() {
-        if (!prevPw || !newPw) {
-            alert('현재 비밀번호와 새 비밀번호를 입력해주세요.');
+        if (!prevPw || !newPw || !newPwConfirm) {
+            alert('비밀번호 입력칸을 모두 작성해주세요.');
+            return;
+        }
+
+        if (newPw !== newPwConfirm) {
+            alert('변경 비밀번호가 일치하지 않습니다.');
             return;
         }
 
@@ -98,6 +156,13 @@ function MyPage() {
             prevPw,
             newPw
         });
+    }
+
+    function closePasswordModal() {
+        setPrevPw('');
+        setNewPw('');
+        setNewPwConfirm('');
+        setIsPasswordBoxOpen(false);
     }
 
     return (
@@ -112,14 +177,10 @@ function MyPage() {
 
                     <div className="myPageTitleBox">
                         <h2>내정보</h2>
-                        <p>프로필과 기본 정보를 여기서 관리합니다.</p>
                     </div>
                 </div>
 
                 <div className="myInfoGrid">
-                    <span>publicId</span>
-                    <strong>{me.publicId}</strong>
-
                     <span>닉네임</span>
                     <strong>{me.nickname}</strong>
 
@@ -127,59 +188,86 @@ function MyPage() {
                     <strong>{me.friendCode}</strong>
 
                     <span>프로필 이미지</span>
-                    <strong>{me.profileImg || '기본 이미지'}</strong>
+                    <strong>{currentProfileImageFileName}</strong>
                 </div>
 
                 <div className="myEditSection">
-                    <label>
-                        닉네임 변경
-                        <input
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
-                            placeholder={me.nickname}
-                        />
-                    </label>
-
-                    <div className="profileImageEditBox">
-                        <span>프로필 이미지</span>
-                        <strong>{profileImgFileName || (profileImg ? '새 이미지 선택됨' : '현재 이미지 유지')}</strong>
+                    <div className="myEditRow">
+                        <label>
+                            닉네임 변경
+                            <input
+                                value={nickname}
+                                onChange={(e) => setNickname(e.target.value)}
+                                placeholder={me.nickname}
+                            />
+                        </label>
 
                         <button
-                            type="button"
-                            onClick={() => profileImgInputRef.current?.click()}
-                            disabled={isUploadingProfileImg}
+                            className="myPrimaryButton"
+                            onClick={saveMyNickname}
+                            disabled={updateNicknameMutation.isPending}
                         >
-                            {isUploadingProfileImg ? '업로드 중...' : '파일 선택'}
+                            닉네임 변경
                         </button>
-
-                        <input
-                            ref={profileImgInputRef}
-                            type="file"
-                            accept="image/*"
-                            hidden
-                            onChange={changeProfileImage}
-                        />
                     </div>
 
-                    <button
-                        className="myPrimaryButton"
-                        onClick={saveMyProfile}
-                        disabled={updateProfileMutation.isPending || isUploadingProfileImg}
-                    >
-                        프로필 저장
-                    </button>
+                    <div className="myEditRow profileImageEditRow">
+                        <div className="profileImageEditBox">
+                            <span>프로필 이미지</span>
+                            <strong title={selectedProfileImageFileName}>{selectedProfileImageFileName}</strong>
+
+                            <button
+                                type="button"
+                                onClick={() => profileImgInputRef.current?.click()}
+                                disabled={isUploadingProfileImg}
+                            >
+                                {isUploadingProfileImg ? '업로드 중...' : '파일 선택'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="defaultProfileImageButton"
+                                onClick={selectDefaultProfileImage}
+                                disabled={isUploadingProfileImg}
+                            >
+                                기본 이미지
+                            </button>
+
+                            <input
+                                ref={profileImgInputRef}
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={changeProfileImage}
+                            />
+                        </div>
+
+                        <button
+                            className="myPrimaryButton"
+                            onClick={saveMyProfileImage}
+                            disabled={updateProfileImageMutation.isPending || isUploadingProfileImg || !profileImg}
+                        >
+                            프로필 이미지 변경
+                        </button>
+                    </div>
                 </div>
 
                 <div className="passwordSection">
                     <button
                         className="passwordToggleButton"
-                        onClick={() => setIsPasswordBoxOpen(prev => !prev)}
+                        onClick={() => setIsPasswordBoxOpen(true)}
                     >
                         비밀번호 변경하기
                     </button>
 
                     {isPasswordBoxOpen && (
-                        <div className="passwordEditBox">
+                        <div className="passwordModalOverlay">
+                            <div className="passwordEditBox" onMouseDown={(e) => e.stopPropagation()}>
+                                <div className="passwordModalHeader">
+                                    <strong>비밀번호 변경</strong>
+                                    <button type="button" onClick={closePasswordModal}>×</button>
+                                </div>
+
                             <input
                                 type="password"
                                 value={prevPw}
@@ -194,12 +282,25 @@ function MyPage() {
                                 placeholder="새 비밀번호"
                             />
 
-                            <button
-                                onClick={changePassword}
-                                disabled={changePasswordMutation.isPending}
-                            >
-                                변경
-                            </button>
+                                <input
+                                    type="password"
+                                    value={newPwConfirm}
+                                    onChange={(e) => setNewPwConfirm(e.target.value)}
+                                    placeholder="새 비밀번호 확인"
+                                />
+
+                                <div className="passwordModalActions">
+                                    <button type="button" className="passwordCancelButton" onClick={closePasswordModal}>
+                                        취소
+                                    </button>
+                                    <button
+                                        onClick={changePassword}
+                                        disabled={changePasswordMutation.isPending}
+                                    >
+                                        변경
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

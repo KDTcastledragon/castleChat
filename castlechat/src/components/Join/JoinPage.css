@@ -1,6 +1,6 @@
 .JoinPageContainer {
     width: 1000px;
-    height: 550px;
+    min-height: 620px;
     /* background-color: rgb(169, 167, 255); */
     margin: auto;
     display: flex;
@@ -29,7 +29,7 @@
 /* ====== */
 .joinMemberData {
     width: 900px;
-    height: 400px;
+    min-height: 470px;
     background-color: rgb(195, 218, 255);
     background-color: rgb(255, 242, 211);
     margin: 10px auto;
@@ -134,6 +134,33 @@
     color: rgb(0, 130, 0);
 }
 
+/* ========[프로필 이미지]=================================== */
+.joinProfileImage>strong {
+    width: 200px;
+    height: 40px;
+    padding: 0 10px;
+    line-height: 40px;
+    margin-right: 12px;
+    border: 1px solid #aaa;
+    background: #fff;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+
+.joinProfileImage>button {
+    height: 40px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.joinProfileImage>.joinProfileResetButton {
+    background: #666;
+    color: #fff;
+    border: 0;
+}
+
 
 /* ========[생년 월일]=================================== */
 .joinBirth>span:nth-of-type(2),
@@ -194,4 +221,57 @@
     opacity: 0.2;
     background-color: rgb(0, 0, 0);
     cursor: auto;
+}
+
+/* Professional theme */
+.JoinPageContainer {
+    color: var(--castle-text);
+}
+
+.joinMemberData {
+    border: 1px solid var(--castle-border);
+    border-radius: 16px;
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow);
+}
+
+.joinMemberData>div>input,
+.joinMemberData>div>select,
+.joinProfileImage>strong {
+    border: 1px solid var(--castle-border);
+    border-radius: 9px;
+    background: var(--castle-surface-soft);
+    color: var(--castle-text);
+    box-sizing: border-box;
+}
+
+.joinId>button,
+.joinProfileImage>button {
+    border: 0;
+    border-radius: 8px;
+    background: var(--castle-primary);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.joinId>button:hover,
+.joinProfileImage>button:hover {
+    background: var(--castle-primary-hover);
+}
+
+.joinProfileImage>.joinProfileResetButton {
+    background: #64748b;
+}
+
+.joinButton>button {
+    background: var(--castle-primary);
+}
+
+.joinButton>button:hover {
+    background: var(--castle-primary-hover);
+}
+
+.joinButton>button:disabled,
+.joinButton>button:disabled:hover {
+    background: #94a3b8;
 }

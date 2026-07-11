@@ -1,6 +1,6 @@
 import './JoinPage.css';
 import axios from 'axios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import 'react-calendar/dist/Calendar.css';
 import { useNavigate } from 'react-router-dom';
 // import Calendar from 'react-calendar';
@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 function JoinPage() {
     const navigator = useNavigate();
+    const profileImgInputRef = useRef(null);
     const [loginId, setLoginId] = useState('');
     const [validId, setValidId] = useState(false);
 
@@ -26,6 +27,7 @@ function JoinPage() {
     const [nickname, setNickname] = useState('');
     const [validNickname, setValidNickname] = useState(false);
     const [nicknameMsg, setNicknameMsg] = useState('');
+    const [profileImgFile, setProfileImgFile] = useState(null);
 
     // const [phoneNumber, setPhoneNumber] = useState('');
     // const [validPhoneNumber, setValidPhoneNumber] = useState(false);
@@ -166,16 +168,18 @@ function JoinPage() {
         // if (validId && vaildPw && pw === confirmPw && validName && year !== null && month !== null && day !== null && validPhoneNumber) {
         if (validId && vaildPw && password === confirmPw && validNickname) {
 
-            const data = {
-                loginId: loginId,
-                password: password,
-                nickname: nickname
-                // birth: `${year}-${month}-${day}`,
-                // phone_number: phoneNumber
+            const joinFormData = new FormData();
+
+            joinFormData.append('loginId', loginId);
+            joinFormData.append('password', password);
+            joinFormData.append('nickname', nickname);
+
+            if (profileImgFile) {
+                joinFormData.append('profileImgFile', profileImgFile);
             }
 
             axios
-                .post(`/user/join`, data)
+                .post(`/user/join`, joinFormData)
                 .then((r) => {
                     navigator('/');
                     alert(`회원가입 완료. 로그인 페이지로 이동합니다.`);
@@ -193,6 +197,25 @@ function JoinPage() {
             alert(`각 항목을 조건에 맞게 모두 입력해주세요`);
         }
     }// join
+
+    function selectProfileImage(e) {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 선택할 수 있습니다.');
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert('프로필 이미지는 최대 10MB까지 가능합니다.');
+            return;
+        }
+
+        setProfileImgFile(file);
+    }
 
 
     //======================================================================================================================
@@ -282,6 +305,28 @@ function JoinPage() {
                         required autoComplete='off' minLength={1} maxLength={20} onBlur={handleValidateNickname}
                     />
                     {nicknameMsg === 'validNickname' ? <span className='validName'>적절한 닉네임</span> : <span className='inValidName'>{nicknameMsg}</span>}
+                </div>
+
+                <div className='joinProfileImage'>
+                    <span>프로필 이미지</span>
+                    <strong title={profileImgFile?.name ?? 'mococo_question.png'}>
+                        {profileImgFile?.name ?? 'mococo_question.png'}
+                    </strong>
+                    <button type="button" onClick={() => profileImgInputRef.current?.click()}>
+                        파일 선택
+                    </button>
+                    {profileImgFile && (
+                        <button type="button" className="joinProfileResetButton" onClick={() => setProfileImgFile(null)}>
+                            기본 이미지
+                        </button>
+                    )}
+                    <input
+                        ref={profileImgInputRef}
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={selectProfileImage}
+                    />
                 </div>
 
                 {/* <div className='joinBirth'>

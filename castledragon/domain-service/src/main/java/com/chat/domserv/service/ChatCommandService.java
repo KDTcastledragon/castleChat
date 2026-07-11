@@ -34,6 +34,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class ChatCommandService implements ChatCommandUseCase {
 	private static final long MAX_TOTAL_UPLOAD_BYTES = 320L * 1024 * 1024;
+	private static final long MAX_PROFILE_IMAGE_BYTES = 10L * 1024 * 1024;
 	private static final int MAX_FILE_COUNT = 20;
 
 	private final DomServChatMapper domServChatMapper;
@@ -97,12 +98,22 @@ public class ChatCommandService implements ChatCommandUseCase {
 			throw new IllegalArgumentException("로그인 정보가 없습니다.");
 		}
 
+		return saveCommonImage(file, imageTarget, MAX_TOTAL_UPLOAD_BYTES, "업로드 용량은 최대 320MB까지 가능합니다.");
+	}
+
+	@Override
+	public String uploadJoinProfileImage(MultipartFile file) {
+		return saveCommonImage(file, "PROFILE_IMAGE", MAX_PROFILE_IMAGE_BYTES, "프로필 이미지는 최대 10MB까지 가능합니다.");
+	}
+
+	private String saveCommonImage(MultipartFile file, String imageTarget, long maxUploadBytes, String maxUploadMessage) {
+
 		if (file == null || file.isEmpty()) {
 			throw new IllegalArgumentException("업로드할 이미지가 없습니다.");
 		}
 
-		if (file.getSize() > MAX_TOTAL_UPLOAD_BYTES) {
-			throw new IllegalArgumentException("업로드 용량은 최대 320MB까지 가능합니다.");
+		if (file.getSize() > maxUploadBytes) {
+			throw new IllegalArgumentException(maxUploadMessage);
 		}
 
 		String contentType = file.getContentType();

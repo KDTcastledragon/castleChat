@@ -274,6 +274,16 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         return date.toTimeString().split(" ")[0];
     };
 
+    const formatNoticeDateTime = (isoString) => {
+        const date = new Date(isoString);
+
+        if (Number.isNaN(date.getTime())) return '';
+
+        const pad = (value) => String(value).padStart(2, '0');
+
+        return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
     function formatFileSize(size) {
         if (size >= 1024 * 1024) {
             return `${(size / 1024 / 1024).toFixed(1)}MB`;
@@ -892,8 +902,21 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 const feed = notice.roomFeedResponse ?? notice.roomFeed ?? notice;
 
                 if (noticeView) {
-                    setCurrentRoomNotice(noticeView.roomNoticeStatus === 'ACTIVE' ? noticeView : null);
-                    setIsRoomNoticeVisible(true);
+					if (noticeView.roomNoticeStatus === 'ACTIVE') {
+						setIsRoomNoticeVisible(true);
+					}
+
+					setCurrentRoomNotice(prev => {
+						if (noticeView.roomNoticeStatus === 'ACTIVE') {
+							return noticeView;
+						}
+
+						if (Number(prev?.roomNoticeId) === Number(noticeView.roomNoticeId)) {
+							return null;
+						}
+
+						return prev;
+					});
 					setRoomNoticeList(prev => {
 						const exists = prev.some(item => Number(item.roomNoticeId) === Number(noticeView.roomNoticeId));
 
@@ -1326,7 +1349,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
     }
 
-    async function changeMemberRole(member, targetRole) {
+    async function changeMemberRole(e, member, targetRole) {
         if (!member) return;
         if (!canChangeMemberRole(member)) return;
         if (member.role === targetRole) return;
@@ -1334,6 +1357,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         const confirmed = window.confirm(`${member.nickname}님의 권한을 ${targetRole}로 변경하시겠습니까?`);
 
         if (!confirmed) return;
+
+		const roleChangeDetails = e.currentTarget.closest('details');
+
+		if (roleChangeDetails) {
+			roleChangeDetails.open = false;
+		}
 
         try {
             const emitted = emitWsChangeMemberRole(roomId, member.publicId, targetRole);
@@ -1993,14 +2022,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                             <div className="memberRoleChangeMenu">
                                                 <button
                                                     className={member.role === 'MEMBER' ? 'active' : ''}
-                                                    onClick={() => changeMemberRole(member, 'MEMBER')}
+											onClick={(e) => changeMemberRole(e, member, 'MEMBER')}
                                                 >
                                                     MEMBER
                                                 </button>
 
                                                 <button
                                                     className={member.role === 'MANAGER' ? 'active' : ''}
-                                                    onClick={() => changeMemberRole(member, 'MANAGER')}
+											onClick={(e) => changeMemberRole(e, member, 'MANAGER')}
                                                 >
                                                     MANAGER
                                                 </button>
@@ -2065,7 +2094,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 									<div className={`roomNoticeHistoryItem status-${notice.roomNoticeStatus}`} key={notice.roomNoticeId}>
 										<div className="roomNoticeHistoryMeta">
 											<span className="roomNoticeHistoryNickname">{getRoomNoticeRequesterNickname(notice)}</span>
-											<span>{notice.lastAppliedAt ? formatTime(notice.lastAppliedAt) : ''}</span>
+											<span>{notice.lastAppliedAt ? formatNoticeDateTime(notice.lastAppliedAt) : ''}</span>
 										</div>
 
 										{isEditing ? (
@@ -2433,7 +2462,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     ref={chatListRef}
                     onScroll={handleChatScroll}
                     style={roomBackgroundUrl ? {
-                        backgroundImage: `linear-gradient(rgba(255,255,255,0.72), rgba(255,255,255,0.72)), url(${roomBackgroundUrl})`,
+						backgroundImage: `url(${roomBackgroundUrl})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'
                     } : undefined}
@@ -2647,7 +2676,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                 <div
                                     className="uploadProgressCircle"
                                     style={{
-                                        background: `conic-gradient(#fee500 ${uploadProgress.percent * 3.6}deg, #e9e9e9 0deg)`
+                                        background: `conic-gradient(var(--castle-primary) ${uploadProgress.percent * 3.6}deg, #e2e8f0 0deg)`
                                     }}
                                 >
                                     <span>{uploadProgress.percent}%</span>

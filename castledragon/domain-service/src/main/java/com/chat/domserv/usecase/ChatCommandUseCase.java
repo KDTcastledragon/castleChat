@@ -11,4 +11,6 @@ public interface ChatCommandUseCase {
 	List<ChatAttachmentDTO> uploadChatAttachments(Long roomId, SessionUserDTO uploader, List<MultipartFile> files);
 
 	String uploadCommonImage(SessionUserDTO uploader, MultipartFile file, String imageTarget);
+
+	String uploadJoinProfileImage(MultipartFile file);
 }

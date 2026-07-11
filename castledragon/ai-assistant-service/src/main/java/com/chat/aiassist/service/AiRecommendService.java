@@ -36,8 +36,12 @@ public class AiRecommendService implements AiRecommendUseCase {
 
 	@Override
 	public List<String> recommendMessages(Long requesterUserId, Long roomId) {
-		if (roomId == null) {
-			throw new IllegalArgumentException("roomId가 없습니다.");
+		if (requesterUserId == null || roomId == null) {
+			throw new IllegalArgumentException("추천 요청 정보가 없습니다.");
+		}
+
+		if (aiAssistMapper.countActiveRoomMember(roomId, requesterUserId) < 1) {
+			throw new IllegalArgumentException("현재 채팅방의 멤버만 AI 추천을 사용할 수 있습니다.");
 		}
 
 		List<RecentMessageDTO> recentMessages = aiAssistMapper.findRecentMessagesInRoom(roomId, RECENT_MESSAGE_LIMIT);

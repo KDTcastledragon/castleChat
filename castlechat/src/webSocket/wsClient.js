@@ -25,6 +25,7 @@ const WS_TYPES = {
     DELETE_MSG: "DELETE_MESSAGE",
     REACT_MSG: "REACT_MESSAGE",
     SHARE_MSG: "SHARE_MESSAGE",
+    PROFILE_UPDATED: "PROFILE_UPDATED",
     ADD_FRIEND: "ADD_FRIEND",
     RESPOND_FRIEND: "RESPOND_FRIEND",
     INVITE_MEMBER: "INVITE_MEMBER",
@@ -333,6 +334,10 @@ export function registerGlobalWsHandler(handler) {
 
 export function emitWsConnectUser() {
     return emitWs(WS_TYPES.CONNECT_USER);
+}
+
+export function emitWsProfileUpdated() {
+    return emitWs(WS_TYPES.PROFILE_UPDATED);
 }
 
 export function emitWsOpenDirectChat(friendPublicId) {

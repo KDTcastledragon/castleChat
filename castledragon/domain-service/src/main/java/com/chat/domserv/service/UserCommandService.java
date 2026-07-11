@@ -21,7 +21,7 @@ public class UserCommandService implements UserCommandUseCase {
 	PasswordEncoder encoder;
 
 	@Override
-	public boolean join(String loginId, String password, String nickname) {
+	public boolean join(String loginId, String password, String nickname, String profileImg) {
 
 		String encodedPassword = encoder.encode(password);
 
@@ -41,7 +41,7 @@ public class UserCommandService implements UserCommandUseCase {
 			String friendCode = friendCodeBuilder.toString();
 
 			try {
-				int joinUser = userMapper.join(publicId, loginId, encodedPassword, nickname, friendCode);
+				int joinUser = userMapper.join(publicId, loginId, encodedPassword, nickname, friendCode, profileImg);
 
 				log.info("회원가입 완료 publicId={}, friendCode={}", publicId, friendCode);
 

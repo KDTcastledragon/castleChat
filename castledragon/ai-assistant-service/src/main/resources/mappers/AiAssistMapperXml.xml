@@ -4,6 +4,13 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.chat.aiassist.mapper.AiAssistMapper">
+	<select id="countActiveRoomMember" resultType="int">
+		SELECT COUNT(*)
+		FROM room_members
+		WHERE room_id = #{roomId}
+		  AND user_id = #{userId}
+		  AND member_status = 'ACTIVE'
+	</select>
 
 	<!-- 추천 프롬프트용 최근 메시지. read-only. 최신순으로 뽑아서 service에서 시간순으로 뒤집어 쓴다. -->
 	<select id="findRecentMessagesInRoom" resultType="com.chat.aiassist.domain.RecentMessageDTO">

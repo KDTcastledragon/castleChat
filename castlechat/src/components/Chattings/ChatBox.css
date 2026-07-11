@@ -125,19 +125,32 @@
 }
 
 .activeRoomNoticeBar {
+	position: absolute;
+	top: 44px;
+	left: 50%;
+	z-index: 14;
     display: flex;
     align-items: center;
     gap: 6px;
-    width: 100%;
+	width: min(360px, calc(100% - 28px));
     min-height: 34px;
     padding: 4px 7px 4px 10px;
-    border-bottom: 1px solid #eadc72;
+	border: 1px solid #eadc72;
+	border-radius: 10px;
     background: #fffbe1;
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+	transform: translateX(-50%);
     box-sizing: border-box;
 }
 
 .activeRoomNoticeBar.collapsed {
+	left: auto;
+	right: 12px;
+	width: auto;
+	min-height: 30px;
+	padding-left: 7px;
     justify-content: flex-end;
+	transform: none;
 }
 
 .activeRoomNoticeContents {
@@ -1764,4 +1777,293 @@
 
 .profilePopupActionButton.report {
     background-color: #eeeeee;
+}
+
+/* Professional navy, slate and teal theme. Layout and interaction rules stay unchanged. */
+.chattingRoomSection {
+    border-color: var(--castle-border);
+    border-radius: 14px;
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow-strong);
+}
+
+.chattingRoomSection .chatListTitle {
+    background: var(--castle-nav);
+    color: #f8fafc;
+}
+
+.roomMenuButton,
+.chatCloseButton,
+.notificationBellButton {
+    border-color: #475569;
+    background: var(--castle-nav-soft);
+    color: #e2e8f0;
+}
+
+.roomMenuButton:hover,
+.notificationBellButton:hover {
+    border-color: #64748b;
+    background: #334155;
+}
+
+.roomMenuButton.active,
+.notificationBellButton.on {
+    border-color: #5eead4;
+    background: var(--castle-primary);
+    color: #ffffff;
+}
+
+.notificationBellButton.off {
+    background: #475569;
+    color: #cbd5e1;
+}
+
+.activeRoomNoticeBar {
+    border-color: #99f6e4;
+    background: var(--castle-primary-pale);
+    box-shadow: 0 5px 14px rgba(15, 118, 110, 0.14);
+}
+
+.activeRoomNoticeContents {
+    color: var(--castle-text);
+}
+
+.activeRoomNoticeToggleButton {
+    border-color: #99f6e4;
+    background: var(--castle-surface);
+    color: var(--castle-primary-hover);
+}
+
+.chattingBox {
+    background-color: var(--castle-surface-soft);
+    scrollbar-color: #94a3b8 transparent;
+}
+
+.senderNickname {
+    color: var(--castle-text);
+}
+
+.mine .messageWrap {
+    background-color: var(--castle-primary);
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(15, 118, 110, 0.18);
+}
+
+.other .messageWrap {
+    background-color: var(--castle-surface-muted);
+    color: var(--castle-text);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
+}
+
+.messageWrap.deleted {
+    background: #e2e8f0;
+    color: var(--castle-text-muted);
+}
+
+.replyPreviewInMessage {
+    border-left-color: #5eead4;
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.replyPreviewSender,
+.replyComposerTitle {
+    color: var(--castle-primary);
+}
+
+.unreadCount {
+    color: var(--castle-warning);
+}
+
+.formatTime,
+.messageInfo,
+.emptyChatMessage {
+    color: var(--castle-text-muted);
+}
+
+.systemMessage,
+.typingNotice {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.messageReactionAddButton,
+.messageReactionMembersButton,
+.messageReactionSummaryList,
+.messageHoverReactionButton {
+    border-color: var(--castle-border);
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--castle-text-muted);
+}
+
+.messageHoverReactionButton:hover,
+.messageReactionAddButton:hover,
+.messageReactionMembersButton:hover {
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+}
+
+.messageContextMenu,
+.reactionPicker,
+.reactionViewer,
+.messageReadersBox,
+.inviteFriendPanel,
+.profilePopup {
+    border-color: var(--castle-border);
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow-strong);
+}
+
+.messageContextMenu button:hover,
+.reactionViewerTabs button.active,
+.reactionPickerButtons button:hover {
+    background: var(--castle-primary-pale);
+}
+
+.reactionPickerButtons button.selected {
+    border-color: var(--castle-primary);
+    background: var(--castle-primary-soft);
+    box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.18);
+}
+
+.imageViewerDownloadButton:hover,
+.imageViewerCloseButton:hover {
+    border-color: #5eead4;
+    background: var(--castle-primary);
+    color: #ffffff;
+}
+
+.composerMetaPanel,
+.aiRecommendBox,
+.inputChat {
+    background: var(--castle-surface);
+    border-color: var(--castle-border-soft);
+}
+
+.replyComposerBar,
+.selectedFileList {
+    border-color: var(--castle-border-soft);
+}
+
+.aiRecommendBox {
+    border-top-color: var(--castle-border-soft);
+}
+
+.aiRecommendButton {
+    border-color: #99f6e4;
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+}
+
+.aiRecommendButton:hover,
+.aiRecommendItem:hover {
+    border-color: var(--castle-primary);
+    background: var(--castle-primary-pale);
+}
+
+.aiRecommendItem {
+    border-color: var(--castle-border-soft);
+    background: var(--castle-surface);
+    color: var(--castle-text);
+}
+
+.attachFileButton {
+    border-right-color: var(--castle-border);
+    background: var(--castle-surface-soft);
+    color: var(--castle-primary);
+}
+
+.attachFileButton:hover {
+    background: var(--castle-primary-soft);
+}
+
+.inputChat>textarea {
+    border: 0;
+    border-top: 1px solid var(--castle-border-soft);
+    background: var(--castle-surface);
+    color: var(--castle-text);
+}
+
+.inputChat>button:not(.attachFileButton) {
+    border: 0;
+    border-left: 1px solid var(--castle-border);
+    background: var(--castle-primary);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.inputChat>button:not(.attachFileButton):hover {
+    background: var(--castle-primary-hover);
+}
+
+.roomSidePanel,
+.roomNoticePanel {
+    border-color: var(--castle-border);
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow-strong);
+}
+
+.roomSidePanelHeader,
+.roomNoticePanelHeader,
+.inviteFriendPanelHeader {
+    border-color: var(--castle-border-soft);
+    background: var(--castle-nav);
+    color: #ffffff;
+}
+
+.roomSidePanelDangerZone,
+.roomSettingsBox,
+.roomNoticeSettingBox {
+    border-color: var(--castle-border-soft);
+    background: var(--castle-surface-soft);
+}
+
+.roomMemberItem.me {
+    border-color: #5eead4;
+    background: var(--castle-primary-pale);
+}
+
+.roomMemberMeBadge {
+    background: var(--castle-primary);
+}
+
+.memberRoleChangeDetails summary:hover,
+.memberRoleChangeMenu button:hover,
+.memberRoleChangeMenu button.active {
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+}
+
+.roomImageSettingRow button,
+.saveRoomSettingsButton,
+.roomNoticeActions button,
+.inviteMemberButton,
+.inviteFriendSubmitButton {
+    background: var(--castle-primary);
+    color: #ffffff;
+}
+
+.roomImageSettingRow button:hover,
+.saveRoomSettingsButton:hover,
+.roomNoticeActions button:hover,
+.inviteMemberButton:hover,
+.inviteFriendSubmitButton:hover {
+    background: var(--castle-primary-hover);
+}
+
+.roomNoticeContents {
+    border-color: #99f6e4;
+    background: var(--castle-primary-pale);
+    color: var(--castle-text);
+}
+
+.selectedInviteFriendChip {
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+}
+
+.profilePopupActionButton.direct {
+    border-color: #5eead4;
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
 }

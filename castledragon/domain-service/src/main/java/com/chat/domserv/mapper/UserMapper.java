@@ -20,13 +20,17 @@ public interface UserMapper {
 
 	String getUserLoginId(Long userId);
 
-	int join(@Param("publicId") String publicId, @Param("loginId") String loginId, @Param("password") String password, @Param("nickname") String nickname, @Param("friendCode") String friendCode);
+	int join(@Param("publicId") String publicId, @Param("loginId") String loginId, @Param("password") String password, @Param("nickname") String nickname, @Param("friendCode") String friendCode, @Param("profileImg") String profileImg);
 
 	int changePassword(String id, String encodedNewPassword);
 
 	int updatePasswordByUserId(@Param("userId") Long userId, @Param("encodedNewPassword") String encodedNewPassword);
 
 	int updateMyProfile(@Param("userId") Long userId, @Param("nickname") String nickname, @Param("profileImg") String profileImg);
+
+	int updateMyNickname(@Param("userId") Long userId, @Param("nickname") String nickname);
+
+	int updateMyProfileImage(@Param("userId") Long userId, @Param("profileImg") String profileImg);
 
 	int withdrawMember(String id);
 

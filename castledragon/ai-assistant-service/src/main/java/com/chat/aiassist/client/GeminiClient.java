@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -21,9 +22,11 @@ public class GeminiClient {
 
 	private final RestClient restClient;
 	private final String model;
+	private final boolean apiKeyConfigured;
 
-	public GeminiClient(@Value("${ai.gemini.api-key:}") String apiKey, @Value("${ai.gemini.model:gemini-2.0-flash}") String model) {
+	public GeminiClient(@Value("${ai.gemini.api-key:}") String apiKey, @Value("${ai.gemini.model:gemini-3.5-flash}") String model) {
 		this.model = model;
+		this.apiKeyConfigured = apiKey != null && !apiKey.isBlank();
 		this.restClient = RestClient.builder()
 				.baseUrl("https://generativelanguage.googleapis.com/v1beta")
 				.defaultHeader("x-goog-api-key", apiKey)
@@ -36,6 +39,10 @@ public class GeminiClient {
 	 */
 	@SuppressWarnings("unchecked")
 	public String generateText(String prompt) {
+		if (!apiKeyConfigured) {
+			throw new IllegalStateException("Gemini API key가 설정되지 않았습니다.");
+		}
+
 		Map<String, Object> requestBody = Map.of(
 				"contents", List.of(Map.of(
 						"parts", List.of(Map.of("text", prompt)))));
@@ -58,6 +65,9 @@ public class GeminiClient {
 			List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
 
 			return (String) parts.get(0).get("text");
+		} catch (RestClientResponseException e) {
+			log.error("Gemini generateContent HTTP 실패. model={}, status={}, body={}", model, e.getStatusCode(), e.getResponseBodyAsString());
+			throw new IllegalStateException("Gemini API 요청 실패. status=" + e.getStatusCode().value());
 		} catch (IllegalStateException e) {
 			throw e;
 		} catch (Exception e) {

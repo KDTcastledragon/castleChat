@@ -289,3 +289,318 @@ An empty string ("") was passed to the src attribute.
 - `./gradlew.bat --offline --no-daemon --console=plain :common-contract:generateProto :common-contract:compileJava :domain-service:compileJava :websocket-gateway:compileJava :channel-engine:compileJava` 성공.
 - channel-engine/domain-service의 수정된 MyBatis XML 3개 문법 검사 성공.
 - 실제 DB와 WebSocket 다중 사용자 통합 테스트는 실행 중인 서비스와 로그인 세션이 필요하므로 코드 빌드 검증까지만 수행했다.
+
+## 2026-07-10 공지·권한·배경·썸네일·unread 후속 수정
+
+### 1. INACTIVE 공지 수정 시 현재 ACTIVE 공지가 사라지던 문제
+
+원인.
+
+- `ROOM_NOTICE_APPLIED` 응답의 공지가 `ACTIVE`가 아니면 공지 ID를 확인하지 않고 `currentRoomNotice`를 무조건 `null`로 바꿨다.
+- 따라서 2번 INACTIVE 공지를 수정해도 별개의 3번 ACTIVE 공지가 FE에서 사라졌다.
+- DB의 3번 공지는 계속 ACTIVE였으므로 DB 상태가 아니라 FE 상태 축약 로직의 문제였다.
+
+수정 내용.
+
+- 응답 공지가 ACTIVE이면 현재 공지로 교체한다.
+- 응답 공지가 INACTIVE/DELETED이고 현재 공지와 같은 `roomNoticeId`일 때만 현재 공지를 제거한다.
+- 서로 다른 INACTIVE 공지의 수정 응답은 현재 ACTIVE 공지를 그대로 보존한다.
+
+### 2. 활성 공지를 작은 독립 창으로 변경하고 이력에 날짜 표시
+
+문제.
+
+- 기존 공지 바는 채팅방 상단의 문서 흐름을 차지해 메시지 영역을 밀어냈다.
+- 공지 이력에는 시간만 보여 날짜가 다른 공지를 구분하기 어려웠다.
+
+수정 내용.
+
+- 활성 공지 UI를 채팅방 내부의 `position: absolute` floating card로 변경했다.
+- 작은 카드의 `숨기기/표시하기`로 열고 닫을 수 있고, 숨겨도 서버 공지 상태는 바꾸지 않는다.
+- 공지 이력 시각을 `yyyy.MM.dd HH:mm` 형식으로 표시한다.
+
+### 3. 권한 변경 확인 후 선택 메뉴가 남던 문제
+
+원인.
+
+- 권한 선택 UI가 네이티브 `<details>`이고, 권한 변경 요청 후 `open` 상태를 닫는 코드가 없었다.
+
+수정 내용.
+
+- 확인창에서 승인하면 클릭한 버튼의 가장 가까운 `<details>`를 찾아 `open = false`로 닫는다.
+- 취소하면 기존 선택 메뉴를 유지한다.
+
+### 4. 방 배경 이미지에 투명 효과가 적용되던 문제
+
+원인.
+
+- 배경 이미지 위에 반투명 흰색 `linear-gradient`를 함께 합성해 원본 색이 흐려졌다.
+
+수정 내용.
+
+- 합성 gradient를 제거하고 사용자가 설정한 이미지 URL만 `background-image`로 적용한다.
+- `cover`와 `center` 배치만 유지하며 opacity나 색상 overlay는 적용하지 않는다.
+
+### 5. 사용자 채팅창 크기 조절 가이드
+
+이번 항목은 지시대로 코드 변경하지 않았다.
+
+권장 구현 방향.
+
+- 최상위 `.chattingRoomSection`에 `resize: both`와 `overflow: hidden`을 적용한다.
+- 최소 크기와 화면을 벗어나지 않는 최대 크기를 함께 제한한다.
+- 현재 고정값인 `.chattingBox`와 `.inputChat`의 width/height를 부모 기준 `100%`, `flex: 1`, `min-height: 0` 구조로 바꿔야 실제 내용도 창 크기를 따라간다.
+- `ResizeObserver`로 최종 width/height를 감지해 Redux의 각 chat window 상태에 저장하면 페이지 이동 후에도 열린 창의 크기를 유지할 수 있다.
+- 브라우저 재접속 이후까지 유지하려면 Redux 상태를 localStorage에 동기화하거나 사용자별 방 UI 설정으로 서버에 저장한다.
+
+### 6. DIRECT 채팅 목록 썸네일이 상대 최신 프로필을 반영하지 않던 문제
+
+원인.
+
+- 채팅방 내부 멤버 목록은 `users.profile_img`를 조회해 최신 이미지가 보였다.
+- 채팅 목록은 `room_members.custom_room_thumbnail`에 복제된 과거 값을 읽어 두 화면의 데이터 원천이 달랐다.
+
+수정 내용.
+
+- `getMyAllChatRooms`에서 DIRECT 방은 상대 room member의 `users.profile_img`를 조회한다.
+- GROUP 방은 방별 커스텀 썸네일 정책이므로 기존 `me.custom_room_thumbnail`을 유지한다.
+- DIRECT 상대가 LEFT 상태여도 기존 방의 상대 식별이 가능하도록 썸네일 하위 조회에는 ACTIVE 조건을 강제하지 않았다.
+
+### 7. 실시간 read 중 채팅 목록 unread가 누적되고 과거 값이 되살아나던 문제
+
+원인.
+
+- 방 입장 시 `visibleRooms` 화면 상태만 0으로 만들고 React Query의 `['myAllRooms']` 캐시는 바꾸지 않았다.
+- ChatBox가 실시간으로 보낸 `READ_MESSAGE`와 서버의 `MSG_READ` 응답을 ChatList가 처리하지 않았다.
+- read의 DB LRM 반영은 Redis dirty flush worker가 비동기로 수행하므로, flush 전 목록 재조회는 과거 DB LRM 기준 unread를 반환할 수 있다.
+- 이 오래된 React Query 응답이 화면의 0을 다시 덮은 뒤 새 메시지마다 증가해 `n + 과거 unread` 형태가 됐다.
+
+수정 내용.
+
+- 방 입장과 본인의 `MSG_READ` 수신 시 화면 목록과 React Query 캐시의 unread를 함께 0으로 만든다.
+- 방별 로컬 unread override를 유지해 dirty flush 전의 오래된 DB 스냅샷이 0을 되살리지 못하게 한다.
+- `CHAT_ROOM_UPDATED`는 방을 보고 있지 않을 때만 unread를 1 증가시키고, 방 안에서 받는 `MSG_CREATED`는 마지막 메시지와 시각만 갱신한다.
+- 화면 상태와 Query cache에 같은 순수 updater를 적용하되 unread 증가값은 updater 밖에서 한 번만 계산해 이중 증가를 막는다.
+- read 요청에서 동기 DB 조회나 update는 추가하지 않았으며 기존 Redis + dirty flush 정책을 유지한다.
+
+### 후속 검증 결과
+
+- `npm.cmd run build` 성공.
+- 이번에 수정한 `ChatList.jsx`의 hook dependency warning은 제거됐다.
+- 기존 `AdminPage.jsx`, `ChatBox.jsx`, `JoinPage.jsx`의 선행 ESLint warning은 이번 변경 범위 밖이라 유지했다.
+- `RoomMapperXml.xml` DTD 무시 XML 파싱 성공.
+- `plan.md` 원칙에 따라 Gradle refresh, project clean, `gradlew.bat`은 실행하지 않았다.
+- 실제 DB/WebSocket 다중 사용자 통합 검증은 실행 중인 전체 서비스와 두 로그인 세션이 필요하므로 수행하지 않았다.
+
+## 2026-07-10 DIRECT 썸네일 실시간 반영과 헤더 현재 페이지 표시
+
+### 1. 상대 프로필 변경이 열린 채팅방 목록에 반영되지 않던 문제
+
+원인.
+
+- 이전 수정은 DIRECT 목록 조회 시 `users.profile_img`를 읽도록 데이터 원천만 바로잡았다.
+- 이미 상대가 채팅 목록을 열어 둔 상태에서는 `getMyAllChatRooms`를 다시 호출할 사건이 없었다.
+- React Query의 `myAllRooms` cache가 기존 썸네일 URL을 계속 가지고 있어 DB 값이 바뀌어도 열린 화면은 그대로였다.
+- 따라서 SQL만 바꾼 이전 수정은 새로 조회하는 경우만 해결했고 실시간 반영 경로는 해결하지 못했다.
+
+수정 내용.
+
+- 프로필 HTTP 저장 성공 후 FE가 `PROFILE_UPDATED` WebSocket 이벤트를 보낸다.
+- gateway는 payload의 이미지 URL을 신뢰하지 않고 로그인 세션의 userId/publicId만 사용한다.
+- 기존 `findOnlineFriendTargets` gRPC 흐름을 재사용해 프로필 변경자의 친구들에게만 `FRIEND_PROFILE_UPDATED`를 전송한다.
+- 이벤트를 받은 상대 AppShell은 `friends`와 `myAllRooms` Query만 invalidate한다.
+- 채팅 목록이 열려 있으면 즉시 재조회하고, 다른 페이지라면 다음 목록 진입 때 최신 값을 조회한다.
+- 주기적 polling이나 전체 접속자 broadcast는 추가하지 않았다.
+
+처리 흐름.
+
+`MyPage.updateMyProfile 성공 -> emitWsProfileUpdated -> WsGateDispatcher -> WsGateConnectionHandler.handleProfileUpdated -> 기존 친구 대상 gRPC 조회 -> FRIEND_PROFILE_UPDATED -> 상대 AppShell invalidateQueries -> getMyAllChatRooms -> 최신 users.profile_img`
+
+### 2. 헤더에서 현재 페이지를 구분할 수 없던 문제
+
+원인.
+
+- 헤더 버튼이 `useNavigate`만 사용하고 현재 pathname을 읽지 않았다.
+- hover 순간을 제외하면 모든 버튼이 같은 스타일이었다.
+
+수정 내용.
+
+- `useLocation`의 `location.pathname`과 각 버튼 경로를 비교한다.
+- 현재 경로의 버튼에 `active` class를 적용한다.
+- active 상태는 요청대로 기존 hover와 같은 배경색과 글자색을 유지한다.
+
+### 검증 결과
+
+- `npm.cmd run build` 성공.
+- 이번 변경으로 추가된 ESLint 오류나 경고는 없다.
+- 기존 AdminPage/ChatBox/JoinPage 경고는 이번 범위 밖이라 유지했다.
+- `git diff --check` 통과.
+- `plan.md` 원칙에 따라 `gradlew.bat`과 Gradle refresh는 실행하지 않았다.
+- 두 로그인 세션을 사용한 런타임 WebSocket 검증은 수행하지 않았다.
+
+## 2026-07-11 내정보·회원가입 프로필·비밀번호 모달·채팅 목록 개선
+
+### 1. 내 프로필을 기본 이미지로 되돌릴 수 없던 문제
+
+원인.
+
+- 내정보 화면에는 새 파일 선택만 있었고 기본 이미지 경로를 선택 상태로 만드는 동작이 없었다.
+
+수정 내용.
+
+- 기본 이미지 버튼을 추가했다.
+- 선택하면 미리보기와 선택 파일명이 `/images/mococo_question.png`, `mococo_question.png`로 바뀐다.
+- 프로필 이미지 변경 버튼을 눌러야 DB에 저장되며 선택만으로 서버 상태를 바꾸지 않는다.
+
+### 2. 프로필 이미지 URL 전체가 노출되던 문제
+
+원인.
+
+- `me.profileImg`를 화면에 그대로 출력해 `/uploads/.../UUID.png` 전체 경로가 보였다.
+
+수정 내용.
+
+- query string과 경로를 제거하고 마지막 파일명만 표시하는 `getProfileImageFileName`을 추가했다.
+- 기본 정보와 파일 선택 왼쪽 칸 모두 파일명만 표시한다.
+- 파일 선택 칸은 `overflow: hidden`, `white-space: nowrap`, `text-overflow: ellipsis`를 적용하고 전체 이름은 title로 확인할 수 있다.
+
+### 3. 내정보의 publicId 노출 제거
+
+- publicId 행을 제거했다.
+- loginId로 대체하지 않았다. 로그인 식별자는 본인 화면에서도 반복 노출할 UX 이득이 없고 계정 식별 정보 노출만 늘리기 때문이다.
+- 내정보에는 닉네임, 친구코드, 프로필 이미지 파일명만 표시한다.
+
+### 4. 내정보 제목 설명 제거
+
+- `프로필과 기본 정보를 여기서 관리합니다.` 문구와 사용하지 않게 된 CSS를 제거했다.
+
+### 5. 닉네임과 프로필 이미지 저장 분리
+
+원인.
+
+- 기존 `updateMyProfile`은 닉네임과 이미지가 항상 함께 update돼 한 필드만 수정해도 다른 필드까지 DB update 대상이 됐다.
+
+수정 내용.
+
+- FE 버튼을 `닉네임 변경`, `프로필 이미지 변경`으로 분리했다.
+- HTTP endpoint를 `/user/updateMyNickname`, `/user/updateMyProfileImage`로 분리했다.
+- MyBatis update도 `updateMyNickname`, `updateMyProfileImage`로 분리했다.
+- 각 성공 응답은 기존 세션의 변경하지 않은 필드를 보존하고 `me` Query cache를 갱신한다.
+- 닉네임 또는 이미지 변경 후 기존 `PROFILE_UPDATED` WebSocket 알림을 보내 친구 화면도 최신 정보를 재조회한다.
+
+### 6. 헤더 프로필 이미지에서 내정보 이동
+
+- 헤더 이미지를 접근 가능한 button으로 감쌌다.
+- 클릭하면 `/myPage`로 이동한다.
+- hover 시 원형 outline을 표시해 클릭 가능한 영역임을 보여준다.
+
+### 7. 회원가입 프로필 이미지와 기본 이미지 저장
+
+원인.
+
+- 회원가입 요청은 JSON만 받았고 `users.profile_img`를 INSERT하지 않았다.
+- 이미지 미선택 사용자는 DB 값이 NULL이라 화면마다 서로 다른 fallback 처리가 필요했다.
+
+수정 내용.
+
+- 회원가입 UI에 이미지 파일 선택과 기본 이미지 복귀 버튼을 추가했다.
+- 가입 요청을 multipart FormData로 변경해 loginId, password, nickname, 선택 이미지를 한 요청으로 보낸다.
+- 가입 전 별도 공개 업로드 endpoint는 만들지 않았다. 이미지 저장과 가입 요청을 분리하면 가입하지 않은 사용자의 고아 파일이 더 쉽게 쌓이기 때문이다.
+- 선택 이미지는 기존 공통 이미지 저장 로직을 재사용하며 프로필 이미지는 최대 10MB로 제한한다.
+- 미선택 시 `/images/mococo_question.png`를 `users.profile_img`에 명시적으로 INSERT한다.
+- 기존 NULL/빈 문자열 사용자는 DIRECT 목록 및 채팅방 멤버 조회에서 SQL `COALESCE`로 기본 이미지를 반환한다.
+
+### 8. 비밀번호 변경 입력이 본문에 펼쳐지던 문제
+
+수정 내용.
+
+- 비밀번호 변경을 fixed modal overlay로 변경했다.
+- overlay는 아주 옅은 회색 배경으로 전체 화면을 덮어 뒤쪽 UI 클릭을 차단한다.
+- 현재 비밀번호, 새 비밀번호, 새 비밀번호 확인 입력을 제공한다.
+- 새 비밀번호 두 값이 다르면 HTTP 요청 전에 차단한다.
+- 닫기와 취소 시 입력값을 모두 초기화한다.
+
+### 9. 채팅 목록 가로 스크롤과 과도한 컨테이너 폭
+
+원인.
+
+- `.chatList`에 세로 overflow가 생기면 scrollbar 폭만큼 내부 가용 폭이 줄었지만 자식은 고정 680px과 margin을 유지했다.
+- 바깥 컨테이너는 실제 목록 700px보다 훨씬 큰 1800px였다.
+
+수정 내용.
+
+- 바깥 컨테이너를 목록과 여백에 맞는 724px로 조정했다.
+- 목록에 `box-sizing: border-box`, 내부 padding, `overflow-x: hidden`을 적용했다.
+- title과 row는 고정 폭 대신 부모의 `width: 100%`를 사용한다.
+
+### 검증 결과
+
+- `npm.cmd run build` 성공.
+- 수정한 MyBatis XML 4개 DTD 무시 파싱 성공.
+- `git diff --check` 통과.
+- 기존 AdminPage, ChatBox, JoinPage의 선행 ESLint warning은 이번 범위 밖이라 유지했다.
+- `plan.md` 원칙에 따라 `gradlew.bat`과 Gradle refresh는 실행하지 않았다.
+- Java 변경은 사용자가 Gradle을 실행하기 전까지 컴파일 검증되지 않은 상태다.
+
+========================================================================================================================
+
+## 2026-07-11 전체 테마 교체와 AI 메시지 추천 예외 수정
+
+### 1. 화면마다 노랑·형광색·원색이 섞여 포트폴리오 인상이 일관되지 않던 문제
+
+원인.
+
+- 헤더는 형광 연두, 청록, 보라를 직접 RGB 값으로 사용하고 있었다.
+- 친구 목록, 채팅 목록, ChatBox의 선택 상태와 메시지 bubble은 카카오톡과 동일한 노랑 계열을 각각 직접 선언하고 있었다.
+- 화면별 공통 색상 기준이 없어 같은 의미의 버튼과 선택 상태도 서로 다른 색을 사용했다.
+
+수정 내용.
+
+- `index.css`에 딥 네이비, 슬레이트, 틸 기반의 공통 CSS 변수를 정의했다.
+- 주 배경은 `#f4f7fb`, 표면은 흰색, 상단 강조는 `#0f172a`, 핵심 액션은 `#0f766e`를 사용한다.
+- Header, 친구 목록, 채팅 목록, 로그인, 회원가입, 내정보, 설정, 관리자 화면의 기존 class에 동일 토큰을 적용했다.
+- ChatBox의 내 메시지는 짙은 틸과 흰 글자, 상대 메시지는 밝은 슬레이트와 짙은 글자로 구분했다.
+- 공지, 리액션, AI 추천, 초대, 멤버 설정의 선택 상태는 옅은 틸 배경으로 통일했다.
+- 위험 액션의 빨강과 unread의 주황은 의미 전달을 위해 유지했다.
+- JSX 구조, API 호출, 상태, 이벤트 handler, 렌더링 데이터는 변경하지 않았다. 업로드 진행 원형의 인라인 색상 값만 CSS 변수로 교체했다.
+
+### 2. AI에게 메시지 추천받기 요청이 exception으로 끝나던 문제
+
+원인.
+
+- AI 서비스가 사용하던 `gemini-2.0-flash` 모델은 2026-06-01 종료되어 기존 generateContent 요청이 더 이상 정상 처리되지 않는다.
+- 기존 예외는 공급자 HTTP status와 response body를 남기지 않아 모델 종료, API key 누락, quota 초과를 로그에서 구분하기 어려웠다.
+- 추천 endpoint가 로그인 세션만 확인하고 요청자가 해당 방의 ACTIVE 멤버인지 확인하지 않았다.
+
+수정 내용.
+
+- 설정 모델과 Java 기본 모델을 공식 대체 모델인 `gemini-3.5-flash`로 변경했다.
+- API key 미설정은 외부 호출 전에 명시적으로 차단한다.
+- Gemini HTTP 실패는 model, HTTP status, response body를 서버 로그에 남기고 FE에는 status가 포함된 오류 메시지를 반환한다.
+- 최근 대화를 조회하기 전에 요청자가 해당 방의 ACTIVE 멤버인지 확인한다.
+- 호출 방식은 기존 저빈도 HTTP 요청/응답 구조를 유지했다.
+
+### 3. 모니터별 화면 크기 차이 대응 가이드
+
+이번 작업에서는 사용자의 지시에 따라 반응형 레이아웃을 직접 적용하지 않았다. 후속 작업은 다음 순서가 적합하다.
+
+1. Header 1500px, FriendList 1280px, ChatList 724px처럼 화면 컨테이너에 박힌 고정 폭을 먼저 목록화한다.
+2. 최상위 화면 폭을 `width: min(calc(100% - 32px), 1440px)` 형태의 max-width 컨테이너로 변경한다.
+3. 친구 화면의 3열은 CSS Grid `repeat(3, minmax(0, 1fr))`로 유지하고 1024px 이하에서 2열, 768px 이하에서 1열로 전환한다.
+4. 채팅창은 기능상 최소 폭을 보장하기 위해 `width: clamp(360px, 32vw, 520px)`처럼 제한하고 viewport 밖으로 나간 좌표를 resize 시 보정한다.
+5. 레이아웃 분기는 JavaScript의 `window.innerWidth`보다 CSS media query를 사용한다. 채팅창 위치처럼 상태가 필요한 값만 ResizeObserver와 Redux에서 처리한다.
+6. 1366x768, 1440x900, 1920x1080, 2560x1440과 브라우저 확대 100%, 125%, 150% 조합을 검증 기준으로 둔다.
+7. 각 기준에서 가로 스크롤, 겹침, 잘린 버튼, modal viewport 이탈을 확인하는 시각 회귀 체크리스트를 만든다.
+
+이 방식은 특정 면접관 모니터 해상도를 추측하지 않고 가용 viewport를 기준으로 자연스럽게 재배치하므로 유지보수와 실무 대응에 유리하다.
+
+### 검증 결과
+
+- `npm.cmd run build` 성공.
+- 기존 AdminPage, ChatBox, JoinPage의 선행 ESLint warning은 유지됐다.
+- `AiAssistMapperXml.xml` DTD 무시 XML 파싱 성공.
+- `git diff --check` 통과.
+- 로컬 3000 포트의 개발 서버가 실행 중이지 않아 실제 브라우저 시각 검증은 수행하지 못했다.
+- `plan.md` 원칙에 따라 `gradlew.bat`과 Gradle refresh는 실행하지 않았다.
+
+========================================================================================================================

@@ -1,11 +1,12 @@
 import './Header.css';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMe, useLogout } from '../../hooks/useAuthUser';
 
 function Header() {
 
     const nav = useNavigate();  //  --> useNavigate안에 ('') 할 필요는 없다. 없는게 정석.
+    const location = useLocation();
 
     const { data: me } = useMe();
     const logoutMutation = useLogout();
@@ -15,6 +16,10 @@ function Header() {
         logoutMutation.mutate();
     }
 
+    function headerButtonClassName(path) {
+        return location.pathname === path ? 'active' : '';
+    }
+
     // ======< return >=======================================================================================================
     return (
         <div className='HeaderContainer'>
@@ -22,9 +27,16 @@ function Header() {
                 <div className='loginedHeader'>
                     <div className='loginedUserProfileBox'>
                         <div className='loginedUserProfileImg'>
-                            <img className="headerProfileImg"
-                                src={me.profileImg || "/images/mococo_question.png"}
-                                alt={me.nickname} />
+                            <button
+                                type="button"
+                                className="headerProfileButton"
+                                title="내정보로 이동"
+                                onClick={() => nav('/myPage')}
+                            >
+                                <img className="headerProfileImg"
+                                    src={me.profileImg || "/images/mococo_question.png"}
+                                    alt={me.nickname} />
+                            </button>
                         </div>
                         <div className='loginedUserNickname'><span>{me.nickname}</span></div>
                         <div className='loginedUserFriendCode'><span>{me.friendCode}</span></div>
@@ -34,10 +46,10 @@ function Header() {
                     </div>
 
                     <div className='headerButtonSection'>
-                        <button onClick={() => nav('/')}>친구목록</button>
-                        <button onClick={() => nav('/chatList')}>채팅</button>
-                        <button onClick={() => nav('/myPage')}>내정보</button>
-                        <button onClick={() => nav('/settings')}>설정</button>
+                        <button className={headerButtonClassName('/')} onClick={() => nav('/')}>친구목록</button>
+                        <button className={headerButtonClassName('/chatList')} onClick={() => nav('/chatList')}>채팅</button>
+                        <button className={headerButtonClassName('/myPage')} onClick={() => nav('/myPage')}>내정보</button>
+                        <button className={headerButtonClassName('/settings')} onClick={() => nav('/settings')}>설정</button>
                     </div>
 
                 </div>

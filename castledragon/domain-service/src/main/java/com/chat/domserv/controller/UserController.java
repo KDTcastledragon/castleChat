@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,12 +13,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.chat.contract.user.domain.SessionUserDTO;
 import com.chat.contract.user.domain.UserProfileResponseDTO;
 import com.chat.domserv.domain.LoginRequestDTO;
 import com.chat.domserv.domain.UserDTO;
 import com.chat.domserv.mapper.UserMapper;
+import com.chat.domserv.usecase.ChatCommandUseCase;
 import com.chat.domserv.usecase.UserCommandUseCase;
 import com.chat.domserv.usecase.UserQueryUseCase;
 
@@ -30,33 +33,33 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @AllArgsConstructor
 public class UserController {
+	private static final String DEFAULT_PROFILE_IMAGE = "/images/mococo_question.png";
+
 	PasswordEncoder pwEncoder; // 추후 Service로 이동.
 	UserCommandUseCase usrCmdUseCase;
 	UserQueryUseCase usrQryUseCase;
+	ChatCommandUseCase chatCommandUseCase;
 	UserMapper userMapper;
 
 	// ======[ 회원가입 ]===================================================================================================
-	@PostMapping("/join")
+	@PostMapping(value = "/join", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	//	너는 Controller 메소드를 직접 호출하지 않잖아.
 	//	HTTP request가 오면 Spring이 호출함. --> 먼소리고???????? 자세히 공부 ㄱ.
-	public ResponseEntity<?> join(@RequestBody UserDTO data) {
+	public ResponseEntity<?> join(@RequestParam("loginId") String loginId, @RequestParam("password") String password, @RequestParam("nickname") String nickname, @RequestParam(value = "profileImgFile", required = false) MultipartFile profileImgFile) {
 		try {
-			log.info("");
-			log.info("join data : {} {} {}", data.getLoginId(), data.getPassword(), data.getNickname());
-
-			String loginId = data.getLoginId();
-			String password = data.getPassword();
-			String nickname = data.getNickname();
-
-			if (loginId == null || password == null || nickname == null) {
+			if (loginId == null || loginId.isBlank() || password == null || password.isBlank() || nickname == null || nickname.isBlank()) {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("필수값 누락");
 			}
 
-			log.info("회원가입 : {} {} {} {} {}", loginId, password, nickname);// 추후 삭제.
+			String profileImg = DEFAULT_PROFILE_IMAGE;
 
-			boolean isJoined = usrCmdUseCase.join(loginId, password, nickname);
+			if (profileImgFile != null && !profileImgFile.isEmpty()) {
+				profileImg = chatCommandUseCase.uploadJoinProfileImage(profileImgFile);
+			}
 
-			log.info("isJoined : {}", isJoined);
+			boolean isJoined = usrCmdUseCase.join(loginId.trim(), password, nickname.trim(), profileImg);
+
+			log.info("회원가입 결과. loginId={}, nickname={}, joined={}", loginId, nickname, isJoined);
 
 			if (isJoined == true) {
 				return ResponseEntity.ok().build();
@@ -173,6 +176,58 @@ public class UserController {
 		session.setAttribute("LOGIN_USER", updatedSessionUser);
 
 		return ResponseEntity.ok(new UserProfileResponseDTO(me.getPublicId(), nickname.trim(), me.getFriendCode(), profileImg));
+	}
+
+	@PostMapping("/updateMyNickname")
+	public ResponseEntity<?> updateMyNickname(@RequestBody Map<String, String> data, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		String nickname = data.get("nickname");
+
+		if (nickname == null || nickname.isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("닉네임 필요");
+		}
+
+		int updated = userMapper.updateMyNickname(me.getUserId(), nickname.trim());
+
+		if (updated != 1) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("닉네임 변경 실패");
+		}
+
+		SessionUserDTO updatedSessionUser = new SessionUserDTO(me.getUserId(), me.getPublicId(), nickname.trim(), me.getFriendCode(), me.getProfileImg());
+		session.setAttribute("LOGIN_USER", updatedSessionUser);
+
+		return ResponseEntity.ok(new UserProfileResponseDTO(me.getPublicId(), nickname.trim(), me.getFriendCode(), me.getProfileImg()));
+	}
+
+	@PostMapping("/updateMyProfileImage")
+	public ResponseEntity<?> updateMyProfileImage(@RequestBody Map<String, String> data, HttpSession session) {
+		SessionUserDTO me = (SessionUserDTO) session.getAttribute("LOGIN_USER");
+
+		if (me == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 필요");
+		}
+
+		String profileImg = data.get("profileImg");
+
+		if (profileImg == null || profileImg.isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("프로필 이미지 필요");
+		}
+
+		int updated = userMapper.updateMyProfileImage(me.getUserId(), profileImg);
+
+		if (updated != 1) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("프로필 이미지 변경 실패");
+		}
+
+		SessionUserDTO updatedSessionUser = new SessionUserDTO(me.getUserId(), me.getPublicId(), me.getNickname(), me.getFriendCode(), profileImg);
+		session.setAttribute("LOGIN_USER", updatedSessionUser);
+
+		return ResponseEntity.ok(new UserProfileResponseDTO(me.getPublicId(), me.getNickname(), me.getFriendCode(), profileImg));
 	}
 
 	@PostMapping("/changeMyPassword")

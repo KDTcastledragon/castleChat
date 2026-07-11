@@ -1,71 +1,129 @@
 .HeaderContainer {
-    margin: 10px auto;
+    position: relative;
     width: 1500px;
     height: 100px;
-    position: relative;
-    background-color: rgb(238, 255, 188);
-    border: 1px solid red;
+    margin: 10px auto;
+    border: 1px solid var(--castle-border);
+    border-radius: 16px;
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow);
+    overflow: hidden;
 }
 
 .loginedHeader {
+    height: 100%;
     display: flex;
-    gap: 10px;
+    align-items: stretch;
+}
+
+.loginedUserProfileBox {
+    width: 480px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--castle-nav);
+    color: #ffffff;
+    box-sizing: border-box;
+}
+
+.headerProfileButton {
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.headerProfileImg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.headerProfileButton:hover .headerProfileImg {
+    outline: 3px solid #5eead4;
+    outline-offset: 2px;
+}
+
+.loginedUserNickname,
+.loginedUserFriendCode {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.loginedUserNickname {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.loginedUserFriendCode {
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+.loginedUserLogoutButton {
+    width: 96px;
+    height: 42px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.loginedUserLogoutButton>button {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #475569;
+    border-radius: 10px;
+    background: var(--castle-nav-soft);
+    color: #e2e8f0;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.loginedUserLogoutButton>button:hover {
+    border-color: #64748b;
+    background: #334155;
+    color: #ffffff;
 }
 
 .headerButtonSection {
-    width: 1000px;
-    height: 100px;
-    background-color: aqua;
+    flex: 1;
+    height: 100%;
+    padding: 10px;
     display: flex;
     justify-content: center;
-    gap: 50px;
+    gap: 8px;
+    background: var(--castle-surface);
+    box-sizing: border-box;
 }
 
 .headerButtonSection>button {
     width: 200px;
     height: 100%;
-    background-color: rgb(223, 190, 255);
-    font-size: 24px;
-    font-weight: bold;
-    border: none;
-}
-
-.headerButtonSection>button:hover {
-    background-color: rgb(105, 0, 209);
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--castle-text-muted);
+    font-size: 20px;
+    font-weight: 800;
     cursor: pointer;
-    color: white;
+    transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
 }
 
-.loginedHeader>.loginedUserProfileBox>div>.headerProfileImg {
-    width: 90px;
-    height: 90px;
-    object-fit: cover;
-    border-radius: 50%;
+.headerButtonSection>button:hover,
+.headerButtonSection>button.active {
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
 }
 
-.loginedUserProfileBox {
-    display: flex;
-
-}
-
-.loginedUserLogoutButton {
-    width: 100px;
-    height: 100%;
-}
-
-.loginedUserLogoutButton>button {
-    display: inline-block;
-    width: 100%;
-    height: 70%;
-    background-color: rgb(255, 246, 121);
-    font-size: 22px;
-    font-weight: bold;
-    color: rgb(0, 0, 0);
-    border: none;
-}
-
-.loginedUserLogoutButton>button:hover {
-    background-color: rgb(131, 122, 0);
-    color: white;
-    cursor: pointer;
+.headerButtonSection>button.active {
+    box-shadow: inset 0 -3px 0 var(--castle-primary);
 }

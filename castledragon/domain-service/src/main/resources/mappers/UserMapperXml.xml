@@ -5,9 +5,9 @@
   
   <mapper namespace="com.chat.domserv.mapper.UserMapper">
   
- 	<insert id="join">
-	INSERT INTO users(public_id, login_id, password, nickname, friend_code)
-	VALUES(#{publicId}, #{loginId}, #{password}, #{nickname}, #{friendCode})
+	<insert id="join">
+	INSERT INTO users(public_id, login_id, password, nickname, friend_code, profile_img)
+	VALUES(#{publicId}, #{loginId}, #{password}, #{nickname}, #{friendCode}, #{profileImg})
 	</insert>
 	
 	<select id="getUserByLoginId" resultType="com.chat.domserv.domain.UserDTO">
@@ -74,6 +74,20 @@
 		SET
 			nickname = #{nickname},
 			profile_img = #{profileImg}
+		WHERE user_id = #{userId}
+		  AND user_status = 'ACTIVE'
+	</update>
+
+	<update id="updateMyNickname">
+		UPDATE users
+		SET nickname = #{nickname}
+		WHERE user_id = #{userId}
+		  AND user_status = 'ACTIVE'
+	</update>
+
+	<update id="updateMyProfileImage">
+		UPDATE users
+		SET profile_img = #{profileImg}
 		WHERE user_id = #{userId}
 		  AND user_status = 'ACTIVE'
 	</update>

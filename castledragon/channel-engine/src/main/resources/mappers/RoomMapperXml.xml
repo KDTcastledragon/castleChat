@@ -229,7 +229,7 @@
 			u.public_id AS publicId,
 			u.nickname AS nickname,
 			u.friend_code AS friendCode,
-			u.profile_img AS profileImg,
+			COALESCE(NULLIF(TRIM(u.profile_img), ''), '/images/mococo_question.png') AS profileImg,
 			rm.role AS role
 		FROM room_members rm
 		JOIN users u

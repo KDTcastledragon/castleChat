@@ -1,0 +1,13 @@
+.AdminPageContainer {
+    width: 1100px;
+    min-height: 520px;
+    margin: 18px auto;
+    padding: 28px;
+    border: 1px solid var(--castle-border);
+    border-radius: 18px;
+    background: var(--castle-surface);
+    color: var(--castle-text);
+    box-shadow: var(--castle-shadow);
+    box-sizing: border-box;
+    text-align: left;
+}

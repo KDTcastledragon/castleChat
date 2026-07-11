@@ -1,5 +1,5 @@
 import './ChatList.css';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMe } from '../../hooks/useAuthUser';
 import { useChatRoomActions, useGetMyAllRooms } from '../../hooks/useChatRoom';
@@ -11,51 +11,105 @@ function ChatList() {
     const { data: myAllRooms = [], isLoading, isError } = useGetMyAllRooms(!!me);
     const queryClient = useQueryClient();
     const [visibleRooms, setVisibleRooms] = useState([]);
+	const visibleRoomsRef = useRef([]);
+	const localUnreadCountRef = useRef({});
 
     const { enterExistingRoom } = useChatRoomActions();
 
     useEffect(() => {
-        setVisibleRooms(myAllRooms);
+		const nextRooms = myAllRooms.map(room => {
+			const roomKey = String(room.roomId);
+			const localUnreadCount = localUnreadCountRef.current[roomKey];
+
+			if (localUnreadCount === undefined) {
+				return room;
+			}
+
+			return {
+				...room,
+				unreadMessageCount: localUnreadCount,
+				unreadCount: localUnreadCount
+			};
+		});
+
+		visibleRoomsRef.current = nextRooms;
+		setVisibleRooms(nextRooms);
     }, [myAllRooms]);
+
+	const updateRoomLists = useCallback((updater) => {
+		const nextVisibleRooms = updater(visibleRoomsRef.current);
+
+		visibleRoomsRef.current = nextVisibleRooms;
+		setVisibleRooms(nextVisibleRooms);
+
+		queryClient.setQueryData(['myAllRooms'], prevRooms => {
+			if (!Array.isArray(prevRooms)) return prevRooms;
+			return updater(prevRooms);
+		});
+	}, [queryClient]);
+
+	const resetRoomUnreadCount = useCallback((roomId) => {
+		const roomKey = String(roomId);
+		localUnreadCountRef.current[roomKey] = 0;
+
+		updateRoomLists(rooms => rooms.map(room =>
+			Number(room.roomId) === Number(roomId)
+				? { ...room, unreadMessageCount: 0, unreadCount: 0 }
+				: room
+		));
+	}, [updateRoomLists]);
 
     useEffect(() => {
         if (!me) return;
 
         return registerGlobalWsHandler((wsEvt) => {
-            if (wsEvt.wsType !== 'CHAT_ROOM_UPDATED' && wsEvt.wsType !== 'MSG_CREATED') {
+            if (wsEvt.wsType === 'MSG_READ') {
+				const readPosition = wsEvt.payload;
+
+				if (readPosition?.readerPublicId === me.publicId && readPosition?.roomId) {
+					resetRoomUnreadCount(readPosition.roomId);
+				}
+
+				return;
+			}
+
+			if (wsEvt.wsType !== 'CHAT_ROOM_UPDATED' && wsEvt.wsType !== 'MSG_CREATED') {
                 return;
             }
 
-            const payload = wsEvt.payload;
-            if (!payload?.roomId) return;
+			const payload = wsEvt.payload;
+			if (!payload?.roomId) return;
 
-            setVisibleRooms(prevRooms => {
-                const roomExistsInList = prevRooms.some(room => Number(room.roomId) === Number(payload.roomId));
+			const roomKey = String(payload.roomId);
+			const currentRoom = visibleRoomsRef.current.find(room => Number(room.roomId) === Number(payload.roomId));
 
-                if (!roomExistsInList) {
-                    queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
-                    return prevRooms;
-                }
+			if (!currentRoom) {
+				queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+				return;
+			}
 
-                const nextRooms = prevRooms.map(room => {
-                    if (Number(room.roomId) !== Number(payload.roomId)) {
-                        return room;
-                    }
+			const isMyMessage = payload.senderPublicId === me.publicId;
+			const previewText = payload.previewText ?? payload.messageText ?? currentRoom.lastMessage ?? '';
+			const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? currentRoom.lastMessageAt;
+			const currentUnreadCount = Number(localUnreadCountRef.current[roomKey]
+				?? currentRoom.unreadMessageCount
+				?? currentRoom.unreadCount
+				?? 0);
+			const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage;
+			const nextUnreadCount = shouldIncreaseUnread ? currentUnreadCount + 1 : currentUnreadCount;
 
-                    const isMyMessage = payload.senderPublicId === me.publicId;
-                    const previewText = payload.previewText ?? payload.messageText ?? room.lastMessage ?? '';
-                    const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? room.lastMessageAt;
-                    const unreadCount = Number(room.unreadMessageCount ?? room.unreadCount ?? 0);
-                    const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage;
+			localUnreadCountRef.current[roomKey] = nextUnreadCount;
 
-                    return {
-                        ...room,
-                        lastMessage: previewText,
-                        lastMessageAt,
-                        unreadMessageCount: shouldIncreaseUnread ? unreadCount + 1 : unreadCount,
-                        unreadCount: shouldIncreaseUnread ? unreadCount + 1 : unreadCount
-                    };
-                });
+			updateRoomLists(prevRooms => {
+				const nextRooms = prevRooms.map(room => Number(room.roomId) === Number(payload.roomId)
+					? {
+						...room,
+						lastMessage: previewText,
+						lastMessageAt,
+						unreadMessageCount: nextUnreadCount,
+						unreadCount: nextUnreadCount
+					}
+					: room);
 
                 return nextRooms.sort((a, b) => {
                     const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
@@ -64,7 +118,7 @@ function ChatList() {
                 });
             });
         });
-    }, [me, queryClient]);
+	}, [me, queryClient, resetRoomUnreadCount, updateRoomLists]);
 
     function formatRoomTime(value) {
         if (!value) return '';
@@ -76,13 +130,7 @@ function ChatList() {
     }
 
     function handleEnterRoom(roomId) {
-        setVisibleRooms(prevRooms =>
-            prevRooms.map(room =>
-                Number(room.roomId) === Number(roomId)
-                    ? { ...room, unreadMessageCount: 0, unreadCount: 0 }
-                    : room
-            )
-        );
+		resetRoomUnreadCount(roomId);
 
         enterExistingRoom(roomId);
     }

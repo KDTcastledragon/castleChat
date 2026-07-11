@@ -102,6 +102,11 @@ function AppShell() {
                 text = payload.notificationText ?? `${payload.nickname ?? '친구'}님이 접속했습니다.`;
             }
 
+            if (wsEvt.wsType === 'FRIEND_PROFILE_UPDATED') {
+                queryClient.invalidateQueries({ queryKey: ['friends'] });
+                queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+            }
+
             if (wsEvt.wsType === 'CHAT_MESSAGE_NOTIFICATION') {
                 text = `${payload.senderNickname ?? '상대'}: ${payload.previewText ?? ''}`;
             }

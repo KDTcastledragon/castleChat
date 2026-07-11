@@ -9,6 +9,7 @@ import com.chat.aiassist.domain.RecentMessageDTO;
 
 @Mapper
 public interface AiAssistMapper {
+	int countActiveRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
 
 	List<RecentMessageDTO> findRecentMessagesInRoom(@Param("roomId") Long roomId, @Param("limit") int limit);
 

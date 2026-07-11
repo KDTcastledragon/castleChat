@@ -10,10 +10,10 @@
 .friendPanel {
     min-height: 610px;
     padding: 16px;
-    border: 1px solid #111;
+    border: 1px solid var(--castle-border);
     border-radius: 16px;
-    background: #fffdf3;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow);
     box-sizing: border-box;
 }
 
@@ -22,7 +22,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    border-bottom: 1px solid #eeeeee;
+    border-bottom: 1px solid var(--castle-border-soft);
     margin-bottom: 14px;
 }
 
@@ -33,7 +33,7 @@
 
 .friendPanelHeader p {
     margin: 4px 0 0;
-    color: #777;
+    color: var(--castle-text-muted);
     font-size: 12px;
 }
 
@@ -43,7 +43,7 @@
 .createGroupButton {
     border: 0;
     border-radius: 8px;
-    background: #111;
+    background: var(--castle-primary);
     color: #fff;
     font-weight: bold;
     cursor: pointer;
@@ -52,6 +52,14 @@
 .friendPanelHeader button {
     height: 30px;
     padding: 0 10px;
+}
+
+.friendPanelHeader button:hover,
+.friendItem button:hover,
+.requestItem button:hover,
+.createGroupButton:hover,
+.groupThumbnailControl button:hover {
+    background: var(--castle-primary-hover);
 }
 
 .friendScrollBox {
@@ -67,9 +75,9 @@
     gap: 10px;
     min-height: 58px;
     padding: 8px;
-    border: 1px solid #eeeeee;
+    border: 1px solid var(--castle-border-soft);
     border-radius: 12px;
-    background: #fff;
+    background: var(--castle-surface);
     box-sizing: border-box;
     margin-bottom: 8px;
 }
@@ -87,8 +95,9 @@
 }
 
 .friendItem.selected {
-    background: #fff7bf;
-    border-color: #f0d44f;
+    background: var(--castle-primary-pale);
+    border-color: #5eead4;
+    box-shadow: inset 3px 0 0 var(--castle-primary);
 }
 
 .friendItem img,
@@ -117,7 +126,7 @@
 
 .friendInfo span,
 .requestItem span {
-    color: #777;
+    color: var(--castle-text-muted);
     font-size: 11px;
 }
 
@@ -127,12 +136,12 @@
 }
 
 .requestItem .rejectButton {
-    background: #777;
+    background: #64748b;
 }
 
 .friendEmpty {
     padding: 18px;
-    color: #777;
+    color: var(--castle-text-muted);
     text-align: center;
     font-size: 13px;
 }
@@ -143,7 +152,7 @@
     height: 38px;
     margin-bottom: 10px;
     padding: 0 12px;
-    border: 1px solid #cccccc;
+    border: 1px solid var(--castle-border);
     border-radius: 10px;
     box-sizing: border-box;
 }
@@ -157,9 +166,9 @@
     grid-template-columns: 58px 1fr;
     gap: 10px;
     align-items: center;
-    border: 1px solid #eeeeee;
+    border: 1px solid var(--castle-border-soft);
     border-radius: 12px;
-    background: #ffffff;
+    background: var(--castle-surface-soft);
     box-sizing: border-box;
 }
 
@@ -168,8 +177,8 @@
     height: 54px;
     border-radius: 14px;
     object-fit: cover;
-    background: #f4f4f4;
-    border: 1px solid #dddddd;
+    background: var(--castle-surface-muted);
+    border: 1px solid var(--castle-border);
 }
 
 .groupThumbnailControl {
@@ -190,7 +199,7 @@
 
 .groupThumbnailControl span {
     min-width: 0;
-    color: #777;
+    color: var(--castle-text-muted);
     font-size: 11px;
     overflow: hidden;
     white-space: nowrap;
@@ -203,14 +212,14 @@
     height: 32px;
     border: 0;
     border-radius: 8px;
-    background: #111;
+    background: var(--castle-primary);
     color: #fff;
     font-weight: bold;
     cursor: pointer;
 }
 
 .groupThumbnailControl button:disabled {
-    background: #aaa;
+    background: #94a3b8;
     cursor: not-allowed;
 }
 
@@ -218,8 +227,8 @@
     min-height: 72px;
     padding: 10px;
     border-radius: 12px;
-    background: #fff;
-    border: 1px solid #eeeeee;
+    background: var(--castle-surface-soft);
+    border: 1px solid var(--castle-border-soft);
     display: flex;
     flex-wrap: wrap;
     align-content: flex-start;
@@ -230,13 +239,14 @@
 .selectedFriendChips span {
     padding: 4px 8px;
     border-radius: 12px;
-    background: #fee500;
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
     font-size: 12px;
     font-weight: bold;
 }
 
 .selectedFriendChips em {
-    color: #999;
+    color: var(--castle-text-muted);
     font-size: 12px;
 }
 
@@ -244,18 +254,18 @@
     width: 100%;
     height: 38px;
     margin: 12px 0 18px;
-    background: #fee500;
-    color: #111;
+    background: var(--castle-primary);
+    color: #ffffff;
 }
 
 .createGroupButton:disabled {
-    background: #dddddd;
-    color: #888;
+    background: #e2e8f0;
+    color: #94a3b8;
     cursor: not-allowed;
 }
 
 .requestBox {
-    border-top: 1px solid #eeeeee;
+    border-top: 1px solid var(--castle-border-soft);
     padding-top: 12px;
 }
 

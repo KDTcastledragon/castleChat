@@ -49,6 +49,7 @@ public class WsGateDispatcher extends TextWebSocketHandler { // Ws 최상위 입
 
 			switch (dto.getWsType()) {
 			case "CONNECT_USER" -> wsGateConnectionHandler.handleConnectUser(session, dto);
+			case "PROFILE_UPDATED" -> wsGateConnectionHandler.handleProfileUpdated(session, dto);
 
 			case "ADD_FRIEND" -> wsGateFriendHandler.handleAddFriend(session, dto);
 			case "RESPOND_FRIEND" -> wsGateFriendHandler.handleRespondFriend(session, dto);

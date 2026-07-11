@@ -36,12 +36,6 @@
     font-size: 28px;
 }
 
-.myPageTitleBox p {
-    margin: 6px 0 0;
-    color: #777;
-    font-size: 13px;
-}
-
 .myInfoGrid {
     display: grid;
     grid-template-columns: 130px 1fr;
@@ -59,18 +53,26 @@
 
 .myInfoGrid strong {
     min-width: 0;
-    overflow-wrap: anywhere;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .myEditSection {
     margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.myEditRow {
     display: grid;
-    grid-template-columns: 1fr 1fr 120px;
+    grid-template-columns: minmax(0, 1fr) 150px;
     gap: 12px;
     align-items: end;
 }
 
-.myEditSection label {
+.myEditRow label {
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -82,7 +84,7 @@
 .profileImageEditBox {
     min-width: 0;
     display: grid;
-    grid-template-columns: 1fr 92px;
+    grid-template-columns: minmax(0, 1fr) 92px 110px;
     gap: 6px 8px;
     align-items: end;
     color: #555;
@@ -91,7 +93,7 @@
 }
 
 .profileImageEditBox span {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
 }
 
 .profileImageEditBox strong {
@@ -123,6 +125,10 @@
 .profileImageEditBox button:disabled {
     background: #aaa;
     cursor: not-allowed;
+}
+
+.profileImageEditBox .defaultProfileImageButton {
+    background: #555;
 }
 
 .myEditSection input,
@@ -162,9 +168,124 @@
     color: #111;
 }
 
+.passwordModalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(235, 235, 235, 0.9);
+}
+
 .passwordEditBox {
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 80px;
-    gap: 10px;
+    width: 390px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid #bbb;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+    box-sizing: border-box;
+}
+
+.passwordModalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 18px;
+}
+
+.passwordModalHeader button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #333;
+    font-size: 22px;
+}
+
+.passwordModalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.passwordModalActions button {
+    width: 90px;
+}
+
+.passwordModalActions .passwordCancelButton {
+    background: #777;
+}
+
+/* Professional theme */
+.myPageCard {
+    border-color: var(--castle-border);
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow);
+}
+
+.myPageHeader {
+    border-bottom-color: var(--castle-border-soft);
+}
+
+.myPageProfileImg {
+    border-color: var(--castle-primary);
+    background: var(--castle-surface);
+}
+
+.myInfoGrid {
+    background: var(--castle-surface-soft);
+}
+
+.myInfoGrid span,
+.myEditRow label,
+.profileImageEditBox {
+    color: var(--castle-text-muted);
+}
+
+.profileImageEditBox strong,
+.myEditSection input,
+.passwordEditBox input {
+    border-color: var(--castle-border);
+    background: var(--castle-surface);
+    color: var(--castle-text);
+}
+
+.profileImageEditBox button,
+.myPrimaryButton,
+.passwordEditBox button {
+    background: var(--castle-primary);
+}
+
+.profileImageEditBox button:hover,
+.myPrimaryButton:hover,
+.passwordEditBox button:hover {
+    background: var(--castle-primary-hover);
+}
+
+.profileImageEditBox .defaultProfileImageButton,
+.passwordModalActions .passwordCancelButton {
+    background: #64748b;
+}
+
+.passwordToggleButton {
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+}
+
+.passwordModalOverlay {
+    background: rgba(15, 23, 42, 0.36);
+    backdrop-filter: blur(2px);
+}
+
+.passwordEditBox {
+    border-color: var(--castle-border);
+    box-shadow: var(--castle-shadow-strong);
 }

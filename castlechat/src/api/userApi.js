@@ -19,6 +19,16 @@ export const updateMyProfileApi = async (data) => {
     return res.data;
 };
 
+export const updateMyNicknameApi = async (nickname) => {
+    const res = await axios.post('/user/updateMyNickname', { nickname });
+    return res.data;
+};
+
+export const updateMyProfileImageApi = async (profileImg) => {
+    const res = await axios.post('/user/updateMyProfileImage', { profileImg });
+    return res.data;
+};
+
 export const changeMyPasswordApi = async (data) => {
     const res = await axios.post('/user/changeMyPassword', data);
     return res.data;

@@ -1,6 +1,7 @@
 package com.chat.wsgate.handler;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -52,6 +53,22 @@ public class WsGateConnectionHandler {
 		pushOnlineNotification(loginUser, dto.getRequestId());
 
 	}// handleConnectUser
+
+	//	====== 프로필 변경 알림 ============================================================================================================
+	public void handleProfileUpdated(WebSocketSession session, WebSocketDTO dto) throws Exception {
+		SessionUserDTO loginUser = wsGateAuth.requireLoginUser(session);
+		FindOnlineFriendTargetsCommand command = new FindOnlineFriendTargetsCommand(loginUser.getUserId(), loginUser.getPublicId());
+		OnlineFriendTargetsResponseDTO targets = wsGateChEngineFriendClient.findOnlineFriendTargets(command);
+		Map<String, String> profileUpdate = Map.of("publicId", loginUser.getPublicId());
+
+		wsGateOutboundWriter.responseOk(session, dto, "PROFILE_UPDATED_OK", profileUpdate);
+
+		if (targets.getTargetUserIds() == null || targets.getTargetUserIds().isEmpty()) {
+			return;
+		}
+
+		wsGateOutboundWriter.pushToMultipleUsers(targets.getTargetUserIds(), "FRIEND_PROFILE_UPDATED", profileUpdate, dto.getRequestId());
+	}
 
 	private void pushOnlineNotification(SessionUserDTO loginUser, String requestId) {
 		try {

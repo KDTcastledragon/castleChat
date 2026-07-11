@@ -1,3 +1,6 @@
 .App {
+  min-height: 100vh;
+  background: var(--castle-bg);
+  color: var(--castle-text);
   text-align: center;
 }
