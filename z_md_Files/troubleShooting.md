@@ -436,6 +436,96 @@ An empty string ("") was passed to the src attribute.
 - 기존 AdminPage/ChatBox/JoinPage 경고는 이번 범위 밖이라 유지했다.
 - `git diff --check` 통과.
 - `plan.md` 원칙에 따라 `gradlew.bat`과 Gradle refresh는 실행하지 않았다.
+
+========================================================================================================================
+
+## 2026-07-11 회원가입 경로 차단과 그룹 draft 중복 생성 수정
+
+### 1. 로그인 화면에서 회원가입을 눌러도 회원가입 페이지가 열리지 않던 문제
+
+원인.
+
+- `/join` Route와 회원가입 버튼의 `navigator('/join')`는 정상적으로 존재했다.
+- AppShell의 로그인 확인 effect가 비로그인 상태의 모든 URL을 `/login`으로 강제 이동시켰다.
+- 따라서 `/join`으로 이동한 직후 같은 effect가 다시 `/login`으로 되돌렸다.
+
+수정 내용.
+
+- `/login`, `/join`을 비로그인 접근이 가능한 공개 경로로 명시했다.
+- 비로그인 상태이면서 공개 경로가 아닌 경우에만 `/login`으로 이동한다.
+- 공개 경로에서는 WebSocket을 연결하지 않고 해당 화면을 그대로 렌더링한다.
+
+### 2. 그룹 draft에서 첫 메시지 Enter 연타 시 방이 여러 개 생성되던 문제
+
+원인.
+
+- draft 첫 메시지는 `START_GROUP_CHAT` 응답을 기다리는 비동기 요청이다.
+- 기존 차단 조건은 파일 업로드용 `isUploadingFiles`뿐이어서 텍스트 기반 START 요청에는 적용되지 않았다.
+- 첫 요청의 응답이 오기 전에 Enter가 다시 입력되면 `sendChatMessage()`가 재진입해 START 요청이 병렬 전송됐다.
+- React state만 추가할 경우 state 반영 전 같은 event loop에서 들어오는 연속 keydown을 완전히 막을 수 없다.
+
+수정 내용.
+
+- draft START 요청 전용 `startChatRequestLockRef`를 추가했다.
+- 첫 요청을 보내기 전에 ref를 동기적으로 잠그므로 같은 렌더 사이클에서 Enter가 반복돼도 후속 요청은 즉시 종료된다.
+- 응답 성공 또는 예외가 끝나는 `finally`에서만 잠금을 해제한다.
+- `isStartingChat` state는 전송 버튼 비활성화와 `전송 중` 표시만 담당한다.
+- 기존 방의 일반 `SEND_MESSAGE` 연속 전송 흐름은 변경하지 않았다.
+
+### 검증 결과
+
+- `npm.cmd run build` 성공.
+- 기존 AdminPage, ChatBox, JoinPage의 선행 ESLint warning만 남았다.
+- `git diff --check` 통과.
+- `plan.md` 원칙에 따라 Gradle과 project refresh는 실행하지 않았다.
+
+========================================================================================================================
+
+## 2026-07-11 활성 공지 폭과 START 첫 메시지 송신자 렌더 누락 수정
+
+### 1. 활성 공지 폭이 좁고 숨김/표시 toggle 시 버튼 위치가 이동하던 문제
+
+원인.
+
+- 펼친 공지는 `width: min(360px, ...)`, 가운데 정렬 transform을 사용했다.
+- 접힌 공지는 가운데 좌표를 제거하고 `right: 12px`, `width: auto`로 별도 배치해 toggle 시 버튼 위치가 달라졌다.
+
+수정 내용.
+
+- 펼침과 접힘 모두 `left: 8px`, `right: 8px`, `width: auto`를 사용해 채팅창 가로 폭을 채운다.
+- 접힘 상태에서도 동일한 bar 영역과 오른쪽 정렬을 유지해 toggle 버튼 좌표가 움직이지 않는다.
+- 접힘 상태의 빈 bar는 배경, border, shadow를 투명 처리한다.
+
+### 2. START 첫 메시지가 DB에는 저장되지만 송신자 ChatBox에서 보이지 않던 문제
+
+원인.
+
+- START 응답의 `StartChatResponseDTO`에는 `enterRoomInfo`와 `firstChatMessage`가 모두 포함돼 있었다.
+- FE는 draft 창을 닫은 뒤 `enterRoomInfo`만 `openRoom()`에 전달하고 `firstChatMessage`를 버렸다.
+- gateway가 START 응답 직후 `MSG_CREATED`를 broadcast해도 새 room handler가 등록되기 전이면 송신자는 이벤트를 놓칠 수 있었다.
+- 새 ChatBox가 즉시 HTTP 메시지 조회를 시작하지만 Kafka worker의 DB insert가 아직 끝나지 않았으면 빈 목록을 반환했다.
+- HTTP 응답이 늦게 도착하면 그 사이 받은 WS 메시지까지 `setPrevChattings(messages)`로 덮어쓸 수 있었다.
+
+수정 내용.
+
+- `openRoom(roomInfo, initialMessages)` 형태로 START 응답의 첫 메시지를 Redux 채팅창 상태에 함께 전달한다.
+- AppShell이 `initialMessages`를 새 ChatBox에 전달하고 ChatBox는 첫 렌더부터 해당 메시지를 표시한다.
+- HTTP 로드 결과는 기존 메모리 메시지를 지우지 않고 `messageId` 기준으로 병합한다.
+- START broadcast가 새 handler 등록 후 도착해도 이미 같은 `messageId`가 있으면 중복 추가하지 않는다.
+- Kafka durable save 후 응답, 비동기 DB insert, 기존 REST/WS/backend 흐름은 변경하지 않았다.
+
+### 3. 첫 메시지에서만 체감 지연이 컸던 이유와 개선
+
+- 첫 메시지는 일반 SEND와 달리 방 생성, 멤버 생성, cache 초기화, Kafka durable save, 입장 정보 조립이 포함돼 본질적으로 작업량이 더 많다.
+- 기존에는 이 작업을 기다린 뒤 새 ChatBox가 다시 HTTP DB 조회까지 수행해야 첫 메시지가 보였다.
+- 이제 START 응답에 이미 포함된 첫 메시지를 즉시 렌더 source로 사용하므로 DB worker 반영과 재조회 완료를 기다리지 않고 표시된다.
+
+### 검증 결과
+
+- `npm.cmd run build` 성공.
+- 기존 AdminPage, ChatBox, JoinPage의 선행 ESLint warning만 남았다.
+- `git diff --check` 통과.
+- `plan.md` 원칙에 따라 Gradle과 project refresh는 실행하지 않았다.
 - 두 로그인 세션을 사용한 런타임 WebSocket 검증은 수행하지 않았다.
 
 ## 2026-07-11 내정보·회원가입 프로필·비밀번호 모달·채팅 목록 개선

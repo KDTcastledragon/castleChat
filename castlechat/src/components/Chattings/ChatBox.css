@@ -127,30 +127,34 @@
 .activeRoomNoticeBar {
 	position: absolute;
 	top: 44px;
-	left: 50%;
+	left: 8px;
+	right: 8px;
 	z-index: 14;
     display: flex;
     align-items: center;
     gap: 6px;
-	width: min(360px, calc(100% - 28px));
+	width: auto;
     min-height: 34px;
     padding: 4px 7px 4px 10px;
 	border: 1px solid #eadc72;
 	border-radius: 10px;
     background: #fffbe1;
 	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
-	transform: translateX(-50%);
+	transform: none;
     box-sizing: border-box;
 }
 
 .activeRoomNoticeBar.collapsed {
-	left: auto;
-	right: 12px;
+	left: 8px;
+	right: 8px;
 	width: auto;
-	min-height: 30px;
-	padding-left: 7px;
+	min-height: 34px;
+	padding: 4px 7px 4px 10px;
     justify-content: flex-end;
 	transform: none;
+	border-color: transparent;
+	background: transparent;
+	box-shadow: none;
 }
 
 .activeRoomNoticeContents {

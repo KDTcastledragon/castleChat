@@ -234,7 +234,7 @@ export function connectWs() {
             case 'LEFT_ROOM':
             case 'ROOM_NOTICE_APPLIED':
             case 'ROOM_NOTICE': {
-				const roomId = wsEvt.payload?.roomId ?? wsEvt.payload?.roomNoticeView?.roomId;
+                const roomId = wsEvt.payload?.roomId ?? wsEvt.payload?.roomNoticeView?.roomId;
 
                 if (roomId == null) { // roomId가 없으면 roomHandlers[undefined]를 보게 됨. 큰 문제는 아니지만, 명시적으로 막으면 더 좋음.
                     return;

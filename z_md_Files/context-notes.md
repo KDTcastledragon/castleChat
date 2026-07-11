@@ -116,3 +116,35 @@
 - AI MyBatis XML 파싱과 `git diff --check`는 성공했다.
 - 로컬 개발 서버가 실행 중이지 않아 브라우저 시각 검증은 수행하지 못했다.
 - `plan.md` 원칙에 따라 Gradle과 project refresh는 실행하지 않았다.
+
+## 2026-07-11 Join Route And Draft Group Duplicate Creation Decisions
+
+- `/login`과 `/join`은 비로그인 사용자가 접근해야 하는 공개 경로다. AppShell의 비로그인 redirect는 이 두 경로를 제외한다.
+- 그룹 draft 첫 메시지는 방 생성 명령이므로 응답을 받기 전 동일 draft에서 두 번째 START 요청을 허용하지 않는다.
+- React state 갱신만으로는 같은 event loop에서 연속 Enter를 막지 못하므로 `useRef`를 동기 잠금으로 사용하고 state는 버튼 UX 표시에 사용한다.
+- 일반 방의 SEND_MESSAGE 연속 전송 정책은 이번 문제와 별개이므로 변경하지 않는다.
+
+## 2026-07-11 Join Route And Draft Group Duplicate Creation Result
+
+- RouteBody의 `/join` 등록과 LoginPage의 이동 버튼은 원래 정상이라 변경하지 않았다.
+- AppShell 인증 redirect 조건에 공개 경로만 추가했다.
+- draft START 요청에만 ref 잠금을 적용해 기존 일반 SEND 동작은 유지했다.
+- `npm.cmd run build`와 `git diff --check`는 성공했다.
+- Gradle과 project refresh는 실행하지 않았다.
+
+## 2026-07-11 Notice Width And First Message Decisions
+
+- 활성 공지 bar는 채팅창 좌우 8px만 남기고 가로 폭을 채운다. 접힘 상태에서도 같은 box와 오른쪽 toggle 좌표를 유지한다.
+- START 응답은 이미 durable save가 끝난 `firstChatMessage`를 포함하므로 이를 송신자 화면의 초기 메시지 source로 사용한다.
+- 새 방의 DB insert는 Kafka worker가 비동기로 처리하므로 START 직후 HTTP 메시지 조회 결과는 source of truth로 화면을 덮어쓰면 안 된다.
+- HTTP 로드 메시지와 START/WS 메시지는 messageId로 병합하고 현재 메모리 메시지를 보존한다.
+- 기존 REST, WebSocket, Kafka, backend transaction 구조는 변경하지 않는다.
+
+## 2026-07-11 Notice Width And First Message Result
+
+- 공지 bar와 toggle은 펼침/접힘 모두 동일한 좌우 좌표를 사용한다.
+- START 응답의 firstChatMessage는 Redux window state를 거쳐 새 ChatBox에 전달된다.
+- 초기 HTTP 조회와 WS broadcast는 messageId 병합으로 첫 메시지 유실과 중복을 모두 방지한다.
+- 첫 메시지는 Kafka DB insert 완료를 기다리지 않고 durable save가 끝난 START 응답으로 렌더된다.
+- `npm.cmd run build`와 `git diff --check`는 성공했다.
+- Gradle과 project refresh는 실행하지 않았다.

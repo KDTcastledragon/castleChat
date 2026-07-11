@@ -58,3 +58,22 @@
 - [x] 반응형 전환 방법만 문서 코멘트로 기록
 - [x] 트러블슈팅 기록
 - [x] 프론트와 AI XML 검증
+
+## 2026-07-11 Join Route And Draft Group Duplicate Creation Fix
+
+- [x] 비로그인 상태에서도 `/join` 공개 경로 유지
+- [x] 그룹 draft 첫 메시지 요청 중복 진입 차단
+- [x] 전송 버튼 pending 상태 표시와 연속 클릭 차단
+- [x] 기존 일반 메시지 전송 흐름 무변경 확인
+- [x] 트러블슈팅 기록
+- [x] 프론트 빌드와 diff 검증
+
+## 2026-07-11 Notice Width And First Message Rendering Fix
+
+- [x] 활성 공지 bar를 채팅창 가로 폭에 맞춤
+- [x] 공지 숨김/표시 toggle 위치 고정
+- [x] START 응답의 firstChatMessage를 새 ChatBox 초기 데이터로 전달
+- [x] Kafka DB 반영 전 HTTP 빈 조회가 초기 메시지를 지우지 않도록 병합
+- [x] START broadcast와 초기 메시지 중복 렌더 방지
+- [x] 트러블슈팅 기록
+- [x] 프론트 빌드와 diff 검증

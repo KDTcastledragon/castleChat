@@ -47,6 +47,7 @@ const chatWindowsSlice = createSlice({
                 roomNotice: room.roomNotice || null,
                 friend: room.friend || null,
                 memberList: room.memberList || [],
+                initialMessages: room.initialMessages || [],
                 x: 560 + state.windows.length * 30,
                 y: 90 + state.windows.length * 30,
                 zIndex: Date.now()

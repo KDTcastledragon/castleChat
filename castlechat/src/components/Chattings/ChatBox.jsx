@@ -29,7 +29,7 @@ import { recommendMessagesApi } from '../../api/aiAssistApi';
 import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi, uploadImageApi } from '../../api/chatApi';
 import { loadRoomNoticesApi, updateMyRoomSettingsApi } from '../../api/roomApi';
 
-function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, roomNotice, memberList, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
+function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], roomType, roomName, roomThumbnail, customRoomBackground, messageNotificationEnabled, roomNotice, memberList, initialMessages, x, y, zIndex, exitChatRoom, onMove, onFocus }) {
     const [chatMessage, setChatMessage] = useState('');
     const [prevChattings, setPrevChattings] = useState([]);
     const prevChattingsRef = useRef([]);
@@ -51,6 +51,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploadProgress, setUploadProgress] = useState(null);
     const [isUploadingFiles, setIsUploadingFiles] = useState(false);
+    const [isStartingChat, setIsStartingChat] = useState(false);
+    const startChatRequestLockRef = useRef(false);
     const [isAiRecommendLoading, setIsAiRecommendLoading] = useState(false);
     const [aiRecommendedMessages, setAiRecommendedMessages] = useState([]);
     const [myReactionMap, setMyReactionMap] = useState({});
@@ -615,7 +617,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         oldestMessageIdRef.current = null;
         isPrependingPrevRef.current = false;
 
-        setPrevChattings([]);
+        setPrevChattings(Array.isArray(initialMessages) ? initialMessages : []);
         setTypingUsers([]);
         setIsRoomMenuOpen(false);
         setIsInviteFriendPanelOpen(false);
@@ -656,11 +658,25 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
                 const messages = await loadMessagesInRoomApi(roomId, MESSAGE_PAGE_SIZE);
 
-                setPrevChattings(messages);
+				setPrevChattings(currentMessages => {
+					const mergedMessageMap = new Map();
+
+					(messages ?? []).forEach(message => {
+						mergedMessageMap.set(String(message.messageId), message);
+					});
+
+					currentMessages.forEach(message => {
+						mergedMessageMap.set(String(message.messageId), message);
+					});
+
+					const mergedMessages = Array.from(mergedMessageMap.values());
+					oldestMessageIdRef.current = mergedMessages[0]?.messageId ?? null;
+
+					return mergedMessages;
+				});
 				mergeMyReactionState(messages);
 
                 hasMorePrevRef.current = messages.length === MESSAGE_PAGE_SIZE;
-                oldestMessageIdRef.current = messages[0]?.messageId ?? null;
 
                 if (messages.length) {
                     const lastOtherMsgInRoom = [...messages]
@@ -688,7 +704,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             if (wsResponse.wsType === "MSG_CREATED") {
                 const newMsg = wsResponse.payload;
 
-                setPrevChattings(prev => [...prev, newMsg]);
+                setPrevChattings(prev => {
+                    const alreadyRendered = prev.some(message => String(message.messageId) === String(newMsg.messageId));
+
+                    return alreadyRendered ? prev : [...prev, newMsg];
+                });
 
                 if (newMsg.senderPublicId !== myPublicId) {
                     scheduleReadMessage(newMsg.messageId);
@@ -945,13 +965,20 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             flushPendingReadMessage();
             unregisterRoomHandler(roomId);
         };
-    }, [roomId, myPublicId]);
+    }, [roomId, myPublicId, initialMessages]);
 
     async function sendChatMessage() {
         if (isUploadingFiles) return;
 
+        if (isDraftRoom && startChatRequestLockRef.current) return;
+
         if (isEmptyMessage(chatMessage)) {
             return;
+        }
+
+        if (isDraftRoom) {
+            startChatRequestLockRef.current = true;
+            setIsStartingChat(true);
         }
 
         if (isTypingRef.current) {
@@ -1010,7 +1037,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 setUploadProgress(null);
 
                 exitChatRoom();
-                openRoom(startChat.enterRoomInfo);
+                openRoom(startChat.enterRoomInfo, [startChat.firstChatMessage]);
                 queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
                 return;
             }
@@ -1063,6 +1090,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             alert(e.response?.data ?? '메시지 전송 실패');
         } finally {
             setIsUploadingFiles(false);
+
+            if (isDraftRoom) {
+                startChatRequestLockRef.current = false;
+                setIsStartingChat(false);
+            }
         }
     }
 
@@ -2751,8 +2783,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             }
                         }}
                     />
-                    <button onClick={sendChatMessage} disabled={isUploadingFiles}>
-                        {isUploadingFiles ? '전송 중' : '전송'}
+                    <button onClick={sendChatMessage} disabled={isUploadingFiles || isStartingChat}>
+                        {isUploadingFiles || isStartingChat ? '전송 중' : '전송'}
                     </button>
                 </div>
             </div>

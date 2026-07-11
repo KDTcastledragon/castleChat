@@ -33,18 +33,21 @@ function AppShell() {
     const dispatch = useDispatch();
     const chatWindows = useSelector(state => state.chatWindows.windows);
     const canShowChatWindows = location.pathname === '/chatList';
+    const isPublicRoute = location.pathname === '/login' || location.pathname === '/join';
 
     // ======== WebSocket 연결 + 유저 목록 ======= ※ useEffect쓰는 이유? "컴포넌트가 화면에 등장했을 때" 웹소켓 연결하려고. 처음 렌더링될 때만 딱! 한! 번! 실행되어야한다.
     useEffect(() => {
         if (isCheckingLogin) return;
 
-        if (!me) {
+        if (!me && !isPublicRoute) {
             navigator('/login', { replace: true });
             return;
         }
 
+        if (!me) return;
+
         connectWs();
-    }, [me, isCheckingLogin, navigator]);
+    }, [me, isCheckingLogin, isPublicRoute, navigator]);
 
     useEffect(() => {
         return () => {
@@ -149,6 +152,7 @@ function AppShell() {
                     messageNotificationEnabled={win.messageNotificationEnabled}
                     roomNotice={win.roomNotice}
                     memberList={win.memberList}
+                    initialMessages={win.initialMessages}
 
                     x={win.x}
                     y={win.y}

@@ -11,7 +11,7 @@ export function useChatRoomActions() {
     const nav = useNavigate();
     const { data: me } = useMe();
 
-    function openRoom(roomInfo) {
+    function openRoom(roomInfo, initialMessages = []) {
         dispatch(openChatWindow({
             isDraft: false,
             roomId: roomInfo.roomId,
@@ -23,7 +23,8 @@ export function useChatRoomActions() {
             roomNotice: roomInfo.roomNotice,
             roomMemberCount: roomInfo.roomMemberCount,
             memberList: roomInfo.memberList,
-            lastReadMessageId: roomInfo.lastReadMessageId
+            lastReadMessageId: roomInfo.lastReadMessageId,
+            initialMessages
         }));
 
         nav('/chatList');
