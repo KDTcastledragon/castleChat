@@ -1,5 +1,6 @@
 package com.chat.chengine.mapper;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -51,6 +52,8 @@ public interface RoomMapper {
 	List<String> findNicknamesByPublicIds(@Param("publicIds") List<String> publicIds);
 
 	String findActiveRoomMemberRole(@Param("roomId") Long roomId, @Param("userId") Long userId);
+
+	int insertRoomFeedMessage(@Param("messageId") Long messageId, @Param("roomId") Long roomId, @Param("requesterUserId") Long requesterUserId, @Param("feedText") String feedText, @Param("feedAt") LocalDateTime feedAt);
 
 	int leftRoom(@Param("roomId") Long roomId, @Param("requesterUserId") Long requesterUserId);
 

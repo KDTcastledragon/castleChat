@@ -132,6 +132,16 @@
 - `npm.cmd run build`와 `git diff --check`는 성공했다.
 - Gradle과 project refresh는 실행하지 않았다.
 
+## 2026-07-11 Join Profile And Media Type Decisions
+
+- 이미지 미선택 가입은 파일 전송이 없으므로 JSON 요청을 사용하고 서버가 기본 프로필 경로를 저장한다.
+- 실제 이미지가 선택된 경우에만 multipart/form-data를 사용한다.
+- `/user/join`은 같은 URL에서 consumes 값으로 JSON과 multipart handler를 구분한다.
+- 회원가입 화면에는 파일 선택 버튼 하나만 두고 별도 기본 이미지 복귀 버튼은 제거한다.
+- 현재 8080 프로세스는 multipart 요청을 `RequestResponseBodyMethodProcessor`로 처리하려 해, source가 아니라 이전 `@RequestBody` controller가 실행 중임을 확인했다.
+- `npm.cmd run build`와 수정 파일 대상 `git diff --check`는 성공했다.
+- `plan.md` 원칙에 따라 Gradle 명령은 실행하지 않았다. Java 변경 반영에는 domain-service 컴파일과 재시작이 필요하다.
+
 ## 2026-07-11 Notice Width And First Message Decisions
 
 - 활성 공지 bar는 채팅창 좌우 8px만 남기고 가로 폭을 채운다. 접힘 상태에서도 같은 box와 오른쪽 toggle 좌표를 유지한다.
@@ -148,3 +158,58 @@
 - 첫 메시지는 Kafka DB insert 완료를 기다리지 않고 durable save가 끝난 START 응답으로 렌더된다.
 - `npm.cmd run build`와 `git diff --check`는 성공했다.
 - Gradle과 project refresh는 실행하지 않았다.
+
+## 2026-07-11 Compact Layout Decisions
+
+- 이번 작업은 기능 흐름, API, WebSocket, backend 구조를 변경하지 않고 CSS 레이아웃 수치만 조정한다.
+- 헤더 높이는 사용자 요청대로 100px에서 85px로 낮추고, 내부 프로필 이미지와 버튼도 같은 밀도에 맞춰 줄인다.
+- 친구 목록 화면은 3열 구조를 유지하되 패널과 내부 scroll 영역 높이만 낮춰 브라우저 세로 스크롤을 줄인다.
+- 채팅방 목록은 기존 폭의 약 60%인 434px로 줄이고 `margin-left`를 8px만 둬 왼쪽에 가깝게 붙인다.
+- 채팅창은 고정 폭을 유지하면서 메시지 영역과 입력 영역 높이를 줄이고 `max-height: calc(100vh - 24px)`로 viewport 침범을 제한한다.
+- 프로필 이미지 파일명이 임의 문자열처럼 보이는 이유는 저장 파일명이 충돌 방지를 위해 uuid/hash 기반으로 바뀌기 때문이다. 원본 파일명을 그대로 보여주려면 업로드 시 original file name을 별도 컬럼이나 response 필드로 보존해야 한다.
+
+## 2026-07-11 Compact Layout Result
+
+- `Header.css`, `Friends.css`, `ChatList.css`, `ChatBox.css`만 레이아웃 목적으로 수정했다.
+- `ChatList.css`의 `.chatListTitle`은 ChatBox title과 전역 클래스명이 겹치므로 `.ChatListContainer .chatListTitle`로 스코프를 좁혔다.
+- 작업기록은 `cdx0711.md`에 남겼다.
+- `npm.cmd run build`는 성공했으며 기존 ESLint warning만 남았다.
+- `git -c safe.directory=D:/castleDragonProjects/castleChat diff --check`는 성공했으며 CRLF 변환 warning만 출력됐다.
+
+## 2026-07-11 Discord Style UI Conversion Decisions (claude)
+
+디자인 리드 : 채팅 제품 UI의 "보존형 리디자인". 목적은 비전공 인사팀 첫인상 + 웹 관례 준수. 배경은 chatUI.md 참고.
+다이얼 : VARIANCE 3(정돈된 2패널) / MOTION 2(hover, active만) / DENSITY 6(목록은 밀도 있게).
+
+1. 레이아웃은 "새로 만들지 않고 도킹"으로 해결한다.
+   기존 ChatBox(플로팅 창)는 그대로 두고 isDocked prop 하나로 고정 좌표+드래그만 끈다. 도킹 시 .docked CSS 오버라이드로 메인 패널을 100% 채운다.
+   이유 : ChatBox 2318줄에 메시지/첨부/리액션/공지 전 기능이 들어있어 레이아웃 때문에 재작성하는 건 리스크만 크다.
+   부수 효과 : 팝아웃 재도입 시 isDocked=false로 그대로 복구된다.
+2. chatWindowsSlice는 "활성 방 1개" 정책으로 변경한다.
+   openChatWindow에서 push 대신 배열 교체. A 보다가 B를 열면 A의 ChatBox 언마운트(EXIT_ROOM 자동) 후 B 마운트(ENTER_ROOM).
+   기존 멀티창에서도 창 닫기가 같은 흐름이라 서버 프로토콜 변화 없음. x/y/zIndex 필드는 팝아웃 복구 대비 유지.
+3. 방 목록은 사이드바가 된다. "채팅" 버튼 제거, 행 전체 클릭 입장(디코/슬랙 관례). handleEnterRoom 로직 재사용. 활성 방 하이라이트는 chatWindows read-only 참조.
+4. 녹색 테마는 index.css 토큰 교체로 끝낸다. 전 컴포넌트가 var(--castle-*) 참조라 토큰만 바꾸면 전체 리테마.
+   teal(#0f766e) -> 저채도 emerald(#047857). nav는 순검정 대신 짙은 녹회색. danger 빨강 unread 뱃지는 의미색이라 유지.
+5. 반응형은 범위 제외. Header 자체가 1500px 고정이라 채팅 페이지만 반응형해도 의미 없음. Header 개편과 함께 별도 과제.
+6. ChatBox 내부 노란 하드코딩 색(#fee500, #fff8c7 등) 잔존. 이번엔 도킹 레이아웃 검증이 우선이라 후속으로 미룸(한 번에 다 바꾸면 회귀 추적 어려움).
+
+## 2026-07-12 Discord Chat UI Regression Fix Decisions
+
+- 이번 작업은 디스코드형 2패널 구조를 유지하면서 기존 채팅 기능의 회귀만 복구한다.
+- 메시지 추가와 리액션 변경을 구분한다. 새 메시지 또는 최초 입장 때만 최하단 이동을 허용하고, 기존 메시지 객체의 리액션 변경은 현재 scrollTop을 보존한다.
+- 답장 대상 이동은 messageId 기반 DOM 식별자로 처리하며, 대상이 현재 로드 범위에 없을 때는 잘못된 위치로 이동하지 않는다.
+- 상단 bar, 우클릭 메뉴, 공지, 방 메뉴는 viewport가 아니라 채팅방 root를 좌표 기준으로 삼는다.
+- unread와 feed 복원은 기존 WebSocket 및 HTTP 계약을 우선 재사용하고, 기능을 새로 추측해 만들지 않는다.
+- Gradle과 project refresh는 실행하지 않는다. 프론트 변경은 npm build로 검증한다.
+
+## 2026-07-12 Discord Chat UI Regression Fix Result
+
+- 입력 영역은 첨부 버튼 70px과 전송 버튼 86px을 고정하고 textarea가 남은 폭을 차지한다.
+- 상단 bar는 46px 고정이며 도킹 레이아웃의 메시지 증가에 의해 축소되지 않는다.
+- 자동 스크롤은 새 메시지와 최초 입장에만 반응하고, 리액션과 읽음 상태 변경은 현재 위치를 유지한다.
+- 답장 미리보기는 현재 로드된 원본 메시지로 이동하고 잠시 강조한다.
+- 이전 방 EXIT 누락과 route 이탈 viewing registry 잔류를 FE에서 명시적으로 정리했다.
+- room feed는 room action 트랜잭션에서 SYSTEM 메시지로 동기 저장한다. Kafka 비동기 메시지 경로는 변경하지 않았다.
+- 절대좌표 UI는 도킹 채팅방을 기준으로 복구했고, room menu는 목록 영역을 덮는 drawer로 배치했다.
+- 프론트 build, MyBatis XML 파싱, diff check는 성공했다. Gradle과 DB ALTER는 실행하지 않았다.

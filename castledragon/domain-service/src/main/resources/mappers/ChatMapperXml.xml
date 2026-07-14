@@ -12,8 +12,16 @@
 	            m.message_id,
 	            m.room_id,
 	            u.public_id AS sender_public_id,
-	            m.message_type,
-	            m.message_text,
+	            u.nickname AS sender_nickname,
+	            COALESCE(NULLIF(TRIM(u.profile_img), ''), '/images/mococo_question.png') AS sender_profile_img,
+	            CASE
+	                WHEN m.message_text LIKE '[ROOM_FEED]%' THEN 'SYSTEM'
+	                ELSE m.message_type
+	            END AS message_type,
+	            CASE
+	                WHEN m.message_text LIKE '[ROOM_FEED]%' THEN SUBSTRING(m.message_text, CHAR_LENGTH('[ROOM_FEED]') + 1)
+	                ELSE m.message_text
+	            END AS message_text,
 	            m.reply_to_message_id,
 	            m.message_status,
 	            m.created_at,

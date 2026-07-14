@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.chat.chengine.mapper.ChatMapper;
 import com.chat.chengine.mapper.RoomMapper;
+import com.chat.chengine.support.ChatMessageIdGenerator;
 import com.chat.chengine.usecase.RoomCommandUseCase;
 import com.chat.contract.room.command.ApplyRoomNoticeCommand;
 import com.chat.contract.room.command.BanMemberCommand;
@@ -56,6 +57,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 	private final RoomMapper roomMapper;
 	private final ChatMapper chatMapper;
 	private final RoomMemberCache roomMemberCache;
+	private final ChatMessageIdGenerator chatMessageIdGenerator;
 
 	private void syncActiveRoomMemberCache(Long roomId) {
 		List<Long> activeMemberIds = chatMapper.findAllActiveMemberIdsInRoom(roomId);
@@ -409,11 +411,13 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("방 나가기 실패");
 		}
 
-		syncActiveRoomMemberCache(cmd.getRoomId());
-
-		return createRoomFeed(cmd.getRoomId(), "LEFT", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getRequesterPublicId()), List
+		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), "LEFT", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getRequesterPublicId()), List
 				.of(requesterNickname), requesterNickname
 				+ "님이 방을 나갔습니다.");
+
+		syncActiveRoomMemberCache(cmd.getRoomId());
+
+		return roomFeed;
 	}
 
 	@Override
@@ -433,12 +437,14 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("초대 처리 실패");
 		}
 
-		syncActiveRoomMemberCache(cmd.getRoomId());
-
 		List<String> targetNicknames = roomMapper.findNicknamesByPublicIds(cmd.getInviteTargetMemberPublicIds());
 
-		return createRoomFeed(cmd.getRoomId(), "INVITE", cmd.getRequesterPublicId(), requesterNickname, cmd
+		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), "INVITE", cmd.getRequesterPublicId(), requesterNickname, cmd
 				.getInviteTargetMemberPublicIds(), targetNicknames, requesterNickname + "님이 " + String.join(", ", targetNicknames) + "님을 초대했습니다.");
+
+		syncActiveRoomMemberCache(cmd.getRoomId());
+
+		return roomFeed;
 	}
 
 	@Override
@@ -459,10 +465,12 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("강퇴 실패");
 		}
 
+		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), "KICK", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getKickTargetPublicId()), List
+				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 강퇴했습니다.");
+
 		syncActiveRoomMemberCache(cmd.getRoomId());
 
-		return createRoomFeed(cmd.getRoomId(), "KICK", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getKickTargetPublicId()), List
-				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 강퇴했습니다.");
+		return roomFeed;
 	}
 
 	@Override
@@ -483,10 +491,12 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("영구강퇴 실패");
 		}
 
+		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), "BAN", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getBanTargetPublicId()), List
+				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 영구강퇴했습니다.");
+
 		syncActiveRoomMemberCache(cmd.getRoomId());
 
-		return createRoomFeed(cmd.getRoomId(), "BAN", cmd.getRequesterPublicId(), requesterNickname, List.of(cmd.getBanTargetPublicId()), List
-				.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님을 영구강퇴했습니다.");
+		return roomFeed;
 	}
 
 	@Override
@@ -521,7 +531,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("권한 변경 실패");
 		}
 
-		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), "ROLE_CHANGED", cmd.getRequesterPublicId(), requesterNickname, List
+		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), "ROLE_CHANGED", cmd.getRequesterPublicId(), requesterNickname, List
 				.of(cmd.getTargetPublicId()), List
 						.of(targetNickname), requesterNickname + "님이 " + targetNickname + "님의 권한을 " + cmd.getTargetRole() + "로 변경했습니다.");
 		roomFeed.setTargetRole(cmd.getTargetRole());
@@ -548,7 +558,7 @@ public class RoomCommandService implements RoomCommandUseCase {
 	private RoomFeedResponseDTO createNoticeRoomFeed(ApplyRoomNoticeCommand cmd) {
 		String requesterNickname = roomMapper.findNicknameByUserId(cmd.getRequesterUserId());
 
-		return createRoomFeed(cmd.getRoomId(), toNoticeFeedType(cmd.getRoomNoticeAction()), cmd.getRequesterPublicId(), requesterNickname, List
+		return createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), toNoticeFeedType(cmd.getRoomNoticeAction()), cmd.getRequesterPublicId(), requesterNickname, List
 				.of(), List.of(), createNoticeFeedText(requesterNickname, cmd.getRoomNoticeAction()));
 	}
 
@@ -574,8 +584,16 @@ public class RoomCommandService implements RoomCommandUseCase {
 		};
 	}
 
-	private RoomFeedResponseDTO createRoomFeed(Long roomId, String feedType, String requesterPublicId, String requesterNickname, List<String> targetPublicIds, List<String> targetNicknames, String feedText) {
-		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, null, feedText, LocalDateTime
-				.now());
+	private RoomFeedResponseDTO createRoomFeed(Long roomId, Long requesterUserId, String feedType, String requesterPublicId, String requesterNickname, List<String> targetPublicIds, List<String> targetNicknames, String feedText) {
+		Long feedMessageId = chatMessageIdGenerator.nextMessageId();
+		LocalDateTime feedAt = LocalDateTime.now();
+
+		int inserted = roomMapper.insertRoomFeedMessage(feedMessageId, roomId, requesterUserId, feedText, feedAt);
+
+		if (inserted != 1) {
+			throw new IllegalStateException("채팅방 feed 저장 실패");
+		}
+
+		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, null, feedText, feedAt);
 	}
 }

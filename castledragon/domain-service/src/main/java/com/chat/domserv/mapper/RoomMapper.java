@@ -45,6 +45,8 @@ public interface RoomMapper {
 	int countActiveRoomMember(@Param("roomId") Long roomId, @Param("userId") Long userId);
 
 	List<RoomNoticeViewDTO> findRoomNotices(@Param("roomId") Long roomId, @Param("beforeRoomNoticeId") Long beforeRoomNoticeId, @Param("limit") int limit);
+
+	Long countUnreadMessages(@Param("roomId") Long roomId, @Param("userId") Long userId, @Param("lastReadMessageId") Long lastReadMessageId);
 }
 
 // Mapper는 SQL 소유권 기준으로 RoomMapper, MessageMapper, UserMapper처럼 도메인별로 유지했다.

@@ -66,6 +66,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const [settingRoomThumbnailFileName, setSettingRoomThumbnailFileName] = useState('');
     const [settingRoomBackgroundFileName, setSettingRoomBackgroundFileName] = useState('');
     const [isRoomNameEditing, setIsRoomNameEditing] = useState(false);
+    const [roomSettingsToast, setRoomSettingsToast] = useState('');
     const [isMessageNotificationEnabled, setIsMessageNotificationEnabled] = useState(messageNotificationEnabled ?? true);
     const [currentRoomNotice, setCurrentRoomNotice] = useState(roomNotice ?? null);
     const [isRoomNoticeVisible, setIsRoomNoticeVisible] = useState(true);
@@ -122,6 +123,20 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
         return map;
     }, [visibleRoomMembers]);
+
+    const messageSenderMap = useMemo(() => {
+        const map = {};
+
+        (memberList ?? []).forEach(member => {
+            map[member.publicId] = member;
+        });
+
+        locallyAddedRoomMembers.forEach(member => {
+            map[member.publicId] = member;
+        });
+
+        return map;
+    }, [memberList, locallyAddedRoomMembers]);
 
     const myRoomMemberInfo = useMemo(() => {
         return visibleRoomMembers.find(member => member.publicId === myPublicId);
@@ -219,6 +234,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const shouldStickToBottomRef = useRef(true);
     const isInitialRoomScrollPendingRef = useRef(true);
     const messageHighlightTimerRef = useRef(null);
+    const roomSettingsToastTimerRef = useRef(null);
 
     const dragRef = useRef({
         isDragging: false,
@@ -434,6 +450,16 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 setIsRoomNameEditing(false);
             }
 
+            if (roomSettingsToastTimerRef.current) {
+                clearTimeout(roomSettingsToastTimerRef.current);
+            }
+
+            setRoomSettingsToast('적용되었습니다.');
+            roomSettingsToastTimerRef.current = setTimeout(() => {
+                setRoomSettingsToast('');
+                roomSettingsToastTimerRef.current = null;
+            }, 1800);
+
             queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
         } catch (err) {
             console.error('방 설정 저장 실패', err);
@@ -525,16 +551,9 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         isPrependingPrevRef.current = true;
 
         try {
-            const res = await axios.get(`/room/loadMessagesInRoom/${roomId}`, {
-                params: {
-                    beforeMessageId,
-                    limit: MESSAGE_PAGE_SIZE
-                }
-            });
+            const olderMessages = await loadMessagesInRoomApi(roomId, MESSAGE_PAGE_SIZE, beforeMessageId);
 
-            const olderMessages = res.data ?? [];
-
-			mergeMyReactionState(olderMessages);
+            mergeMyReactionState(olderMessages);
 
             if (olderMessages.length === 0) {
                 hasMorePrevRef.current = false;
@@ -728,23 +747,23 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
                 const messages = await loadMessagesInRoomApi(roomId, MESSAGE_PAGE_SIZE);
 
-				setPrevChattings(currentMessages => {
-					const mergedMessageMap = new Map();
+                setPrevChattings(currentMessages => {
+                    const mergedMessageMap = new Map();
 
-					(messages ?? []).forEach(message => {
-						mergedMessageMap.set(String(message.messageId), message);
-					});
+                    (messages ?? []).forEach(message => {
+                        mergedMessageMap.set(String(message.messageId), message);
+                    });
 
-					currentMessages.forEach(message => {
-						mergedMessageMap.set(String(message.messageId), message);
-					});
+                    currentMessages.forEach(message => {
+                        mergedMessageMap.set(String(message.messageId), message);
+                    });
 
-					const mergedMessages = Array.from(mergedMessageMap.values());
-					oldestMessageIdRef.current = mergedMessages[0]?.messageId ?? null;
+                    const mergedMessages = Array.from(mergedMessageMap.values());
+                    oldestMessageIdRef.current = mergedMessages[0]?.messageId ?? null;
 
-					return mergedMessages;
-				});
-				mergeMyReactionState(messages);
+                    return mergedMessages;
+                });
+                mergeMyReactionState(messages);
 
                 hasMorePrevRef.current = messages.length === MESSAGE_PAGE_SIZE;
 
@@ -992,30 +1011,30 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 const feed = notice.roomFeedResponse ?? notice.roomFeed ?? notice;
 
                 if (noticeView) {
-					if (noticeView.roomNoticeStatus === 'ACTIVE') {
-						setIsRoomNoticeVisible(true);
-					}
+                    if (noticeView.roomNoticeStatus === 'ACTIVE') {
+                        setIsRoomNoticeVisible(true);
+                    }
 
-					setCurrentRoomNotice(prev => {
-						if (noticeView.roomNoticeStatus === 'ACTIVE') {
-							return noticeView;
-						}
+                    setCurrentRoomNotice(prev => {
+                        if (noticeView.roomNoticeStatus === 'ACTIVE') {
+                            return noticeView;
+                        }
 
-						if (Number(prev?.roomNoticeId) === Number(noticeView.roomNoticeId)) {
-							return null;
-						}
+                        if (Number(prev?.roomNoticeId) === Number(noticeView.roomNoticeId)) {
+                            return null;
+                        }
 
-						return prev;
-					});
-					setRoomNoticeList(prev => {
-						const exists = prev.some(item => Number(item.roomNoticeId) === Number(noticeView.roomNoticeId));
+                        return prev;
+                    });
+                    setRoomNoticeList(prev => {
+                        const exists = prev.some(item => Number(item.roomNoticeId) === Number(noticeView.roomNoticeId));
 
-						if (!exists) {
-							return [noticeView, ...prev];
-						}
+                        if (!exists) {
+                            return [noticeView, ...prev];
+                        }
 
-						return prev.map(item => Number(item.roomNoticeId) === Number(noticeView.roomNoticeId) ? noticeView : item);
-					});
+                        return prev.map(item => Number(item.roomNoticeId) === Number(noticeView.roomNoticeId) ? noticeView : item);
+                    });
                 }
 
                 setPrevChattings(prev => [
@@ -1041,6 +1060,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         return () => {
             if (messageHighlightTimerRef.current) {
                 clearTimeout(messageHighlightTimerRef.current);
+            }
+
+            if (roomSettingsToastTimerRef.current) {
+                clearTimeout(roomSettingsToastTimerRef.current);
             }
         };
     }, []);
@@ -1362,10 +1385,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 return;
             }
 
-			if (isRoomNoticePanelOpen) {
-				closeRoomNoticePanel();
-				return;
-			}
+            if (isRoomNoticePanelOpen) {
+                closeRoomNoticePanel();
+                return;
+            }
 
             if (isRoomMenuOpen) {
                 setIsRoomMenuOpen(false);
@@ -1468,11 +1491,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
         if (!confirmed) return;
 
-		const roleChangeDetails = e.currentTarget.closest('details');
+        const roleChangeDetails = e.currentTarget.closest('details');
 
-		if (roleChangeDetails) {
-			roleChangeDetails.open = false;
-		}
+        if (roleChangeDetails) {
+            roleChangeDetails.open = false;
+        }
 
         try {
             const emitted = emitWsChangeMemberRole(roomId, member.publicId, targetRole);
@@ -1523,12 +1546,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
             const inviteTargetMemberPublicIds = selectedInviteFriends.map(friend => friend.publicId);
 
-            const emitted = emitWsInviteMember(roomId, inviteTargetMemberPublicIds);
-
-            if (!emitted) {
-                alert('WebSocket 연결 안 됨');
-                return;
-            }
+            await emitWsInviteMember(roomId, inviteTargetMemberPublicIds);
 
             setLocallyAddedRoomMembers(prev => {
                 const map = new Map();
@@ -1772,7 +1790,26 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
 
         if (action === 'SHARE') {
-            alert(`공유하기: ${targetMessage.messageId}`);
+            const targetRoomId = window.prompt('공유할 채팅방 roomId를 입력해주세요.');
+
+            if (!targetRoomId) {
+                return;
+            }
+
+            const sharedText = targetMessage.messageText
+                ? `[공유] ${targetMessage.messageText}`
+                : '[공유] 첨부 메시지';
+
+            const emitted = emitWsSendMessage(Number(targetRoomId), sharedText, {
+                messageType: 'TEXT',
+                replyToMessageId: null,
+                attachmentIds: []
+            });
+
+            if (!emitted) {
+                alert('WebSocket 연결 안 됨');
+            }
+
             return;
         }
 
@@ -1879,10 +1916,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             return;
         }
 
-		if (roomNoticeAction === 'DELETE' && !window.confirm('이 공지를 삭제하시겠습니까?')) return;
-		if (roomNoticeAction === 'INACTIVATE' && !window.confirm('이 공지를 내리시겠습니까?')) return;
+        if (roomNoticeAction === 'DELETE' && !window.confirm('이 공지를 삭제하시겠습니까?')) return;
+        if (roomNoticeAction === 'INACTIVATE' && !window.confirm('이 공지를 내리시겠습니까?')) return;
 
-		const roomNoticeContents = nextContents ?? targetNotice.roomNoticeContents;
+        const roomNoticeContents = nextContents ?? targetNotice.roomNoticeContents;
 
         try {
             await emitWsApplyRoomNotice({
@@ -1893,24 +1930,24 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 roomNoticeContents
             });
 
-			setEditingRoomNoticeId(null);
-			setEditingRoomNoticeContents('');
+            setEditingRoomNoticeId(null);
+            setEditingRoomNoticeContents('');
         } catch (e) {
             console.error('공지 처리 실패', e);
             alert(e.message || '공지 처리 실패');
         }
     }
 
-	async function saveEditedRoomNotice(notice) {
-		const nextContents = editingRoomNoticeContents.trim();
+    async function saveEditedRoomNotice(notice) {
+        const nextContents = editingRoomNoticeContents.trim();
 
-		if (!nextContents) {
-			alert('공지 내용을 입력해주세요.');
-			return;
-		}
+        if (!nextContents) {
+            alert('공지 내용을 입력해주세요.');
+            return;
+        }
 
-		await applyRoomNoticeAction('UPDATE', notice, nextContents);
-	}
+        await applyRoomNoticeAction('UPDATE', notice, nextContents);
+    }
 
     function applyReaction(reactionCode) {
         if (!reactionTargetMessage) return;
@@ -1985,28 +2022,28 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     </div>
                 </div>
 
-				{currentRoomNotice && (
-					<div className={`activeRoomNoticeBar ${isRoomNoticeVisible ? '' : 'collapsed'}`}>
-						{isRoomNoticeVisible && (
-							<button className="activeRoomNoticeContents" onClick={openRoomNoticePanel}>
-								<span className="activeRoomNoticeNickname">
-									{getRoomNoticeRequesterNickname(currentRoomNotice)}
-								</span>
-								<span className="activeRoomNoticeDivider">:</span>
-								<span className="activeRoomNoticeText">
-									{currentRoomNotice.roomNoticeContents}
-								</span>
-							</button>
-						)}
+                {currentRoomNotice && (
+                    <div className={`activeRoomNoticeBar ${isRoomNoticeVisible ? '' : 'collapsed'}`}>
+                        {isRoomNoticeVisible && (
+                            <button className="activeRoomNoticeContents" onClick={openRoomNoticePanel}>
+                                <span className="activeRoomNoticeNickname">
+                                    {getRoomNoticeRequesterNickname(currentRoomNotice)}
+                                </span>
+                                <span className="activeRoomNoticeDivider">:</span>
+                                <span className="activeRoomNoticeText">
+                                    {currentRoomNotice.roomNoticeContents}
+                                </span>
+                            </button>
+                        )}
 
-						<button
-							className="activeRoomNoticeToggleButton"
-							onClick={() => setIsRoomNoticeVisible(prev => !prev)}
-						>
-							{isRoomNoticeVisible ? '숨기기' : '표시하기'}
-						</button>
-					</div>
-				)}
+                        <button
+                            className="activeRoomNoticeToggleButton"
+                            onClick={() => setIsRoomNoticeVisible(prev => !prev)}
+                        >
+                            {isRoomNoticeVisible ? '숨기기' : '표시하기'}
+                        </button>
+                    </div>
+                )}
 
                 <div
                     className={`roomSidePanel ${isRoomMenuOpen ? 'open' : ''}`}
@@ -2016,6 +2053,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                         <span>채팅방 메뉴</span>
                         <button onClick={() => setIsRoomMenuOpen(false)}>닫기</button>
                     </div>
+
+                    {roomSettingsToast && (
+                        <div className="roomSettingsToast">
+                            {roomSettingsToast}
+                        </div>
+                    )}
 
                     <div className="roomSidePanelDangerZone">
                         <button
@@ -2087,11 +2130,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                         <div className="roomNoticeSettingHeader">공지사항</div>
 
                         {currentRoomNotice ? (
-							<button className="roomNoticeContents" onClick={openRoomNoticePanel}>
-                                    {currentRoomNotice.roomNoticeContents}
-							</button>
+                            <button className="roomNoticeContents" onClick={openRoomNoticePanel}>
+                                {currentRoomNotice.roomNoticeContents}
+                            </button>
                         ) : (
-							<button className="roomNoticeEmpty" onClick={openRoomNoticePanel}>등록된 공지 없음</button>
+                            <button className="roomNoticeEmpty" onClick={openRoomNoticePanel}>등록된 공지 없음</button>
                         )}
                     </div>
 
@@ -2132,14 +2175,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                             <div className="memberRoleChangeMenu">
                                                 <button
                                                     className={member.role === 'MEMBER' ? 'active' : ''}
-											onClick={(e) => changeMemberRole(e, member, 'MEMBER')}
+                                                    onClick={(e) => changeMemberRole(e, member, 'MEMBER')}
                                                 >
                                                     MEMBER
                                                 </button>
 
                                                 <button
                                                     className={member.role === 'MANAGER' ? 'active' : ''}
-											onClick={(e) => changeMemberRole(e, member, 'MANAGER')}
+                                                    onClick={(e) => changeMemberRole(e, member, 'MANAGER')}
                                                 >
                                                     MANAGER
                                                 </button>
@@ -2188,66 +2231,66 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     )}
                 </div>
 
-				{isRoomNoticePanelOpen && (
-					<div className="roomNoticePanel" onMouseDown={(e) => e.stopPropagation()}>
-						<div className="roomNoticePanelHeader">
-							<span>공지사항</span>
-							<button onClick={closeRoomNoticePanel}>×</button>
-						</div>
+                {isRoomNoticePanelOpen && (
+                    <div className="roomNoticePanel" onMouseDown={(e) => e.stopPropagation()}>
+                        <div className="roomNoticePanelHeader">
+                            <span>공지사항</span>
+                            <button onClick={closeRoomNoticePanel}>×</button>
+                        </div>
 
-						<div className="roomNoticePanelList" onScroll={handleRoomNoticeScroll}>
-							{roomNoticeList.map(notice => {
-								const isOwner = notice.requesterPublicId === myPublicId;
-								const isEditing = Number(editingRoomNoticeId) === Number(notice.roomNoticeId);
+                        <div className="roomNoticePanelList" onScroll={handleRoomNoticeScroll}>
+                            {roomNoticeList.map(notice => {
+                                const isOwner = notice.requesterPublicId === myPublicId;
+                                const isEditing = Number(editingRoomNoticeId) === Number(notice.roomNoticeId);
 
-								return (
-									<div className={`roomNoticeHistoryItem status-${notice.roomNoticeStatus}`} key={notice.roomNoticeId}>
-										<div className="roomNoticeHistoryMeta">
-											<span className="roomNoticeHistoryNickname">{getRoomNoticeRequesterNickname(notice)}</span>
-											<span>{notice.lastAppliedAt ? formatNoticeDateTime(notice.lastAppliedAt) : ''}</span>
-										</div>
+                                return (
+                                    <div className={`roomNoticeHistoryItem status-${notice.roomNoticeStatus}`} key={notice.roomNoticeId}>
+                                        <div className="roomNoticeHistoryMeta">
+                                            <span className="roomNoticeHistoryNickname">{getRoomNoticeRequesterNickname(notice)}</span>
+                                            <span>{notice.lastAppliedAt ? formatNoticeDateTime(notice.lastAppliedAt) : ''}</span>
+                                        </div>
 
-										{isEditing ? (
-											<textarea
-												className="roomNoticeEditTextarea"
-												value={editingRoomNoticeContents}
-												onChange={(e) => setEditingRoomNoticeContents(e.target.value)}
-												maxLength={1500}
-											/>
-										) : (
-											<div className="roomNoticeHistoryContents">{getRoomNoticeDisplayContents(notice)}</div>
-										)}
+                                        {isEditing ? (
+                                            <textarea
+                                                className="roomNoticeEditTextarea"
+                                                value={editingRoomNoticeContents}
+                                                onChange={(e) => setEditingRoomNoticeContents(e.target.value)}
+                                                maxLength={1500}
+                                            />
+                                        ) : (
+                                            <div className="roomNoticeHistoryContents">{getRoomNoticeDisplayContents(notice)}</div>
+                                        )}
 
-										{isOwner && notice.roomNoticeStatus !== 'DELETED' && (
-											<div className="roomNoticeHistoryActions">
-												{isEditing ? (
-													<>
-														<button onClick={() => saveEditedRoomNotice(notice)}>저장</button>
-														<button onClick={() => setEditingRoomNoticeId(null)}>취소</button>
-													</>
-												) : (
-													<>
-														<button onClick={() => startEditingRoomNotice(notice)}>수정</button>
-														{notice.roomNoticeStatus === 'ACTIVE' ? (
-															<button onClick={() => applyRoomNoticeAction('INACTIVATE', notice)}>내리기</button>
-														) : (
-															<button onClick={() => applyRoomNoticeAction('REACTIVATE', notice)}>재공지</button>
-														)}
-														<button className="delete" onClick={() => applyRoomNoticeAction('DELETE', notice)}>삭제</button>
-													</>
-												)}
-											</div>
-										)}
-									</div>
-								);
-							})}
+                                        {isOwner && notice.roomNoticeStatus !== 'DELETED' && (
+                                            <div className="roomNoticeHistoryActions">
+                                                {isEditing ? (
+                                                    <>
+                                                        <button onClick={() => saveEditedRoomNotice(notice)}>저장</button>
+                                                        <button onClick={() => setEditingRoomNoticeId(null)}>취소</button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <button onClick={() => startEditingRoomNotice(notice)}>수정</button>
+                                                        {notice.roomNoticeStatus === 'ACTIVE' ? (
+                                                            <button onClick={() => applyRoomNoticeAction('INACTIVATE', notice)}>내리기</button>
+                                                        ) : (
+                                                            <button onClick={() => applyRoomNoticeAction('REACTIVATE', notice)}>재공지</button>
+                                                        )}
+                                                        <button className="delete" onClick={() => applyRoomNoticeAction('DELETE', notice)}>삭제</button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
 
-							{isLoadingRoomNotices && <div className="roomNoticePanelState">불러오는 중...</div>}
-							{!isLoadingRoomNotices && roomNoticeList.length === 0 && <div className="roomNoticePanelState">공지사항이 없습니다.</div>}
-							{!isLoadingRoomNotices && roomNoticeList.length > 0 && !hasMoreRoomNotices && <div className="roomNoticePanelState">마지막 공지입니다.</div>}
-						</div>
-					</div>
-				)}
+                            {isLoadingRoomNotices && <div className="roomNoticePanelState">불러오는 중...</div>}
+                            {!isLoadingRoomNotices && roomNoticeList.length === 0 && <div className="roomNoticePanelState">공지사항이 없습니다.</div>}
+                            {!isLoadingRoomNotices && roomNoticeList.length > 0 && !hasMoreRoomNotices && <div className="roomNoticePanelState">마지막 공지입니다.</div>}
+                        </div>
+                    </div>
+                )}
 
                 {isInviteFriendPanelOpen && roomType === 'GROUP' && (
                     <div
@@ -2376,7 +2419,9 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                         <button onClick={() => handleMessageMenuAction('DELETE')}>삭제하기</button>
                         <button onClick={() => handleMessageMenuAction('READERS')}>이 메시지 읽은 사람</button>
                         <button onClick={() => handleMessageMenuAction('SHARE')}>공유하기</button>
-                        <button onClick={() => handleMessageMenuAction('NOTICE')}>공지</button>
+                        {messageContextMenu.message?.messageType === 'TEXT'
+                            && !(messageContextMenu.message?.attachments?.length > 0)
+                            && <button onClick={() => handleMessageMenuAction('NOTICE')}>공지</button>}
                     </div>
                 )}
 
@@ -2395,9 +2440,9 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             {REACTION_OPTIONS.map(reaction => (
                                 <button
                                     key={reaction.code}
-									className={myReactionMap[`${reactionTargetMessage.messageId}:${reaction.code}`] ? 'selected' : ''}
+                                    className={myReactionMap[`${reactionTargetMessage.messageId}:${reaction.code}`] ? 'selected' : ''}
                                     title={reaction.title}
-									aria-pressed={Boolean(myReactionMap[`${reactionTargetMessage.messageId}:${reaction.code}`])}
+                                    aria-pressed={Boolean(myReactionMap[`${reactionTargetMessage.messageId}:${reaction.code}`])}
                                     onClick={() => applyReaction(reaction.code)}
                                 >
                                     {reaction.label}
@@ -2572,7 +2617,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     ref={chatListRef}
                     onScroll={handleChatScroll}
                     style={roomBackgroundUrl ? {
-						backgroundImage: `url(${roomBackgroundUrl})`,
+                        backgroundImage: `url(${roomBackgroundUrl})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center'
                     } : undefined}
@@ -2587,9 +2632,9 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                 );
                             }
 
-                            const sender = memberMap[d.senderPublicId];
-                            const senderNickname = sender?.nickname ?? '알 수 없음';
-                            const senderProfileImg = sender?.profileImg || '/images/mococo_question.png';
+                            const sender = messageSenderMap[d.senderPublicId] ?? memberMap[d.senderPublicId];
+                            const senderNickname = sender?.nickname ?? d.senderNickname ?? '알 수 없음';
+                            const senderProfileImg = sender?.profileImg ?? d.senderProfileImg ?? '/images/mococo_question.png';
 
                             const isMine = d.senderPublicId === myPublicId;
                             const isDeletedMessage = d.messageStatus === 'DELETED';
@@ -2598,6 +2643,19 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                 : null;
                             const attachments = Array.isArray(d.attachments) ? d.attachments : [];
                             const reactions = Array.isArray(d.reactions) ? d.reactions : [];
+                            const hasImageOnlyAttachment = attachments.length > 0
+                                && attachments.every(attachment => attachment.attachmentKind === 'IMAGE')
+                                && !d.messageText
+                                && !replyMessage;
+                            const replyPreviewMessage = replyMessage ?? (
+                                d.replyToMessageId
+                                    ? {
+                                        messageId: d.replyToMessageId,
+                                        senderPublicId: null,
+                                        messageText: '이전 답장 메시지'
+                                    }
+                                    : null
+                            );
 
                             return (
                                 <div
@@ -2637,25 +2695,27 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                             <div className="senderNickname">{senderNickname}</div>
                                         )}
 
-                                        <div className={`messageWrap ${isDeletedMessage ? 'deleted' : ''}`}>
-                                            {replyMessage && !isDeletedMessage && (
+                                        <div className={`messageWrap ${isDeletedMessage ? 'deleted' : ''} ${hasImageOnlyAttachment ? 'imageOnlyMessage' : ''}`}>
+                                            {replyPreviewMessage && !isDeletedMessage && (
                                                 <div
                                                     className="replyPreviewInMessage"
                                                     role="button"
                                                     tabIndex={0}
-                                                    onClick={() => scrollToMessage(replyMessage.messageId)}
+                                                    onClick={() => scrollToMessage(replyPreviewMessage.messageId)}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter' || e.key === ' ') {
                                                             e.preventDefault();
-                                                            scrollToMessage(replyMessage.messageId);
+                                                            scrollToMessage(replyPreviewMessage.messageId);
                                                         }
                                                     }}
                                                 >
                                                     <div className="replyPreviewSender">
-                                                        {memberMap[replyMessage.senderPublicId]?.nickname ?? '답장'}
+                                                        {messageSenderMap[replyPreviewMessage.senderPublicId]?.nickname
+                                                            ?? memberMap[replyPreviewMessage.senderPublicId]?.nickname
+                                                            ?? '답장'}
                                                     </div>
                                                     <div className="replyPreviewText">
-                                                        {replyMessage.messageText || '첨부 메시지'}
+                                                        {replyPreviewMessage.messageText || '첨부 메시지'}
                                                     </div>
                                                 </div>
                                             )}
@@ -2694,21 +2754,23 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                                 </div>
                                             )}
 
-                                            <div className="messageText">
-                                                {isDeletedMessage ? '삭제된 메시지입니다.' : d.messageText}
-                                            </div>
+                                            {(isDeletedMessage || d.messageText) && (
+                                                <div className="messageText">
+                                                    {isDeletedMessage ? '삭제된 메시지입니다.' : d.messageText}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {reactions.length > 0 && (
                                             <div className="messageReactionBar">
-										<div className="messageReactionSummaryList">
-											{reactions.map(reaction => (
-												<span className="messageReactionBadge" key={reaction.reactionCode}>
-													{getReactionLabel(reaction.reactionCode)}
-													{` ${Number(reaction.count ?? 0)}`}
-												</span>
-											))}
-										</div>
+                                                <div className="messageReactionSummaryList">
+                                                    {reactions.map(reaction => (
+                                                        <span className="messageReactionBadge" key={reaction.reactionCode}>
+                                                            {getReactionLabel(reaction.reactionCode)}
+                                                            {` ${Number(reaction.count ?? 0)}`}
+                                                        </span>
+                                                    ))}
+                                                </div>
 
                                                 <button
                                                     className="messageReactionAddButton"
@@ -2719,11 +2781,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                                 </button>
 
                                                 <button
-											className="messageReactionMembersButton"
+                                                    className="messageReactionMembersButton"
                                                     title="리액션 한 사람"
                                                     onClick={() => openReactionMemberViewer(d)}
                                                 >
-											<span aria-hidden="true">👤</span>
+                                                    <span aria-hidden="true">👤</span>
                                                 </button>
                                             </div>
                                         )}

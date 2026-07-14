@@ -42,36 +42,35 @@ public class UserController {
 	UserMapper userMapper;
 
 	// ======[ 회원가입 ]===================================================================================================
+	@PostMapping(value = "/join", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> joinDefaultProfile(@RequestBody UserDTO joinData) {
+		return joinMember(joinData.getLoginId(), joinData.getPassword(), joinData.getNickname(), DEFAULT_PROFILE_IMAGE);
+	}
+
 	@PostMapping(value = "/join", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	//	너는 Controller 메소드를 직접 호출하지 않잖아.
-	//	HTTP request가 오면 Spring이 호출함. --> 먼소리고???????? 자세히 공부 ㄱ.
-	public ResponseEntity<?> join(@RequestParam("loginId") String loginId, @RequestParam("password") String password, @RequestParam("nickname") String nickname, @RequestParam(value = "profileImgFile", required = false) MultipartFile profileImgFile) {
-		try {
-			if (loginId == null || loginId.isBlank() || password == null || password.isBlank() || nickname == null || nickname.isBlank()) {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("필수값 누락");
-			}
-
-			String profileImg = DEFAULT_PROFILE_IMAGE;
-
-			if (profileImgFile != null && !profileImgFile.isEmpty()) {
-				profileImg = chatCommandUseCase.uploadJoinProfileImage(profileImgFile);
-			}
-
-			boolean isJoined = usrCmdUseCase.join(loginId.trim(), password, nickname.trim(), profileImg);
-
-			log.info("회원가입 결과. loginId={}, nickname={}, joined={}", loginId, nickname, isJoined);
-
-			if (isJoined == true) {
-				return ResponseEntity.ok().build();
-
-			} else {
-				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("service 오류");
-			}
-
-		} catch (Exception e) {
-			throw e;
+	public ResponseEntity<?> joinWithProfile(@RequestParam("loginId") String loginId, @RequestParam("password") String password, @RequestParam("nickname") String nickname, @RequestParam("profileImgFile") MultipartFile profileImgFile) {
+		if (profileImgFile == null || profileImgFile.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("프로필 이미지 파일 누락");
 		}
-	}// join
+
+		String profileImg = chatCommandUseCase.uploadJoinProfileImage(profileImgFile);
+
+		return joinMember(loginId, password, nickname, profileImg);
+	}
+
+	private ResponseEntity<?> joinMember(String loginId, String password, String nickname, String profileImg) {
+		if (loginId == null || loginId.isBlank() || password == null || password.isBlank() || nickname == null || nickname.isBlank()) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("필수값 누락");
+		}
+
+		boolean isJoined = usrCmdUseCase.join(loginId.trim(), password, nickname.trim(), profileImg);
+
+		log.info("회원가입 결과. loginId={}, nickname={}, joined={}", loginId, nickname, isJoined);
+
+		return isJoined
+				? ResponseEntity.ok().build()
+				: ResponseEntity.status(HttpStatus.BAD_REQUEST).body("service 오류");
+	}
 
 	// ======[ 회원가입시, ID 중복체크 ]===================================================================================================
 	@PostMapping("/loginIdDuplicateCheck")

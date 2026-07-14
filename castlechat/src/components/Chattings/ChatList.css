@@ -47,11 +47,12 @@
 }
 
 .ChatListContainer .chatListTitle {
-    justify-content: center;
+    justify-content: flex-start;
     background-color: var(--castle-nav);
     color: white;
     font-size: 24px;
     height: 44px;
+    padding: 0 16px;
     margin-bottom: 8px;
 }
 

@@ -79,6 +79,11 @@ public class ChatQueryService implements ChatQueryUseCase {
 				continue;
 			}
 
+			if ("SYSTEM".equals(message.getMessageType())) {
+				message.setUnreadCount(0L);
+				continue;
+			}
+
 			long unreadCount = members.stream()
 					.filter(member -> !Objects.equals(member.getPublicId(), message.getSenderPublicId()))
 					.filter(member -> getEffectiveLastReadMessageId(roomId, member) < messageId)

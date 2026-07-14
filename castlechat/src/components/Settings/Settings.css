@@ -1,7 +1,9 @@
 .SettingsContainer {
     width: 1100px;
-    min-height: 520px;
-    margin: 18px auto;
+    max-width: 100%;
+    height: calc(100% - 16px);
+    min-height: 0;
+    margin: 8px auto;
     padding: 28px;
     border: 1px solid var(--castle-border);
     border-radius: 18px;

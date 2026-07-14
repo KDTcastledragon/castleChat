@@ -1,6 +1,6 @@
 .HeaderContainer {
     position: relative;
-    width: 1500px;
+    width: min(1500px, calc(100vw - 16px));
     height: 85px;
     margin: 8px auto;
     border: 1px solid var(--castle-border);

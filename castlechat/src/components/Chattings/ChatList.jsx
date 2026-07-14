@@ -12,107 +12,124 @@ function ChatList() {
     const { data: myAllRooms = [], isLoading, isError } = useGetMyAllRooms(!!me);
     const queryClient = useQueryClient();
     const [visibleRooms, setVisibleRooms] = useState([]);
-	const visibleRoomsRef = useRef([]);
-	const localUnreadCountRef = useRef({});
+    const visibleRoomsRef = useRef([]);
+    const localUnreadCountRef = useRef({});
 
     const { enterExistingRoom } = useChatRoomActions();
     // 디스코드식 싱글뷰 : 현재 열려있는 방을 목록에서 하이라이트하기 위한 read-only 참조.
     const activeChatWindowKey = useSelector(state => state.chatWindows.windows[0]?.chatWindowKey ?? null);
 
     useEffect(() => {
-		const nextRooms = myAllRooms.map(room => {
-			const roomKey = String(room.roomId);
-			const localUnreadCount = localUnreadCountRef.current[roomKey];
+        const nextRooms = myAllRooms.map(room => {
+            const roomKey = String(room.roomId);
+            const localUnreadCount = localUnreadCountRef.current[roomKey];
 
-			if (localUnreadCount === undefined) {
-				return room;
-			}
+            if (localUnreadCount === undefined) {
+                return room;
+            }
 
-			return {
-				...room,
-				unreadMessageCount: localUnreadCount,
-				unreadCount: localUnreadCount
-			};
-		});
+            return {
+                ...room,
+                unreadMessageCount: localUnreadCount,
+                unreadCount: localUnreadCount
+            };
+        });
 
-		visibleRoomsRef.current = nextRooms;
-		setVisibleRooms(nextRooms);
+        visibleRoomsRef.current = nextRooms;
+        setVisibleRooms(nextRooms);
     }, [myAllRooms]);
 
-	const updateRoomLists = useCallback((updater) => {
-		const nextVisibleRooms = updater(visibleRoomsRef.current);
+    const updateRoomLists = useCallback((updater) => {
+        const nextVisibleRooms = updater(visibleRoomsRef.current);
 
-		visibleRoomsRef.current = nextVisibleRooms;
-		setVisibleRooms(nextVisibleRooms);
+        visibleRoomsRef.current = nextVisibleRooms;
+        setVisibleRooms(nextVisibleRooms);
 
-		queryClient.setQueryData(['myAllRooms'], prevRooms => {
-			if (!Array.isArray(prevRooms)) return prevRooms;
-			return updater(prevRooms);
-		});
-	}, [queryClient]);
+        queryClient.setQueryData(['myAllRooms'], prevRooms => {
+            if (!Array.isArray(prevRooms)) return prevRooms;
+            return updater(prevRooms);
+        });
+    }, [queryClient]);
 
-	const resetRoomUnreadCount = useCallback((roomId) => {
-		const roomKey = String(roomId);
-		localUnreadCountRef.current[roomKey] = 0;
+    const resetRoomUnreadCount = useCallback((roomId) => {
+        const roomKey = String(roomId);
+        localUnreadCountRef.current[roomKey] = 0;
 
-		updateRoomLists(rooms => rooms.map(room =>
-			Number(room.roomId) === Number(roomId)
-				? { ...room, unreadMessageCount: 0, unreadCount: 0 }
-				: room
-		));
-	}, [updateRoomLists]);
+        updateRoomLists(rooms => rooms.map(room =>
+            Number(room.roomId) === Number(roomId)
+                ? { ...room, unreadMessageCount: 0, unreadCount: 0 }
+                : room
+        ));
+    }, [updateRoomLists]);
 
     useEffect(() => {
         if (!me) return;
 
         return registerGlobalWsHandler((wsEvt) => {
-            if (wsEvt.wsType === 'MSG_READ') {
-				const readPosition = wsEvt.payload;
+            if (wsEvt.wsType === 'LEFT_ROOM' || wsEvt.wsType === 'LEFT_ROOM_OK') {
+                const payload = wsEvt.payload;
 
-				if (readPosition?.readerPublicId === me.publicId && readPosition?.roomId) {
-					resetRoomUnreadCount(readPosition.roomId);
-				}
+                if (payload?.requesterPublicId === me.publicId && payload?.roomId) {
+                    const roomKey = String(payload.roomId);
+                    delete localUnreadCountRef.current[roomKey];
 
-				return;
-			}
+                    updateRoomLists(rooms => rooms.filter(room => Number(room.roomId) !== Number(payload.roomId)));
+                    queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+                }
 
-			if (wsEvt.wsType !== 'CHAT_ROOM_UPDATED' && wsEvt.wsType !== 'MSG_CREATED') {
                 return;
             }
 
-			const payload = wsEvt.payload;
-			if (!payload?.roomId) return;
+            if (wsEvt.wsType === 'MSG_READ') {
+                const readPosition = wsEvt.payload;
 
-			const roomKey = String(payload.roomId);
-			const currentRoom = visibleRoomsRef.current.find(room => Number(room.roomId) === Number(payload.roomId));
+                if (readPosition?.readerPublicId === me.publicId && readPosition?.roomId) {
+                    resetRoomUnreadCount(readPosition.roomId);
+                }
 
-			if (!currentRoom) {
-				queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
-				return;
-			}
+                return;
+            }
 
-			const isMyMessage = payload.senderPublicId === me.publicId;
-			const previewText = payload.previewText ?? payload.messageText ?? currentRoom.lastMessage ?? '';
-			const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? currentRoom.lastMessageAt;
-			const currentUnreadCount = Number(localUnreadCountRef.current[roomKey]
-				?? currentRoom.unreadMessageCount
-				?? currentRoom.unreadCount
-				?? 0);
-			const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage;
-			const nextUnreadCount = shouldIncreaseUnread ? currentUnreadCount + 1 : currentUnreadCount;
+            if (wsEvt.wsType !== 'CHAT_ROOM_UPDATED' && wsEvt.wsType !== 'MSG_CREATED') {
+                return;
+            }
 
-			localUnreadCountRef.current[roomKey] = nextUnreadCount;
+            const payload = wsEvt.payload;
+            if (!payload?.roomId) return;
 
-			updateRoomLists(prevRooms => {
-				const nextRooms = prevRooms.map(room => Number(room.roomId) === Number(payload.roomId)
-					? {
-						...room,
-						lastMessage: previewText,
-						lastMessageAt,
-						unreadMessageCount: nextUnreadCount,
-						unreadCount: nextUnreadCount
-					}
-					: room);
+            const roomKey = String(payload.roomId);
+            const currentRoom = visibleRoomsRef.current.find(room => Number(room.roomId) === Number(payload.roomId));
+
+            if (!currentRoom) {
+                queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+                return;
+            }
+
+            const isMyMessage = payload.senderPublicId === me.publicId;
+            const rawPreviewText = payload.previewText ?? payload.messageText ?? currentRoom.lastMessage ?? '';
+            // room feed(공지/초대/권한변경 등)는 prefix를 떼서 보여주고, unread에도 세지 않는다.
+            const isRoomFeedPreview = rawPreviewText.startsWith('[ROOM_FEED]');
+            const previewText = isRoomFeedPreview ? rawPreviewText.slice('[ROOM_FEED]'.length) : rawPreviewText;
+            const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? currentRoom.lastMessageAt;
+            const currentUnreadCount = Number(localUnreadCountRef.current[roomKey]
+                ?? currentRoom.unreadMessageCount
+                ?? currentRoom.unreadCount
+                ?? 0);
+            const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage && !isRoomFeedPreview;
+            const nextUnreadCount = shouldIncreaseUnread ? currentUnreadCount + 1 : currentUnreadCount;
+
+            localUnreadCountRef.current[roomKey] = nextUnreadCount;
+
+            updateRoomLists(prevRooms => {
+                const nextRooms = prevRooms.map(room => Number(room.roomId) === Number(payload.roomId)
+                    ? {
+                        ...room,
+                        lastMessage: previewText,
+                        lastMessageAt,
+                        unreadMessageCount: nextUnreadCount,
+                        unreadCount: nextUnreadCount
+                    }
+                    : room);
 
                 return nextRooms.sort((a, b) => {
                     const aTime = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
@@ -121,7 +138,7 @@ function ChatList() {
                 });
             });
         });
-	}, [me, queryClient, resetRoomUnreadCount, updateRoomLists]);
+    }, [me, queryClient, resetRoomUnreadCount, updateRoomLists]);
 
     function formatRoomTime(value) {
         if (!value) return '';
@@ -164,38 +181,38 @@ function ChatList() {
                     const isActiveRoom = activeChatWindowKey === `room:${r.roomId}`;
 
                     return (
-                    <div
-                        className={isActiveRoom ? 'chatListBox active' : 'chatListBox'}
-                        key={r.roomId}
-                        onClick={() => handleEnterRoom(r.roomId)}
-                    >
-                        <img
-                            className="chatListRoomThumbnail"
-                            src={r.customRoomThumbnail || '/images/mococo_question.png'}
-                            alt={r.customRoomName}
-                        />
+                        <div
+                            className={isActiveRoom ? 'chatListBox active' : 'chatListBox'}
+                            key={r.roomId}
+                            onClick={() => handleEnterRoom(r.roomId)}
+                        >
+                            <img
+                                className="chatListRoomThumbnail"
+                                src={r.customRoomThumbnail || '/images/mococo_question.png'}
+                                alt={r.customRoomName}
+                            />
 
-                        <div className="chatListMainInfo">
-                            <div className="chatListRoomNameLine">
-                                <span className="chatListRoomName">{r.customRoomName}</span>
-                                {r.roomType !== 'DIRECT' && (
-                                    <span className="chatListMemberCount">{r.activeMemberCount}명</span>
+                            <div className="chatListMainInfo">
+                                <div className="chatListRoomNameLine">
+                                    <span className="chatListRoomName">{r.customRoomName}</span>
+                                    {r.roomType !== 'DIRECT' && (
+                                        <span className="chatListMemberCount">{r.activeMemberCount}명</span>
+                                    )}
+                                </div>
+
+                                <div className="chatListLastMessage">
+                                    {r.lastMessage || '아직 메시지가 없습니다.'}
+                                </div>
+                            </div>
+
+                            <div className="chatListSubInfo">
+                                <div className="chatListLastTime">{formatRoomTime(r.lastMessageAt)}</div>
+
+                                {unreadCount > 0 && (
+                                    <div className="chatListUnreadBadge">{unreadCount > 999 ? '999+' : unreadCount}</div>
                                 )}
                             </div>
-
-                            <div className="chatListLastMessage">
-                                {r.lastMessage || '아직 메시지가 없습니다.'}
-                            </div>
                         </div>
-
-                        <div className="chatListSubInfo">
-                            <div className="chatListLastTime">{formatRoomTime(r.lastMessageAt)}</div>
-
-                            {unreadCount > 0 && (
-                                <div className="chatListUnreadBadge">{unreadCount > 999 ? '999+' : unreadCount}</div>
-                            )}
-                        </div>
-                    </div>
                     );
                 })}
             </div>

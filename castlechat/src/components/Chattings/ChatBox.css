@@ -26,7 +26,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 100%;
     height: 46px;
     min-height: 46px;
@@ -61,14 +61,13 @@
 }
 
 .chatRoomTitleText {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 188px);
+    position: static;
+    width: auto;
+    flex: 1;
     z-index: 1;
     min-width: 0;
     font-weight: bold;
-    text-align: center;
+    text-align: left;
     font-size: 18px;
     overflow: hidden;
     white-space: nowrap;
@@ -259,7 +258,7 @@
     flex-shrink: 0;
 }
 
-.chatRow.other > .senderProfileImg {
+.chatRow.other>.senderProfileImg {
     align-self: flex-start;
     margin-top: 18px;
 }
@@ -343,6 +342,15 @@
     font-style: italic;
 }
 
+.messageWrap.imageOnlyMessage {
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
 .replyPreviewInMessage {
     margin-bottom: 6px;
     padding: 5px 7px;
@@ -363,11 +371,14 @@
 }
 
 @keyframes replyTargetPulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: inherit;
     }
 
-    35%, 70% {
+    35%,
+    70% {
         box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.32);
     }
 }
@@ -394,6 +405,14 @@
     margin-bottom: 6px;
 }
 
+.messageWrap.imageOnlyMessage .attachmentPreviewList {
+    margin-bottom: 0;
+}
+
+.messageWrap.imageOnlyMessage .attachmentPreviewItem {
+    display: block;
+}
+
 .attachmentImagePreview,
 .attachmentVideoPreview {
     max-width: 220px;
@@ -401,6 +420,11 @@
     border-radius: 10px;
     object-fit: cover;
     display: block;
+}
+
+.messageWrap.imageOnlyMessage .attachmentImagePreview {
+    max-width: 260px;
+    max-height: 210px;
 }
 
 .attachmentImagePreview {
@@ -962,6 +986,7 @@
 }
 
 .aiRecommendBox {
+    position: relative;
     width: 460px;
     min-height: 34px;
     padding: 7px 9px;
@@ -993,11 +1018,21 @@
     cursor: not-allowed;
 }
 
+/* 추천 목록은 레이아웃을 밀지 않고 입력창 위로 떠오르는 팝업으로 표시한다. */
 .aiRecommendList {
-    margin-top: 7px;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 8px;
+    right: 8px;
+    z-index: 90;
     display: flex;
     flex-direction: column;
     gap: 5px;
+    padding: 8px;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    background-color: #ffffff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 .aiRecommendItem {
@@ -1075,16 +1110,14 @@
     background-color: #ffffff;
     border-right: 1px solid #cfcfcf;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.16);
-    transform: translateX(-100%);
-    transition: transform 220ms ease;
     z-index: 20;
-    display: flex;
+    display: none;
     flex-direction: column;
     box-sizing: border-box;
 }
 
 .roomSidePanel.open {
-    transform: translateX(0);
+    display: flex;
 }
 
 .roomSidePanelHeader {
@@ -1101,6 +1134,22 @@
 
 .roomSidePanelHeader button {
     cursor: pointer;
+}
+
+.roomSettingsToast {
+    position: absolute;
+    top: 48px;
+    left: 50%;
+    z-index: 24;
+    transform: translateX(-50%);
+    padding: 7px 12px;
+    border-radius: 14px;
+    background: rgba(15, 118, 110, 0.96);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.22);
+    pointer-events: none;
 }
 
 .roomSidePanelDangerZone {
@@ -1899,6 +1948,13 @@
     box-shadow: 0 3px 10px rgba(15, 23, 42, 0.08);
 }
 
+.mine .messageWrap.imageOnlyMessage,
+.other .messageWrap.imageOnlyMessage {
+    background: transparent;
+    color: inherit;
+    box-shadow: none;
+}
+
 .messageWrap.deleted {
     background: #e2e8f0;
     color: var(--castle-text-muted);
@@ -2008,6 +2064,12 @@
     border-color: var(--castle-border-soft);
     background: var(--castle-surface);
     color: var(--castle-text);
+}
+
+.aiRecommendList {
+    border-color: var(--castle-border);
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow-strong);
 }
 
 .attachFileButton {
@@ -2126,7 +2188,7 @@
     width: 100%;
     height: 100%;
     max-height: none;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .chattingRoomSection.docked .chatListTitle {
@@ -2136,6 +2198,8 @@
 .chattingRoomSection.docked .chattingBox {
     width: 100%;
     height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
 }
 
 .chattingRoomSection.docked .composerMetaPanel,
@@ -2145,13 +2209,21 @@
 }
 
 .chattingRoomSection.docked .roomSidePanel {
-    top: 0;
-    left: calc((var(--chat-list-width, 380px) + var(--chat-layout-gap, 8px)) * -1);
+    top: 46px;
+    left: 0;
     bottom: 0;
-    width: var(--chat-list-width, 380px);
+    width: min(380px, 76%);
     min-width: 0;
-    max-width: none;
+    max-width: calc(100% - 24px);
     z-index: 100;
     border: 1px solid var(--castle-border);
+    border-radius: 14px;
+}
+
+/* 친구 초대 패널은 채팅방 메뉴(z:100) 바로 옆에, 메뉴보다 앞에 뜬다. */
+.chattingRoomSection.docked .inviteFriendPanel {
+    top: 46px;
+    left: calc(min(380px, 76%) + 10px);
+    z-index: 110;
     border-radius: 14px;
 }

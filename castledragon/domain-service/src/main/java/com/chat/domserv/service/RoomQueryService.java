@@ -10,6 +10,7 @@ import com.chat.contract.room.domain.ChatRoomListDTO;
 import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
 import com.chat.domserv.mapper.RoomMapper;
 import com.chat.domserv.usecase.RoomQueryUseCase;
+import com.chat.redis.cache.RoomReadPositionCache;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -20,9 +21,28 @@ public class RoomQueryService implements RoomQueryUseCase {
 	@Autowired
 	RoomMapper roomMapper;
 
+	@Autowired
+	RoomReadPositionCache roomReadPositionCache;
+
 	@Override
 	public List<ChatRoomListDTO> getMyAllChatRooms(Long userId) {
 		List<ChatRoomListDTO> roomList = roomMapper.getMyAllChatRooms(userId);
+
+		// 읽음 위치는 Redis가 최신이다(DB는 dirty flush 전까지 과거값).
+		// DB 기준으로 계산된 unread를 Redis LRM으로 보정해야 읽은 방이 다시 unread로 뜨지 않는다.
+		for (ChatRoomListDTO room : roomList) {
+			if (room.getUnreadCount() == null || room.getUnreadCount() == 0) {
+				continue;
+			}
+
+			Long cachedLrm = roomReadPositionCache.getLastReadMessageId(room.getRoomId(), userId);
+			Long dbLrm = room.getMyLastReadMessageId() == null ? 0L : room.getMyLastReadMessageId();
+
+			if (cachedLrm != null && cachedLrm > dbLrm) {
+				room.setUnreadCount(roomMapper.countUnreadMessages(room.getRoomId(), userId, cachedLrm));
+			}
+		}
+
 		return roomList;
 	}
 

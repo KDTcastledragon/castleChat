@@ -68,6 +68,16 @@
 - [x] 트러블슈팅 기록
 - [x] 프론트 빌드와 diff 검증
 
+## 2026-07-11 Join Profile Control And Media Type Fix
+
+- [x] 회원가입 프로필 파일 버튼을 하나로 정리
+- [x] 기본 이미지 가입은 JSON 요청으로 분리
+- [x] 이미지 선택 가입은 multipart 요청 유지
+- [x] backend `/user/join` JSON/multipart 계약 모두 지원
+- [x] 실행 중 stale controller 확인과 기록
+- [x] 트러블슈팅 기록
+- [x] 프론트 빌드와 diff 검증
+
 ## 2026-07-11 Notice Width And First Message Rendering Fix
 
 - [x] 활성 공지 bar를 채팅창 가로 폭에 맞춤
@@ -77,3 +87,47 @@
 - [x] START broadcast와 초기 메시지 중복 렌더 방지
 - [x] 트러블슈팅 기록
 - [x] 프론트 빌드와 diff 검증
+
+## 2026-07-11 Compact Layout Adjustment
+
+- [x] 헤더 높이를 기존 대비 15% 축소
+- [x] 친구 목록 메인 패널 높이 축소
+- [x] 채팅방 목록을 왼쪽에 가깝게 배치하고 폭을 60% 수준으로 축소
+- [x] 채팅방 목록 높이를 화면 스크롤이 덜 생기도록 축소
+- [x] 채팅창 높이를 헤더와 viewport를 침범하지 않도록 축소
+- [x] 프로필 원본 파일명 표시 정책 코멘트 정리
+- [x] cdx0711.md 작업기록 작성
+- [x] 프론트 검증 실행
+
+## 2026-07-11 Discord Style UI Conversion (claude)
+
+원칙 : 기능(핸들러/ws/스토어 로직/서버 호출)은 절대 건드리지 않는다. 배치와 스타일만 바꾼다. 팝아웃은 이번에 구현하지 않는다.
+
+- [x] index.css 테마 토큰을 녹색 계열로 교체 (저채도, 가시성 우선)
+- [x] chatWindowsSlice.js openChatWindow가 활성 방 1개만 유지 (디코식 싱글뷰. 팝아웃 재도입시 push 복구)
+- [x] AppShell.jsx /chatList에서 좌(방 목록) + 우(활성 방) 2패널 레이아웃, ChatBox에 isDocked 전달, 빈 상태 패널
+- [x] AppShell.css 2패널 레이아웃 + 빈 상태 스타일
+- [x] ChatBox.jsx isDocked prop 추가 - 도킹 시 inline left/top 제거 + 드래그 비활성
+- [x] ChatBox.css .docked 오버라이드 (position static, 100% 채움, 고정폭 4종 100%로)
+- [x] ChatList.jsx "채팅" 버튼 제거, 행 클릭 입장, 활성 방 하이라이트 (고아가 된 버튼 CSS 제거)
+- [x] ChatList.css 사이드바 형태 (전체 높이, 행 스타일, 활성 상태)
+- [x] npm run build 통과 (기존 ESLint warning만 잔존)
+- [x] chatUI.md G항목 결정 로그 추가
+- [ ] 브라우저 시각 검증 (사용자 수행)
+- [ ] 후속 : ChatBox 내부 노랑 하드코딩 색 토큰화 (도킹 검증 후)
+
+## 2026-07-12 Discord Chat UI Regression Fixes
+
+- [x] 입력창·첨부 버튼·전송 버튼 가로 폭 정합과 전송 버튼 10px 확대
+- [x] 메시지 수와 무관하게 채팅방 상단 bar 높이 46px 고정
+- [x] 리액션 변경 시 기존 스크롤 위치 보존
+- [x] 리액션 표시가 발신자 프로필 위치를 밀지 않도록 메시지 행 레이아웃 수정
+- [x] 답장 대상 미리보기 클릭 시 원본 메시지로 이동 및 강조
+- [x] 최초 방 입장 시 최신 메시지 최하단으로 안정적으로 이동
+- [x] 비활성 방 새 메시지의 채팅 목록 unread 실시간 증가 복구
+- [x] 재입장 시 방 feed 이력도 메시지와 함께 복원
+- [x] 우클릭 메뉴와 활성 공지를 채팅방 내부 좌표에 표시
+- [x] 채팅방 메뉴를 채팅 레이아웃의 왼쪽 경계에 맞춤
+- [x] cdx0712-Fe.md 작업 기록
+- [x] 프론트 빌드 및 정적 검증
+- [ ] `cdx0712-feed-schema.sql` DB 적용 후 다중 사용자 브라우저 검증

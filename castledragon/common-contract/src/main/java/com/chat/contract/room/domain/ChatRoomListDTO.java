@@ -22,6 +22,8 @@ public class ChatRoomListDTO {
 	private String lastMessage;
 	private LocalDateTime lastMessageAt;
 
+	private Long myLastReadMessageId;
+
 	private Long unreadMessageCount;
 }
 

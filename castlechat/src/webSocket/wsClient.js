@@ -400,9 +400,12 @@ export function emitWsLeftRoom(roomId) {
 }
 
 export function emitWsInviteMember(roomId, inviteTargetMemberPublicIds) {
-    return emitWs(WS_TYPES.INVITE_MEMBER, {
+    return emitWsRequest(WS_TYPES.INVITE_MEMBER, {
         roomId,
         inviteTargetMemberPublicIds
+    }, {
+        successTypes: ['ROOM_MEMBER_INVITED'],
+        failTypes: ['INVITE_MEMBER_FAIL', 'WS_MESSAGE_FAIL']
     });
 }
 

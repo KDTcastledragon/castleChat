@@ -305,6 +305,29 @@
 		  AND member_status = 'ACTIVE'
 	</select>
 
+	<insert id="insertRoomFeedMessage">
+		INSERT INTO chat_messages (
+			message_id,
+			room_id,
+			sender_id,
+			message_type,
+			message_text,
+			reply_to_message_id,
+			message_status,
+			created_at
+		)
+		VALUES (
+			#{messageId},
+			#{roomId},
+			#{requesterUserId},
+			'TEXT',
+			CONCAT('[ROOM_FEED]', #{feedText}),
+			NULL,
+			'ACTIVE',
+			#{feedAt}
+		)
+	</insert>
+
 	<update id="leftRoom">
 		UPDATE room_members
 		SET

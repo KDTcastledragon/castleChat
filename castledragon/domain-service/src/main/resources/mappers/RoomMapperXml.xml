@@ -37,7 +37,16 @@
 	            m.message_id,
 	            m.room_id,
 	            u.public_id AS sender_public_id,
-	            m.message_text,
+	            u.nickname AS sender_nickname,
+	            COALESCE(NULLIF(TRIM(u.profile_img), ''), '/images/mococo_question.png') AS sender_profile_img,
+	            CASE
+	                WHEN m.message_text LIKE '[ROOM_FEED]%' THEN 'SYSTEM'
+	                ELSE m.message_type
+	            END AS message_type,
+	            CASE
+	                WHEN m.message_text LIKE '[ROOM_FEED]%' THEN SUBSTRING(m.message_text, CHAR_LENGTH('[ROOM_FEED]') + 1)
+	                ELSE m.message_text
+	            END AS message_text,
 	            m.created_at,
 	
 	            (
@@ -117,8 +126,13 @@
 
         COUNT(DISTINCT m.message_id) AS unreadCount,
 
+        IFNULL(me.last_read_message_id, 0) AS myLastReadMessageId,
+
         (
-            SELECT cm.message_text
+            SELECT CASE
+                WHEN cm.message_text LIKE '[ROOM_FEED]%' THEN SUBSTRING(cm.message_text, CHAR_LENGTH('[ROOM_FEED]') + 1)
+                ELSE cm.message_text
+            END
             FROM chat_messages cm
             WHERE cm.room_id = r.room_id
             ORDER BY cm.message_id DESC
@@ -142,6 +156,7 @@
       ON m.room_id = r.room_id
      AND m.message_id > IFNULL(me.last_read_message_id, 0)
      AND m.sender_id != me.user_id
+     AND m.message_text NOT LIKE '[ROOM_FEED]%'
 
     WHERE me.user_id = #{userId}
       AND me.member_status = 'ACTIVE'
@@ -227,6 +242,16 @@
 		  AND member_status = 'ACTIVE'
 	</select>
 
+	<!-- Redis LRM 기준 unread 재계산용. room feed는 unread에서 제외한다. -->
+	<select id="countUnreadMessages" resultType="Long">
+		SELECT COUNT(*)
+		FROM chat_messages m
+		WHERE m.room_id = #{roomId}
+		  AND m.message_id &gt; #{lastReadMessageId}
+		  AND m.sender_id != #{userId}
+		  AND m.message_text NOT LIKE '[ROOM_FEED]%'
+	</select>
+
 	<select id="findRoomNotices" resultType="com.chat.contract.room.domain.res.RoomNoticeViewDTO">
 		SELECT
 			rn.room_notice_id AS roomNoticeId,
@@ -282,7 +307,10 @@
         COUNT(DISTINCT m.message_id) AS unread_count,
 
         (
-            SELECT cm.message_text
+            SELECT CASE
+                WHEN cm.message_text LIKE '[ROOM_FEED]%' THEN SUBSTRING(cm.message_text, CHAR_LENGTH('[ROOM_FEED]') + 1)
+                ELSE cm.message_text
+            END
             FROM chat_messages cm
             WHERE cm.room_id = r.room_id
             ORDER BY cm.message_id DESC
@@ -306,6 +334,7 @@
       ON m.room_id = r.room_id
      AND m.message_id > IFNULL(me.last_read_message_id, 0)
      AND m.sender_id != me.user_id
+     AND m.message_text NOT LIKE '[ROOM_FEED]%'
 
     WHERE me.user_id = #{userId}
       AND me.left_at IS NULL

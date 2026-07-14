@@ -21,13 +21,18 @@
   --castle-shadow-strong: 0 16px 40px rgba(24, 46, 33, 0.18);
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 html {
-  min-height: 100%;
   background: var(--castle-bg);
 }
 
 body {
-  min-height: 100%;
   margin: 0;
   background: var(--castle-bg);
   color: var(--castle-text);

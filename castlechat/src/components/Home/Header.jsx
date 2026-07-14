@@ -55,7 +55,7 @@ function Header() {
                 </div>
                 :
                 <div className='loginedHeader'>
-                    caslteChat &nbsp;&nbsp;
+                    caslteChat 웹채팅에 오신걸 환영합니다.
                 </div>
             }
 

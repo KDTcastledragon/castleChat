@@ -439,6 +439,42 @@ An empty string ("") was passed to the src attribute.
 
 ========================================================================================================================
 
+## 2026-07-11 회원가입 프로필 버튼 중복과 415 multipart 오류
+
+### 1. 회원가입 화면에 파일 관련 버튼이 두 개 보이던 문제
+
+원인.
+
+- 실제 파일 탐색기를 여는 `파일 선택` 버튼과 선택 파일을 취소하는 `기본 이미지` 버튼을 함께 표시하고 있었다.
+- 회원가입 시 기본 이미지는 이미 서버 정책으로 결정되므로 별도 복귀 버튼이 필수 기능은 아니었다.
+
+수정 내용.
+
+- 화면에는 파일 탐색기를 여는 `파일 선택` 버튼 하나만 남겼다.
+- 제거된 기본 이미지 버튼의 CSS도 함께 삭제했다.
+
+### 2. 기본 이미지 회원가입이 415 Unsupported Media Type으로 끝나던 문제
+
+원인.
+
+- 이미지가 없어도 프론트가 항상 `FormData`를 만들어 multipart 요청을 보내고 있었다.
+- 실행 중인 8080 서버는 해당 요청을 `RequestResponseBodyMethodProcessor`로 처리하려 했다. 이는 현재 소스의 multipart handler가 아니라 이전 `@RequestBody` JSON controller가 실행 중이라는 증거다.
+- `DefaultHandlerExceptionResolver`가 controller의 지원 media type과 실제 요청 Content-Type 불일치를 `HttpMediaTypeNotSupportedException`으로 처리해 415를 반환했다.
+
+수정 내용.
+
+- 이미지 미선택 가입은 JSON으로 보내고 서버가 `/images/mococo_question.png`를 저장한다.
+- 실제 이미지가 선택된 가입만 multipart/form-data로 보낸다.
+- 서버의 같은 `/user/join` URL에 JSON handler와 multipart handler를 `consumes` 기준으로 분리했다.
+- 현재 실행 중인 `domain-service`에는 변경 소스가 반영되지 않았으므로 컴파일 후 프로세스 재시작이 필요하다.
+
+### 검증 결과
+
+- 수정 전 실행 중인 8080 endpoint에 multipart 요청을 보내 415와 `RequestResponseBodyMethodProcessor` 호출 경로를 재현했다.
+- 프론트 빌드와 diff 검증 결과는 아래 작업 기록에 반영한다.
+
+========================================================================================================================
+
 ## 2026-07-11 회원가입 경로 차단과 그룹 draft 중복 생성 수정
 
 ### 1. 로그인 화면에서 회원가입을 눌러도 회원가입 페이지가 열리지 않던 문제

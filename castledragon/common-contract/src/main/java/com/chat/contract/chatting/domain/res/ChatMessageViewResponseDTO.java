@@ -17,6 +17,8 @@ public class ChatMessageViewResponseDTO {
 
 	private Long roomId;
 	private String senderPublicId;
+	private String senderNickname;
+	private String senderProfileImg;
 
 	private String messageType;
 	private String messageText;
