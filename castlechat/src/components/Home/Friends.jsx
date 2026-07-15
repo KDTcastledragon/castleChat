@@ -200,8 +200,8 @@ function FriendList() {
         if (!friendConfirmModal) return;
 
         alert(friendConfirmModal.action === 'DELETE'
-            ? '친구삭제는 아직 준비 중인 기능입니다.'
-            : '친구차단은 아직 준비 중인 기능입니다.');
+            ? '친구삭제는 아직 준비 중입니다.'
+            : '친구차단은 아직 준비 중입니다.');
         setFriendConfirmModal(null);
     }
 

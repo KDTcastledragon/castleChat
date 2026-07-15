@@ -2684,12 +2684,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                         1:1 채팅
                                     </button>
 
-                                    <button
+                                    {/* <button
                                         className="profilePopupActionButton report"
                                         onClick={() => alert('임시 버튼')}
                                     >
                                         rand_btn
-                                    </button>
+                                    </button> */}
                                 </div>
                             </div>
                         </div>

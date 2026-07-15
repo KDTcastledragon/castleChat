@@ -285,6 +285,8 @@
 }
 
 /* ====[채팅 메시지 영역]============================================= */
+/* 자식 chattingBox가 flex로 높이를 받아 내부 스크롤이 되려면 이 래퍼가 flex 컨테이너여야 한다.
+   block이면 chattingBox가 내용 높이만큼 자라 AI 버튼/입력창 위로 넘친다. */
 .chattingViewport {
     position: relative;
     width: 444px;
@@ -292,6 +294,9 @@
     min-height: 300px;
     flex: 1 1 auto;
     margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .chattingBox {
