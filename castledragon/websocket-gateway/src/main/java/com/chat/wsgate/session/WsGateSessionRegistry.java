@@ -17,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 public class WsGateSessionRegistry {
 	private final Map<WebSocketSession, SessionUserDTO> wsSessionsToConnectedUser = new ConcurrentHashMap<>();
 	private final Map<Long, WebSocketSession> userIdToWsSessions = new ConcurrentHashMap<>(); // userId:ws 1:1대응이라서 단수형으로 naming.
+	private final Map<String, WebSocketSession> publicIdToWsSessions = new ConcurrentHashMap<>();
 
 	private final Map<Long, Map<Long, WebSocketSession>> roomSessions = new ConcurrentHashMap<>(); // room하나에 여러 sessions들어가서 복수형으로 naming.
 	// final : 한 번 만든 뒤 다른 ObjectMapper로 바꾸지 않겠다. 근데, final이라고 해서 Map 안의 내용이 못 바뀌는 건 아닙니다.Map 객체 자체는 고정이고, Map 내부 내용은 계속 변경 가능
@@ -43,6 +44,7 @@ public class WsGateSessionRegistry {
 	public void registerConnectedUser(WebSocketSession session, SessionUserDTO loginUser) {
 		wsSessionsToConnectedUser.put(session, loginUser);
 		userIdToWsSessions.put(loginUser.getUserId(), session);
+		publicIdToWsSessions.put(loginUser.getPublicId(), session);
 	}
 
 	// ====== 로그아웃 세션 삭제 ===========================================================================================================
@@ -51,6 +53,7 @@ public class WsGateSessionRegistry {
 
 		if (removedUser != null) {
 			userIdToWsSessions.remove(removedUser.getUserId(), session);
+			publicIdToWsSessions.remove(removedUser.getPublicId(), session);
 		}
 
 		return removedUser;
@@ -97,6 +100,10 @@ public class WsGateSessionRegistry {
 		//	.map(Map.Entry::getKey).findFirst().orElse(null);
 		WebSocketSession userSession = userIdToWsSessions.get(userId); // 역 직렬화도 해줘야, O(n) -> O(1)로 조회시간이 확 줄어든다.
 		return userSession;
+	}
+
+	public WebSocketSession findSessionByPublicId(String publicId) {
+		return publicIdToWsSessions.get(publicId);
 	}
 
 	// ====== 현재 채팅방 접속중인 유저찾기 ===========================================================================================================

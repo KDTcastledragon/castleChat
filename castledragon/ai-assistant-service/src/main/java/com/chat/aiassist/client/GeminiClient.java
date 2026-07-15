@@ -19,6 +19,8 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Log4j2
 public class GeminiClient {
+	private static final int MAX_ATTEMPTS = 3;
+	private static final long INITIAL_RETRY_DELAY_MS = 1000L;
 
 	private final RestClient restClient;
 	private final String model;
@@ -48,11 +50,7 @@ public class GeminiClient {
 						"parts", List.of(Map.of("text", prompt)))));
 
 		try {
-			Map<String, Object> response = restClient.post()
-					.uri("/models/{model}:generateContent", model)
-					.body(requestBody)
-					.retrieve()
-					.body(Map.class);
+			Map<String, Object> response = requestGenerateContent(requestBody);
 
 			// 응답 구조 : candidates[0].content.parts[0].text
 			List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.get("candidates");
@@ -65,14 +63,50 @@ public class GeminiClient {
 			List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
 
 			return (String) parts.get(0).get("text");
-		} catch (RestClientResponseException e) {
-			log.error("Gemini generateContent HTTP 실패. model={}, status={}, body={}", model, e.getStatusCode(), e.getResponseBodyAsString());
-			throw new IllegalStateException("Gemini API 요청 실패. status=" + e.getStatusCode().value());
 		} catch (IllegalStateException e) {
 			throw e;
 		} catch (Exception e) {
 			log.error("Gemini generateContent 호출 실패. model={}", model, e);
 			throw new IllegalStateException("Gemini 호출 실패");
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> requestGenerateContent(Map<String, Object> requestBody) {
+		for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+			try {
+				return restClient.post()
+						.uri("/models/{model}:generateContent", model)
+						.body(requestBody)
+						.retrieve()
+						.body(Map.class);
+			} catch (RestClientResponseException e) {
+				if (e.getStatusCode().value() != 503) {
+					log.error("Gemini generateContent HTTP 실패. model={}, status={}, body={}", model, e.getStatusCode(), e
+							.getResponseBodyAsString());
+					throw new IllegalStateException("Gemini API 요청 실패. status=" + e.getStatusCode().value());
+				}
+
+				if (attempt == MAX_ATTEMPTS) {
+					log.error("Gemini generateContent 503 반복 실패. model={}, attempts={}", model, MAX_ATTEMPTS);
+					throw new IllegalStateException("AI 모델이 혼잡합니다. 잠시 후 다시 시도해 주세요.");
+				}
+
+				long retryDelayMs = INITIAL_RETRY_DELAY_MS * (1L << (attempt - 1));
+				log.warn("Gemini generateContent 503 재시도. model={}, attempt={}, delayMs={}", model, attempt, retryDelayMs);
+				waitBeforeRetry(retryDelayMs);
+			}
+		}
+
+		throw new IllegalStateException("Gemini 호출 실패");
+	}
+
+	private void waitBeforeRetry(long retryDelayMs) {
+		try {
+			Thread.sleep(retryDelayMs);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			throw new IllegalStateException("Gemini 재시도 대기 중 요청이 중단되었습니다.");
 		}
 	}
 

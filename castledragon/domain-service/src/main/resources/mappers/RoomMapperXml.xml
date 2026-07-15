@@ -129,10 +129,7 @@
         IFNULL(me.last_read_message_id, 0) AS myLastReadMessageId,
 
         (
-            SELECT CASE
-                WHEN cm.message_text LIKE '[ROOM_FEED]%' THEN SUBSTRING(cm.message_text, CHAR_LENGTH('[ROOM_FEED]') + 1)
-                ELSE cm.message_text
-            END
+            SELECT cm.message_text
             FROM chat_messages cm
             WHERE cm.room_id = r.room_id
             ORDER BY cm.message_id DESC
@@ -156,7 +153,7 @@
       ON m.room_id = r.room_id
      AND m.message_id > IFNULL(me.last_read_message_id, 0)
      AND m.sender_id != me.user_id
-     AND m.message_text NOT LIKE '[ROOM_FEED]%'
+     AND m.message_type != 'SYSTEM'
 
     WHERE me.user_id = #{userId}
       AND me.member_status = 'ACTIVE'
@@ -249,7 +246,7 @@
 		WHERE m.room_id = #{roomId}
 		  AND m.message_id &gt; #{lastReadMessageId}
 		  AND m.sender_id != #{userId}
-		  AND m.message_text NOT LIKE '[ROOM_FEED]%'
+		  AND m.message_type != 'SYSTEM'
 	</select>
 
 	<select id="findRoomNotices" resultType="com.chat.contract.room.domain.res.RoomNoticeViewDTO">

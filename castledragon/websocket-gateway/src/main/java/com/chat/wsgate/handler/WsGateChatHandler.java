@@ -3,6 +3,7 @@ package com.chat.wsgate.handler;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
@@ -63,8 +64,11 @@ public class WsGateChatHandler {
 		return messageType;
 	}
 
+	// SYSTEM은 서버(room feed)만 만들 수 있는 타입. 클라이언트가 보낸 타입은 화이트리스트로만 통과시킨다.
+	private static final Set<String> CLIENT_MESSAGE_TYPES = Set.of("TEXT", "IMAGE", "FILE", "VIDEO", "AUDIO");
+
 	private String defaultMessageType(String messageType, List<Long> attachmentIds) {
-		if (messageType != null && !messageType.isBlank()) {
+		if (messageType != null && CLIENT_MESSAGE_TYPES.contains(messageType)) {
 			return messageType;
 		}
 

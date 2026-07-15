@@ -213,3 +213,14 @@
 - room feed는 room action 트랜잭션에서 SYSTEM 메시지로 동기 저장한다. Kafka 비동기 메시지 경로는 변경하지 않았다.
 - 절대좌표 UI는 도킹 채팅방을 기준으로 복구했고, room menu는 목록 영역을 덮는 drawer로 배치했다.
 - 프론트 build, MyBatis XML 파싱, diff check는 성공했다. Gradle과 DB ALTER는 실행하지 않았다.
+## 2026-07-15 Chat UX And Invite Realtime Follow-up
+
+- 채팅 검색은 추가 DB 부하 없이 현재 로드된 메시지에서 수행한다. Enter로 다음 결과를 이동하고 ESC로 닫는다.
+- 초대 실시간 반영은 현재 방 broadcast만으로는 초대 대상자에게 도달하지 않으므로, WebSocket Gateway의 온라인 사용자 세션에 별도 `ROOM_INVITED` 푸시를 추가한다.
+- 확인창은 새 라이브러리 없이 ChatBox 내부 공통 모달 하나로 통합한다.
+- AI 추천 프롬프트 본문은 사용자와 함께 설계하기 위해 이번 변경에서 제외한다.
+- 메시지 알림은 기존 방 설정 REST를 재사용하고 최대 4개, 4초 표시 정책으로 제한한다.
+- 초대 대상자 푸시는 `RoomFeedResponseDTO.targetPublicIds`와 Gateway의 publicId 세션 인덱스를 재사용한다. proto와 channel-engine 계약은 늘리지 않는다.
+- 알림 방 이름은 기존 `myAllRooms` 캐시에서 읽고, 캐시가 아직 없을 때만 한 번 조회해 채운다.
+- AI 추천 관점 오류는 `RecentMessageDTO.senderId`가 있음에도 요청자와 비교하지 않는 것이 원인이다. 프롬프트 공동 설계 전까지 서비스 코드는 변경하지 않는다.
+- Gradle 명령은 실행하지 않았다. 프론트 테스트는 `react-router-dom` 로컬 의존성 누락으로 테스트 로딩 단계에서 중단됐다.

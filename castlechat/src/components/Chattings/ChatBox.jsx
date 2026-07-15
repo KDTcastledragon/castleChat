@@ -7,7 +7,6 @@ import {
     emitWsChangeMemberRole,
     emitWsDeleteMessage,
     emitWsExitRoom,
-    emitWsBanMember,
     emitWsInviteMember,
     emitWsKickMember,
     emitWsLeftRoom,
@@ -25,7 +24,7 @@ import { useMe } from '../../hooks/useAuthUser';
 import { useFriendList } from '../../hooks/useFriend';
 import { useChatRoomActions } from '../../hooks/useChatRoom';
 import { useQueryClient } from '@tanstack/react-query';
-import { recommendMessagesApi } from '../../api/aiAssistApi';
+import { recommendMessagesApi, recommendPersonalizedMessagesApi, refineMessageToneApi } from '../../api/aiAssistApi';
 import { getMessageReactionMembersApi, getMessageReadersApi, getMessageUnreadCountsApi, loadMessagesInRoomApi, sendFileApi, uploadImageApi } from '../../api/chatApi';
 import { loadRoomNoticesApi, updateMyRoomSettingsApi } from '../../api/roomApi';
 
@@ -36,11 +35,16 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const [typingUsers, setTypingUsers] = useState([]);
 
     const [isRoomMenuOpen, setIsRoomMenuOpen] = useState(false);
+    const [isChatSearchOpen, setIsChatSearchOpen] = useState(false);
+    const [chatSearchWord, setChatSearchWord] = useState('');
+    const [chatSearchResultIndex, setChatSearchResultIndex] = useState(-1);
     const [isInviteFriendPanelOpen, setIsInviteFriendPanelOpen] = useState(false);
     const [selectedInviteFriends, setSelectedInviteFriends] = useState([]);
     const [isInvitingMembers, setIsInvitingMembers] = useState(false);
 
     const [profileTargetMember, setProfileTargetMember] = useState(null);
+    const [roleChangeResultModal, setRoleChangeResultModal] = useState(null);
+    const [confirmModal, setConfirmModal] = useState(null);
     const [imageViewerAttachment, setImageViewerAttachment] = useState(null);
     const [messageContextMenu, setMessageContextMenu] = useState(null);
     const [replyTargetMessage, setReplyTargetMessage] = useState(null);
@@ -56,6 +60,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const startChatRequestLockRef = useRef(false);
     const [isAiRecommendLoading, setIsAiRecommendLoading] = useState(false);
     const [aiRecommendedMessages, setAiRecommendedMessages] = useState([]);
+    const [isToneRefinePanelOpen, setIsToneRefinePanelOpen] = useState(false);
+    const [refiningTone, setRefiningTone] = useState(null);
+    const [toneRefineResultModal, setToneRefineResultModal] = useState(null);
+    const [isPersonalizedRecommendOpen, setIsPersonalizedRecommendOpen] = useState(false);
+    const [personalizedTargetPublicId, setPersonalizedTargetPublicId] = useState('');
+    const [isPersonalizedRecommendLoading, setIsPersonalizedRecommendLoading] = useState(false);
     const [myReactionMap, setMyReactionMap] = useState({});
     const [localRoomName, setLocalRoomName] = useState(roomName ?? '');
     const [roomThumbnailUrl, setRoomThumbnailUrl] = useState(roomThumbnail ?? '');
@@ -76,7 +86,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const [hasMoreRoomNotices, setHasMoreRoomNotices] = useState(true);
     const [editingRoomNoticeId, setEditingRoomNoticeId] = useState(null);
     const [editingRoomNoticeContents, setEditingRoomNoticeContents] = useState('');
+    const [isWritingRoomNotice, setIsWritingRoomNotice] = useState(false);
+    const [newRoomNoticeContents, setNewRoomNoticeContents] = useState('');
     const [isSavingRoomSettings, setIsSavingRoomSettings] = useState(false);
+    const [isScrolledAwayFromBottom, setIsScrolledAwayFromBottom] = useState(false);
+    const [newMessageWhileScrolled, setNewMessageWhileScrolled] = useState(null);
 
     const [locallyRemovedMemberPublicIds, setLocallyRemovedMemberPublicIds] = useState(() => new Set());
     const [locallyAddedRoomMembers, setLocallyAddedRoomMembers] = useState([]);
@@ -154,6 +168,21 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         return map;
     }, [prevChattings]);
 
+    const chatSearchResults = useMemo(() => {
+        const searchWord = chatSearchWord.trim().toLocaleLowerCase();
+
+        if (!searchWord) return [];
+
+        return prevChattings.filter(message =>
+            message.messageType !== 'SYSTEM'
+            && message.messageStatus !== 'DELETED'
+            && (message.messageText ?? '').toLocaleLowerCase().includes(searchWord)
+        ).reverse();
+    }, [chatSearchWord, prevChattings]);
+
+    const personalizedCandidateMembers = useMemo(() => visibleRoomMembers.filter(member => member.publicId !== myPublicId), [visibleRoomMembers, myPublicId]);
+    const isAiProcessing = isAiRecommendLoading || isPersonalizedRecommendLoading || Boolean(refiningTone);
+
     const inviteCandidateFriends = useMemo(() => {
         const currentRoomMemberPublicIds = new Set(
             visibleRoomMembers.map(member => member.publicId)
@@ -181,16 +210,6 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         return false;
     }
 
-    function canBanMember(member) {
-        if (!canKickMember(member)) return false;
-
-        if (myRoomRole === 'HOST') {
-            return member.role !== 'HOST';
-        }
-
-        return myRoomRole === 'MANAGER' && member.role === 'MEMBER';
-    }
-
     function canChangeMemberRole(member) {
         if (!member) return false;
         if (roomType !== 'GROUP') return false;
@@ -204,6 +223,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const isChatBoxFocusedRef = useRef(false);
 
     const fileInputRef = useRef(null);
+    const chatSearchInputRef = useRef(null);
     const roomThumbnailInputRef = useRef(null);
     const roomBackgroundInputRef = useRef(null);
 
@@ -221,12 +241,58 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const REACTION_OPTIONS = [
         { label: '👍', code: 'like', title: '좋아요' },
         { label: '👎', code: 'dislike', title: '싫어요' },
-        { label: '😿', code: 'cat_sad', title: '슬퍼요' },
-        { label: '😢', code: 'sad', title: '눈물' },
-        { label: '😈', code: 'devil', title: '장난' }
+        { label: '❤️', code: 'heart', title: '하트' },
+        { label: '😂', code: 'laugh', title: '웃겨요' },
+        { label: '😊', code: 'smile', title: '미소' },
+        { label: '😉', code: 'wink', title: '윙크' },
+        { label: '😮', code: 'wow', title: '놀라워요' },
+        { label: '😢', code: 'sad', title: '슬퍼요' },
+        { label: '😭', code: 'cry', title: '눈물' },
+        { label: '😡', code: 'angry', title: '화나요' },
+        { label: '😈', code: 'devil', title: '장난' },
+        { label: '🥳', code: 'party', title: '축하해요' },
+        { label: '👏', code: 'clap', title: '박수' },
+        { label: '🔥', code: 'fire', title: '최고예요' },
+        { label: '🚀', code: 'rocket', title: '가보자' },
+        { label: '👀', code: 'eyes', title: '보고 있어요' },
+        { label: '🤔', code: 'thinking', title: '생각 중' },
+        { label: '👌', code: 'ok', title: '좋아요' },
+        { label: '🙏', code: 'pray', title: '부탁해요' },
+        { label: '💪', code: 'muscle', title: '힘내요' },
+        { label: '🎉', code: 'celebrate', title: '축하' },
+        { label: '🤗', code: 'hug', title: '응원해요' },
+        { label: '😘', code: 'kiss', title: '애정' },
+        { label: '😎', code: 'cool', title: '멋져요' },
+        { label: '😴', code: 'sleep', title: '졸려요' },
+        { label: '😵‍💫', code: 'confused', title: '혼란' },
+        { label: '🤯', code: 'shock', title: '충격' },
+        { label: '💩', code: 'poop', title: '별로예요' },
+        { label: '😿', code: 'cat_sad', title: '고양이 눈물' },
+        { label: '⭐', code: 'star', title: '별' },
+        { label: '😍', code: 'heart_eyes', title: '반했어요' },
+        { label: '🥰', code: 'lovely', title: '사랑스러워요' },
+        { label: '😇', code: 'angel', title: '착해요' },
+        { label: '🙃', code: 'upside_down', title: '머쓱해요' },
+        { label: '😏', code: 'smirk', title: '흐뭇해요' },
+        { label: '😒', code: 'unamused', title: '별로예요' },
+        { label: '😤', code: 'huff', title: '흥' },
+        { label: '🤩', code: 'star_struck', title: '대단해요' },
+        { label: '🥺', code: 'pleading', title: '부탁해요' },
+        { label: '🤭', code: 'giggle', title: '킥킥' },
+        { label: '🫡', code: 'salute', title: '알겠습니다' },
+        { label: '🫠', code: 'melting', title: '녹아요' },
+        { label: '🤝', code: 'handshake', title: '약속' },
+        { label: '🙌', code: 'hooray', title: '만세' },
+        { label: '💯', code: 'hundred', title: '완벽해요' },
+        { label: '✅', code: 'check', title: '확인' },
+        { label: '🎁', code: 'gift', title: '선물' },
+        { label: '🍻', code: 'cheers', title: '건배' },
+        { label: '☕', code: 'coffee', title: '커피' },
+        { label: '🌙', code: 'moon', title: '잘 자요' }
     ];
 
     const chatListRef = useRef(null);
+    const chatMessageRef = useRef(chatMessage);
     const isLoadingPrevRef = useRef(false);
     const hasMorePrevRef = useRef(true);
     const oldestMessageIdRef = useRef(null);
@@ -235,6 +301,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     const isInitialRoomScrollPendingRef = useRef(true);
     const messageHighlightTimerRef = useRef(null);
     const roomSettingsToastTimerRef = useRef(null);
+    const toneRefineResultTimerRef = useRef(null);
 
     const dragRef = useRef({
         isDragging: false,
@@ -247,6 +314,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     useEffect(() => {
         prevChattingsRef.current = prevChattings;
     }, [prevChattings]);
+
+    useEffect(() => {
+        chatMessageRef.current = chatMessage;
+    }, [chatMessage]);
 
     useEffect(() => {
         setLocalRoomName(roomName ?? '');
@@ -273,6 +344,16 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setCurrentRoomNotice(roomNotice ?? null);
         setIsRoomNoticeVisible(true);
     }, [roomNotice]);
+
+    useEffect(() => {
+        if (isChatSearchOpen) {
+            chatSearchInputRef.current?.focus();
+        }
+    }, [isChatSearchOpen]);
+
+    useEffect(() => {
+        setChatSearchResultIndex(-1);
+    }, [chatSearchWord]);
 
     function mergeMyReactionState(messages) {
         setMyReactionMap(prev => {
@@ -610,10 +691,25 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
         const distanceToBottom = chatListEl.scrollHeight - chatListEl.scrollTop - chatListEl.clientHeight;
         shouldStickToBottomRef.current = distanceToBottom <= 80;
+        setIsScrolledAwayFromBottom(!shouldStickToBottomRef.current);
+
+        if (shouldStickToBottomRef.current) {
+            setNewMessageWhileScrolled(null);
+        }
 
         if (chatListEl.scrollTop <= LOAD_PREV_THRESHOLD_PX) {
             loadOlderMessages();
         }
+    }
+
+    function scrollChatToBottom() {
+        const chatListEl = chatListRef.current;
+        if (!chatListEl) return;
+
+        shouldStickToBottomRef.current = true;
+        setIsScrolledAwayFromBottom(false);
+        setNewMessageWhileScrolled(null);
+        chatListEl.scrollTo({ top: chatListEl.scrollHeight, behavior: 'smooth' });
     }
 
     function keepLatestMessageVisibleAfterMediaLoad() {
@@ -664,6 +760,49 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }, 1400);
     }
 
+    function moveChatSearchResult(direction = 1) {
+        if (chatSearchResults.length === 0) return;
+
+        const nextIndex = direction > 0
+            ? (chatSearchResultIndex + 1) % chatSearchResults.length
+            : (chatSearchResultIndex - 1 + chatSearchResults.length) % chatSearchResults.length;
+
+        setChatSearchResultIndex(nextIndex);
+        scrollToMessage(chatSearchResults[nextIndex].messageId);
+    }
+
+    function closeChatSearch() {
+        setIsChatSearchOpen(false);
+        setChatSearchWord('');
+        setChatSearchResultIndex(-1);
+    }
+
+    function renderSearchHighlightedText(text) {
+        const searchWord = chatSearchWord.trim();
+
+        if (!searchWord || !text) return text;
+
+        const escapedWord = searchWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        return text.split(new RegExp(`(${escapedWord})`, 'gi')).map((part, index) =>
+            part.toLocaleLowerCase() === searchWord.toLocaleLowerCase()
+                ? <mark className="chatSearchMatch" key={`${part}-${index}`}>{part}</mark>
+                : part
+        );
+    }
+
+    function openConfirmModal(title, message, onConfirm, danger = false, confirmLabel = '확인') {
+        setConfirmModal({ title, message, onConfirm, danger, confirmLabel });
+    }
+
+    async function confirmCurrentAction() {
+        const action = confirmModal?.onConfirm;
+        setConfirmModal(null);
+
+        if (action) {
+            await action();
+        }
+    }
+
     async function syncVisibleMessageUnreadCounts() {
         if (!roomId) return;
 
@@ -708,9 +847,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setPrevChattings(Array.isArray(initialMessages) ? initialMessages : []);
         setTypingUsers([]);
         setIsRoomMenuOpen(false);
+        setIsChatSearchOpen(false);
+        setChatSearchWord('');
+        setChatSearchResultIndex(-1);
         setIsInviteFriendPanelOpen(false);
         setSelectedInviteFriends([]);
         setProfileTargetMember(null);
+        setRoleChangeResultModal(null);
+        setConfirmModal(null);
         setImageViewerAttachment(null);
         setMessageContextMenu(null);
         setReplyTargetMessage(null);
@@ -725,11 +869,21 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setHasMoreRoomNotices(true);
         setEditingRoomNoticeId(null);
         setEditingRoomNoticeContents('');
+        setIsWritingRoomNotice(false);
+        setNewRoomNoticeContents('');
+        setIsScrolledAwayFromBottom(false);
+        setNewMessageWhileScrolled(null);
         setSelectedFiles([]);
         setUploadProgress(null);
         setIsUploadingFiles(false);
         setIsAiRecommendLoading(false);
         setAiRecommendedMessages([]);
+        setIsToneRefinePanelOpen(false);
+        setRefiningTone(null);
+        setToneRefineResultModal(null);
+        setIsPersonalizedRecommendOpen(false);
+        setPersonalizedTargetPublicId('');
+        setIsPersonalizedRecommendLoading(false);
         setLocallyRemovedMemberPublicIds(new Set());
         setLocallyAddedRoomMembers([]);
         setLocallyChangedMemberRoles({});
@@ -792,6 +946,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         registerRoomHandler(roomId, (wsResponse) => {
             if (wsResponse.wsType === "MSG_CREATED") {
                 const newMsg = wsResponse.payload;
+
+                if (!shouldStickToBottomRef.current && newMsg.senderPublicId !== myPublicId) {
+                    setNewMessageWhileScrolled(newMsg);
+                }
 
                 setPrevChattings(prev => {
                     const alreadyRendered = prev.some(message => String(message.messageId) === String(newMsg.messageId));
@@ -960,6 +1118,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     });
                 }
 
+                if (wsResponse.wsType === "ROOM_MEMBER_INVITED" && Array.isArray(feed?.targetMembers)) {
+                    setLocallyAddedRoomMembers(prev => {
+                        const map = new Map(prev.map(member => [member.publicId, member]));
+                        feed.targetMembers.forEach(member => map.set(member.publicId, member));
+                        return Array.from(map.values());
+                    });
+                }
+
                 if (wsResponse.wsType !== "ROOM_MEMBER_ROLE_CHANGED") {
                     syncVisibleMessageUnreadCounts();
                 }
@@ -973,6 +1139,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             ...prev,
                             [targetPublicId]: targetRole
                         }));
+                    }
+
+                    // 내가 요청한 권한 변경이 성공했을 때만 결과 모달을 띄운다.
+                    if (feed?.requesterPublicId === myPublicId && targetRole) {
+                        setRoleChangeResultModal({
+                            nickname: feed?.targetNicknames?.[0] ?? '멤버',
+                            role: targetRole
+                        });
                     }
                 }
             }
@@ -1065,11 +1239,15 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             if (roomSettingsToastTimerRef.current) {
                 clearTimeout(roomSettingsToastTimerRef.current);
             }
+
+            if (toneRefineResultTimerRef.current) {
+                clearTimeout(toneRefineResultTimerRef.current);
+            }
         };
     }, []);
 
     async function sendChatMessage() {
-        if (isUploadingFiles) return;
+        if (isUploadingFiles || isAiProcessing) return;
 
         if (isDraftRoom && startChatRequestLockRef.current) return;
 
@@ -1200,7 +1378,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     }
 
     async function requestAiRecommendedMessages() {
-        if (isAiRecommendLoading) return;
+        if (isAiProcessing) return;
 
         if (!roomId) {
             alert('AI 추천은 실제 채팅방이 생성된 뒤 사용할 수 있습니다.');
@@ -1208,6 +1386,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
 
         try {
+            setIsToneRefinePanelOpen(false);
             setIsAiRecommendLoading(true);
             const recommendations = await recommendMessagesApi(roomId);
 
@@ -1223,6 +1402,76 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
     function applyAiRecommendedMessage(recommendedMessage) {
         setChatMessage(recommendedMessage);
         setAiRecommendedMessages([]);
+    }
+
+    async function refineCurrentMessageTone(tone) {
+        if (isAiProcessing) return;
+
+        const sourceMessage = chatMessage;
+
+        if (!sourceMessage.trim()) {
+            alert('다듬을 메시지를 먼저 입력해 주세요.');
+            return;
+        }
+
+        try {
+            setRefiningTone(tone);
+            const refinedMessage = await refineMessageToneApi(sourceMessage, tone);
+
+            if (chatMessageRef.current !== sourceMessage) {
+                alert('AI 처리 중 입력문이 변경되어 결과를 적용하지 않았습니다.');
+                return;
+            }
+
+            setChatMessage(refinedMessage);
+            setIsToneRefinePanelOpen(false);
+            setToneRefineResultModal({
+                toneLabel: getToneLabel(tone),
+                before: sourceMessage,
+                after: refinedMessage
+            });
+
+            if (toneRefineResultTimerRef.current) {
+                clearTimeout(toneRefineResultTimerRef.current);
+            }
+
+            toneRefineResultTimerRef.current = setTimeout(closeToneRefineResultModal, 4000);
+        } catch (e) {
+            console.error('AI 메시지 말투 다듬기 실패', e);
+            alert(e.response?.data?.message ?? e.response?.data ?? 'AI 메시지 말투 다듬기 실패');
+        } finally {
+            setRefiningTone(null);
+        }
+    }
+
+    function getToneLabel(tone) {
+        return { SOFT: '부드럽게', CONCISE: '간결하게', POLITE: '정중하게' }[tone] ?? tone;
+    }
+
+    function closeToneRefineResultModal() {
+        if (toneRefineResultTimerRef.current) {
+            clearTimeout(toneRefineResultTimerRef.current);
+            toneRefineResultTimerRef.current = null;
+        }
+
+        setToneRefineResultModal(null);
+    }
+
+    async function requestPersonalizedMessages(relationshipType) {
+        if (isAiProcessing || !personalizedTargetPublicId) return;
+
+        try {
+            setIsPersonalizedRecommendLoading(true);
+            const recommendations = await recommendPersonalizedMessagesApi(roomId, personalizedTargetPublicId, relationshipType);
+            setAiRecommendedMessages(Array.isArray(recommendations) ? recommendations : []);
+            setIsPersonalizedRecommendOpen(false);
+            setPersonalizedTargetPublicId('');
+        } catch (e) {
+            console.error('AI 섬세한 맞춤 메시지 추천 실패', e);
+            alert(e.response?.data?.message ?? e.response?.data ?? 'AI 섬세한 맞춤 메시지 추천 실패');
+        } finally {
+            setIsPersonalizedRecommendLoading(false);
+        }
     }
 
     const handleChatMessageChange = (e) => {
@@ -1349,6 +1598,27 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         const handleEscKeyDown = (e) => {
             if (e.key !== 'Escape') return;
 
+            if (toneRefineResultModal) {
+                closeToneRefineResultModal();
+                return;
+            }
+
+            if (isPersonalizedRecommendOpen) {
+                setIsPersonalizedRecommendOpen(false);
+                setPersonalizedTargetPublicId('');
+                return;
+            }
+
+            if (confirmModal) {
+                setConfirmModal(null);
+                return;
+            }
+
+            if (roleChangeResultModal) {
+                setRoleChangeResultModal(null);
+                return;
+            }
+
             if (messageContextMenu) {
                 setMessageContextMenu(null);
                 return;
@@ -1395,6 +1665,16 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 return;
             }
 
+            if (isToneRefinePanelOpen) {
+                setIsToneRefinePanelOpen(false);
+                return;
+            }
+
+            if (isChatSearchOpen) {
+                closeChatSearch();
+                return;
+            }
+
             if (isChatBoxFocusedRef.current) {
                 closeChatAndExitRoom();
             }
@@ -1405,7 +1685,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         return () => {
             window.removeEventListener('keydown', handleEscKeyDown);
         };
-    }, [messageContextMenu, reactionTargetMessage, reactionViewer, messageReadersViewer, imageViewerAttachment, profileTargetMember, isInviteFriendPanelOpen, isRoomNoticePanelOpen, isRoomMenuOpen]);
+    }, [toneRefineResultModal, isPersonalizedRecommendOpen, confirmModal, roleChangeResultModal, messageContextMenu, reactionTargetMessage, reactionViewer, messageReadersViewer, imageViewerAttachment, profileTargetMember, isInviteFriendPanelOpen, isRoomNoticePanelOpen, isRoomMenuOpen, isToneRefinePanelOpen, isChatSearchOpen]);
 
     async function leftRoom() {
         if (!roomId) {
@@ -1426,15 +1706,19 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
     }
 
-    async function kickMember(member) {
+    function kickMember(member) {
         if (!member) return;
 
-        const confirmed = window.confirm(`${member.nickname}님을 추방하시겠습니까?`);
+        openConfirmModal(
+            '멤버 추방',
+            `${member.nickname}님을 채팅방에서 추방하시겠습니까?`,
+            () => executeKickMember(member),
+            true,
+            '추방'
+        );
+    }
 
-        if (!confirmed) {
-            return;
-        }
-
+    async function executeKickMember(member) {
         try {
             const emitted = emitWsKickMember(roomId, member.publicId);
 
@@ -1454,42 +1738,10 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
     }
 
-    async function banMember(member) {
-        if (!member) return;
-
-        const firstConfirmed = window.confirm(`${member.nickname}님을 영구강퇴하시겠습니까?`);
-        if (!firstConfirmed) return;
-
-        const secondConfirmed = window.confirm('영구강퇴는 재초대가 제한될 수 있습니다. 정말 진행할까요?');
-        if (!secondConfirmed) return;
-
-        try {
-            const emitted = emitWsBanMember(roomId, member.publicId);
-
-            if (!emitted) {
-                alert('WebSocket 연결 안 됨');
-                return;
-            }
-
-            setLocallyRemovedMemberPublicIds(prev => {
-                const next = new Set(prev);
-                next.add(member.publicId);
-                return next;
-            });
-        } catch (e) {
-            console.error('영구강퇴 실패', e);
-            alert(e.response?.data ?? '영구강퇴 실패');
-        }
-    }
-
-    async function changeMemberRole(e, member, targetRole) {
+    function changeMemberRole(e, member, targetRole) {
         if (!member) return;
         if (!canChangeMemberRole(member)) return;
         if (member.role === targetRole) return;
-
-        const confirmed = window.confirm(`${member.nickname}님의 권한을 ${targetRole}로 변경하시겠습니까?`);
-
-        if (!confirmed) return;
 
         const roleChangeDetails = e.currentTarget.closest('details');
 
@@ -1497,6 +1749,14 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
             roleChangeDetails.open = false;
         }
 
+        openConfirmModal(
+            '멤버 권한 변경',
+            `${member.nickname}님의 권한을 ${targetRole}로 변경하시겠습니까?`,
+            () => executeChangeMemberRole(member, targetRole)
+        );
+    }
+
+    async function executeChangeMemberRole(member, targetRole) {
         try {
             const emitted = emitWsChangeMemberRole(roomId, member.publicId, targetRole);
 
@@ -1601,15 +1861,16 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setImageViewerAttachment(null);
     }
 
-    async function downloadImageFromViewer() {
+    function downloadImageFromViewer() {
         if (!imageViewerAttachment?.fileUrl) return;
 
         const fileName = imageViewerAttachment.originalFileName || `image-${imageViewerAttachment.attachmentId ?? Date.now()}`;
-        const confirmed = window.confirm(`${fileName} 파일을 다운로드하시겠습니까?`);
 
-        if (!confirmed) {
-            return;
-        }
+        openConfirmModal('파일 다운로드', `${fileName} 파일을 다운로드하시겠습니까?`, executeImageDownload);
+    }
+
+    async function executeImageDownload() {
+        const fileName = imageViewerAttachment.originalFileName || `image-${imageViewerAttachment.attachmentId ?? Date.now()}`;
 
         try {
             const response = await fetch(imageViewerAttachment.fileUrl);
@@ -1690,8 +1951,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
         if (boxRect) {
             setReactionPickerPosition({
-                left: Math.min(Math.max(clickX - boxRect.left, 8), boxRect.width - 220),
-                top: Math.min(Math.max(clickY - boxRect.top, 52), boxRect.height - 120)
+                left: Math.min(Math.max(clickX - boxRect.left, 8), Math.max(boxRect.width - 280, 8)),
+                top: Math.min(Math.max(clickY - boxRect.top, 52), Math.max(boxRect.height - 270, 52))
             });
         } else {
             setReactionPickerPosition(null);
@@ -1775,12 +2036,12 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
 
         if (action === 'DELETE') {
-            const confirmed = window.confirm('이 메시지를 삭제하시겠습니까?');
-
-            if (confirmed) {
-                emitWsDeleteMessage(roomId, targetMessage.messageId);
-            }
-
+            openConfirmModal(
+                '메시지 삭제',
+                '이 메시지를 삭제하시겠습니까?',
+                () => emitWsDeleteMessage(roomId, targetMessage.messageId),
+                true
+            );
             return;
         }
 
@@ -1818,13 +2079,18 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         }
     }
 
-    async function applyMessageAsRoomNotice(targetMessage) {
+    function applyMessageAsRoomNotice(targetMessage) {
         if (!roomId || !targetMessage?.messageId) return;
 
-        const contents = targetMessage.messageText || '첨부 메시지';
-        const confirmed = window.confirm('이 메시지를 공지로 등록하시겠습니까?');
+        openConfirmModal(
+            '공지 등록',
+            '이 메시지를 공지로 등록하시겠습니까?',
+            () => executeApplyMessageAsRoomNotice(targetMessage)
+        );
+    }
 
-        if (!confirmed) return;
+    async function executeApplyMessageAsRoomNotice(targetMessage) {
+        const contents = targetMessage.messageText || '첨부 메시지';
 
         try {
             await emitWsApplyRoomNotice({
@@ -1883,6 +2149,31 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setIsRoomNoticePanelOpen(false);
         setEditingRoomNoticeId(null);
         setEditingRoomNoticeContents('');
+        setIsWritingRoomNotice(false);
+        setNewRoomNoticeContents('');
+    }
+
+    async function createCustomRoomNotice() {
+        const contents = newRoomNoticeContents.trim();
+
+        if (!contents) {
+            alert('공지 내용을 입력해주세요.');
+            return;
+        }
+
+        try {
+            await emitWsApplyRoomNotice({
+                roomId,
+                roomNoticeAction: 'CREATE',
+                roomNoticeType: 'CUSTOM',
+                roomNoticeContents: contents
+            });
+            setIsWritingRoomNotice(false);
+            setNewRoomNoticeContents('');
+        } catch (e) {
+            console.error('새 공지 등록 실패', e);
+            alert(e.message || '새 공지 등록 실패');
+        }
     }
 
     function handleRoomNoticeScroll(e) {
@@ -1910,14 +2201,22 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         setEditingRoomNoticeContents(notice.roomNoticeContents ?? '');
     }
 
-    async function applyRoomNoticeAction(roomNoticeAction, targetNotice = currentRoomNotice, nextContents = null) {
+    async function applyRoomNoticeAction(roomNoticeAction, targetNotice = currentRoomNotice, nextContents = null, confirmed = false) {
         if (!targetNotice?.roomNoticeId) {
             alert('처리할 공지가 없습니다.');
             return;
         }
 
-        if (roomNoticeAction === 'DELETE' && !window.confirm('이 공지를 삭제하시겠습니까?')) return;
-        if (roomNoticeAction === 'INACTIVATE' && !window.confirm('이 공지를 내리시겠습니까?')) return;
+        if (!confirmed && (roomNoticeAction === 'DELETE' || roomNoticeAction === 'INACTIVATE')) {
+            const isDelete = roomNoticeAction === 'DELETE';
+            openConfirmModal(
+                isDelete ? '공지 삭제' : '공지 내리기',
+                isDelete ? '이 공지를 삭제하시겠습니까?' : '이 공지를 내리시겠습니까?',
+                () => applyRoomNoticeAction(roomNoticeAction, targetNotice, nextContents, true),
+                isDelete
+            );
+            return;
+        }
 
         const roomNoticeContents = nextContents ?? targetNotice.roomNoticeContents;
 
@@ -1968,7 +2267,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
         <div className='chatBoxContainer'>
             <div
                 ref={chatRoomSectionRef}
-                className={isDocked ? 'chattingRoomSection docked' : 'chattingRoomSection'}
+                className={`${isDocked ? 'chattingRoomSection docked' : 'chattingRoomSection'} ${isChatSearchOpen ? 'searchOpen' : ''}`}
                 style={isDocked ? undefined : {
                     left: x,
                     top: y,
@@ -2001,6 +2300,15 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
                     <div className="chatTitleRightControls">
                         <button
+                            className={`chatSearchButton ${isChatSearchOpen ? 'active' : ''}`}
+                            title="채팅방 메시지 검색"
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={() => setIsChatSearchOpen(prev => !prev)}
+                        >
+                            <span aria-hidden="true">🔍</span>
+                        </button>
+
+                        <button
                             className={`notificationBellButton ${isMessageNotificationEnabled ? 'on' : 'off'}`}
                             title={isDraftRoom ? '첫 메시지 전송 후 알림 설정을 사용할 수 있습니다.' : isMessageNotificationEnabled ? '메시지 알림 켜짐' : '메시지 알림 꺼짐'}
                             onMouseDown={(e) => e.stopPropagation()}
@@ -2022,6 +2330,30 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     </div>
                 </div>
 
+                {isChatSearchOpen && (
+                    <div className="chatSearchBar">
+                        <span aria-hidden="true">🔍</span>
+                        <input
+                            ref={chatSearchInputRef}
+                            value={chatSearchWord}
+                            onChange={(e) => setChatSearchWord(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    moveChatSearchResult(e.shiftKey ? -1 : 1);
+                                }
+                            }}
+                            placeholder="메시지 검색"
+                        />
+                        <span className="chatSearchCount">
+                            {chatSearchResults.length > 0 ? `${chatSearchResultIndex + 1}/${chatSearchResults.length}` : '0/0'}
+                        </span>
+                        <button onClick={() => moveChatSearchResult(-1)} disabled={chatSearchResults.length === 0}>↑</button>
+                        <button onClick={() => moveChatSearchResult(1)} disabled={chatSearchResults.length === 0}>↓</button>
+                        <button aria-label="검색 닫기" onClick={closeChatSearch}>×</button>
+                    </div>
+                )}
+
                 {currentRoomNotice && (
                     <div className={`activeRoomNoticeBar ${isRoomNoticeVisible ? '' : 'collapsed'}`}>
                         {isRoomNoticeVisible && (
@@ -2040,7 +2372,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             className="activeRoomNoticeToggleButton"
                             onClick={() => setIsRoomNoticeVisible(prev => !prev)}
                         >
-                            {isRoomNoticeVisible ? '숨기기' : '표시하기'}
+                            {isRoomNoticeVisible ? '숨기기' : '공지표시'}
                         </button>
                     </div>
                 )}
@@ -2060,183 +2392,141 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                         </div>
                     )}
 
-                    <div className="roomSidePanelDangerZone">
-                        <button
-                            className="leaveRoomInMenuButton"
-                            onClick={leftRoom}
-                        >
-                            방 나가기
-                        </button>
-                    </div>
+                    <div className="roomSidePanelBody">
+                        <div className="roomSidePanelRoomColumn">
+                            <div className="roomSidePanelRoomScroll">
+                                <div className="roomSettingsBox">
+                                    <div className="roomNameSettingHeader">
+                                        <span>방 이름</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (isRoomNameEditing) {
+                                                    setSettingRoomName(localRoomName);
+                                                    setIsRoomNameEditing(false);
+                                                    return;
+                                                }
 
-                    <div className="roomSettingsBox">
-                        <div className="roomNameSettingHeader">
-                            <span>방 이름</span>
-                            <button
-                                type="button"
-                                onClick={() => setIsRoomNameEditing(prev => !prev)}
-                            >
-                                변경
-                            </button>
-                        </div>
-
-                        <label className="roomSettingLabel">
-                            <input
-                                value={settingRoomName}
-                                onChange={(e) => setSettingRoomName(e.target.value)}
-                                placeholder="방 이름"
-                                disabled={!isRoomNameEditing}
-                            />
-                        </label>
-
-                        <div className="roomImageSettingRow">
-                            <button onClick={() => roomThumbnailInputRef.current?.click()}>
-                                썸네일 사진
-                            </button>
-                            <span>{settingRoomThumbnailFileName || (settingRoomThumbnailUrl ? '기존 썸네일 사용 중' : '기본 이미지')}</span>
-                            <input
-                                ref={roomThumbnailInputRef}
-                                type="file"
-                                accept="image/*"
-                                hidden
-                                onChange={(e) => uploadRoomSettingImage(e, 'THUMBNAIL')}
-                            />
-                        </div>
-
-                        <div className="roomImageSettingRow">
-                            <button onClick={() => roomBackgroundInputRef.current?.click()}>
-                                배경 사진
-                            </button>
-                            <span>{settingRoomBackgroundFileName || (settingRoomBackgroundUrl ? '기존 배경 사용 중' : '기본 배경')}</span>
-                            <input
-                                ref={roomBackgroundInputRef}
-                                type="file"
-                                accept="image/*"
-                                hidden
-                                onChange={(e) => uploadRoomSettingImage(e, 'BACKGROUND')}
-                            />
-                        </div>
-
-                        <button
-                            className="saveRoomSettingsButton"
-                            onClick={() => saveRoomSettings()}
-                            disabled={isSavingRoomSettings}
-                        >
-                            방 설정 저장
-                        </button>
-                    </div>
-
-                    <div className="roomNoticeSettingBox">
-                        <div className="roomNoticeSettingHeader">공지사항</div>
-
-                        {currentRoomNotice ? (
-                            <button className="roomNoticeContents" onClick={openRoomNoticePanel}>
-                                {currentRoomNotice.roomNoticeContents}
-                            </button>
-                        ) : (
-                            <button className="roomNoticeEmpty" onClick={openRoomNoticePanel}>등록된 공지 없음</button>
-                        )}
-                    </div>
-
-                    <div className="roomSidePanelSubTitle">
-                        채팅방 멤버
-                    </div>
-
-                    <div className="roomMemberList">
-                        {visibleRoomMembers.map(member => {
-                            const isMe = member.publicId === myPublicId;
-
-                            return (
-                                <div
-                                    className={`roomMemberItem ${isMe ? 'me' : ''}`}
-                                    key={member.publicId}
-                                >
-                                    <img
-                                        className="roomMemberProfileImg"
-                                        src={member.profileImg || '/images/mococo_question.png'}
-                                        alt={member.nickname}
-                                    />
-
-                                    <div className="roomMemberInfo">
-                                        <div className="roomMemberNicknameLine">
-                                            <span className="roomMemberNickname">{member.nickname}</span>
-                                            {isMe && <span className="roomMemberMeBadge">나</span>}
-                                        </div>
+                                                setIsRoomNameEditing(true);
+                                            }}
+                                        >
+                                            {isRoomNameEditing ? '취소' : '변경'}
+                                        </button>
                                     </div>
 
-                                    <div className={`roomMemberRole role-${member.role}`}>
-                                        {member.role}
+                                    <label className="roomSettingLabel">
+                                        <input
+                                            value={settingRoomName}
+                                            onChange={(e) => setSettingRoomName(e.target.value)}
+                                            placeholder="방 이름"
+                                            disabled={!isRoomNameEditing}
+                                        />
+                                    </label>
+
+                                    <div className="roomImageSettingRow">
+                                        <button onClick={() => roomThumbnailInputRef.current?.click()}>썸네일 사진</button>
+                                        <span>{settingRoomThumbnailFileName || (settingRoomThumbnailUrl ? '기존 썸네일 사용 중' : '기본 이미지')}</span>
+                                        <input ref={roomThumbnailInputRef} type="file" accept="image/*" hidden onChange={(e) => uploadRoomSettingImage(e, 'THUMBNAIL')} />
                                     </div>
 
-                                    {canChangeMemberRole(member) ? (
-                                        <details className="memberRoleChangeDetails">
-                                            <summary>권한</summary>
+                                    <div className="roomImageSettingRow">
+                                        <button onClick={() => roomBackgroundInputRef.current?.click()}>배경 사진</button>
+                                        <span>{settingRoomBackgroundFileName || (settingRoomBackgroundUrl ? '기존 배경 사용 중' : '기본 배경')}</span>
+                                        <input ref={roomBackgroundInputRef} type="file" accept="image/*" hidden onChange={(e) => uploadRoomSettingImage(e, 'BACKGROUND')} />
+                                    </div>
 
-                                            <div className="memberRoleChangeMenu">
-                                                <button
-                                                    className={member.role === 'MEMBER' ? 'active' : ''}
-                                                    onClick={(e) => changeMemberRole(e, member, 'MEMBER')}
-                                                >
-                                                    MEMBER
-                                                </button>
+                                    <button className="saveRoomSettingsButton" onClick={() => saveRoomSettings()} disabled={isSavingRoomSettings}>
+                                        방 설정 저장
+                                    </button>
+                                </div>
 
-                                                <button
-                                                    className={member.role === 'MANAGER' ? 'active' : ''}
-                                                    onClick={(e) => changeMemberRole(e, member, 'MANAGER')}
-                                                >
-                                                    MANAGER
-                                                </button>
-                                            </div>
-                                        </details>
+                                <div className="roomNoticeSettingBox">
+                                    <div className="roomNoticeSettingHeader">공지사항</div>
+                                    {currentRoomNotice ? (
+                                        <button className="roomNoticeContents" onClick={openRoomNoticePanel}>{currentRoomNotice.roomNoticeContents}</button>
                                     ) : (
-                                        <div className="memberRoleChangePlaceholder" />
-                                    )}
-
-                                    {canKickMember(member) ? (
-                                        <div className="memberDangerActions">
-                                            <button
-                                                className="kickMemberButton"
-                                                onClick={() => kickMember(member)}
-                                            >
-                                                추방
-                                            </button>
-
-                                            {canBanMember(member) && (
-                                                <details className="banMemberDetails">
-                                                    <summary>더보기</summary>
-                                                    <button
-                                                        className="banMemberButton"
-                                                        onClick={() => banMember(member)}
-                                                    >
-                                                        영구강퇴
-                                                    </button>
-                                                </details>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="kickMemberButtonPlaceholder" />
+                                        <button className="roomNoticeEmpty" onClick={openRoomNoticePanel}>등록된 공지 없음</button>
                                     )}
                                 </div>
-                            );
-                        })}
-                    </div>
+                            </div>
 
-                    {roomType === 'GROUP' && (
-                        <button
-                            className="inviteMemberButton"
-                            onClick={openInviteMemberPanel}
-                        >
-                            초대하기
-                        </button>
-                    )}
+                            <div className="roomSidePanelDangerZone">
+                                <button className="leaveRoomInMenuButton" onClick={leftRoom}>방 나가기</button>
+                            </div>
+                        </div>
+
+                        <div className="roomSidePanelMemberColumn">
+                            <div className="roomSidePanelSubTitle">채팅방 멤버</div>
+                            <div className="roomMemberList">
+                                {visibleRoomMembers.map(member => {
+                                    const isMe = member.publicId === myPublicId;
+
+                                    return (
+                                        <div className={`roomMemberItem ${isMe ? 'me' : ''}`} key={member.publicId}>
+                                            <img className="roomMemberProfileImg" src={member.profileImg || '/images/mococo_question.png'} alt={member.nickname} />
+                                            <div className="roomMemberInfo">
+                                                <div className="roomMemberNicknameLine">
+                                                    <span className="roomMemberNickname">{member.nickname}</span>
+                                                    {isMe && <span className="roomMemberMeBadge">나</span>}
+                                                </div>
+                                            </div>
+                                            <div className={`roomMemberRole role-${member.role}`}>{member.role}</div>
+
+                                            {canChangeMemberRole(member) ? (
+                                                <details className="memberRoleChangeDetails">
+                                                    <summary>권한</summary>
+                                                    <div className="memberRoleChangeMenu">
+                                                        <button className={member.role === 'MEMBER' ? 'active' : ''} onClick={(e) => changeMemberRole(e, member, 'MEMBER')}>MEMBER</button>
+                                                        <button className={member.role === 'MANAGER' ? 'active' : ''} onClick={(e) => changeMemberRole(e, member, 'MANAGER')}>MANAGER</button>
+                                                    </div>
+                                                </details>
+                                            ) : (
+                                                <div className="memberRoleChangePlaceholder" />
+                                            )}
+
+                                            {canKickMember(member) ? (
+                                                <div className="memberDangerActions">
+                                                    <button className="kickMemberButton" onClick={() => kickMember(member)}>추방</button>
+                                                </div>
+                                            ) : (
+                                                <div className="kickMemberButtonPlaceholder" />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {roomType === 'GROUP' && (
+                                <button className="inviteMemberButton" onClick={openInviteMemberPanel}>초대하기</button>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {isRoomNoticePanelOpen && (
                     <div className="roomNoticePanel" onMouseDown={(e) => e.stopPropagation()}>
                         <div className="roomNoticePanelHeader">
                             <span>공지사항</span>
-                            <button onClick={closeRoomNoticePanel}>×</button>
+                            <div className="roomNoticePanelHeaderActions">
+                                <button className="write" onClick={() => setIsWritingRoomNotice(prev => !prev)}>새 공지</button>
+                                <button onClick={closeRoomNoticePanel}>×</button>
+                            </div>
                         </div>
+
+                        {isWritingRoomNotice && (
+                            <div className="newRoomNoticeEditor">
+                                <textarea
+                                    value={newRoomNoticeContents}
+                                    onChange={(e) => setNewRoomNoticeContents(e.target.value)}
+                                    maxLength={1500}
+                                    placeholder="새 공지 내용을 입력해주세요."
+                                />
+                                <div>
+                                    <button onClick={createCustomRoomNotice}>등록</button>
+                                    <button className="cancel" onClick={() => { setIsWritingRoomNotice(false); setNewRoomNoticeContents(''); }}>취소</button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="roomNoticePanelList" onScroll={handleRoomNoticeScroll}>
                             {roomNoticeList.map(notice => {
@@ -2369,8 +2659,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             className="profilePopup"
                             onMouseDown={(e) => e.stopPropagation()}
                         >
-                            <button className="profilePopupCloseButton" onClick={closeProfilePopup}>
-                                닫기
+                            <button className="profilePopupCloseButton" aria-label="닫기" onClick={closeProfilePopup}>
+                                ×
                             </button>
 
                             <div className="profilePopupImageWrap">
@@ -2381,25 +2671,105 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                 />
                             </div>
 
-                            <div className="profilePopupNickname">
-                                {profileTargetMember.nickname}
-                            </div>
+                            <div className="profilePopupMainInfo">
+                                <div className="profilePopupNickname">
+                                    {profileTargetMember.nickname}
+                                </div>
 
-                            <div className="profilePopupActions">
-                                <button
-                                    className="profilePopupActionButton direct"
-                                    onClick={startDirectChatFromProfile}
-                                >
-                                    1:1 채팅
-                                </button>
+                                <div className="profilePopupActions">
+                                    <button
+                                        className="profilePopupActionButton direct"
+                                        onClick={startDirectChatFromProfile}
+                                    >
+                                        1:1 채팅
+                                    </button>
 
-                                <button
-                                    className="profilePopupActionButton report"
-                                    onClick={() => alert('임시 버튼')}
-                                >
-                                    rand_btn
-                                </button>
+                                    <button
+                                        className="profilePopupActionButton report"
+                                        onClick={() => alert('임시 버튼')}
+                                    >
+                                        rand_btn
+                                    </button>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {roleChangeResultModal && (
+                    <div
+                        className="roleChangeResultOverlay"
+                        onMouseDown={(e) => {
+                            e.stopPropagation();
+                            setRoleChangeResultModal(null);
+                        }}
+                    >
+                        <div
+                            className="roleChangeResultModal"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <div className="roleChangeResultText">
+                                {roleChangeResultModal.nickname}님의 권한을 {roleChangeResultModal.role}로 변경하였습니다.
+                            </div>
+                            <button onClick={() => setRoleChangeResultModal(null)}>확인</button>
+                        </div>
+                    </div>
+                )}
+
+                {confirmModal && (
+                    <div className="chatConfirmOverlay" onMouseDown={() => setConfirmModal(null)}>
+                        <div className="chatConfirmModal" onMouseDown={(e) => e.stopPropagation()}>
+                            <div className="chatConfirmTitle">{confirmModal.title}</div>
+                            <div className="chatConfirmMessage">{confirmModal.message}</div>
+                            <div className="chatConfirmActions">
+                                <button className={confirmModal.danger ? 'danger' : ''} onClick={confirmCurrentAction}>{confirmModal.confirmLabel}</button>
+                                <button className="cancel" onClick={() => setConfirmModal(null)}>취소</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {toneRefineResultModal && (
+                    <div className="toneRefineResultOverlay" onMouseDown={closeToneRefineResultModal}>
+                        <div className="toneRefineResultModal" onMouseDown={(e) => e.stopPropagation()}>
+                            <button className="toneRefineResultClose" aria-label="결과 닫기" onClick={closeToneRefineResultModal}>×</button>
+                            <strong>[{toneRefineResultModal.toneLabel}]</strong>
+                            <div>{toneRefineResultModal.before}</div>
+                            <span>→</span>
+                            <div>{toneRefineResultModal.after}</div>
+                            <b>[적용되었습니다]</b>
+                        </div>
+                    </div>
+                )}
+
+                {isPersonalizedRecommendOpen && (
+                    <div className="personalizedRecommendOverlay" onMouseDown={() => setIsPersonalizedRecommendOpen(false)}>
+                        <div className="personalizedRecommendModal" onMouseDown={(e) => e.stopPropagation()}>
+                            <div className="personalizedRecommendHeader">
+                                <strong>섬세한 맞춤 메시지</strong>
+                                <button onClick={() => setIsPersonalizedRecommendOpen(false)}>×</button>
+                            </div>
+                            <p>현재 이 방의 어떤 분에게 맞춤 메시지를 추천받고 싶으신가요?</p>
+                            <div className="personalizedMemberList">
+                                {personalizedCandidateMembers.map(member => (
+                                    <button
+                                        key={member.publicId}
+                                        className={personalizedTargetPublicId === member.publicId ? 'selected' : ''}
+                                        onClick={() => setPersonalizedTargetPublicId(member.publicId)}
+                                    >
+                                        <img src={member.profileImg || '/images/mococo_question.png'} alt="" />
+                                        <span>{member.nickname}</span>
+                                    </button>
+                                ))}
+                            </div>
+                            {personalizedTargetPublicId && (
+                                <div className="personalizedRelationshipButtons">
+                                    <button onClick={() => requestPersonalizedMessages('FLIRTING')}>썸타는중</button>
+                                    <button onClick={() => requestPersonalizedMessages('CRUSH')}>짝사랑</button>
+                                    <button onClick={() => requestPersonalizedMessages('RESPECT')}>존경</button>
+                                    <button onClick={() => requestPersonalizedMessages('STRATEGIC')}>가식</button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -2612,16 +2982,17 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                     </div>
                 )}
 
-                <div
-                    className='chattingBox'
-                    ref={chatListRef}
-                    onScroll={handleChatScroll}
-                    style={roomBackgroundUrl ? {
-                        backgroundImage: `url(${roomBackgroundUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                    } : undefined}
-                >
+                <div className="chattingViewport">
+                    <div
+                        className='chattingBox'
+                        ref={chatListRef}
+                        onScroll={handleChatScroll}
+                        style={roomBackgroundUrl ? {
+                            backgroundImage: `url(${roomBackgroundUrl})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center'
+                        } : undefined}
+                    >
                     {prevChattings && prevChattings.length > 0 ?
                         prevChattings.map((d) => {
                             if (d.messageType === 'SYSTEM') {
@@ -2635,6 +3006,11 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             const sender = messageSenderMap[d.senderPublicId] ?? memberMap[d.senderPublicId];
                             const senderNickname = sender?.nickname ?? d.senderNickname ?? '알 수 없음';
                             const senderProfileImg = sender?.profileImg ?? d.senderProfileImg ?? '/images/mococo_question.png';
+                            const senderProfile = sender ?? {
+                                publicId: d.senderPublicId,
+                                nickname: senderNickname,
+                                profileImg: senderProfileImg
+                            };
 
                             const isMine = d.senderPublicId === myPublicId;
                             const isDeletedMessage = d.messageStatus === 'DELETED';
@@ -2669,25 +3045,8 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                             className="senderProfileImg clickableProfileImg"
                                             src={senderProfileImg}
                                             alt={senderNickname}
-                                            onClick={() => openProfilePopup(sender)}
+                                            onClick={() => openProfilePopup(senderProfile)}
                                         />
-                                    )}
-
-                                    {isMine && (
-                                        <div className='messageInfo'>
-                                            <div className='unreadCount'>{d.unreadCount}</div>
-                                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
-                                        </div>
-                                    )}
-
-                                    {isMine && !isDeletedMessage && (
-                                        <button
-                                            className="messageHoverReactionButton"
-                                            title="리액션"
-                                            onClick={(e) => openReactionPicker(e, d)}
-                                        >
-                                            ☺
-                                        </button>
                                     )}
 
                                     <div className="messageContent">
@@ -2695,68 +3054,105 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                             <div className="senderNickname">{senderNickname}</div>
                                         )}
 
-                                        <div className={`messageWrap ${isDeletedMessage ? 'deleted' : ''} ${hasImageOnlyAttachment ? 'imageOnlyMessage' : ''}`}>
-                                            {replyPreviewMessage && !isDeletedMessage && (
-                                                <div
-                                                    className="replyPreviewInMessage"
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    onClick={() => scrollToMessage(replyPreviewMessage.messageId)}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' || e.key === ' ') {
-                                                            e.preventDefault();
-                                                            scrollToMessage(replyPreviewMessage.messageId);
-                                                        }
-                                                    }}
+                                        {/* urc/시각은 리액션 유무와 무관하게 항상 말풍선 바로 옆에 붙도록 말풍선과 같은 라인에 둔다. */}
+                                        <div className="messageBubbleLine">
+                                            {isMine && (
+                                                <div className='messageInfo'>
+                                                    <div className='unreadCount'>{d.unreadCount}</div>
+                                                    <div className='formatTime'>{formatTime(d.createdAt)}</div>
+                                                </div>
+                                            )}
+
+                                            {isMine && !isDeletedMessage && reactions.length === 0 && (
+                                                <button
+                                                    className="messageHoverReactionButton"
+                                                    title="리액션"
+                                                    onClick={(e) => openReactionPicker(e, d)}
                                                 >
-                                                    <div className="replyPreviewSender">
-                                                        {messageSenderMap[replyPreviewMessage.senderPublicId]?.nickname
-                                                            ?? memberMap[replyPreviewMessage.senderPublicId]?.nickname
-                                                            ?? '답장'}
-                                                    </div>
-                                                    <div className="replyPreviewText">
-                                                        {replyPreviewMessage.messageText || '첨부 메시지'}
-                                                    </div>
-                                                </div>
+                                                    ☺
+                                                </button>
                                             )}
 
-                                            {attachments.length > 0 && !isDeletedMessage && (
-                                                <div className="attachmentPreviewList">
-                                                    {attachments.map(attachment => (
-                                                        <div className="attachmentPreviewItem" key={attachment.attachmentId}>
-                                                            {attachment.attachmentKind === 'IMAGE' ? (
-                                                                <img
-                                                                    className="attachmentImagePreview"
-                                                                    src={attachment.fileUrl}
-                                                                    alt={attachment.originalFileName}
-                                                                    onClick={() => openImageViewer(attachment)}
-                                                                    onLoad={keepLatestMessageVisibleAfterMediaLoad}
-                                                                />
-                                                            ) : attachment.attachmentKind === 'VIDEO' ? (
-                                                                <video
-                                                                    className="attachmentVideoPreview"
-                                                                    src={attachment.fileUrl}
-                                                                    controls
-                                                                    onLoadedMetadata={keepLatestMessageVisibleAfterMediaLoad}
-                                                                />
-                                                            ) : (
-                                                                <a
-                                                                    className="attachmentFilePreview"
-                                                                    href={attachment.fileUrl}
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                >
-                                                                    {attachment.originalFileName}
-                                                                </a>
-                                                            )}
+                                            <div className={`messageWrap ${isDeletedMessage ? 'deleted' : ''} ${hasImageOnlyAttachment ? 'imageOnlyMessage' : ''}`}>
+                                                {replyPreviewMessage && !isDeletedMessage && (
+                                                    <div
+                                                        className="replyPreviewInMessage"
+                                                        role="button"
+                                                        tabIndex={0}
+                                                        onClick={() => scrollToMessage(replyPreviewMessage.messageId)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                                e.preventDefault();
+                                                                scrollToMessage(replyPreviewMessage.messageId);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <div className="replyPreviewSender">
+                                                            {messageSenderMap[replyPreviewMessage.senderPublicId]?.nickname
+                                                                ?? memberMap[replyPreviewMessage.senderPublicId]?.nickname
+                                                                ?? '답장'}
                                                         </div>
-                                                    ))}
-                                                </div>
+                                                        <div className="replyPreviewText">
+                                                            {replyPreviewMessage.messageText || '첨부 메시지'}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {attachments.length > 0 && !isDeletedMessage && (
+                                                    <div className="attachmentPreviewList">
+                                                        {attachments.map(attachment => (
+                                                            <div className="attachmentPreviewItem" key={attachment.attachmentId}>
+                                                                {attachment.attachmentKind === 'IMAGE' ? (
+                                                                    <img
+                                                                        className="attachmentImagePreview"
+                                                                        src={attachment.fileUrl}
+                                                                        alt={attachment.originalFileName}
+                                                                        onClick={() => openImageViewer(attachment)}
+                                                                        onLoad={keepLatestMessageVisibleAfterMediaLoad}
+                                                                    />
+                                                                ) : attachment.attachmentKind === 'VIDEO' ? (
+                                                                    <video
+                                                                        className="attachmentVideoPreview"
+                                                                        src={attachment.fileUrl}
+                                                                        controls
+                                                                        onLoadedMetadata={keepLatestMessageVisibleAfterMediaLoad}
+                                                                    />
+                                                                ) : (
+                                                                    <a
+                                                                        className="attachmentFilePreview"
+                                                                        href={attachment.fileUrl}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                    >
+                                                                        {attachment.originalFileName}
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {(isDeletedMessage || d.messageText) && (
+                                                    <div className="messageText">
+                                                        {isDeletedMessage ? '삭제된 메시지입니다.' : renderSearchHighlightedText(d.messageText)}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {!isMine && !isDeletedMessage && reactions.length === 0 && (
+                                                <button
+                                                    className="messageHoverReactionButton"
+                                                    title="리액션"
+                                                    onClick={(e) => openReactionPicker(e, d)}
+                                                >
+                                                    ☺
+                                                </button>
                                             )}
 
-                                            {(isDeletedMessage || d.messageText) && (
-                                                <div className="messageText">
-                                                    {isDeletedMessage ? '삭제된 메시지입니다.' : d.messageText}
+                                            {!isMine && (
+                                                <div className='messageInfo'>
+                                                    <div className='unreadCount'>{d.unreadCount}</div>
+                                                    <div className='formatTime'>{formatTime(d.createdAt)}</div>
                                                 </div>
                                             )}
                                         </div>
@@ -2790,23 +3186,6 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                                             </div>
                                         )}
                                     </div>
-
-                                    {!isMine && !isDeletedMessage && (
-                                        <button
-                                            className="messageHoverReactionButton"
-                                            title="리액션"
-                                            onClick={(e) => openReactionPicker(e, d)}
-                                        >
-                                            ☺
-                                        </button>
-                                    )}
-
-                                    {!isMine && (
-                                        <div className='messageInfo'>
-                                            <div className='unreadCount'>{d.unreadCount}</div>
-                                            <div className='formatTime'>{formatTime(d.createdAt)}</div>
-                                        </div>
-                                    )}
                                 </div>
                             );
                         })
@@ -2814,6 +3193,19 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                         <div className="emptyChatMessage">친구와 새로운 이야기를 시작해보세요.</div>
                     }
 
+                    </div>
+
+                    {isScrolledAwayFromBottom && (
+                        <div className="chatScrollAssist">
+                            {newMessageWhileScrolled && (
+                                <button className="newMessageWhileScrolled" onClick={scrollChatToBottom}>
+                                    <strong>{messageSenderMap[newMessageWhileScrolled.senderPublicId]?.nickname ?? newMessageWhileScrolled.senderNickname ?? '새 메시지'}</strong>
+                                    <span>{newMessageWhileScrolled.messageText || (newMessageWhileScrolled.attachments?.length ? '첨부파일을 보냈습니다.' : '새 메시지가 도착했습니다.')}</span>
+                                </button>
+                            )}
+                            <button className="scrollToBottomButton" aria-label="맨 아래로 이동" onClick={scrollChatToBottom}>↓</button>
+                        </div>
+                    )}
                 </div>
 
                 {typingUsers.length > 0 && (
@@ -2876,16 +3268,70 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                 )}
 
                 <div className="aiRecommendBox">
-                    <button
-                        className="aiRecommendButton"
-                        onClick={requestAiRecommendedMessages}
-                        disabled={isAiRecommendLoading || isUploadingFiles}
-                    >
-                        {isAiRecommendLoading ? 'AI 추천 받는 중...' : 'AI에게 메시지 추천받기'}
-                    </button>
+                    <div className="aiActionButtons">
+                        <div className="aiRecommendButtonWrap">
+                            <button
+                                className="aiRecommendButton"
+                                onClick={requestAiRecommendedMessages}
+                                disabled={isAiProcessing || isUploadingFiles}
+                            >
+                                {isAiRecommendLoading ? 'AI 추천 받는 중...' : 'AI에게 메시지 추천받기'}
+                            </button>
+
+                            <div className="aiRecommendTooltip" role="tooltip">
+                                <div>1. 현재 채팅방 메시지를 기준으로 AI가 추천합니다.</div>
+                                <div>2. Gemini 3.5 기반이며 503 오류 시 작동하지 않을 수 있습니다.</div>
+                                <div>3. 약 12~20초 소요됩니다.</div>
+                            </div>
+                        </div>
+
+                        <button
+                            className="aiToneRefineButton"
+                            onClick={() => {
+                                setAiRecommendedMessages([]);
+                                setIsToneRefinePanelOpen(prev => !prev);
+                            }}
+                            disabled={isAiProcessing || isUploadingFiles}
+                        >
+                            {refiningTone ? '말투 다듬는 중...' : 'AI로 말투 다듬기'}
+                        </button>
+
+                        <button
+                            className="aiPersonalizedRecommendButton"
+                            onClick={() => {
+                                setIsToneRefinePanelOpen(false);
+                                setPersonalizedTargetPublicId('');
+                                setIsPersonalizedRecommendOpen(true);
+                            }}
+                            disabled={isAiProcessing || isUploadingFiles || !roomId}
+                        >
+                            {isPersonalizedRecommendLoading ? '맞춤 추천 중...' : '섬세한 맞춤 메시지'}
+                        </button>
+                    </div>
+
+                    {isToneRefinePanelOpen && (
+                        <div className="toneRefinePanel">
+                            <div className="toneRefinePanelHeader">
+                                <strong>변경할 말투 선택</strong>
+                                <button aria-label="말투 선택 닫기" onClick={() => setIsToneRefinePanelOpen(false)}>×</button>
+                            </div>
+                            <div className="toneRefineButtons">
+                                <button onClick={() => refineCurrentMessageTone('SOFT')} disabled={Boolean(refiningTone)}>부드럽게</button>
+                                <button onClick={() => refineCurrentMessageTone('CONCISE')} disabled={Boolean(refiningTone)}>간결하게</button>
+                                <button onClick={() => refineCurrentMessageTone('POLITE')} disabled={Boolean(refiningTone)}>정중하게</button>
+                            </div>
+                        </div>
+                    )}
 
                     {aiRecommendedMessages.length > 0 && (
                         <div className="aiRecommendList">
+                            <button
+                                className="aiRecommendCloseButton"
+                                aria-label="AI 추천 목록 닫기"
+                                onClick={() => setAiRecommendedMessages([])}
+                            >
+                                ×
+                            </button>
                             {aiRecommendedMessages.map((recommendedMessage, index) => (
                                 <button
                                     key={`${recommendedMessage}-${index}`}
@@ -2919,7 +3365,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
 
                             fileInputRef.current?.click();
                         }}
-                        disabled={isUploadingFiles}
+                        disabled={isUploadingFiles || isAiProcessing}
                     >
                         +
                     </button>
@@ -2936,7 +3382,7 @@ function ChatBox({ roomId, isDraft, targetPublicId, inviteMemberPublicIds = [], 
                             }
                         }}
                     />
-                    <button onClick={sendChatMessage} disabled={isUploadingFiles || isStartingChat}>
+                    <button onClick={sendChatMessage} disabled={isUploadingFiles || isStartingChat || isAiProcessing}>
                         {isUploadingFiles || isStartingChat ? '전송 중' : '전송'}
                     </button>
                 </div>

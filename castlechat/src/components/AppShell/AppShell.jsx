@@ -13,6 +13,8 @@ import { useMe } from "../../hooks/useAuthUser";
 import { closeChatWindow, moveChatWindow, focusChatWindow, clearChatWindows } from '../../store/chatWindowsSlice';
 import { connectWs, disconnectWs, emitWsEnterRoom, emitWsExitRoom, registerGlobalWsHandler, registerWsCloseListener } from "../../webSocket/wsClient";
 import { addAcceptedFriendToCache, addReceivedFriendRequestToCache, removeReceivedFriendRequestFromCache } from '../../hooks/useFriend';
+import { useChatRoomActions } from '../../hooks/useChatRoom';
+import { getMyAllRoomsApi, updateMyRoomSettingsApi } from '../../api/roomApi';
 
 import ChatBox from '../Chattings/ChatBox';
 
@@ -27,6 +29,7 @@ function AppShell() {
     const { data: me, isLoading: isCheckingLogin } = useMe();
     const [toastList, setToastList] = useState([]);
     const queryClient = useQueryClient();
+    const { enterExistingRoom } = useChatRoomActions();
     const navigator = useNavigate();
     const location = useLocation();
 
@@ -95,9 +98,11 @@ function AppShell() {
         }
 
 
-        return registerGlobalWsHandler((wsEvt) => {
+        return registerGlobalWsHandler(async (wsEvt) => {
             const payload = wsEvt.payload ?? {};
             let text = '';
+			let toastType = 'default';
+			let toastRoom = null;
 
             if (wsEvt.wsType === 'FRIEND_REQUEST_RECEIVED') {
                 addReceivedFriendRequestToCache(queryClient, payload);
@@ -136,7 +141,34 @@ function AppShell() {
 
             if (wsEvt.wsType === 'CHAT_MESSAGE_NOTIFICATION') {
                 text = `${payload.senderNickname ?? '상대'}: ${payload.previewText ?? ''}`;
+				toastType = 'chat';
+				let roomList = queryClient.getQueryData(['myAllRooms']);
+
+				if (!Array.isArray(roomList)) {
+					try {
+						roomList = await getMyAllRoomsApi();
+						queryClient.setQueryData(['myAllRooms'], roomList);
+					} catch {
+						roomList = [];
+					}
+				}
+
+				toastRoom = roomList.find(room => Number(room.roomId) === Number(payload.roomId)) ?? null;
+			}
+
+			if (wsEvt.wsType === 'ROOM_INVITED') {
+				queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+				text = `${payload.requesterNickname ?? '상대'}님이 채팅방에 초대했습니다.`;
             }
+
+			if (wsEvt.wsType === 'ROOM_KICKED' && (payload.targetPublicIds ?? []).includes(me.publicId)) {
+				dispatch(closeChatWindow(`room:${payload.roomId}`));
+				queryClient.setQueryData(['myAllRooms'], rooms => Array.isArray(rooms)
+					? rooms.filter(room => Number(room.roomId) !== Number(payload.roomId))
+					: rooms);
+				queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+				text = '채팅방에서 추방되었습니다.';
+			}
 
             if (wsEvt.wsType === 'ADD_FRIEND_FAIL' || wsEvt.wsType === 'RESPOND_FRIEND_FAIL') {
                 text = payload?.errorMessage ?? '친구 처리 실패';
@@ -145,13 +177,62 @@ function AppShell() {
             if (!text) return;
 
             const toastId = crypto.randomUUID();
-            setToastList(prev => [...prev, { toastId, text }]);
+			setToastList(prev => [...prev, {
+				toastId,
+				text,
+				toastType,
+				roomId: payload.roomId ?? null,
+				roomName: toastRoom?.customRoomName ?? null,
+				roomThumbnail: toastRoom?.customRoomThumbnail ?? payload.senderProfileImg ?? null,
+				messageNotificationEnabled: toastRoom?.messageNotificationEnabled ?? true
+			}].slice(-4));
 
             setTimeout(() => {
                 setToastList(prev => prev.filter(toast => toast.toastId !== toastId));
-            }, 3000);
+			}, 4000);
         });
-    }, [me, queryClient]);
+	}, [me, queryClient, dispatch]);
+
+	function closeToast(toastId) {
+		setToastList(prev => prev.filter(toast => toast.toastId !== toastId));
+	}
+
+	async function openToastRoom(toast) {
+		if (!toast.roomId) return;
+
+		closeToast(toast.toastId);
+
+		try {
+			await enterExistingRoom(toast.roomId);
+		} catch (e) {
+			console.error('알림 채팅방 입장 실패', e);
+		}
+	}
+
+	async function turnOffToastRoomNotification(e, toast) {
+		e.stopPropagation();
+
+		try {
+			const cachedRoomList = queryClient.getQueryData(['myAllRooms']);
+			const roomList = Array.isArray(cachedRoomList) ? cachedRoomList : await getMyAllRoomsApi();
+			const room = roomList.find(item => Number(item.roomId) === Number(toast.roomId));
+
+			if (!room) return;
+
+			await updateMyRoomSettingsApi({
+				roomId: room.roomId,
+				customRoomName: room.customRoomName,
+				customRoomThumbnail: room.customRoomThumbnail,
+				customRoomBackground: room.customRoomBackground,
+				messageNotificationEnabled: false
+			});
+
+			setToastList(prev => prev.filter(item => Number(item.roomId) !== Number(toast.roomId)));
+			queryClient.invalidateQueries({ queryKey: ['myAllRooms'] });
+		} catch (error) {
+			console.error('알림에서 방 알림 끄기 실패', error);
+		}
+	}
 
     return (
         <>
@@ -205,8 +286,37 @@ function AppShell() {
 
             <div className="globalToastBox">
                 {toastList.map(toast => (
-                    <div className="globalToastItem" key={toast.toastId}>
-                        {toast.text}
+					<div
+						className={`globalToastItem ${toast.toastType === 'chat' ? 'chatNotificationToast' : ''}`}
+						key={toast.toastId}
+						onClick={() => openToastRoom(toast)}
+					>
+						{toast.toastType === 'chat' && (
+							<img src={toast.roomThumbnail || '/images/mococo_question.png'} alt="채팅방" />
+						)}
+						<div className="globalToastTextBox">
+							{toast.toastType === 'chat' && <strong>{toast.roomName ?? '채팅방'}</strong>}
+							<span>{toast.text}</span>
+						</div>
+						{toast.toastType === 'chat' && toast.messageNotificationEnabled && (
+							<button
+								className="globalToastBellButton"
+								title="이 방 알림 끄기"
+								onClick={(e) => turnOffToastRoomNotification(e, toast)}
+							>
+								🔔
+							</button>
+						)}
+						<button
+							className="globalToastCloseButton"
+							aria-label="알림 닫기"
+							onClick={(e) => {
+								e.stopPropagation();
+								closeToast(toast.toastId);
+							}}
+						>
+							×
+						</button>
                     </div>
                 ))}
             </div>

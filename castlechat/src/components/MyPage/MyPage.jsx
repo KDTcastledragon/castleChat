@@ -28,6 +28,7 @@ function MyPage() {
     const profileImgInputRef = useRef(null);
 
     const [nickname, setNickname] = useState('');
+    const [isNicknameEditing, setIsNicknameEditing] = useState(false);
     const [profileImg, setProfileImg] = useState('');
     const [profileImgFileName, setProfileImgFileName] = useState('');
     const [isUploadingProfileImg, setIsUploadingProfileImg] = useState(false);
@@ -41,11 +42,6 @@ function MyPage() {
         onSuccess: (updatedMe) => {
             queryClient.setQueryData(['me'], updatedMe);
             emitWsProfileUpdated();
-            setNickname('');
-            alert('닉네임이 변경되었습니다.');
-        },
-        onError: (err) => {
-            alert(err.response?.data ?? '닉네임 변경 실패');
         }
     });
 
@@ -54,12 +50,6 @@ function MyPage() {
         onSuccess: (updatedMe) => {
             queryClient.setQueryData(['me'], updatedMe);
             emitWsProfileUpdated();
-            setProfileImg('');
-            setProfileImgFileName('');
-            alert('프로필 이미지가 변경되었습니다.');
-        },
-        onError: (err) => {
-            alert(err.response?.data ?? '프로필 이미지 변경 실패');
         }
     });
 
@@ -86,29 +76,49 @@ function MyPage() {
     const currentProfileImageFileName = getProfileImageFileName(me.profileImg || DEFAULT_PROFILE_IMAGE);
     const selectedProfileImageFileName = profileImgFileName || getProfileImageFileName(nextProfileImg);
 
-    function saveMyNickname() {
-        const nextNickname = nickname.trim();
+    // 닉네임/프로필 중 하나라도 실제로 바뀌어야 저장 버튼이 활성화된다.
+    const isNicknameChanged = isNicknameEditing && nickname.trim().length > 0 && nickname.trim() !== me.nickname;
+    const isProfileImgChanged = !!profileImg && profileImg !== (me.profileImg || DEFAULT_PROFILE_IMAGE);
+    const isSavingProfile = updateNicknameMutation.isPending || updateProfileImageMutation.isPending;
 
-        if (!nextNickname) {
-            alert('변경할 닉네임을 입력해주세요.');
-            return;
-        }
-
-        updateNicknameMutation.mutate(nextNickname);
+    function toggleNicknameEditing() {
+        setIsNicknameEditing(prev => {
+            const next = !prev;
+            setNickname(next ? me.nickname : '');
+            return next;
+        });
     }
 
-    function saveMyProfileImage() {
-        if (!profileImg) {
-            alert('변경할 프로필 이미지를 선택해주세요.');
-            return;
-        }
+    // 닉네임 + 프로필 이미지 통합 저장.
+    async function saveMyProfile() {
+        try {
+            if (isNicknameChanged) {
+                await updateNicknameMutation.mutateAsync(nickname.trim());
+            }
 
-        updateProfileImageMutation.mutate(profileImg);
+            if (isProfileImgChanged) {
+                await updateProfileImageMutation.mutateAsync(profileImg);
+            }
+
+            setIsNicknameEditing(false);
+            setNickname('');
+            setProfileImg('');
+            setProfileImgFileName('');
+            alert('프로필이 저장되었습니다.');
+        } catch (err) {
+            alert(err.response?.data ?? '프로필 저장 실패');
+        }
     }
 
     function selectDefaultProfileImage() {
         setProfileImg(DEFAULT_PROFILE_IMAGE);
         setProfileImgFileName('mococo_question.png');
+    }
+
+    // 원래대로: 선택했던 이미지 초안을 버리고 기존 프로필 이미지로 되돌린다.
+    function revertProfileImage() {
+        setProfileImg('');
+        setProfileImgFileName('');
     }
 
     async function changeProfileImage(e) {
@@ -178,6 +188,13 @@ function MyPage() {
                     <div className="myPageTitleBox">
                         <h2>내정보</h2>
                     </div>
+
+                    <button
+                        className="passwordToggleButton"
+                        onClick={() => setIsPasswordBoxOpen(true)}
+                    >
+                        비밀번호 변경하기
+                    </button>
                 </div>
 
                 <div className="myInfoGrid">
@@ -194,20 +211,19 @@ function MyPage() {
                 <div className="myEditSection">
                     <div className="myEditRow">
                         <label>
-                            닉네임 변경
+                            닉네임
                             <input
-                                value={nickname}
+                                value={isNicknameEditing ? nickname : me.nickname}
                                 onChange={(e) => setNickname(e.target.value)}
-                                placeholder={me.nickname}
+                                disabled={!isNicknameEditing}
                             />
                         </label>
 
                         <button
                             className="myPrimaryButton"
-                            onClick={saveMyNickname}
-                            disabled={updateNicknameMutation.isPending}
+                            onClick={toggleNicknameEditing}
                         >
-                            닉네임 변경
+                            {isNicknameEditing ? '변경 취소' : '닉네임 변경하기'}
                         </button>
                     </div>
 
@@ -233,6 +249,15 @@ function MyPage() {
                                 기본 이미지
                             </button>
 
+                            <button
+                                type="button"
+                                className="revertProfileImageButton"
+                                onClick={revertProfileImage}
+                                disabled={isUploadingProfileImg || !profileImg}
+                            >
+                                원래대로
+                            </button>
+
                             <input
                                 ref={profileImgInputRef}
                                 type="file"
@@ -241,25 +266,20 @@ function MyPage() {
                                 onChange={changeProfileImage}
                             />
                         </div>
-
-                        <button
-                            className="myPrimaryButton"
-                            onClick={saveMyProfileImage}
-                            disabled={updateProfileImageMutation.isPending || isUploadingProfileImg || !profileImg}
-                        >
-                            프로필 이미지 변경
-                        </button>
                     </div>
                 </div>
 
-                <div className="passwordSection">
+                <div className="mySaveSection">
                     <button
-                        className="passwordToggleButton"
-                        onClick={() => setIsPasswordBoxOpen(true)}
+                        className="myPrimaryButton profileSaveButton"
+                        onClick={saveMyProfile}
+                        disabled={isSavingProfile || isUploadingProfileImg || (!isNicknameChanged && !isProfileImgChanged)}
                     >
-                        비밀번호 변경하기
+                        {isSavingProfile ? '저장 중...' : '프로필 저장'}
                     </button>
+                </div>
 
+                <div className="passwordSection">
                     {isPasswordBoxOpen && (
                         <div className="passwordModalOverlay">
                             <div className="passwordEditBox" onMouseDown={(e) => e.stopPropagation()}>
@@ -290,14 +310,14 @@ function MyPage() {
                                 />
 
                                 <div className="passwordModalActions">
-                                    <button type="button" className="passwordCancelButton" onClick={closePasswordModal}>
-                                        취소
-                                    </button>
                                     <button
                                         onClick={changePassword}
                                         disabled={changePasswordMutation.isPending}
                                     >
                                         변경
+                                    </button>
+                                    <button type="button" className="passwordCancelButton" onClick={closePasswordModal}>
+                                        취소
                                     </button>
                                 </div>
                             </div>

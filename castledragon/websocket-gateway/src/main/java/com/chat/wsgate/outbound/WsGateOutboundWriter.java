@@ -163,6 +163,16 @@ public class WsGateOutboundWriter {
 		dispatchToSession(targetSession, createSuccessEvent(type, payloadData, requestId));
 	}
 
+	public void pushToSingleUserByPublicId(String publicId, String type, Object payloadData, String requestId) throws Exception {
+		WebSocketSession targetSession = wsGateSessionRegistry.findSessionByPublicId(publicId);
+
+		if (targetSession == null || !targetSession.isOpen()) {
+			return;
+		}
+
+		dispatchToSession(targetSession, createSuccessEvent(type, payloadData, requestId));
+	}
+
 	public void pushToMultipleUsers(Collection<Long> userIds, String type, Object payloadData, String requestId) throws Exception {
 		if (userIds == null || userIds.isEmpty()) {
 			log.info("pushToMultipleUsers 대상 없음. type={}", type);

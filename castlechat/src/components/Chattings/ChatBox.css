@@ -31,7 +31,7 @@
     height: 46px;
     min-height: 46px;
     flex: 0 0 46px;
-    padding: 0 96px 0 52px;
+	padding: 0 190px 0 52px;
     background-color: #000;
     color: #fff;
     box-sizing: border-box;
@@ -57,7 +57,7 @@
 .chatTitleRightControls {
     right: 6px;
     justify-content: flex-end;
-    gap: 5px;
+	gap: 20px;
 }
 
 .chatRoomTitleText {
@@ -86,6 +86,77 @@
     align-items: center;
     justify-content: center;
     transition: background-color 160ms ease, border-color 160ms ease, transform 120ms ease;
+}
+
+.chatSearchButton {
+	width: 30px;
+	height: 28px;
+	padding: 0;
+	border: 1px solid #475569;
+	border-radius: 8px;
+	background: var(--castle-nav-soft);
+	color: #e2e8f0;
+	font-size: 16px;
+	cursor: pointer;
+}
+
+.chatSearchButton:hover,
+.chatSearchButton.active {
+	border-color: #5eead4;
+	background: var(--castle-primary);
+	color: #fff;
+}
+
+.chatSearchBar {
+	width: 100%;
+	height: 42px;
+	min-height: 42px;
+	padding: 6px 10px;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	border-bottom: 1px solid var(--castle-border-soft);
+	background: var(--castle-surface);
+	box-sizing: border-box;
+}
+
+.chatSearchBar input {
+	flex: 1;
+	min-width: 0;
+	height: 30px;
+	padding: 0 9px;
+	border: 1px solid var(--castle-border);
+	border-radius: 8px;
+	background: var(--castle-surface-soft);
+	color: var(--castle-text);
+	outline: none;
+}
+
+.chatSearchBar input:focus {
+	border-color: var(--castle-primary);
+}
+
+.chatSearchBar button {
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 7px;
+	background: var(--castle-primary-soft);
+	color: var(--castle-primary-hover);
+	cursor: pointer;
+}
+
+.chatSearchBar button:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.chatSearchCount {
+	min-width: 36px;
+	color: var(--castle-text-muted);
+	font-size: 11px;
+	text-align: center;
 }
 
 .roomMenuButton:hover {
@@ -146,6 +217,10 @@
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
     transform: none;
     box-sizing: border-box;
+}
+
+.chattingRoomSection.searchOpen .activeRoomNoticeBar {
+	top: 96px;
 }
 
 .activeRoomNoticeBar.collapsed {
@@ -210,12 +285,20 @@
 }
 
 /* ====[채팅 메시지 영역]============================================= */
-.chattingBox {
+.chattingViewport {
+    position: relative;
     width: 444px;
     height: min(390px, calc(100vh - 236px));
     min-height: 300px;
     flex: 1 1 auto;
     margin: 0 auto;
+}
+
+.chattingBox {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
     padding: 10px;
     background-color: rgb(255, 255, 255);
     display: flex;
@@ -275,7 +358,20 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 250px;
+    max-width: 100%;
+}
+
+/* 내 메시지는 말풍선/리액션이 오른쪽 기준으로 정렬된다. */
+.mine .messageContent {
+    align-items: flex-end;
+}
+
+/* 말풍선 + urc/시각 + hover 리액션 버튼을 한 라인에 고정.
+   리액션 바는 이 라인 아래에 붙으므로 urc/시각이 아래로 밀리지 않는다. */
+.messageBubbleLine {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
 }
 
 .senderNickname {
@@ -309,6 +405,12 @@
 
 .messageText {
     word-break: break-word;
+}
+
+.chatSearchMatch {
+	padding: 0 1px;
+	background: #fde047;
+	color: #1f2937;
 }
 
 .notificationBellButton {
@@ -500,15 +602,15 @@
 }
 
 .messageHoverReactionButton {
-    width: 30px;
-    height: 24px;
+    width: 34px;
+    height: 28px;
     align-self: flex-end;
     margin-bottom: 2px;
     border: 1px solid #dddddd;
     border-radius: 13px;
     background-color: rgba(255, 255, 255, 0.92);
     color: #555;
-    font-size: 11px;
+    font-size: 14px;
     cursor: pointer;
     opacity: 0;
     transform: translateY(2px);
@@ -601,7 +703,9 @@
     position: absolute;
     left: 14px;
     top: 72px;
-    width: 190px;
+	width: 272px;
+	max-height: 250px;
+	overflow-y: auto;
     padding: 8px;
     border: 1px solid #d6d6d6;
     border-radius: 12px;
@@ -618,13 +722,13 @@
 }
 
 .reactionPickerButtons {
-    display: flex;
-    gap: 5px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 5px;
 }
 
 .reactionPickerButtons button {
-    flex: 1;
-    height: 34px;
+	height: 38px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background-color: #fafafa;
@@ -657,8 +761,8 @@
     position: absolute;
     top: 24px;
     right: 18px;
-    width: 300px;
-    min-height: 360px;
+	width: 390px;
+	min-height: 420px;
     padding: 18px 16px;
     border-radius: 14px;
     background-color: #ffffff;
@@ -995,6 +1099,18 @@
     box-sizing: border-box;
 }
 
+.aiActionButtons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.aiRecommendButtonWrap {
+    position: relative;
+    display: inline-flex;
+}
+
 .aiRecommendButton {
     min-height: 28px;
     padding: 0 12px;
@@ -1018,6 +1134,149 @@
     cursor: not-allowed;
 }
 
+.aiToneRefineButton {
+    min-height: 28px;
+    padding: 0 12px;
+    border: 1px solid var(--castle-primary);
+    border-radius: 15px;
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.aiToneRefineButton:hover {
+    background: var(--castle-primary-pale);
+}
+
+.aiToneRefineButton:disabled {
+    border-color: var(--castle-border);
+    background: var(--castle-surface-muted);
+    color: var(--castle-text-muted);
+    cursor: not-allowed;
+}
+
+.aiPersonalizedRecommendButton {
+	min-height: 28px;
+	padding: 0 12px;
+	border: 1px solid var(--castle-primary);
+	border-radius: 15px;
+	background: var(--castle-surface);
+	color: var(--castle-primary-hover);
+	font-size: 12px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.aiPersonalizedRecommendButton:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.aiRecommendTooltip {
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 50px);
+	z-index: 90;
+	width: 150px;
+	height: 100px;
+	padding: 8px;
+	border: 1px solid var(--castle-border);
+	border-radius: 12px;
+	background: var(--castle-surface);
+	color: var(--castle-text);
+	font-size: 9px;
+	line-height: 1.35;
+	box-shadow: var(--castle-shadow-strong);
+	box-sizing: border-box;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateX(-50%) translateY(4px);
+	transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.aiRecommendTooltip::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	bottom: -9px;
+	width: 16px;
+	height: 16px;
+	border-right: 1px solid var(--castle-border);
+	border-bottom: 1px solid var(--castle-border);
+	background: var(--castle-surface);
+	transform: translateX(-50%) rotate(45deg);
+}
+
+.aiRecommendButton:hover + .aiRecommendTooltip,
+.aiRecommendButton:focus-visible + .aiRecommendTooltip {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
+}
+
+.toneRefinePanel {
+    position: absolute;
+    right: 8px;
+    bottom: calc(100% + 6px);
+    z-index: 92;
+    width: 286px;
+    padding: 10px;
+    border: 1px solid var(--castle-border);
+    border-radius: 12px;
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow-strong);
+    box-sizing: border-box;
+}
+
+.toneRefinePanelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+    color: var(--castle-text);
+    font-size: 12px;
+}
+
+.toneRefinePanelHeader button {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--castle-surface-soft);
+    color: var(--castle-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.toneRefineButtons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.toneRefineButtons button {
+    height: 34px;
+    border: 1px solid var(--castle-border);
+    border-radius: 9px;
+    background: var(--castle-primary-pale);
+    color: var(--castle-primary-hover);
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.toneRefineButtons button:hover {
+    border-color: var(--castle-primary);
+    background: var(--castle-primary-soft);
+}
+
+.toneRefineButtons button:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
 /* 추천 목록은 레이아웃을 밀지 않고 입력창 위로 떠오르는 팝업으로 표시한다. */
 .aiRecommendList {
     position: absolute;
@@ -1033,6 +1292,19 @@
     border-radius: 12px;
     background-color: #ffffff;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.aiRecommendCloseButton {
+	align-self: flex-end;
+	width: 28px;
+	height: 28px;
+	margin-left: auto;
+	border: 0;
+	border-radius: 50%;
+	background: var(--castle-surface-soft);
+	color: var(--castle-text-muted);
+	font-size: 18px;
+	cursor: pointer;
 }
 
 .aiRecommendItem {
@@ -1104,8 +1376,8 @@
     top: 46px;
     left: 0;
     bottom: 0;
-    width: 76%;
-    min-width: 330px;
+    width: min(630px, calc(100% - 24px));
+    min-width: 0;
     max-width: calc(100% - 24px);
     background-color: #ffffff;
     border-right: 1px solid #cfcfcf;
@@ -1114,6 +1386,32 @@
     display: none;
     flex-direction: column;
     box-sizing: border-box;
+}
+
+.roomSidePanelBody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.roomSidePanelRoomColumn,
+.roomSidePanelMemberColumn {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.roomSidePanelRoomColumn {
+    border-right: 1px solid var(--castle-border-soft);
+}
+
+.roomSidePanelRoomScroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .roomSidePanel.open {
@@ -1154,7 +1452,7 @@
 
 .roomSidePanelDangerZone {
     padding: 10px;
-    border-bottom: 1px solid #eeeeee;
+    border-top: 1px solid #eeeeee;
     background-color: #fffdf2;
     box-sizing: border-box;
 }
@@ -1189,13 +1487,14 @@
     box-sizing: border-box;
 }
 
+/* 닉네임 | 권한 | 권한변경 | 추방/더보기 열을 고정폭 grid로 맞춰 행마다 위치가 흔들리지 않게 한다. */
 .roomMemberItem {
     display: grid;
-    grid-template-columns: 30px minmax(0, 1fr) 46px 68px 66px;
+    grid-template-columns: 30px minmax(0, 1fr) 64px 76px 92px;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
     min-height: 44px;
-    padding: 6px 8px;
+    padding: 6px 10px;
     border-bottom: 1px solid #f0f0f0;
     box-sizing: border-box;
 }
@@ -1252,7 +1551,7 @@
 
 .memberRoleChangeDetails {
     position: relative;
-    width: 68px;
+    width: 100%;
     font-size: 10px;
 }
 
@@ -1326,9 +1625,20 @@
 }
 
 .kickMemberButton {
-    font-size: 11px;
-    padding: 3px 6px;
-    cursor: pointer;
+	width: 56px;
+	height: 28px;
+	padding: 0 8px;
+	border: 1px solid #f59e0b;
+	border-radius: 8px;
+	background: #fffbeb;
+	color: #b45309;
+	font-size: 11px;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.kickMemberButton:hover {
+	background: #fef3c7;
 }
 
 .roomSettingsBox {
@@ -1519,6 +1829,194 @@
     cursor: pointer;
 }
 
+.roomNoticePanelHeaderActions {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+.roomNoticePanelHeaderActions button.write {
+	width: auto;
+	padding: 0 10px;
+	border-radius: 8px;
+	background: var(--castle-primary);
+	color: #fff;
+	font-size: 12px;
+}
+
+.newRoomNoticeEditor {
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--castle-border-soft);
+	background: var(--castle-surface-soft);
+}
+
+.newRoomNoticeEditor textarea {
+	width: 100%;
+	min-height: 76px;
+	padding: 8px;
+	border: 1px solid var(--castle-border);
+	border-radius: 8px;
+	box-sizing: border-box;
+	resize: vertical;
+}
+
+.newRoomNoticeEditor > div {
+	margin-top: 7px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 6px;
+}
+
+.newRoomNoticeEditor button {
+	height: 30px;
+	padding: 0 12px;
+	border: 0;
+	border-radius: 7px;
+	background: var(--castle-primary);
+	color: #fff;
+	cursor: pointer;
+}
+
+.newRoomNoticeEditor button.cancel {
+    background: var(--castle-surface);
+    color: var(--castle-text-muted);
+    border: 1px solid var(--castle-border);
+}
+
+.toneRefineResultOverlay,
+.personalizedRecommendOverlay {
+	position: absolute;
+	inset: 46px 0 0;
+	z-index: 110;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 18px;
+	background: rgba(241, 245, 249, 0.55);
+	backdrop-filter: blur(2px);
+	box-sizing: border-box;
+}
+
+.toneRefineResultModal,
+.personalizedRecommendModal {
+	position: relative;
+	width: min(420px, 100%);
+	padding: 20px;
+	border: 1px solid var(--castle-border);
+	border-radius: 14px;
+	background: var(--castle-surface);
+	box-shadow: var(--castle-shadow-strong);
+	box-sizing: border-box;
+}
+
+.toneRefineResultModal {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: center;
+	gap: 9px;
+	font-size: 13px;
+}
+
+.toneRefineResultModal strong,
+.toneRefineResultModal b {
+	grid-column: 1 / -1;
+}
+
+.toneRefineResultModal > div {
+	padding: 9px;
+	border-radius: 8px;
+	background: var(--castle-surface-soft);
+	word-break: break-word;
+}
+
+.toneRefineResultModal b {
+	color: var(--castle-primary);
+	text-align: right;
+}
+
+.toneRefineResultClose {
+	position: absolute;
+	top: 7px;
+	right: 8px;
+	border: 0;
+	background: transparent;
+	font-size: 20px;
+	cursor: pointer;
+}
+
+.personalizedRecommendHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.personalizedRecommendHeader button {
+	border: 0;
+	background: transparent;
+	font-size: 22px;
+	cursor: pointer;
+}
+
+.personalizedRecommendModal p {
+	margin: 12px 0;
+	font-size: 13px;
+}
+
+.personalizedMemberList {
+	max-height: 210px;
+	overflow-y: auto;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 7px;
+}
+
+.personalizedMemberList button {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 0;
+	padding: 7px;
+	border: 1px solid var(--castle-border);
+	border-radius: 9px;
+	background: var(--castle-surface-soft);
+	cursor: pointer;
+}
+
+.personalizedMemberList button.selected {
+	border-color: var(--castle-primary);
+	background: var(--castle-primary-pale);
+}
+
+.personalizedMemberList img {
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	object-fit: cover;
+}
+
+.personalizedMemberList span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.personalizedRelationshipButtons {
+	margin-top: 12px;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 7px;
+}
+
+.personalizedRelationshipButtons button {
+	height: 34px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--castle-primary);
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
 .roomNoticePanelList {
     flex: 1;
     overflow-y: auto;
@@ -1605,42 +2103,128 @@
 .memberDangerActions {
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 6px;
 }
 
-.banMemberDetails {
-    position: relative;
-    font-size: 10px;
+.chatConfirmOverlay {
+	position: absolute;
+	inset: 0;
+	z-index: 130;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(15, 23, 42, 0.34);
 }
 
-.banMemberDetails summary {
-    cursor: pointer;
-    color: #777;
-    list-style: none;
+.chatConfirmModal {
+	width: min(360px, calc(100% - 36px));
+	padding: 20px;
+	border: 1px solid var(--castle-border);
+	border-radius: 14px;
+	background: var(--castle-surface);
+	box-shadow: var(--castle-shadow-strong);
+	box-sizing: border-box;
 }
 
-.banMemberDetails summary::-webkit-details-marker {
-    display: none;
+.chatConfirmTitle {
+	margin-bottom: 9px;
+	color: var(--castle-text);
+	font-size: 17px;
+	font-weight: 800;
 }
 
-.banMemberButton {
-    position: absolute;
-    right: 0;
-    top: 18px;
-    width: 72px;
-    padding: 4px 5px;
-    border: 1px solid #d32f2f;
-    border-radius: 6px;
-    background-color: #fff3f3;
-    color: #c62828;
-    font-size: 10px;
-    cursor: pointer;
-    z-index: 5;
+.chatConfirmMessage {
+	color: var(--castle-text-muted);
+	font-size: 13px;
+	line-height: 1.5;
+	word-break: keep-all;
+}
+
+.chatConfirmActions {
+	margin-top: 18px;
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.chatConfirmActions button {
+	min-width: 76px;
+	height: 34px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--castle-primary);
+	color: #fff;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.chatConfirmActions button.cancel {
+	background: var(--castle-surface-soft);
+	color: var(--castle-text-muted);
+}
+
+.chatConfirmActions button.danger {
+	background: #dc2626;
 }
 
 .kickMemberButtonPlaceholder {
     width: 44px;
     height: 1px;
+}
+
+.chatScrollAssist {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.newMessageWhileScrolled {
+    max-width: 280px;
+    min-width: 170px;
+    padding: 8px 11px;
+    border: 1px solid var(--castle-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: var(--castle-shadow);
+    color: var(--castle-text);
+    text-align: left;
+    cursor: pointer;
+}
+
+.newMessageWhileScrolled strong,
+.newMessageWhileScrolled span {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.newMessageWhileScrolled strong {
+    margin-bottom: 2px;
+    font-size: 11px;
+}
+
+.newMessageWhileScrolled span {
+    color: var(--castle-text-muted);
+    font-size: 12px;
+}
+
+.scrollToBottomButton {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 1px solid var(--castle-border);
+    border-radius: 50%;
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow);
+    color: var(--castle-primary-hover);
+    font-size: 20px;
+    cursor: pointer;
 }
 
 .inviteMemberButton {
@@ -1797,39 +2381,55 @@
     right: 0;
     bottom: 0;
     z-index: 60;
-    background-color: rgba(0, 0, 0, 0.08);
+	background-color: rgba(241, 245, 249, 0.45);
+	backdrop-filter: blur(2px);
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding-bottom: 110px;
+	padding-bottom: 125px;
     box-sizing: border-box;
 }
 
+/* 510x225 가로형: 왼쪽 프로필 이미지, 오른쪽 닉네임+버튼 */
 .profilePopup {
     position: relative;
-    width: 270px;
-    min-height: 210px;
+    width: 510px;
+    max-width: calc(100% - 24px);
+    min-height: 225px;
     background-color: #ffffff;
     border: 1px solid #cfcfcf;
     border-radius: 16px;
     box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
-    padding: 26px 18px 18px;
+    padding: 30px 34px;
     box-sizing: border-box;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    text-align: left;
 }
 
 .profilePopupCloseButton {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    font-size: 11px;
+    top: 10px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    color: #777;
     cursor: pointer;
 }
 
+.profilePopupCloseButton:hover {
+    color: #222;
+}
+
 .profilePopupImageWrap {
-    width: 82px;
-    height: 82px;
-    margin: 0 auto 10px;
+    width: 140px;
+    height: 140px;
+    flex-shrink: 0;
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid #f0f0f0;
@@ -1841,24 +2441,33 @@
     object-fit: cover;
 }
 
+.profilePopupMainInfo {
+    flex: 1;
+    min-width: 0;
+}
+
 .profilePopupNickname {
-    font-size: 17px;
+    font-size: 22px;
     font-weight: bold;
-    margin-bottom: 18px;
+    margin-bottom: 22px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .profilePopupActions {
     display: flex;
-    justify-content: center;
-    gap: 12px;
+    justify-content: flex-start;
+    gap: 14px;
 }
 
 .profilePopupActionButton {
-    min-width: 86px;
-    height: 34px;
-    border-radius: 17px;
+    min-width: 120px;
+    height: 42px;
+    border-radius: 21px;
     border: 1px solid #cfcfcf;
     background-color: #f7f7f7;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
 }
@@ -1870,6 +2479,51 @@
 
 .profilePopupActionButton.report {
     background-color: #eeeeee;
+}
+
+/* ====[권한 변경 결과 모달]============================================= */
+.roleChangeResultOverlay {
+    position: absolute;
+    inset: 46px 0 0 0;
+    z-index: 120;
+    background-color: rgba(0, 0, 0, 0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.roleChangeResultModal {
+    min-width: 260px;
+    max-width: 80%;
+    padding: 22px 26px;
+    border: 1px solid var(--castle-border);
+    border-radius: 14px;
+    background: var(--castle-surface);
+    box-shadow: var(--castle-shadow-strong);
+    text-align: center;
+}
+
+.roleChangeResultText {
+    margin-bottom: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--castle-text);
+    word-break: keep-all;
+}
+
+.roleChangeResultModal button {
+    min-width: 88px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--castle-primary);
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.roleChangeResultModal button:hover {
+    background: var(--castle-primary-hover);
 }
 
 /* Professional navy, slate and teal theme. Layout and interaction rules stay unchanged. */
@@ -2202,6 +2856,13 @@
     min-height: 0;
 }
 
+.chattingRoomSection.docked .chattingViewport {
+    width: 100%;
+    height: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
 .chattingRoomSection.docked .composerMetaPanel,
 .chattingRoomSection.docked .aiRecommendBox,
 .chattingRoomSection.docked .inputChat {
@@ -2212,7 +2873,7 @@
     top: 46px;
     left: 0;
     bottom: 0;
-    width: min(380px, 76%);
+    width: min(630px, calc(100% - 24px));
     min-width: 0;
     max-width: calc(100% - 24px);
     z-index: 100;
@@ -2223,7 +2884,7 @@
 /* 친구 초대 패널은 채팅방 메뉴(z:100) 바로 옆에, 메뉴보다 앞에 뜬다. */
 .chattingRoomSection.docked .inviteFriendPanel {
     top: 46px;
-    left: calc(min(380px, 76%) + 10px);
+    left: calc(min(630px, calc(100% - 24px)) + 10px);
     z-index: 110;
     border-radius: 14px;
 }

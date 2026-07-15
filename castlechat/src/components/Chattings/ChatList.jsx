@@ -66,6 +66,17 @@ function ChatList() {
         if (!me) return;
 
         return registerGlobalWsHandler((wsEvt) => {
+			if (wsEvt.wsType === 'ROOM_KICKED') {
+				const payload = wsEvt.payload;
+
+				if ((payload?.targetPublicIds ?? []).includes(me.publicId) && payload?.roomId) {
+					delete localUnreadCountRef.current[String(payload.roomId)];
+					updateRoomLists(rooms => rooms.filter(room => Number(room.roomId) !== Number(payload.roomId)));
+				}
+
+				return;
+			}
+
             if (wsEvt.wsType === 'LEFT_ROOM' || wsEvt.wsType === 'LEFT_ROOM_OK') {
                 const payload = wsEvt.payload;
 
@@ -106,16 +117,13 @@ function ChatList() {
             }
 
             const isMyMessage = payload.senderPublicId === me.publicId;
-            const rawPreviewText = payload.previewText ?? payload.messageText ?? currentRoom.lastMessage ?? '';
-            // room feed(공지/초대/권한변경 등)는 prefix를 떼서 보여주고, unread에도 세지 않는다.
-            const isRoomFeedPreview = rawPreviewText.startsWith('[ROOM_FEED]');
-            const previewText = isRoomFeedPreview ? rawPreviewText.slice('[ROOM_FEED]'.length) : rawPreviewText;
+            const previewText = payload.previewText ?? payload.messageText ?? currentRoom.lastMessage ?? '';
             const lastMessageAt = payload.notifiedAt ?? payload.createdAt ?? currentRoom.lastMessageAt;
             const currentUnreadCount = Number(localUnreadCountRef.current[roomKey]
                 ?? currentRoom.unreadMessageCount
                 ?? currentRoom.unreadCount
                 ?? 0);
-            const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage && !isRoomFeedPreview;
+            const shouldIncreaseUnread = wsEvt.wsType === 'CHAT_ROOM_UPDATED' && !isMyMessage;
             const nextUnreadCount = shouldIncreaseUnread ? currentUnreadCount + 1 : currentUnreadCount;
 
             localUnreadCountRef.current[roomKey] = nextUnreadCount;

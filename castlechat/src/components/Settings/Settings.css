@@ -12,4 +12,60 @@
     box-shadow: var(--castle-shadow);
     box-sizing: border-box;
     text-align: left;
+    overflow-y: auto;
+}
+
+.settingsTitle {
+    margin: 0 0 18px;
+    font-size: 24px;
+}
+
+.settingsSection {
+    margin-bottom: 22px;
+    padding: 16px 18px;
+    border: 1px solid var(--castle-border-soft);
+    border-radius: 12px;
+    background: var(--castle-surface-soft);
+}
+
+.settingsSection h3 {
+    margin: 0 0 10px;
+    font-size: 15px;
+    color: var(--castle-primary-hover);
+}
+
+.settingsRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--castle-border-soft);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.settingsRow:last-child {
+    border-bottom: 0;
+}
+
+.settingsRow input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--castle-primary);
+}
+
+.settingsRow select {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--castle-border);
+    border-radius: 8px;
+    background: var(--castle-surface);
+    color: var(--castle-text);
+}
+
+.settingsDemoNotice {
+    margin: 8px 0 0;
+    color: var(--castle-text-muted);
+    font-size: 12px;
 }

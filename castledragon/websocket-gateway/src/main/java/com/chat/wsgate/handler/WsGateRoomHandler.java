@@ -169,6 +169,10 @@ public class WsGateRoomHandler {
 		RoomFeedResponseDTO response = wsGateRoomClient.inviteMember(ivtMbrCmd);
 
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_MEMBER_INVITED", response, dto.getRequestId());
+
+		for (String targetPublicId : response.getTargetPublicIds()) {
+			wsGateOutboundWriter.pushToSingleUserByPublicId(targetPublicId, "ROOM_INVITED", response, dto.getRequestId());
+		}
 	}
 
 	//	====== 단톡방에서 멤버 추방 ===========================================================================================================

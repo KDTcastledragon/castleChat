@@ -42,20 +42,6 @@ export async function sendFileApi(roomId, files, onUploadProgress) {
     return res.data;
 }
 
-const ROOM_FEED_PREFIX = '[ROOM_FEED]';
-
-// room feed는 DB에 TEXT + prefix로 저장된다. 어떤 조회 경로로 내려와도 SYSTEM 메시지로 정규화한다.
-function normalizeRoomFeedMessage(message) {
-    if (typeof message?.messageText === 'string' && message.messageText.startsWith(ROOM_FEED_PREFIX)) {
-        return {
-            ...message,
-            messageType: 'SYSTEM',
-            messageText: message.messageText.slice(ROOM_FEED_PREFIX.length)
-        };
-    }
-    return message;
-}
-
 export async function loadMessagesInRoomApi(roomId, messagePageSize, beforeMessageId = null) {
     const res = await axios.get(`/room/loadMessagesInRoom/${roomId}`, {
         params: {
@@ -63,7 +49,7 @@ export async function loadMessagesInRoomApi(roomId, messagePageSize, beforeMessa
             limit: messagePageSize
         }
     });
-    return (res.data ?? []).map(normalizeRoomFeedMessage);
+    return res.data ?? [];
 }
 
 export async function getMessageReactionMembersApi(roomId, messageId) {

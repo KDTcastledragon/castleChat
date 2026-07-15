@@ -39,6 +39,10 @@ function FriendList() {
     const [isUploadingRoomThumbnail, setIsUploadingRoomThumbnail] = useState(false);
     const [selectedFriendList, setSelectedFriendList] = useState([]);
     const [searchWord, setSearchWord] = useState('');
+    const [friendContextMenu, setFriendContextMenu] = useState(null);
+	const [focusedFriendPublicId, setFocusedFriendPublicId] = useState(null);
+    const [friendConfirmModal, setFriendConfirmModal] = useState(null);
+    const friendListContainerRef = useRef(null);
 
     const debouncedSearchWord = useDebounce(searchWord, 500);
     const {
@@ -158,6 +162,68 @@ function FriendList() {
         }
     }
 
+    // 친구 정보 영역 우클릭 시 msg 메뉴처럼 컨텍스트 메뉴를 띄운다.
+    function openFriendContextMenu(e, friend) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const containerRect = friendListContainerRef.current?.getBoundingClientRect();
+        if (!containerRect) return;
+
+        const menuWidth = 130;
+        const menuHeight = 80;
+        let left = e.clientX - containerRect.left;
+        let top = e.clientY - containerRect.top;
+
+        left = Math.min(Math.max(left, 8), containerRect.width - menuWidth - 8);
+        top = Math.min(Math.max(top, 8), containerRect.height - menuHeight - 8);
+
+        setFriendContextMenu({ friend, left, top });
+    }
+
+    function handleFriendMenuAction(action) {
+        const targetFriend = friendContextMenu?.friend;
+        setFriendContextMenu(null);
+
+        if (!targetFriend) return;
+
+        if (action === 'DELETE') {
+            setFriendConfirmModal({ action, message: `${targetFriend.nickname}님을 친구에서 삭제하시겠습니까?` });
+        }
+
+        if (action === 'BLOCK') {
+            setFriendConfirmModal({ action, message: `${targetFriend.nickname}님을 차단하시겠습니까?` });
+        }
+    }
+
+    function confirmFriendMenuAction() {
+        if (!friendConfirmModal) return;
+
+        alert(friendConfirmModal.action === 'DELETE'
+            ? '친구삭제는 아직 준비 중인 기능입니다.'
+            : '친구차단은 아직 준비 중인 기능입니다.');
+        setFriendConfirmModal(null);
+    }
+
+    useEffect(() => {
+        const closeMenu = (e) => {
+            if (e.type === 'keydown' && e.key !== 'Escape') return;
+            if (e.type === 'mousedown' && e.target.closest('.friendContextMenu')) return;
+			if (e.type === 'mousedown' && e.target.closest('.friendIdentityArea')) return;
+
+            setFriendContextMenu(null);
+			setFocusedFriendPublicId(null);
+        };
+
+        document.addEventListener('mousedown', closeMenu);
+        window.addEventListener('keydown', closeMenu);
+
+        return () => {
+            document.removeEventListener('mousedown', closeMenu);
+            window.removeEventListener('keydown', closeMenu);
+        };
+    }, []);
+
     function toggleFriendSelect(friend) {
         setSelectedFriendList(prev => {
             const alreadySelected = prev.some(selectedFriend => selectedFriend.publicId === friend.publicId);
@@ -187,7 +253,30 @@ function FriendList() {
     }
 
     return (
-        <div className='FriendListContainer'>
+        <div className='FriendListContainer' ref={friendListContainerRef}>
+            {friendConfirmModal && (
+                <div className="friendConfirmOverlay" onMouseDown={() => setFriendConfirmModal(null)}>
+                    <div className="friendConfirmModal" onMouseDown={(e) => e.stopPropagation()}>
+                        <strong>친구 관리</strong>
+                        <p>{friendConfirmModal.message}</p>
+                        <div>
+                            <button className="danger" onClick={confirmFriendMenuAction}>확인</button>
+                            <button onClick={() => setFriendConfirmModal(null)}>취소</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {friendContextMenu && (
+                <div
+                    className="friendContextMenu"
+                    style={{ left: friendContextMenu.left, top: friendContextMenu.top }}
+                >
+                    <button onClick={() => handleFriendMenuAction('DELETE')}>친구삭제</button>
+                    <button className="danger" onClick={() => handleFriendMenuAction('BLOCK')}>친구차단</button>
+                </div>
+            )}
+
             <div className='friendPanel friendListPanel'>
                 <div className='friendPanelHeader'>
                     <div>
@@ -204,18 +293,29 @@ function FriendList() {
                         const selected = selectedFriendList.some(selectedFriend => selectedFriend.publicId === friend.publicId);
 
                         return (
-                            <div className={`friendItem ${selected ? 'selected' : ''}`} key={friend.publicId}>
+                            <div
+								className={`friendItem ${selected ? 'checked' : ''} ${focusedFriendPublicId === friend.publicId ? 'focused' : ''}`}
+                                key={friend.publicId}
+                            >
                                 <input
                                     type="checkbox"
                                     checked={selected}
                                     onChange={() => toggleFriendSelect(friend)}
                                 />
 
-                                <img src={friend.profileImg || '/images/mococo_question.png'} alt={friend.nickname} />
+                                <div
+                                    className="friendIdentityArea"
+                                    onContextMenu={(e) => {
+                                        setFocusedFriendPublicId(friend.publicId);
+                                        openFriendContextMenu(e, friend);
+                                    }}
+                                >
+                                    <img src={friend.profileImg || '/images/mococo_question.png'} alt={friend.nickname} />
 
-                                <div className='friendInfo'>
-                                    <strong>{friend.nickname}</strong>
-                                    <span>{friend.friendCode}</span>
+                                    <div className='friendInfo'>
+                                        <strong>{friend.nickname}</strong>
+                                        <span>{friend.friendCode}</span>
+                                    </div>
                                 </div>
 
                                 <button onClick={() => getOrCreateDirectRoom(friend)}>

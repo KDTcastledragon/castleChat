@@ -182,8 +182,13 @@ export function connectWs() {
     // 즉 const ws = ...가 아니라 바깥의 let ws에 재할당해야 함.
     // 이건 “위에서 아래로 한 번 실행되니까 안다”가 아니야. 
     // 함수가 만들어질 때 자기 바깥 스코프를 기억한다는 JS의 성질 때문이야. 이걸 closure라고 해. connectWs와 sendChatWs는 서로 독립적인 함수 맞음.
-    ws = new WebSocket('ws://localhost:8090/ws'); // --> 이때!! 같은 모듈 변수 ws가 바뀜. 그러면 sendChatWs가 기억하고 있던 같은 ws를 봄.
+    // ws = new WebSocket('ws://localhost:8090/ws'); // --> 이때!! 같은 모듈 변수 ws가 바뀜. 그러면 sendChatWs가 기억하고 있던 같은 ws를 봄.
     // 즉, 이미 WebSocket 객체가 들어 있음. 함수끼리 서로 아는 게 아니다. 함수들이 같은 모듈 스코프 변수를 닫아두고 참조한다. 이게 closure다.
+
+    // ws = new WebSocket('ws://localhost:8090/ws'); // Dev Env
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'; // NginX : on premise
+    ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws`);
 
     ws.onopen = () => {
         isConnected = true;

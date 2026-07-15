@@ -61,17 +61,84 @@
 }
 
 .globalToastItem {
-    min-width: 240px;
-    max-width: 360px;
-    padding: 12px 14px;
+    width: 360px;
+    min-height: 72px;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 30px 30px;
+    align-items: center;
+    gap: 9px;
     border-radius: 14px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    background: rgba(15, 23, 42, 0.96);
-    color: #fff;
+    border: 1px solid var(--castle-border);
+    background: var(--castle-surface);
+    color: var(--castle-text);
     font-size: 13px;
     font-weight: 600;
     box-shadow: var(--castle-shadow-strong);
     animation: toastSlideIn 160ms ease-out;
+    box-sizing: border-box;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.globalToastItem:not(.chatNotificationToast) {
+    grid-template-columns: minmax(0, 1fr) 30px;
+}
+
+.globalToastItem > img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid var(--castle-border-soft);
+}
+
+.globalToastTextBox {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.globalToastTextBox strong,
+.globalToastTextBox span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.globalToastTextBox strong {
+    color: var(--castle-primary-hover);
+    font-size: 13px;
+}
+
+.globalToastTextBox span {
+    color: var(--castle-text-muted);
+    font-size: 12px;
+}
+
+.globalToastBellButton,
+.globalToastCloseButton {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--castle-border);
+    border-radius: 9px;
+    background: var(--castle-primary-soft);
+    color: var(--castle-primary-hover);
+    cursor: pointer;
+}
+
+.globalToastCloseButton {
+    background: var(--castle-surface-soft);
+    color: var(--castle-text-muted);
+    font-size: 20px;
+}
+
+.globalToastBellButton:hover,
+.globalToastCloseButton:hover {
+    border-color: var(--castle-primary);
+    background: var(--castle-primary-pale);
 }
 
 @keyframes toastSlideIn {

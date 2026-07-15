@@ -320,8 +320,8 @@
 			#{messageId},
 			#{roomId},
 			#{requesterUserId},
-			'TEXT',
-			CONCAT('[ROOM_FEED]', #{feedText}),
+			'SYSTEM',
+			#{feedText},
 			NULL,
 			'ACTIVE',
 			#{feedAt}
