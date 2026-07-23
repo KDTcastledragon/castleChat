@@ -13,4 +13,10 @@ public interface AiAssistMapper {
 
 	List<RecentMessageDTO> findRecentMessagesInRoom(@Param("roomId") Long roomId, @Param("limit") int limit);
 
+	Long findUserIdByPublicId(@Param("publicId") String publicId);
+
+	String findRoomType(@Param("roomId") Long roomId);
+
+	List<RecentMessageDTO> findSharedConversationMessages(@Param("requesterUserId") Long requesterUserId, @Param("targetUserId") Long targetUserId, @Param("limit") int limit);
+
 }

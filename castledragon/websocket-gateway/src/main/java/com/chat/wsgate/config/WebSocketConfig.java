@@ -27,7 +27,7 @@ public class WebSocketConfig implements WebSocketConfigurer { // WebSocketConfig
 		//		registry.addHandler(wsHandler, "/ws/chat").setAllowedOrigins("*"); // 어떤 Origin에서 온 WebSocket 연결을 허용할 것인가?
 		registry.addHandler(wsGateDispatcher, "/ws")
 				.addInterceptors(new HttpSessionHandshakeInterceptor())
-				.setAllowedOriginPatterns("http://localhost:*");
+				.setAllowedOriginPatterns("http://localhost", "http://localhost:*");
 	}
 
 	//	여기서 의미는:
@@ -50,4 +50,3 @@ public class WebSocketConfig implements WebSocketConfigurer { // WebSocketConfig
 	// HttpSessionHandshakeInterceptor : 얘가 Spring WebSocket handshake 과정에서 HTTP 세션의 attribute를 WebSocketSession attributes로 복사한다.
 	// ws에서 session에 접근하는건, httpSession이 아니라 wsSession이다. 근데 정확히는 HTTP session === WS session 은 아니야. 같은 객체는 아님.
 }
-

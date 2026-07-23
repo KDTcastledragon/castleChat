@@ -20,6 +20,7 @@ public class RoomFeedResponseDTO {
 
 	private List<String> targetPublicIds;
 	private List<String> targetNicknames;
+	private List<RoomMemberResponseDTO> targetMembers;
 
 	private String targetRole;
 

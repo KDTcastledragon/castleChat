@@ -29,4 +29,46 @@
 		LIMIT #{limit}
 	</select>
 
+	<select id="findUserIdByPublicId" resultType="java.lang.Long">
+		SELECT user_id
+		FROM users
+		WHERE public_id = #{publicId}
+		  AND user_status = 'ACTIVE'
+	</select>
+
+	<select id="findRoomType" resultType="java.lang.String">
+		SELECT room_type
+		FROM chat_rooms
+		WHERE room_id = #{roomId}
+	</select>
+
+	<select id="findSharedConversationMessages" resultType="com.chat.aiassist.domain.RecentMessageDTO">
+		SELECT
+			cm.message_id AS messageId,
+			cm.sender_id AS senderId,
+			u.nickname AS senderNickname,
+			cm.message_text AS messageText,
+			cm.created_at AS createdAt
+		FROM chat_messages cm
+		JOIN users u ON u.user_id = cm.sender_id
+		WHERE cm.message_status = 'ACTIVE'
+		  AND cm.message_text IS NOT NULL
+		  AND cm.sender_id IN (#{requesterUserId}, #{targetUserId})
+		  AND EXISTS (
+			SELECT 1
+			FROM room_members requester_rm
+			WHERE requester_rm.room_id = cm.room_id
+			  AND requester_rm.user_id = #{requesterUserId}
+			  AND requester_rm.member_status = 'ACTIVE'
+		  )
+		  AND EXISTS (
+			SELECT 1
+			FROM room_members target_rm
+			WHERE target_rm.room_id = cm.room_id
+			  AND target_rm.user_id = #{targetUserId}
+		  )
+		ORDER BY cm.message_id DESC
+		LIMIT #{limit}
+	</select>
+
 </mapper>

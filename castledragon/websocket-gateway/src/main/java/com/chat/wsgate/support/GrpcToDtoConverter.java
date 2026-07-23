@@ -226,6 +226,7 @@ public final class GrpcToDtoConverter {
 		roomFeed.setRequesterNickname(response.getRequesterNickname());
 		roomFeed.setTargetPublicIds(response.getTargetPublicIdsList());
 		roomFeed.setTargetNicknames(response.getTargetNicknamesList());
+		roomFeed.setTargetMembers(response.getTargetMembersList().stream().map(GrpcToDtoConverter::convertGrpcToRoomMemberResDto).toList());
 		roomFeed.setTargetRole(response.getTargetRole());
 		roomFeed.setFeedText(response.getFeedText());
 
@@ -234,6 +235,10 @@ public final class GrpcToDtoConverter {
 		}
 
 		return roomFeed;
+	}
+
+	private static RoomMemberResponseDTO convertGrpcToRoomMemberResDto(RoomMemberProfile response) {
+		return new RoomMemberResponseDTO(response.getPublicId(), response.getNickname(), response.getFriendCode(), response.getProfileImg(), response.getRole());
 	}
 
 	public static RoomNoticeApplyResponseDTO convertGrpcToRoomNoticeApplyResDto(ApplyRoomNoticeResponse response) {

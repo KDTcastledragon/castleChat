@@ -9,4 +9,8 @@ public interface AiRecommendUseCase {
 
 	List<String> recommendMessages(Long requesterUserId, Long roomId);
 
+	List<String> recommendPersonalizedMessages(Long requesterUserId, Long roomId, String targetPublicId, String relationshipType);
+
+	String refineMessageTone(Long requesterUserId, String messageText, String tone);
+
 }

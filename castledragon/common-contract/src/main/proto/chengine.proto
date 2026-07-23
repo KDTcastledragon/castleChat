@@ -299,6 +299,8 @@ message RoomFeedResponse {
 
   string feed_text = 8;
   string feed_at = 9;
+
+  repeated RoomMemberProfile target_members = 10;
 }
 
 message ApplyRoomNoticeRequest {

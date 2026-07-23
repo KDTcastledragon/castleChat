@@ -27,6 +27,16 @@ public final class DtoToGrpcConverter {
 		return value == null ? "" : value;
 	}
 
+	private static RoomMemberProfile convertRoomMemberResDtoToGrpc(RoomMemberResponseDTO member) {
+		return RoomMemberProfile.newBuilder()
+				.setPublicId(nvl(member.getPublicId()))
+				.setNickname(nvl(member.getNickname()))
+				.setFriendCode(nvl(member.getFriendCode()))
+				.setProfileImg(nvl(member.getProfileImg()))
+				.setRole(nvl(member.getRole()))
+				.build();
+	}
+
 	public static EnterRoomResponse convertEnterRoomResDtoToGrpc(EnterRoomResponseDTO dto) {
 		EnterRoomResponse.Builder responseBuilder = EnterRoomResponse.newBuilder()
 				.setRoomId(dto.getRoomId())
@@ -39,15 +49,7 @@ public final class DtoToGrpcConverter {
 
 		if (dto.getMemberList() != null) {
 			for (RoomMemberResponseDTO member : dto.getMemberList()) {
-				RoomMemberProfile memberProfile = RoomMemberProfile.newBuilder()
-						.setPublicId(nvl(member.getPublicId()))
-						.setNickname(nvl(member.getNickname()))
-						.setFriendCode(nvl(member.getFriendCode()))
-						.setProfileImg(nvl(member.getProfileImg()))
-						.setRole(nvl(member.getRole()))
-						.build();
-
-				responseBuilder.addMemberList(memberProfile);
+				responseBuilder.addMemberList(convertRoomMemberResDtoToGrpc(member));
 			}
 		}
 
@@ -111,6 +113,12 @@ public final class DtoToGrpcConverter {
 
 		if (dto.getTargetNicknames() != null) {
 			builder.addAllTargetNicknames(dto.getTargetNicknames());
+		}
+
+		if (dto.getTargetMembers() != null) {
+			for (RoomMemberResponseDTO member : dto.getTargetMembers()) {
+				builder.addTargetMembers(convertRoomMemberResDtoToGrpc(member));
+			}
 		}
 
 		return builder.build();

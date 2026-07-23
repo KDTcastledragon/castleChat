@@ -102,6 +102,15 @@ public class WsGateSessionRegistry {
 		return userSession;
 	}
 
+	public void exitRoomSessionByPublicId(Long roomId, String publicId) {
+		WebSocketSession session = publicIdToWsSessions.get(publicId);
+		SessionUserDTO user = session == null ? null : wsSessionsToConnectedUser.get(session);
+
+		if (user != null) {
+			exitRoomSession(roomId, user.getUserId());
+		}
+	}
+
 	public WebSocketSession findSessionByPublicId(String publicId) {
 		return publicIdToWsSessions.get(publicId);
 	}

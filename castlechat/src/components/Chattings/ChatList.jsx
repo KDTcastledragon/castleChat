@@ -9,7 +9,7 @@ import { registerGlobalWsHandler } from '../../webSocket/wsClient';
 function ChatList() {
     // const { data: myAllRooms = [], refetch: refetchMyAllRooms } = useGetMyAllRooms(!!me);
     const { data: me, isLoading: isCheckingLogin } = useMe();
-    const { data: myAllRooms = [], isLoading, isError } = useGetMyAllRooms(!!me);
+    const { data: myAllRooms, isLoading, isError } = useGetMyAllRooms(!!me);
     const queryClient = useQueryClient();
     const [visibleRooms, setVisibleRooms] = useState([]);
     const visibleRoomsRef = useRef([]);
@@ -20,7 +20,7 @@ function ChatList() {
     const activeChatWindowKey = useSelector(state => state.chatWindows.windows[0]?.chatWindowKey ?? null);
 
     useEffect(() => {
-        const nextRooms = myAllRooms.map(room => {
+        const nextRooms = (myAllRooms ?? []).map(room => {
             const roomKey = String(room.roomId);
             const localUnreadCount = localUnreadCountRef.current[roomKey];
 

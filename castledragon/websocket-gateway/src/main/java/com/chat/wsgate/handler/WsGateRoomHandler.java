@@ -191,7 +191,15 @@ public class WsGateRoomHandler {
 
 		RoomFeedResponseDTO response = wsGateRoomClient.kickMember(kickMbrCmd);
 
+		for (String targetPublicId : response.getTargetPublicIds()) {
+			wsGateSessionRegistry.exitRoomSessionByPublicId(payload.getRoomId(), targetPublicId);
+		}
+
 		wsGateOutboundWriter.broadcastToRoom(payload.getRoomId(), "ROOM_MEMBER_KICKED", response, dto.getRequestId());
+
+		for (String targetPublicId : response.getTargetPublicIds()) {
+			wsGateOutboundWriter.pushToSingleUserByPublicId(targetPublicId, "ROOM_KICKED", response, dto.getRequestId());
+		}
 	}
 
 	//	====== 단톡방에서 영구 강퇴 ===========================================================================================================

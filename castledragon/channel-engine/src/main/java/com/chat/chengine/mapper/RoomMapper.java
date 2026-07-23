@@ -49,7 +49,7 @@ public interface RoomMapper {
 
 	String findNicknameByPublicId(@Param("publicId") String publicId);
 
-	List<String> findNicknamesByPublicIds(@Param("publicIds") List<String> publicIds);
+	List<RoomMemberResponseDTO> findRoomMemberProfilesByPublicIds(@Param("roomId") Long roomId, @Param("publicIds") List<String> publicIds);
 
 	String findActiveRoomMemberRole(@Param("roomId") Long roomId, @Param("userId") Long userId);
 

@@ -26,6 +26,7 @@ import com.chat.contract.room.domain.res.DirectChatDraftDTO;
 import com.chat.contract.room.domain.res.EnterRoomResponseDTO;
 import com.chat.contract.room.domain.res.OpenDirectChatRoomResponseDTO;
 import com.chat.contract.room.domain.res.RoomFeedResponseDTO;
+import com.chat.contract.room.domain.res.RoomMemberResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeApplyResponseDTO;
 import com.chat.contract.room.domain.res.RoomNoticeViewDTO;
 import com.chat.redis.cache.RoomMemberCache;
@@ -437,10 +438,12 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("초대 처리 실패");
 		}
 
-		List<String> targetNicknames = roomMapper.findNicknamesByPublicIds(cmd.getInviteTargetMemberPublicIds());
+		List<RoomMemberResponseDTO> targetMembers = roomMapper.findRoomMemberProfilesByPublicIds(cmd.getRoomId(), cmd.getInviteTargetMemberPublicIds());
+		List<String> targetNicknames = targetMembers.stream().map(RoomMemberResponseDTO::getNickname).toList();
 
 		RoomFeedResponseDTO roomFeed = createRoomFeed(cmd.getRoomId(), cmd.getRequesterUserId(), "INVITE", cmd.getRequesterPublicId(), requesterNickname, cmd
 				.getInviteTargetMemberPublicIds(), targetNicknames, requesterNickname + "님이 " + String.join(", ", targetNicknames) + "님을 초대했습니다.");
+		roomFeed.setTargetMembers(targetMembers);
 
 		syncActiveRoomMemberCache(cmd.getRoomId());
 
@@ -594,6 +597,6 @@ public class RoomCommandService implements RoomCommandUseCase {
 			throw new IllegalStateException("채팅방 feed 저장 실패");
 		}
 
-		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, null, feedText, feedAt);
+		return new RoomFeedResponseDTO(roomId, feedType, requesterPublicId, requesterNickname, targetPublicIds, targetNicknames, List.of(), null, feedText, feedAt);
 	}
 }
